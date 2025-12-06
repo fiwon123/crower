@@ -1,5 +1,7 @@
 package data
 
 type App struct {
-	Commands CommandsMap
+	CfgFilePath string
+	AliasMap    CommandsMap
+	CommandsMap CommandsMap
 }

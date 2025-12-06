@@ -2,12 +2,24 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 
+	"github.com/fiwon123/crower/internal/core"
+	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
-var cfgFile string
+var cfgFilePath string
+var createOp bool
+var listOp bool
+var resetOp bool
+var index int
+var name string
+var exec string
+var alias []string
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -18,10 +30,41 @@ managing it with useful operations like add, edit, remove, list and more.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:s
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("args", args)
-		fmt.Println("cfg", cfgFile)
 
-		// init app vars
+		if len(args) > 0 {
+			fmt.Println("args", args)
+			name = args[0]
+			alias = append(alias, args[0])
+		}
+		fmt.Println("cfg", cfgFilePath)
+
+		utils.CreateTomlIfNotExists(cfgFilePath)
+		fmt.Println("cfgfilepath: ", cfgFilePath)
+
+		commandsMap := utils.ReadToml(cfgFilePath)
+		aliasMap := core.GetAliasMap(commandsMap)
+
+		var op data.CommandOperation
+		if createOp {
+			op = data.Create
+		} else if listOp {
+			op = data.List
+		} else if resetOp {
+			op = data.Reset
+		} else {
+			op = data.Execute
+		}
+
+		core.HandlePayload(
+			data.Payload{
+				Op:      op,
+				Command: *data.NewCommand(name, alias, exec),
+			},
+			&data.App{
+				CfgFilePath: cfgFilePath,
+				AliasMap:    aliasMap,
+				CommandsMap: commandsMap,
+			})
 
 	},
 }
@@ -36,12 +79,18 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "$HOME/.crower.yaml", "config file (default is $HOME/.crower.yaml)")
+	homePath, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatal("Error could not get user home directory, ", err)
+	}
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
+	rootCmd.Flags().StringVar(&cfgFilePath, "config", filepath.Join(homePath, "crower.yaml"), "config file (default is $HOME/.crower.yaml)")
+	rootCmd.Flags().IntVarP(&index, "index", "i", 0, "command index")
+	rootCmd.Flags().BoolVar(&createOp, "create", false, "create a command")
+	rootCmd.Flags().BoolVar(&listOp, "list", false, "list all commands")
+	rootCmd.Flags().BoolVar(&resetOp, "reset", false, "reset all commands")
+	rootCmd.Flags().StringVarP(&name, "name", "n", "", "command name")
+	rootCmd.Flags().StringVarP(&exec, "exec", "e", "", `define the command (example "echo 'Hello World!'")`)
+	rootCmd.Flags().StringSliceVarP(&alias, "alias", "a", []string{}, `define alias (example "--alias 'a1,a2,a3'")`)
 }
