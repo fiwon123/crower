@@ -4,7 +4,7 @@ type CommandOperation string
 
 const (
 	Execute CommandOperation = "execute"
-	Create  CommandOperation = "create"
+	Add     CommandOperation = "add"
 	Delete  CommandOperation = "delete"
 	Update  CommandOperation = "update"
 	List    CommandOperation = "list"

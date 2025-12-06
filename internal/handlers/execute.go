@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"os/exec"
-	"strings"
 
 	"github.com/fiwon123/crower/internal/data"
 )
@@ -21,17 +20,19 @@ func Execute(input data.Command, app *data.App) ([]byte, error) {
 		return nil, fmt.Errorf("command not found")
 	}
 
-	i := strings.IndexByte(command.Exec, ' ')
-	cmdName := ""
-	args := ""
-	if i == -1 {
-		cmdName = command.Exec
-	} else {
-		cmdName = command.Exec[:i]
-		args = command.Exec[i+1:]
-	}
+	fmt.Println(command.Exec)
+	// i := strings.IndexByte(command.Exec, ' ')
+	// cmdName := ""
+	// args := ""
+	// if i == -1 {
+	// 	cmdName = command.Exec
+	// } else {
+	// 	cmdName = command.Exec[:i]
+	// 	args = command.Exec[i+1:]
+	// }
 
-	c := exec.Command(cmdName, args)
+	// c := exec.Command(cmdName, args)
+	c := exec.Command("sh", "-c", command.Exec)
 	out, err := c.Output()
 
 	return out, err

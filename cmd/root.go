@@ -13,7 +13,9 @@ import (
 )
 
 var cfgFilePath string
-var createOp bool
+var addOp bool
+var deleteOp bool
+var updateOp bool
 var listOp bool
 var resetOp bool
 var index int
@@ -45,12 +47,16 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		aliasMap := core.GetAliasMap(commandsMap)
 
 		var op data.CommandOperation
-		if createOp {
-			op = data.Create
+		if addOp {
+			op = data.Add
 		} else if listOp {
 			op = data.List
 		} else if resetOp {
 			op = data.Reset
+		} else if deleteOp {
+			op = data.Delete
+		} else if updateOp {
+			op = data.Update
 		} else {
 			op = data.Execute
 		}
@@ -87,9 +93,11 @@ func init() {
 
 	rootCmd.Flags().StringVar(&cfgFilePath, "config", filepath.Join(homePath, "crower.yaml"), "config file (default is $HOME/.crower.yaml)")
 	rootCmd.Flags().IntVarP(&index, "index", "i", 0, "command index")
-	rootCmd.Flags().BoolVar(&createOp, "create", false, "create a command")
+	rootCmd.Flags().BoolVar(&addOp, "add", false, "add a command")
 	rootCmd.Flags().BoolVar(&listOp, "list", false, "list all commands")
 	rootCmd.Flags().BoolVar(&resetOp, "reset", false, "reset all commands")
+	rootCmd.Flags().BoolVar(&updateOp, "update", false, "update command")
+	rootCmd.Flags().BoolVar(&deleteOp, "delete", false, "delete commands")
 	rootCmd.Flags().StringVarP(&name, "name", "n", "", "command name")
 	rootCmd.Flags().StringVarP(&exec, "exec", "e", "", `define the command (example "echo 'Hello World!'")`)
 	rootCmd.Flags().StringSliceVarP(&alias, "alias", "a", []string{}, `define alias (example "--alias 'a1,a2,a3'")`)

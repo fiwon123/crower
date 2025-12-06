@@ -19,17 +19,30 @@ func (cm CommandsMap) Get(key string) *Command {
 	return &command
 }
 
-func (cm CommandsMap) Add(c *Command) {
-	cm[c.Name] = *c
+func (cm CommandsMap) Add(c Command) {
+	cm[c.Name] = c
 }
 
-func (cm CommandsMap) Remove(name string) {
-	delete(cm, name)
-}
-
-func (cm CommandsMap) Update(c *Command) {
-	if command, ok := cm[c.Name]; ok {
-		command.Alias = c.Alias
-		command.Exec = c.Exec
+func (cm CommandsMap) Remove(name string) bool {
+	if cm.Get(name) == nil {
+		return false
 	}
+
+	delete(cm, name)
+
+	return true
+}
+
+func (cm CommandsMap) Update(c Command) bool {
+
+	command := cm.Get(c.Name)
+	if command == nil {
+		return false
+	}
+
+	command.Alias = c.Alias
+	command.Exec = c.Exec
+	cm[c.Name] = c
+
+	return true
 }
