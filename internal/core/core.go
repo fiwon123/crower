@@ -8,6 +8,28 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+func InitApp(cfgFilePath string) *data.App {
+	var commandsMap data.CommandsMap
+	var aliasMap data.CommandsMap
+
+	if cfgFilePath != "" {
+		utils.CreateTomlIfNotExists(cfgFilePath)
+		fmt.Println("cfgfilepath: ", cfgFilePath)
+
+		commandsMap = utils.ReadToml(cfgFilePath)
+		aliasMap = getAliasMap(commandsMap)
+	} else {
+		commandsMap = data.NewCommandsMap()
+		aliasMap = data.NewCommandsMap()
+	}
+
+	return &data.App{
+		CfgFilePath: cfgFilePath,
+		AliasMap:    aliasMap,
+		CommandsMap: commandsMap,
+	}
+}
+
 func HandlePayload(payload data.Payload, app *data.App) {
 	switch payload.Op {
 	case data.Execute:

@@ -8,7 +8,6 @@ import (
 
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/data"
-	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -40,11 +39,7 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		}
 		fmt.Println("cfg", cfgFilePath)
 
-		utils.CreateTomlIfNotExists(cfgFilePath)
-		fmt.Println("cfgfilepath: ", cfgFilePath)
-
-		commandsMap := utils.ReadToml(cfgFilePath)
-		aliasMap := core.GetAliasMap(commandsMap)
+		app := core.InitApp(cfgFilePath)
 
 		var op data.CommandOperation
 		if addOp {
@@ -66,11 +61,8 @@ managing it with useful operations like add, edit, remove, list and more.`,
 				Op:      op,
 				Command: *data.NewCommand(name, alias, exec),
 			},
-			&data.App{
-				CfgFilePath: cfgFilePath,
-				AliasMap:    aliasMap,
-				CommandsMap: commandsMap,
-			})
+			app,
+		)
 
 	},
 }
