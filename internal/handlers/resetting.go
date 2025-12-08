@@ -3,5 +3,5 @@ package handlers
 import "github.com/fiwon123/crower/internal/data"
 
 func Reset(app *data.App) {
-	app.CommandsMap = data.NewCommandsMap()
+	app.AllCommands = data.NewCommandsMap()
 }

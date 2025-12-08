@@ -6,8 +6,8 @@ func getAliasMap(commandMap data.CommandsMap) data.CommandsMap {
 	aliasMap := data.NewCommandsMap()
 
 	for _, command := range commandMap {
-		for _, alias := range command.Alias {
-			aliasMap.Add(*data.NewCommand(alias, []string{}, command.Exec))
+		for _, alias := range command.AllAlias {
+			aliasMap.Add(alias, command)
 		}
 	}
 

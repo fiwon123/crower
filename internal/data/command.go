@@ -1,15 +1,15 @@
 package data
 
 type Command struct {
-	Name  string
-	Alias []string
-	Exec  string
+	Name     string
+	AllAlias []string
+	Exec     string
 }
 
-func NewCommand(name string, alias []string, exec string) *Command {
+func NewCommand(name string, aliases []string, exec string) *Command {
 	return &Command{
-		Name:  name,
-		Alias: alias,
-		Exec:  exec,
+		Name:     name,
+		AllAlias: aliases,
+		Exec:     exec,
 	}
 }

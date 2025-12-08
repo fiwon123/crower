@@ -19,8 +19,8 @@ func (cm CommandsMap) Get(key string) *Command {
 	return &command
 }
 
-func (cm CommandsMap) Add(c Command) {
-	cm[c.Name] = c
+func (cm CommandsMap) Add(key string, c Command) {
+	cm[key] = c
 }
 
 func (cm CommandsMap) Remove(name string) bool {
@@ -40,7 +40,7 @@ func (cm CommandsMap) Update(c Command) bool {
 		return false
 	}
 
-	command.Alias = c.Alias
+	command.AllAlias = c.AllAlias
 	command.Exec = c.Exec
 	cm[c.Name] = c
 

@@ -10,36 +10,32 @@ import (
 )
 
 func InitApp(cfgFilePath string) *data.App {
-	var commandsMap data.CommandsMap
-	var aliasMap data.CommandsMap
+	var allCommands data.CommandsMap
+	var allAliases data.CommandsMap
 
 	if cfgFilePath != "" {
 		utils.CreateTomlIfNotExists(cfgFilePath)
 		fmt.Println("cfgfilepath: ", cfgFilePath)
 
-		commandsMap = utils.ReadToml(cfgFilePath)
-		aliasMap = getAliasMap(commandsMap)
+		allCommands = utils.ReadToml(cfgFilePath)
+		allAliases = getAliasMap(allCommands)
 	} else {
-		commandsMap = data.NewCommandsMap()
-		aliasMap = data.NewCommandsMap()
+		allCommands = data.NewCommandsMap()
+		allAliases = data.NewCommandsMap()
 	}
 
-	return &data.App{
-		CfgFilePath: cfgFilePath,
-		AliasMap:    aliasMap,
-		CommandsMap: commandsMap,
-	}
+	return data.NewApp(cfgFilePath, allAliases, allCommands)
 }
 
 func HandlePayload(payload data.Payload, app *data.App) {
 	switch payload.Op {
 	case data.Execute:
 		input := payload.Command
-		command := app.CommandsMap.Get(input.Name)
+		command := app.AllCommands.Get(input.Name)
 
-		if command == nil && len(input.Alias) > 0 {
-			fmt.Println("find command by alias ", input.Alias)
-			command = app.AliasMap.Get(input.Alias[0])
+		if command == nil && len(input.AllAlias) > 0 {
+			fmt.Println("find command by alias ", input.AllAlias)
+			command = app.AllAliases.Get(input.AllAlias[0])
 		}
 
 		if command == nil {
@@ -55,31 +51,31 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		fmt.Println(string(output))
 	case data.Add:
 		if handlers.AddCommand(payload.Command, app) {
-			utils.WriteToml(app.CommandsMap, app.CfgFilePath)
-			fmt.Println("added new command: ", app.CommandsMap)
+			utils.WriteToml(app.AllCommands, app.CfgFilePath)
+			fmt.Println("added new command: ", app.AllCommands)
 		} else {
 			fmt.Println("Error add command: ", payload.Command)
 		}
 	case data.Delete:
 		if handlers.DeleteCommand(payload.Command.Name, app) {
-			fmt.Println("deleted command: ", app.CommandsMap)
-			utils.WriteToml(app.CommandsMap, app.CfgFilePath)
+			fmt.Println("deleted command: ", app.AllCommands)
+			utils.WriteToml(app.AllCommands, app.CfgFilePath)
 		} else {
 			fmt.Println("Error delete command: ", payload.Command)
 		}
 	case data.Update:
 		if handlers.UpdateCommand(payload.Command, app) {
-			fmt.Println("updated command: ", app.CommandsMap)
-			utils.WriteToml(app.CommandsMap, app.CfgFilePath)
+			fmt.Println("updated command: ", app.AllCommands)
+			utils.WriteToml(app.AllCommands, app.CfgFilePath)
 		} else {
 			fmt.Println("Error update command: ", payload.Command)
 		}
 	case data.List:
-		fmt.Println("list all commands: ", app.CommandsMap)
+		fmt.Println("list all commands: ", app.AllCommands)
 	case data.Reset:
 		handlers.Reset(app)
-		utils.WriteToml(app.CommandsMap, app.CfgFilePath)
-		fmt.Println("reset all commands: ", app.CommandsMap)
+		utils.WriteToml(app.AllCommands, app.CfgFilePath)
+		fmt.Println("reset all commands: ", app.AllCommands)
 	case data.Open:
 		configuration.Open(app.CfgFilePath)
 	}

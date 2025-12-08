@@ -18,7 +18,7 @@ func TestAdd(t *testing.T) {
 		want := true
 		app := core.InitApp("")
 
-		AssertTest(command, want, handlers.AddCommand(command, app), t)
+		assertAddingTest(command, want, handlers.AddCommand(command, app), t)
 	})
 
 	t.Run("Add multiple commands using only name", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestAdd(t *testing.T) {
 				Name: test.name,
 			}
 
-			AssertTest(command, test.want, handlers.AddCommand(command, app), t)
+			assertAddingTest(command, test.want, handlers.AddCommand(command, app), t)
 		}
 
 	})
@@ -70,19 +70,18 @@ func TestAdd(t *testing.T) {
 
 		for _, test := range tests {
 			command := data.Command{
-				Alias: []string{test.alias},
-				Name:  test.name,
+				AllAlias: []string{test.alias},
+				Name:     test.name,
 			}
 
-			AssertTest(command, test.want, handlers.AddCommand(command, app), t)
+			assertAddingTest(command, test.want, handlers.AddCommand(command, app), t)
 		}
 
 	})
 }
 
-func AssertTest(command data.Command, want bool, ans bool, t *testing.T) {
-
-	if ans != want {
-		t.Errorf("command %+v got %v, want %v", command, ans, want)
+func assertAddingTest(command data.Command, want bool, got bool, t *testing.T) {
+	if got != want {
+		t.Errorf("command %+v got %v, want %v", command, got, want)
 	}
 }
