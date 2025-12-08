@@ -1,12 +1,13 @@
 package data
 
-type CommandOperation string
+type Operation string
 
 const (
-	Execute CommandOperation = "execute"
-	Add     CommandOperation = "add"
-	Delete  CommandOperation = "delete"
-	Update  CommandOperation = "update"
-	List    CommandOperation = "list"
-	Reset   CommandOperation = "reset"
+	Execute Operation = "execute"
+	Add     Operation = "add"
+	Delete  Operation = "delete"
+	Update  Operation = "update"
+	List    Operation = "list"
+	Reset   Operation = "reset"
+	Open    Operation = "open"
 )

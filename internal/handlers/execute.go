@@ -7,18 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/data"
 )
 
-func Execute(input data.Command, app *data.App) ([]byte, error) {
-
-	command := app.CommandsMap.Get(input.Name)
-
-	if command == nil && len(input.Alias) > 0 {
-		fmt.Println("find command by alias ", input.Alias)
-		command = app.AliasMap.Get(input.Alias[0])
-	}
-
-	if command == nil {
-		return nil, fmt.Errorf("command not found")
-	}
+func Execute(command data.Command) ([]byte, error) {
 
 	fmt.Println(command.Exec)
 	// i := strings.IndexByte(command.Exec, ' ')

@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 
+	"github.com/fiwon123/crower/internal/configuration"
 	"github.com/fiwon123/crower/internal/data"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -33,7 +34,20 @@ func InitApp(cfgFilePath string) *data.App {
 func HandlePayload(payload data.Payload, app *data.App) {
 	switch payload.Op {
 	case data.Execute:
-		output, err := handlers.Execute(payload.Command, app)
+		input := payload.Command
+		command := app.CommandsMap.Get(input.Name)
+
+		if command == nil && len(input.Alias) > 0 {
+			fmt.Println("find command by alias ", input.Alias)
+			command = app.AliasMap.Get(input.Alias[0])
+		}
+
+		if command == nil {
+			fmt.Println("command not found")
+			return
+		}
+
+		output, err := handlers.Execute(*command)
 		if err != nil {
 			fmt.Println("Error trying to run command: ", err)
 			return
@@ -66,5 +80,7 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		handlers.Reset(app)
 		utils.WriteToml(app.CommandsMap, app.CfgFilePath)
 		fmt.Println("reset all commands: ", app.CommandsMap)
+	case data.Open:
+		configuration.Open(app.CfgFilePath)
 	}
 }

@@ -21,6 +21,7 @@ var index int
 var name string
 var exec string
 var alias []string
+var openOp bool
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -41,7 +42,7 @@ managing it with useful operations like add, edit, remove, list and more.`,
 
 		app := core.InitApp(cfgFilePath)
 
-		var op data.CommandOperation
+		var op data.Operation
 		if addOp {
 			op = data.Add
 		} else if listOp {
@@ -52,6 +53,8 @@ managing it with useful operations like add, edit, remove, list and more.`,
 			op = data.Delete
 		} else if updateOp {
 			op = data.Update
+		} else if openOp {
+			op = data.Open
 		} else {
 			op = data.Execute
 		}
@@ -90,6 +93,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&resetOp, "reset", false, "reset all commands")
 	rootCmd.Flags().BoolVar(&updateOp, "update", false, "update command")
 	rootCmd.Flags().BoolVar(&deleteOp, "delete", false, "delete commands")
+	rootCmd.Flags().BoolVar(&openOp, "open", false, "open cfg file path")
 	rootCmd.Flags().StringVarP(&name, "name", "n", "", "command name")
 	rootCmd.Flags().StringVarP(&exec, "exec", "e", "", `define the command (example "echo 'Hello World!'")`)
 	rootCmd.Flags().StringSliceVarP(&alias, "alias", "a", []string{}, `define alias (example "--alias 'a1,a2,a3'")`)
