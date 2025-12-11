@@ -18,7 +18,7 @@ func TestAdd(t *testing.T) {
 		want := true
 		app := core.InitApp("")
 
-		assertAddingTest(command, want, handlers.AddCommand(command, app), t)
+		assertAddingTest(command, want, handlers.AddCommand(&command, app), t)
 	})
 
 	t.Run("Add multiple commands using only name", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestAdd(t *testing.T) {
 				Name: test.name,
 			}
 
-			assertAddingTest(command, test.want, handlers.AddCommand(command, app), t)
+			assertAddingTest(command, test.want, handlers.AddCommand(&command, app), t)
 		}
 
 	})
@@ -74,7 +74,7 @@ func TestAdd(t *testing.T) {
 				Name:     test.name,
 			}
 
-			assertAddingTest(command, test.want, handlers.AddCommand(command, app), t)
+			assertAddingTest(command, test.want, handlers.AddCommand(&command, app), t)
 		}
 
 	})

@@ -31,11 +31,11 @@ func HandlePayload(payload data.Payload, app *data.App) {
 	switch payload.Op {
 	case data.Execute:
 		input := payload.Command
-		command := app.AllCommands.Get(input.Name)
+		command := app.AllCommandsByName.Get(input.Name)
 
 		if command == nil && len(input.AllAlias) > 0 {
 			fmt.Println("find command by alias ", input.AllAlias)
-			command = app.AllAliases.Get(input.AllAlias[0])
+			command = app.AllCommandsByAlias.Get(input.AllAlias[0])
 		}
 
 		if command == nil {
@@ -51,31 +51,31 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		fmt.Println(string(output))
 	case data.Add:
 		if handlers.AddCommand(payload.Command, app) {
-			utils.WriteToml(app.AllCommands, app.CfgFilePath)
-			fmt.Println("added new command: ", app.AllCommands)
+			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+			fmt.Println("added new command: ", app.AllCommandsByName)
 		} else {
 			fmt.Println("Error add command: ", payload.Command)
 		}
 	case data.Delete:
 		if handlers.DeleteCommand(payload.Command.Name, app) {
-			fmt.Println("deleted command: ", app.AllCommands)
-			utils.WriteToml(app.AllCommands, app.CfgFilePath)
+			fmt.Println("deleted command: ", app.AllCommandsByName)
+			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 		} else {
 			fmt.Println("Error delete command: ", payload.Command)
 		}
 	case data.Update:
-		if handlers.UpdateCommand(payload.Command, app) {
-			fmt.Println("updated command: ", app.AllCommands)
-			utils.WriteToml(app.AllCommands, app.CfgFilePath)
+		if handlers.UpdateCommand(payload.Command.Name, payload.Command, app) {
+			fmt.Println("updated command: ", app.AllCommandsByName)
+			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 		} else {
 			fmt.Println("Error update command: ", payload.Command)
 		}
 	case data.List:
-		fmt.Println("list all commands: ", app.AllCommands)
+		fmt.Println("list all commands: ", app.AllCommandsByName)
 	case data.Reset:
 		handlers.Reset(app)
-		utils.WriteToml(app.AllCommands, app.CfgFilePath)
-		fmt.Println("reset all commands: ", app.AllCommands)
+		utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+		fmt.Println("reset all commands: ", app.AllCommandsByName)
 	case data.Open:
 		configuration.Open(app.CfgFilePath)
 	}

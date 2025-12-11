@@ -62,7 +62,7 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		core.HandlePayload(
 			data.Payload{
 				Op:      op,
-				Command: *data.NewCommand(name, alias, exec),
+				Command: data.NewCommand(name, alias, exec),
 			},
 			app,
 		)
