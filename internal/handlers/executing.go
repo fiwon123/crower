@@ -1,17 +1,16 @@
 package handlers
 
 import (
-	"fmt"
 	"os/exec"
 	"runtime"
 
 	"github.com/fiwon123/crower/internal/data"
 )
 
-func Execute(command data.Command) ([]byte, error) {
+func Execute(command data.Command, app *data.App) ([]byte, error) {
 
 	var c *exec.Cmd
-	fmt.Println(command.Exec)
+	app.LoggerInfo.Info(command.Exec)
 	switch runtime.GOOS {
 	case "windows":
 		c = exec.Command("cmd", "/c", command.Exec)
