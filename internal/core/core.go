@@ -9,6 +9,7 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+// Initialize app based on the cfg file path.
 func InitApp(cfgFilePath string) *data.App {
 	var allCommands data.CommandsMap
 	var allAliases data.CommandsMap
@@ -27,6 +28,7 @@ func InitApp(cfgFilePath string) *data.App {
 	return data.NewApp(cfgFilePath, allAliases, allCommands)
 }
 
+// Determine which operation will be performed for the user.
 func HandlePayload(payload data.Payload, app *data.App) {
 	switch payload.Op {
 	case data.Execute:

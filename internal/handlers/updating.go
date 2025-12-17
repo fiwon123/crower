@@ -2,6 +2,8 @@ package handlers
 
 import "github.com/fiwon123/crower/internal/data"
 
+// Update command based on the key value.
+// Old values will be used if not specified in the data.Command structure.
 func UpdateCommand(key string, newCommand *data.Command, app *data.App) bool {
 
 	var command *data.Command

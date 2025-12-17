@@ -2,6 +2,7 @@ package handlers
 
 import "github.com/fiwon123/crower/internal/data"
 
+// Delete command from the cfg file.
 func DeleteCommand(name string, app *data.App) bool {
 	var command *data.Command
 

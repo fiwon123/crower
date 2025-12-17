@@ -6,6 +6,7 @@ type Command struct {
 	Exec     string
 }
 
+// Create new command.
 func NewCommand(name string, aliases []string, exec string) *Command {
 	return &Command{
 		Name:     name,

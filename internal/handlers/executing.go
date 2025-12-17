@@ -7,6 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/data"
 )
 
+// Execute command based on the user operational system (OS).
 func Execute(command data.Command, app *data.App) ([]byte, error) {
 
 	var c *exec.Cmd

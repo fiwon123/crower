@@ -9,6 +9,7 @@ type App struct {
 	AllCommandsByName  CommandsMap
 }
 
+// Create a new App containing core structures to perform all crower operations.
 func NewApp(cfgFilePath string, allAliases CommandsMap, allCommands CommandsMap) *App {
 
 	return &App{

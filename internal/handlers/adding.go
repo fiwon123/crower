@@ -2,6 +2,7 @@ package handlers
 
 import "github.com/fiwon123/crower/internal/data"
 
+// Add command from the cfg file.
 func AddCommand(command *data.Command, app *data.App) bool {
 	if app.AllCommandsByName.Get(command.Name) != nil {
 		return false

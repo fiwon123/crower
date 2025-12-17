@@ -8,6 +8,7 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
+// Open cfg file based on user operational system(OS).
 func Open(cfgFilePath string, app *data.App) {
 	switch runtime.GOOS {
 	case "windows":
