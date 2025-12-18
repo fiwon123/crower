@@ -62,7 +62,7 @@ func HandlePayload(payload data.Payload, app *data.App) {
 			app.LoggerInfo.Error("Error update command: ", err, payload)
 		}
 	case data.List:
-		app.LoggerInfo.Info("list all commands: ", app.AllCommandsByName)
+		handlers.List(app)
 	case data.Reset:
 		handlers.Reset(app)
 		utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
