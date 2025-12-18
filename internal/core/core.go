@@ -57,7 +57,7 @@ func HandlePayload(payload data.Payload, app *data.App) {
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 			app.LoggerInfo.Info("added new command: ", app.AllCommandsByName)
 		} else {
-			app.LoggerInfo.Error("Error add command: ", payload.Command)
+			app.LoggerInfo.Error("Error add command: ", err.Error(), payload.Command)
 		}
 	case data.Delete:
 		if handlers.DeleteCommand(payload.Command.Name, app) {

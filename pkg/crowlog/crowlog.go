@@ -64,7 +64,7 @@ func NewField(key string, data any) field {
 }
 
 // Translate raw fields to logger provider field used in LoggerInfo struct.
-func translateData(data ...any) []zap.Field {
+func translateData(data []any) []zap.Field {
 	var zapFields []zap.Field
 	for i, d := range data {
 		zapFields = append(zapFields, zap.Any("data"+strconv.Itoa(i), d))

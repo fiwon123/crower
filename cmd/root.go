@@ -40,6 +40,13 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		var op data.Operation
 		if addOp {
 			op = data.Add
+
+			if len(args) == 2 {
+				fmt.Println("args", args)
+				name = args[0]
+				exec = args[1]
+			}
+
 		} else if listOp {
 			op = data.List
 		} else if resetOp {
@@ -92,7 +99,7 @@ func init() {
 
 	rootCmd.Flags().StringVar(&cfgFilePath, "config", filepath.Join(homePath, "crower.yaml"), "config file (default is $HOME/.crower.yaml)")
 	rootCmd.Flags().IntVarP(&index, "index", "i", 0, "command index")
-	rootCmd.Flags().BoolVar(&addOp, "add", false, "add a command")
+	rootCmd.Flags().BoolVar(&addOp, "add", false, "add a command (--add ip ifconfig)")
 	rootCmd.Flags().BoolVar(&listOp, "list", false, "list all commands")
 	rootCmd.Flags().BoolVar(&resetOp, "reset", false, "reset all commands")
 	rootCmd.Flags().BoolVar(&updateOp, "update", false, "update command")
@@ -100,6 +107,6 @@ func init() {
 	rootCmd.Flags().BoolVar(&openOp, "open", false, "open cfg file path")
 	rootCmd.Flags().BoolVar(&processOp, "process", false, "list all process")
 	rootCmd.Flags().StringVarP(&name, "name", "n", "", "command name")
-	rootCmd.Flags().StringVarP(&exec, "exec", "e", "", `define the command (example "echo 'Hello World!'")`)
-	rootCmd.Flags().StringSliceVarP(&alias, "alias", "a", []string{}, `define alias (example "--alias 'a1,a2,a3'")`)
+	rootCmd.Flags().StringVarP(&exec, "exec", "e", "", `define the command (--exec "echo 'Hello World!'")`)
+	rootCmd.Flags().StringSliceVarP(&alias, "alias", "a", []string{}, `define alias (--alias 'a1,a2,a3')`)
 }
