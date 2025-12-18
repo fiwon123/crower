@@ -33,7 +33,7 @@ func HandlePayload(payload data.Payload, app *data.App) {
 	case data.Execute:
 		output, err := handlers.Execute(payload.Name, payload.Args, app)
 		if err != nil {
-			app.LoggerInfo.Error("Error trying to run command: ", err)
+			app.LoggerInfo.Error("Error trying to run command: ", string(output), err)
 			return
 		}
 		fmt.Println(string(output))

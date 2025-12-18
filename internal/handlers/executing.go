@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os/exec"
 	"runtime"
-	"strings"
 
 	"github.com/fiwon123/crower/internal/data"
+	"github.com/google/shlex"
 )
 
 // Execute command based on the user operational system (OS).
@@ -28,11 +28,9 @@ func Execute(name string, args []string, app *data.App) ([]byte, error) {
 	}
 
 	if len(args) > 0 {
-		command.Exec += "\""
 		for _, param := range args {
 			command.Exec += param
 		}
-		command.Exec += "\""
 	}
 
 	fmt.Println(command.Exec)
@@ -42,16 +40,43 @@ func Execute(name string, args []string, app *data.App) ([]byte, error) {
 }
 
 func PerformExecute(ex string) ([]byte, error) {
-	ex = strings.TrimSuffix(ex, `\`)
 	var c *exec.Cmd
 
 	switch runtime.GOOS {
 	case "windows":
-		c = exec.Command("cmd", "/c", ex)
+		ex = fmt.Sprintf("/c %s", ex)
+
+		splitExec, err := getSplitCommand(ex)
+		if err != nil {
+			return nil, err
+		}
+
+		c = exec.Command("cmd", splitExec...)
 	case "linux":
-		c = exec.Command("sh", "-c", ex)
+		ex = fmt.Sprintf("-c %s", ex)
+
+		splitExec, err := getSplitCommand(ex)
+		if err != nil {
+			return nil, err
+		}
+
+		c = exec.Command("sh", splitExec...)
 	}
 
-	out, err := c.Output()
+	out, err := c.CombinedOutput()
 	return out, err
+}
+
+func getSplitCommand(ex string) ([]string, error) {
+	var out []string
+
+	splitExec, err := shlex.Split(ex)
+	if err != nil {
+		return nil, err
+	}
+	for i, _ := range splitExec {
+		out = append(out, splitExec[i])
+	}
+
+	return out, nil
 }
