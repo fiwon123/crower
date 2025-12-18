@@ -10,4 +10,5 @@ const (
 	List    Operation = "list"
 	Reset   Operation = "reset"
 	Open    Operation = "open"
+	Process Operation = "process"
 )

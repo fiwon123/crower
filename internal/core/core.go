@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 
-	"github.com/fiwon123/crower/internal/configuration"
 	"github.com/fiwon123/crower/internal/data"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -79,6 +78,8 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 		app.LoggerInfo.Info("reset all commands: ", app.AllCommandsByName)
 	case data.Open:
-		configuration.Open(app.CfgFilePath, app)
+		handlers.Open(app.CfgFilePath, app)
+	case data.Process:
+		handlers.Process(app)
 	}
 }
