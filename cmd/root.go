@@ -40,13 +40,6 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		var op data.Operation
 		if addOp {
 			op = data.Add
-
-			if len(args) == 2 {
-				fmt.Println("args", args)
-				name = args[0]
-				exec = args[1]
-			}
-
 		} else if listOp {
 			op = data.List
 		} else if resetOp {
@@ -61,19 +54,15 @@ managing it with useful operations like add, edit, remove, list and more.`,
 			op = data.Process
 		} else {
 			op = data.Execute
-
-			if len(args) > 0 {
-				fmt.Println("args", args)
-				name = args[0]
-				alias = append(alias, args[0])
-			}
 		}
 
 		core.HandlePayload(
 			data.Payload{
-				Op:      op,
-				Args:    args,
-				Command: data.NewCommand(name, alias, exec),
+				Op:    op,
+				Args:  args,
+				Name:  name,
+				Alias: alias,
+				Exec:  exec,
 			},
 			app,
 		)

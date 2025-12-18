@@ -11,17 +11,9 @@ import (
 func Open(cfgFilePath string, app *data.App) {
 	switch runtime.GOOS {
 	case "windows":
-		Execute(*data.NewCommand(
-			"open",
-			[]string{},
-			fmt.Sprintf("start %s", cfgFilePath)),
-			app)
+		PerformExecute(fmt.Sprintf("start %s", cfgFilePath))
 	case "linux":
-		Execute(*data.NewCommand(
-			"open",
-			[]string{},
-			fmt.Sprintf("xdg-open %s", cfgFilePath)),
-			app)
+		PerformExecute(fmt.Sprintf("xdg-open %s", cfgFilePath))
 	}
 
 }

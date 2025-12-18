@@ -6,7 +6,13 @@ import (
 
 // Update command based on the key value.
 // Old values will be used if not specified in the data.Command structure.
-func UpdateCommand(key string, newCommand *data.Command, app *data.App) bool {
+func UpdateCommand(key string, newName string, newAlias []string, newExec string, app *data.App) bool {
+
+	newCommand := &data.Command{
+		Name:     newName,
+		AllAlias: newAlias,
+		Exec:     newExec,
+	}
 
 	var command *data.Command
 	command = app.AllCommandsByName.Get(key)

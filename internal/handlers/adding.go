@@ -7,7 +7,19 @@ import (
 )
 
 // Add command from the cfg file.
-func AddCommand(command *data.Command, app *data.App) error {
+func AddCommand(name string, alias []string, exec string, args []string, app *data.App) error {
+
+	command := &data.Command{
+		Name:     name,
+		AllAlias: alias,
+		Exec:     exec,
+	}
+
+	if len(args) == 2 {
+		command.Name = args[0]
+		command.Exec = args[1]
+	}
+
 	if command.Name == "" {
 		return fmt.Errorf("empty name")
 	}

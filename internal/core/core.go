@@ -31,47 +31,34 @@ func InitApp(cfgFilePath string) *data.App {
 func HandlePayload(payload data.Payload, app *data.App) {
 	switch payload.Op {
 	case data.Execute:
-		input := payload.Command
-		command := app.AllCommandsByName.Get(input.Name)
-
-		if command == nil && len(input.AllAlias) > 0 {
-			app.LoggerInfo.Info("find command by alias ", input.AllAlias)
-			command = app.AllCommandsByAlias.Get(input.AllAlias[0])
-		}
-
-		if command == nil {
-			app.LoggerInfo.Error("command not found")
-			return
-		}
-
-		output, err := handlers.Execute(*command, app)
+		output, err := handlers.Execute(payload.Name, payload.Args, app)
 		if err != nil {
 			app.LoggerInfo.Error("Error trying to run command: ", err)
 			return
 		}
 		fmt.Println(string(output))
 	case data.Add:
-		err := handlers.AddCommand(payload.Command, app)
+		err := handlers.AddCommand(payload.Name, payload.Alias, payload.Exec, payload.Args, app)
 
 		if err == nil {
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 			app.LoggerInfo.Info("added new command: ", app.AllCommandsByName)
 		} else {
-			app.LoggerInfo.Error("Error add command: ", err.Error(), payload.Command)
+			app.LoggerInfo.Error("Error add command: ", err.Error(), payload)
 		}
 	case data.Delete:
-		if handlers.DeleteCommand(payload.Command.Name, app) {
+		if handlers.DeleteCommand(payload.Name, app) {
 			app.LoggerInfo.Info("deleted command: ", app.AllCommandsByName)
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 		} else {
-			app.LoggerInfo.Error("Error delete command: ", payload.Command)
+			app.LoggerInfo.Error("Error delete command: ", payload)
 		}
 	case data.Update:
-		if handlers.UpdateCommand(payload.Command.Name, payload.Command, app) {
+		if handlers.UpdateCommand(payload.Name, payload.Name, payload.Alias, payload.Exec, app) {
 			app.LoggerInfo.Info("updated command: ", app.AllCommandsByName)
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 		} else {
-			app.LoggerInfo.Error("Error update command: ", payload.Command)
+			app.LoggerInfo.Error("Error update command: ", payload)
 		}
 	case data.List:
 		app.LoggerInfo.Info("list all commands: ", app.AllCommandsByName)
