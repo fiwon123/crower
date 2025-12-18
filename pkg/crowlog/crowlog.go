@@ -3,9 +3,11 @@
 package crowlog
 
 import (
+	"os"
 	"strconv"
 
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 // The Crowlog wrapper to access logger provider.
@@ -21,9 +23,30 @@ type field struct {
 // Create a new LoggerInfo pointer.
 func New() *LoggerInfo {
 
-	logger, _ := zap.NewProduction(
-		zap.AddCaller(),      // enable caller info
-		zap.AddCallerSkip(1), // skip your wrapper
+	encoderCfg := zapcore.EncoderConfig{
+		TimeKey:       "time",
+		LevelKey:      "level",
+		NameKey:       "logger",
+		CallerKey:     "caller",
+		MessageKey:    "msg",
+		StacktraceKey: "stack",
+		LineEnding:    zapcore.DefaultLineEnding,
+		EncodeLevel:   zapcore.CapitalColorLevelEncoder, // colored levels
+		EncodeTime:    zapcore.ISO8601TimeEncoder,
+		EncodeCaller:  zapcore.ShortCallerEncoder,
+	}
+
+	core := zapcore.NewCore(
+		zapcore.NewConsoleEncoder(encoderCfg),
+		zapcore.AddSync(os.Stdout),
+		zap.DebugLevel,
+	)
+
+	logger := zap.New(
+		core,
+		zap.AddStacktrace(zapcore.ErrorLevel),
+		zap.AddCaller(),
+		zap.AddCallerSkip(1),
 	)
 	defer logger.Sync()
 
