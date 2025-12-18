@@ -5,6 +5,7 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+// List all Process running on user operational system (OS).
 func Process(app *data.App) {
 	err := utils.ListAllProcess("", true)
 	if err != nil {
