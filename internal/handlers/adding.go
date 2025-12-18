@@ -1,16 +1,24 @@
 package handlers
 
-import "github.com/fiwon123/crower/internal/data"
+import (
+	"fmt"
+
+	"github.com/fiwon123/crower/internal/data"
+)
 
 // Add command from the cfg file.
-func AddCommand(command *data.Command, app *data.App) bool {
+func AddCommand(command *data.Command, app *data.App) error {
+	if command.Name == "" {
+		return fmt.Errorf("empty name.")
+	}
+
 	if app.AllCommandsByName.Get(command.Name) != nil {
-		return false
+		return fmt.Errorf("found name, command already added.")
 	}
 
 	for _, alias := range command.AllAlias {
 		if app.AllCommandsByAlias.Get(alias) != nil || app.AllCommandsByName.Get(alias) != nil {
-			return false
+			return fmt.Errorf("found alias, command already added.")
 		}
 	}
 
@@ -20,5 +28,5 @@ func AddCommand(command *data.Command, app *data.App) bool {
 		app.AllCommandsByAlias.Add(alias, command)
 	}
 
-	return true
+	return nil
 }

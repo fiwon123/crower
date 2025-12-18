@@ -51,7 +51,9 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		}
 		fmt.Println(string(output))
 	case data.Add:
-		if handlers.AddCommand(payload.Command, app) {
+		err := handlers.AddCommand(payload.Command, app)
+
+		if err == nil {
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 			app.LoggerInfo.Info("added new command: ", app.AllCommandsByName)
 		} else {
