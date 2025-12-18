@@ -67,6 +67,7 @@ func AddProcess(name string, args []string, app *data.App) error {
 			return err
 		}
 	} else {
+
 		pathStr, err = utils.GetProcessPathByID(int32(pid))
 		if err != nil {
 			return err
@@ -90,6 +91,11 @@ func AddProcess(name string, args []string, app *data.App) error {
 
 		execCommand := fmt.Sprintf("flatpak run %s", appID)
 		AddCommand(name, nil, execCommand, nil, app)
+
+		return nil
+	} else if pathStr != "" {
+		pathStr = fmt.Sprintf("'%s'", pathStr)
+		AddCommand(name, nil, pathStr, nil, app)
 
 		return nil
 	}
