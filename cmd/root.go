@@ -40,6 +40,10 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		var op data.Operation
 		if addOp {
 			op = data.Add
+
+			if processOp {
+				op = data.AddProcess
+			}
 		} else if listOp {
 			op = data.List
 		} else if resetOp {

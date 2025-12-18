@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 // Add command from the cfg file.
@@ -45,4 +48,51 @@ func AddCommand(name string, alias []string, exec string, args []string, app *da
 	}
 
 	return nil
+}
+
+func AddProcess(name string, args []string, app *data.App) error {
+	if len(args) > 0 && name == "" {
+		name = args[0]
+		args = args[1:]
+	}
+
+	process := args[0]
+	pathStr := ""
+	processName := ""
+	pid, err := strconv.Atoi(process)
+	if err != nil {
+		processName = process
+		pathStr, err = utils.GetProcessPathByName(processName)
+		if err != nil {
+			return err
+		}
+	} else {
+		pathStr, err = utils.GetProcessPathByID(int32(pid))
+		if err != nil {
+			return err
+		}
+
+	}
+
+	if strings.Contains(pathStr, "app/") {
+		if processName == "" {
+			processName, err = utils.GetProcessNameByID(int32(pid))
+			if err != nil {
+				return err
+			}
+		}
+
+		var appID string
+		appID, err = utils.GetFlatpakAppIDByName(processName)
+		if err != nil {
+			return err
+		}
+
+		execCommand := fmt.Sprintf("flatpak run %s", appID)
+		AddCommand(name, nil, execCommand, nil, app)
+
+		return nil
+	}
+
+	return fmt.Errorf("couldn't find the process either by pid or name")
 }

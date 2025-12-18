@@ -46,6 +46,14 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		} else {
 			app.LoggerInfo.Error("Error add command: ", err, payload)
 		}
+	case data.AddProcess:
+		err := handlers.AddProcess(payload.Name, payload.Args, app)
+		if err == nil {
+			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+			app.LoggerInfo.Info("added new command by process: ", app.AllCommandsByName)
+		} else {
+			app.LoggerInfo.Error("Error add command by process: ", err, payload)
+		}
 	case data.Delete:
 		if handlers.DeleteCommand(payload.Name, app) {
 			app.LoggerInfo.Info("deleted command: ", app.AllCommandsByName)
