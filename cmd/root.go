@@ -34,13 +34,7 @@ managing it with useful operations like add, edit, remove, list and more.`,
 	// has an action associated with it:s
 	Run: func(cmd *cobra.Command, args []string) {
 
-		if len(args) > 0 {
-			fmt.Println("args", args)
-			name = args[0]
-			alias = append(alias, args[0])
-		}
 		fmt.Println("cfg", cfgFilePath)
-
 		app := core.InitApp(cfgFilePath)
 
 		var op data.Operation
@@ -60,11 +54,18 @@ managing it with useful operations like add, edit, remove, list and more.`,
 			op = data.Process
 		} else {
 			op = data.Execute
+
+			if len(args) > 0 {
+				fmt.Println("args", args)
+				name = args[0]
+				alias = append(alias, args[0])
+			}
 		}
 
 		core.HandlePayload(
 			data.Payload{
 				Op:      op,
+				Args:    args,
 				Command: data.NewCommand(name, alias, exec),
 			},
 			app,

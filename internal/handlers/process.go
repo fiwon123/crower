@@ -6,8 +6,14 @@ import (
 )
 
 // List all Process running on user operational system (OS).
-func Process(app *data.App) {
-	err := utils.ListAllProcess("", true)
+func Process(args []string, app *data.App) {
+
+	partName := ""
+	if len(args) > 0 {
+		partName = args[0]
+	}
+
+	err := utils.ListAllProcess(partName, true)
 	if err != nil {
 		app.LoggerInfo.Error("Error getting processes:", err)
 	}

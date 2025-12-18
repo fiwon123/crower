@@ -80,6 +80,6 @@ func HandlePayload(payload data.Payload, app *data.App) {
 	case data.Open:
 		handlers.Open(app.CfgFilePath, app)
 	case data.Process:
-		handlers.Process(app)
+		handlers.Process(payload.Args, app)
 	}
 }
