@@ -44,7 +44,7 @@ func HandlePayload(payload data.Payload, app *data.App) {
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 			app.LoggerInfo.Info("added new command: ", app.AllCommandsByName)
 		} else {
-			app.LoggerInfo.Error("Error add command: ", err.Error(), payload)
+			app.LoggerInfo.Error("Error add command: ", err, payload)
 		}
 	case data.Delete:
 		if handlers.DeleteCommand(payload.Name, app) {
@@ -54,11 +54,12 @@ func HandlePayload(payload data.Payload, app *data.App) {
 			app.LoggerInfo.Error("Error delete command: ", payload)
 		}
 	case data.Update:
-		if handlers.UpdateCommand(payload.Name, payload.Name, payload.Alias, payload.Exec, app) {
+		err := handlers.UpdateCommand(payload.Name, payload.Name, payload.Alias, payload.Exec, app)
+		if err == nil {
 			app.LoggerInfo.Info("updated command: ", app.AllCommandsByName)
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 		} else {
-			app.LoggerInfo.Error("Error update command: ", payload)
+			app.LoggerInfo.Error("Error update command: ", err, payload)
 		}
 	case data.List:
 		app.LoggerInfo.Info("list all commands: ", app.AllCommandsByName)

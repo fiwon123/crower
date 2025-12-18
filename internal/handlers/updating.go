@@ -1,12 +1,14 @@
 package handlers
 
 import (
+	"fmt"
+
 	"github.com/fiwon123/crower/internal/data"
 )
 
 // Update command based on the key value.
 // Old values will be used if not specified in the data.Command structure.
-func UpdateCommand(key string, newName string, newAlias []string, newExec string, app *data.App) bool {
+func UpdateCommand(key string, newName string, newAlias []string, newExec string, app *data.App) error {
 
 	newCommand := &data.Command{
 		Name:     newName,
@@ -14,8 +16,7 @@ func UpdateCommand(key string, newName string, newAlias []string, newExec string
 		Exec:     newExec,
 	}
 
-	var command *data.Command
-	command = app.AllCommandsByName.Get(key)
+	command := app.AllCommandsByName.Get(key)
 	if command != nil {
 		return performUpdate(command, newCommand, app)
 	}
@@ -25,10 +26,10 @@ func UpdateCommand(key string, newName string, newAlias []string, newExec string
 		return performUpdate(command, newCommand, app)
 	}
 
-	return false
+	return fmt.Errorf("couldn't find command by name or alias")
 }
 
-func performUpdate(oldCommand *data.Command, newCommand *data.Command, app *data.App) bool {
+func performUpdate(oldCommand *data.Command, newCommand *data.Command, app *data.App) error {
 	if newCommand.Name == "" {
 		newCommand.Name = oldCommand.Name
 	}
@@ -41,8 +42,9 @@ func performUpdate(oldCommand *data.Command, newCommand *data.Command, app *data
 		newCommand.Exec = oldCommand.Exec
 	}
 
-	if !canUpdate(newCommand, app) {
-		return false
+	err := canUpdate(newCommand, app)
+	if err != nil {
+		return err
 	}
 
 	app.AllCommandsByName.Remove(oldCommand.Name)
@@ -56,13 +58,13 @@ func performUpdate(oldCommand *data.Command, newCommand *data.Command, app *data
 		app.AllCommandsByAlias.Add(alias, newCommand)
 	}
 
-	return true
+	return nil
 }
 
-func canUpdate(newCommand *data.Command, app *data.App) bool {
-	if app.AllCommandsByName.Get(newCommand.Name) == nil {
-		return false
+func canUpdate(newCommand *data.Command, app *data.App) error {
+	if app.AllCommandsByName.Get(newCommand.Name) != nil {
+		return fmt.Errorf("command name already in use")
 	}
 
-	return true
+	return nil
 }

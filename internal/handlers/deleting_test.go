@@ -23,8 +23,7 @@ func TestDelete(t *testing.T) {
 		}
 
 		for _, command := range mock {
-			handlers.AddCommand(
-				data.NewCommand(command.name, []string{}, ""),
+			handlers.AddCommand(command.name, nil, "exec", nil,
 				app)
 		}
 
@@ -63,7 +62,7 @@ func TestDelete(t *testing.T) {
 
 		for _, command := range mock {
 			handlers.AddCommand(
-				data.NewCommand(command.name, []string{command.alias}, ""),
+				command.name, []string{command.alias}, "exec", nil,
 				app)
 		}
 

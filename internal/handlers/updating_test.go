@@ -25,7 +25,7 @@ func TestUpdate(t *testing.T) {
 
 		for _, command := range mock {
 			handlers.AddCommand(
-				data.NewCommand(command.name, []string{command.alias}, ""),
+				command.name, []string{command.alias}, "exec", nil,
 				app)
 		}
 
@@ -45,16 +45,17 @@ func TestUpdate(t *testing.T) {
 		for _, test := range tests {
 			newCommand := data.NewCommand(test.newName, []string{}, "")
 			key := test.oldName
-			got := handlers.UpdateCommand(key, newCommand, app)
-			assertUpdatingTest(test.want, got, key, *newCommand, t)
+			err := handlers.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec, app)
+			got := err == nil
+			assertUpdatingTest(test.want, got, key, *newCommand, err, t)
 
 		}
 
 	})
 }
 
-func assertUpdatingTest(want bool, got bool, key string, newCommand data.Command, t *testing.T) {
+func assertUpdatingTest(want bool, got bool, key string, newCommand data.Command, err error, t *testing.T) {
 	if want != got {
-		t.Errorf("command %v,  key %v,  got %v, want %v", newCommand, key, got, want)
+		t.Errorf("error %v, key %v, command %v, got %v, want %v", err, key, newCommand, got, want)
 	}
 }
