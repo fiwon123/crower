@@ -3,10 +3,10 @@ package handlers
 import (
 	"fmt"
 	"os/exec"
+	"regexp"
 	"runtime"
 
 	"github.com/fiwon123/crower/internal/data"
-	"github.com/google/shlex"
 )
 
 // Execute command based on the user operational system (OS).
@@ -45,38 +45,29 @@ func PerformExecute(ex string) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":
 		ex = fmt.Sprintf("/c %s", ex)
-
-		splitExec, err := getSplitCommand(ex)
-		if err != nil {
-			return nil, err
-		}
-
-		c = exec.Command("cmd", splitExec...)
+		c = exec.Command("cmd", getSplitCommand(ex)...)
 	case "linux":
 		ex = fmt.Sprintf("-c %s", ex)
-
-		splitExec, err := getSplitCommand(ex)
-		if err != nil {
-			return nil, err
-		}
-
-		c = exec.Command("sh", splitExec...)
+		c = exec.Command("sh", getSplitCommand(ex)...)
 	}
 
 	out, err := c.CombinedOutput()
 	return out, err
 }
 
-func getSplitCommand(ex string) ([]string, error) {
-	var out []string
+func getSplitCommand(ex string) []string {
+	tokenRe := regexp.MustCompile(`"([^"]+)"|'([^']+)'|([^\s]+)`)
+	matches := tokenRe.FindAllStringSubmatch(ex, -1)
 
-	splitExec, err := shlex.Split(ex)
-	if err != nil {
-		return nil, err
-	}
-	for i, _ := range splitExec {
-		out = append(out, splitExec[i])
+	var args []string
+	for _, m := range matches {
+		for i := 1; i <= 3; i++ {
+			if m[i] != "" {
+				args = append(args, m[i])
+				break
+			}
+		}
 	}
 
-	return out, nil
+	return args
 }

@@ -3,7 +3,6 @@ module github.com/fiwon123/crower
 go 1.25.4
 
 require (
-	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/pelletier/go-toml v1.9.5
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/spf13/cobra v1.10.1
