@@ -1,6 +1,8 @@
 package handlers
 
-import "github.com/fiwon123/crower/internal/data"
+import (
+	"github.com/fiwon123/crower/internal/data"
+)
 
 // Update command based on the key value.
 // Old values will be used if not specified in the data.Command structure.
@@ -52,7 +54,7 @@ func performUpdate(oldCommand *data.Command, newCommand *data.Command, app *data
 }
 
 func canUpdate(newCommand *data.Command, app *data.App) bool {
-	if app.AllCommandsByName.Get(newCommand.Name) != nil {
+	if app.AllCommandsByName.Get(newCommand.Name) == nil {
 		return false
 	}
 
