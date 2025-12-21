@@ -14,7 +14,7 @@ More information on Wiki page: [Link](https://github.com/fiwon123/crower/wiki)
 
 ## About
 
-- usage `go run ./ --help` to show availables parameters
+- type `go run ./ --help` to show availables parameters
 - paramereters: add, update, delete, reset, list...
 
 ## Example 
