@@ -24,6 +24,9 @@ var alias []string
 var openOp bool
 var processOp bool
 
+var checkVersion bool
+var Version = "vx.x.x"
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "crower",
@@ -33,6 +36,11 @@ managing it with useful operations like add, edit, remove, list and more.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:s
 	Run: func(cmd *cobra.Command, args []string) {
+
+		if checkVersion {
+			fmt.Println(Version)
+			return
+		}
 
 		fmt.Println("cfg", cfgFilePath)
 		app := core.InitApp(cfgFilePath)
@@ -93,6 +101,7 @@ func init() {
 	rootCmd.Flags().StringVar(&cfgFilePath, "config", filepath.Join(homePath, "crower.yaml"), "config file (default is $HOME/.crower.yaml)")
 	rootCmd.Flags().IntVarP(&index, "index", "i", 0, "command index")
 	rootCmd.Flags().BoolVar(&addOp, "add", false, "add a command (--add ip ifconfig)")
+	rootCmd.Flags().BoolVarP(&checkVersion, "version", "v", false, "check current version")
 	rootCmd.Flags().BoolVar(&listOp, "list", false, "list all commands")
 	rootCmd.Flags().BoolVar(&resetOp, "reset", false, "reset all commands")
 	rootCmd.Flags().BoolVar(&updateOp, "update", false, "update command")
