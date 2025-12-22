@@ -68,7 +68,16 @@ func HandlePayload(payload data.Payload, app *data.App) {
 			app.LoggerInfo.Error("Error delete command: ", payload)
 		}
 	case data.Update:
-		err := handlers.UpdateCommand(payload.Name, payload.Name, payload.Alias, payload.Exec, app)
+		key := ""
+		if len(payload.Args) != 0 {
+			key = payload.Args[0]
+		}
+		err := checkInputUpdate(&key, &payload.Name, &payload.Alias, &payload.Exec, app)
+		if err != nil {
+			app.LoggerInfo.Error("Error update command: ", err, payload)
+		}
+
+		err = handlers.UpdateCommand(key, payload.Name, payload.Alias, payload.Exec, app)
 		if err == nil {
 			app.LoggerInfo.Info("updated command: ", app.AllCommandsByName)
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)

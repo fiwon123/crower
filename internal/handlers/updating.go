@@ -16,35 +16,47 @@ func UpdateCommand(key string, newName string, newAlias []string, newExec string
 		Exec:     newExec,
 	}
 
-	command := app.AllCommandsByName.Get(key)
-	if command != nil {
-		return performUpdate(command, newCommand, app)
+	oldCommand := app.AllCommandsByName.Get(key)
+	if oldCommand != nil {
+		return performUpdate(oldCommand, newCommand, app)
 	}
 
-	command = app.AllCommandsByAlias.Get(key)
-	if command != nil {
-		return performUpdate(command, newCommand, app)
+	oldCommand = app.AllCommandsByAlias.Get(key)
+	if oldCommand != nil {
+		return performUpdate(oldCommand, newCommand, app)
 	}
 
 	return fmt.Errorf("couldn't find command by name or alias")
 }
 
 func performUpdate(oldCommand *data.Command, newCommand *data.Command, app *data.App) error {
-	if newCommand.Name == "" {
-		newCommand.Name = oldCommand.Name
-	}
-
-	if len(newCommand.AllAlias) == 0 {
-		newCommand.AllAlias = oldCommand.AllAlias
-	}
-
-	if newCommand.Exec == "" {
-		newCommand.Exec = oldCommand.Exec
-	}
 
 	err := canUpdate(newCommand, app)
 	if err != nil {
 		return err
+	}
+
+	countFieldsUpdate := 0
+	if newCommand.Name == "" {
+		newCommand.Name = oldCommand.Name
+	} else {
+		countFieldsUpdate += 1
+	}
+
+	if len(newCommand.AllAlias) == 0 {
+		newCommand.AllAlias = oldCommand.AllAlias
+	} else {
+		countFieldsUpdate += 1
+	}
+
+	if newCommand.Exec == "" {
+		newCommand.Exec = oldCommand.Exec
+	} else {
+		countFieldsUpdate += 1
+	}
+
+	if countFieldsUpdate == 0 {
+		return fmt.Errorf("already up-to-date")
 	}
 
 	app.AllCommandsByName.Remove(oldCommand.Name)
@@ -63,7 +75,13 @@ func performUpdate(oldCommand *data.Command, newCommand *data.Command, app *data
 
 func canUpdate(newCommand *data.Command, app *data.App) error {
 	if app.AllCommandsByName.Get(newCommand.Name) != nil {
-		return fmt.Errorf("command name already in use")
+		return fmt.Errorf("command name already in use: %v", newCommand.Name)
+	}
+
+	for _, alias := range newCommand.AllAlias {
+		if app.AllCommandsByAlias.Get(alias) != nil {
+			return fmt.Errorf("alias already in use: %v", alias)
+		}
 	}
 
 	return nil

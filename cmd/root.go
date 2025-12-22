@@ -25,6 +25,8 @@ var openOp bool
 var processOp bool
 
 var checkVersion bool
+
+// Version is popualted when building with Makefile
 var Version = "vx.x.x"
 
 // rootCmd represents the base command when called without any subcommands
