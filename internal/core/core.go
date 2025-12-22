@@ -17,7 +17,10 @@ func InitApp(cfgFilePath string) *data.App {
 		utils.CreateTomlIfNotExists(cfgFilePath)
 		fmt.Println("cfgfilepath: ", cfgFilePath)
 
-		allCommands = utils.ReadToml(cfgFilePath)
+		err := utils.ReadToml(cfgFilePath, &allCommands)
+		if err != nil {
+			fmt.Println("error to read toml: ", err)
+		}
 		allAliases = getAliasMap(allCommands)
 	} else {
 		allCommands = data.NewCommandsMap()

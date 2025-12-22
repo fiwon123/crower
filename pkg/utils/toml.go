@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/fiwon123/crower/internal/data"
 	"github.com/pelletier/go-toml"
 )
 
@@ -20,31 +19,28 @@ func CreateTomlIfNotExists(path string) {
 	defer file.Close()
 }
 
-func ReadToml(path string) data.CommandsMap {
+func ReadToml(path string, output any) error {
 	dataFile, err := os.ReadFile(path)
 	if err != nil {
-		fmt.Println("Error reading path file:", err)
-		return nil
+		return fmt.Errorf("Error reading path file: %v", err)
 	}
 
-	var cmds data.CommandsMap
-	if err = toml.Unmarshal(dataFile, &cmds); err != nil {
-		fmt.Println("Error unmarshal data:", err)
-		return nil
+	if err = toml.Unmarshal(dataFile, output); err != nil {
+		return fmt.Errorf("Error unmarshal data: %v", err)
 	}
 
-	return cmds
+	return nil
 }
 
-func WriteToml(cmds data.CommandsMap, path string) {
+func WriteToml(input any, path string) error {
 	var buf bytes.Buffer
-	if err := toml.NewEncoder(&buf).Encode(cmds); err != nil {
-		fmt.Println("Error enconding path file:", err)
-		return
+	if err := toml.NewEncoder(&buf).Encode(input); err != nil {
+		return fmt.Errorf("Error enconding path file: %v", err)
 	}
 
 	if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
-		fmt.Println("Error writing path file:", err)
-		return
+		return fmt.Errorf("Error writing path file: %v", err)
 	}
+
+	return nil
 }
