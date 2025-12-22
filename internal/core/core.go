@@ -10,14 +10,17 @@ import (
 
 // Initialize app based on the cfg file path.
 func InitApp(cfgFilePath string) *data.App {
-	var allCommands data.CommandsMap
+	var orderKeys []string
+	allCommands := data.NewCommandsMap()
 	var allAliases data.CommandsMap
 
 	if cfgFilePath != "" {
 		utils.CreateTomlIfNotExists(cfgFilePath)
 		fmt.Println("cfgfilepath: ", cfgFilePath)
 
-		err := utils.ReadToml(cfgFilePath, &allCommands)
+		var err error
+		orderKeys, err = utils.ReadKeysTomlInOrder(cfgFilePath)
+		err = utils.ReadToml(cfgFilePath, &allCommands)
 		if err != nil {
 			fmt.Println("error to read toml: ", err)
 		}
@@ -27,7 +30,7 @@ func InitApp(cfgFilePath string) *data.App {
 		allAliases = data.NewCommandsMap()
 	}
 
-	return data.NewApp(cfgFilePath, allAliases, allCommands)
+	return data.NewApp(cfgFilePath, orderKeys, allAliases, allCommands)
 }
 
 // Determine which operation will be performed for the user.

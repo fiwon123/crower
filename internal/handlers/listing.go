@@ -9,13 +9,15 @@ import (
 
 func List(app *data.App) {
 	fmt.Println("------------------------------------------------")
-	printMap(app.AllCommandsByName)
+	print(app.OrderKeys, app.AllCommandsByName)
 }
 
-func printMap(m map[string]data.Command) {
-	fmt.Printf("ID %-12s %-16s %-8s \n", "Name", "Aliases", "Exec")
+func print(orderKeys []string, allCommands data.CommandsMap) {
+	fmt.Printf("%-3s %-12s %-16s %-8s \n", "Row", "Name", "Aliases", "Exec")
 	fmt.Println("------------------------------------------------")
-	for _, command := range m {
-		fmt.Printf("%-12s %-16v %-8s \n", command.Name, strings.Join(command.AllAlias, ","), command.Exec)
+
+	for i, key := range orderKeys {
+		command := allCommands.Get(key)
+		fmt.Printf("%-3d %-12s %-16v %-8s \n", i, command.Name, strings.Join(command.AllAlias, ","), command.Exec)
 	}
 }

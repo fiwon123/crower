@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/pelletier/go-toml"
+	tomlu "github.com/pelletier/go-toml/v2/unstable"
 )
 
 func CreateTomlIfNotExists(path string) {
@@ -30,6 +31,42 @@ func ReadToml(path string, output any) error {
 	}
 
 	return nil
+}
+
+func ReadKeysTomlInOrder(path string) ([]string, error) {
+	dataFile, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading path file: %v", err)
+	}
+
+	var keysInOrder []string
+
+	p := tomlu.Parser{}
+	p.Reset(dataFile)
+
+	for p.NextExpression() {
+		e := p.Expression()
+
+		if e.Kind != tomlu.Table {
+			continue
+		}
+
+		it := e.Key()
+		parts := keyAsStrings(it)
+
+		keysInOrder = append(keysInOrder, string(parts[0]))
+	}
+
+	return keysInOrder, nil
+}
+
+func keyAsStrings(it tomlu.Iterator) []string {
+	var parts []string
+	for it.Next() {
+		n := it.Node()
+		parts = append(parts, string(n.Data))
+	}
+	return parts
 }
 
 func WriteToml(input any, path string) error {

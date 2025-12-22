@@ -10,7 +10,7 @@ import (
 func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using name", func(t *testing.T) {
-		app := data.NewApp("", data.NewCommandsMap(), data.NewCommandsMap())
+		app := data.NewApp("", nil, data.NewCommandsMap(), data.NewCommandsMap())
 
 		var mock = []struct {
 			name string
@@ -47,7 +47,7 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("Delete command using alias", func(t *testing.T) {
-		app := data.NewApp("", data.NewCommandsMap(), data.NewCommandsMap())
+		app := data.NewApp("", nil, data.NewCommandsMap(), data.NewCommandsMap())
 
 		var mock = []struct {
 			name  string

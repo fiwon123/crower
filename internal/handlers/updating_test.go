@@ -9,7 +9,7 @@ import (
 
 func TestUpdate(t *testing.T) {
 	t.Run("Update command name", func(t *testing.T) {
-		app := data.NewApp("", data.NewCommandsMap(), data.NewCommandsMap())
+		app := data.NewApp("", nil, data.NewCommandsMap(), data.NewCommandsMap())
 
 		var mock = []struct {
 			name  string
