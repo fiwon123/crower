@@ -25,13 +25,13 @@ func ReadJson(filePath string, output any) error {
 	return nil
 }
 
-func WriteJson(input string, filePath string) error {
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(input); err != nil {
+func WriteJson(input any, filePath string) error {
+	buf, err := json.MarshalIndent(input, "", "  ")
+	if err != nil {
 		return fmt.Errorf("Error enconding file path: %v", err)
 	}
 
-	if err := os.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
+	if err := os.WriteFile(filePath, buf, 0644); err != nil {
 		return fmt.Errorf("Error writing json file: %v", err)
 	}
 

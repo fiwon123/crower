@@ -1,6 +1,7 @@
 package data
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/fiwon123/crower/pkg/crowlog"
@@ -10,6 +11,8 @@ import (
 type App struct {
 	CfgFilePath        string
 	HistoryFilePath    string
+	HistoryFolderPath  string
+	History            History
 	LoggerInfo         crowlog.LoggerInfo
 	OrderKeys          []string
 	AllCommandsByAlias CommandsMap
@@ -24,9 +27,20 @@ func NewApp(cfgFilePath string, orderKeys []string, allAliases CommandsMap, allC
 	historyFilePath := filepath.Join(folderPath, "history.json")
 	utils.CreateFileIfNotExists(historyFilePath)
 
+	historyFolderPath := filepath.Join(folderPath, "history")
+	utils.CreateFolderIfNotExists(historyFolderPath)
+
+	var history History
+	err := utils.ReadJson(historyFilePath, &history)
+	if err != nil {
+		fmt.Printf("history error: %v \n", err)
+	}
+
 	return &App{
 		CfgFilePath:        cfgFilePath,
+		History:            history,
 		HistoryFilePath:    historyFilePath,
+		HistoryFolderPath:  historyFolderPath,
 		LoggerInfo:         *crowlog.New(),
 		OrderKeys:          orderKeys,
 		AllCommandsByAlias: allAliases,

@@ -6,26 +6,56 @@ import (
 )
 
 type History struct {
-	allData []HistoryData
+	AllData []HistoryData
 }
 
 type HistoryData struct {
 	Version   int
 	File      string
-	Timestemp time.Time
+	Timestemp string
 	Note      string
 }
 
-func (h *History) Add(data HistoryData) {
-	h.allData = append(h.allData, data)
+func NewHistory() History {
+
+	return History{
+		AllData: []HistoryData{},
+	}
+}
+
+func (h *History) GetLast() *HistoryData {
+	if len(h.AllData) == 0 {
+		return nil
+	}
+
+	return &h.AllData[len(h.AllData)-1]
+}
+
+func (h *History) Add(note string) {
+
+	version := 1
+	if len(h.AllData) != 0 {
+		lastData := h.AllData[len(h.AllData)-1]
+		version = lastData.Version + 1
+	}
+
+	data := HistoryData{
+		Version:   version,
+		File:      fmt.Sprintf("%05d.yaml", version),
+		Timestemp: time.Now().Format(time.RFC3339),
+		Note:      note,
+	}
+
+	h.AllData = append(h.AllData, data)
 }
 
 func (h *History) List() {
 
-	fmt.Println("-------------------------------")
-	fmt.Printf("%-8s %-16s %-16s %-3s \n", "Version", "File", "Timestemp", "Note")
-	fmt.Println("-------------------------------")
-	for _, data := range h.allData {
-		fmt.Printf("%-8d %-16s %-16s %-3s \n", data.Version, data.File, data.Timestemp, data.Note)
+	fmt.Println("----------------------------------------------------------------------------")
+	fmt.Printf("%-8s %-16s %-32s %-3s \n", "Version", "File", "Timestemp", "Note")
+	fmt.Println("----------------------------------------------------------------------------")
+	for i := len(h.AllData) - 1; i >= 0; i-- {
+		data := h.AllData[i]
+		fmt.Printf("%-8d %-16s %-32s %-3s \n", data.Version, data.File, data.Timestemp, data.Note)
 	}
 }

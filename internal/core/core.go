@@ -49,6 +49,9 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		if err == nil {
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 			app.LoggerInfo.Info("added new command: ", app.AllCommandsByName)
+
+			app.History.Add("Add")
+			handlers.SaveHistory(app)
 		} else {
 			app.LoggerInfo.Error("Error add command: ", err, payload)
 		}
@@ -57,6 +60,9 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		if err == nil {
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 			app.LoggerInfo.Info("added new command by process: ", app.AllCommandsByName)
+
+			app.History.Add("Add Process")
+			handlers.SaveHistory(app)
 		} else {
 			app.LoggerInfo.Error("Error add command by process: ", err, payload)
 		}
@@ -64,6 +70,9 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		if handlers.DeleteCommand(payload.Name, app) {
 			app.LoggerInfo.Info("deleted command: ", app.AllCommandsByName)
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+
+			app.History.Add("Delete")
+			handlers.SaveHistory(app)
 		} else {
 			app.LoggerInfo.Error("Error delete command: ", payload)
 		}
@@ -81,6 +90,9 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		if err == nil {
 			app.LoggerInfo.Info("updated command: ", app.AllCommandsByName)
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+
+			app.History.Add("Update")
+			handlers.SaveHistory(app)
 		} else {
 			app.LoggerInfo.Error("Error update command: ", err, payload)
 		}
@@ -89,6 +101,10 @@ func HandlePayload(payload data.Payload, app *data.App) {
 	case data.ResetOp:
 		handlers.Reset(app)
 		utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+
+		app.History.Add("Reset")
+		handlers.SaveHistory(app)
+
 		app.LoggerInfo.Info("reset all commands: ", app.AllCommandsByName)
 	case data.OpenOp:
 		handlers.Open(app.CfgFilePath, app)

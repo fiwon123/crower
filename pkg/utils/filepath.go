@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"log"
 	"os"
 )
@@ -13,4 +14,10 @@ func CreateFileIfNotExists(filePath string) {
 		log.Fatal(err)
 	}
 	defer file.Close()
+}
+
+func CreateFolderIfNotExists(path string) {
+	if err := os.MkdirAll(path, 0o755); err != nil {
+		fmt.Println("Failed to create directory:", err)
+	}
 }
