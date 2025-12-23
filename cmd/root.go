@@ -109,7 +109,9 @@ func init() {
 		log.Fatal("Error could not get user home directory, ", err)
 	}
 
-	rootCmd.Flags().StringVar(&cfgFilePath, "config", filepath.Join(homePath, "crower.yaml"), "config file (default is $HOME/.crower.yaml)")
+	defaultCfgFilePath := filepath.Join(homePath, "crower", "crower.yaml")
+
+	rootCmd.Flags().StringVar(&cfgFilePath, "config", defaultCfgFilePath, "config file (default is $HOME/.crower.yaml)")
 	rootCmd.Flags().IntVarP(&index, "index", "i", 0, "command index")
 	rootCmd.Flags().BoolVar(&addOp, "add", false, "add a command (--add ip ifconfig)")
 	rootCmd.Flags().BoolVarP(&checkVersion, "version", "v", false, "check current version")
