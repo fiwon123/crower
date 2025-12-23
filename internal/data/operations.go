@@ -3,13 +3,14 @@ package data
 type Operation string
 
 const (
-	Execute    Operation = "execute"
-	Add        Operation = "add"
-	Process    Operation = "process"
+	ExecuteOp  Operation = "execute"
+	AddOp      Operation = "add"
+	ProcessOp  Operation = "process"
 	AddProcess Operation = "addProcess"
-	Delete     Operation = "delete"
-	Update     Operation = "update"
-	List       Operation = "list"
-	Reset      Operation = "reset"
-	Open       Operation = "open"
+	DeleteOp   Operation = "delete"
+	UpdateOp   Operation = "update"
+	ListOp     Operation = "list"
+	ResetOp    Operation = "reset"
+	OpenOp     Operation = "open"
+	HistoryOp  Operation = "history"
 )

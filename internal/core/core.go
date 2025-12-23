@@ -15,7 +15,7 @@ func InitApp(cfgFilePath string) *data.App {
 	var allAliases data.CommandsMap
 
 	if cfgFilePath != "" {
-		utils.CreateTomlIfNotExists(cfgFilePath)
+		utils.CreateFileIfNotExists(cfgFilePath)
 		fmt.Println("cfgfilepath: ", cfgFilePath)
 
 		var err error
@@ -36,14 +36,14 @@ func InitApp(cfgFilePath string) *data.App {
 // Determine which operation will be performed for the user.
 func HandlePayload(payload data.Payload, app *data.App) {
 	switch payload.Op {
-	case data.Execute:
+	case data.ExecuteOp:
 		output, err := handlers.Execute(payload.Name, payload.Args, app)
 		if err != nil {
 			app.LoggerInfo.Error("Error trying to run command: ", string(output), err)
 			return
 		}
 		fmt.Println(string(output))
-	case data.Add:
+	case data.AddOp:
 		err := handlers.AddCommand(payload.Name, payload.Alias, payload.Exec, payload.Args, app)
 
 		if err == nil {
@@ -60,14 +60,14 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		} else {
 			app.LoggerInfo.Error("Error add command by process: ", err, payload)
 		}
-	case data.Delete:
+	case data.DeleteOp:
 		if handlers.DeleteCommand(payload.Name, app) {
 			app.LoggerInfo.Info("deleted command: ", app.AllCommandsByName)
 			utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 		} else {
 			app.LoggerInfo.Error("Error delete command: ", payload)
 		}
-	case data.Update:
+	case data.UpdateOp:
 		key := ""
 		if len(payload.Args) != 0 {
 			key = payload.Args[0]
@@ -84,15 +84,17 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		} else {
 			app.LoggerInfo.Error("Error update command: ", err, payload)
 		}
-	case data.List:
+	case data.ListOp:
 		handlers.List(app)
-	case data.Reset:
+	case data.ResetOp:
 		handlers.Reset(app)
 		utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 		app.LoggerInfo.Info("reset all commands: ", app.AllCommandsByName)
-	case data.Open:
+	case data.OpenOp:
 		handlers.Open(app.CfgFilePath, app)
-	case data.Process:
+	case data.ProcessOp:
 		handlers.Process(payload.Args, app)
+	case data.HistoryOp:
+		handlers.History(app)
 	}
 }

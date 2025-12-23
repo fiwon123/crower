@@ -23,6 +23,7 @@ var exec string
 var alias []string
 var openOp bool
 var processOp bool
+var historyOp bool
 
 var checkVersion bool
 
@@ -47,28 +48,7 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		fmt.Println("cfg", cfgFilePath)
 		app := core.InitApp(cfgFilePath)
 
-		var op data.Operation
-		if addOp {
-			op = data.Add
-
-			if processOp {
-				op = data.AddProcess
-			}
-		} else if listOp {
-			op = data.List
-		} else if resetOp {
-			op = data.Reset
-		} else if deleteOp {
-			op = data.Delete
-		} else if updateOp {
-			op = data.Update
-		} else if openOp {
-			op = data.Open
-		} else if processOp {
-			op = data.Process
-		} else {
-			op = data.Execute
-		}
+		op := getOperation()
 
 		core.HandlePayload(
 			data.Payload{
@@ -82,6 +62,35 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		)
 
 	},
+}
+
+func getOperation() data.Operation {
+	if addOp {
+
+		if processOp {
+			return data.AddProcess
+		}
+
+		return data.AddOp
+
+	} else if listOp {
+		return data.ListOp
+	} else if resetOp {
+		return data.ResetOp
+	} else if deleteOp {
+		return data.DeleteOp
+	} else if updateOp {
+		return data.UpdateOp
+	} else if openOp {
+		return data.OpenOp
+	} else if processOp {
+		return data.ProcessOp
+	} else if historyOp {
+		return data.HistoryOp
+	}
+
+	return data.ExecuteOp
+
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -110,6 +119,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&deleteOp, "delete", false, "delete commands")
 	rootCmd.Flags().BoolVar(&openOp, "open", false, "open cfg file path")
 	rootCmd.Flags().BoolVar(&processOp, "process", false, "list all process")
+	rootCmd.Flags().BoolVar(&historyOp, "history", false, "list history")
 	rootCmd.Flags().StringVarP(&name, "name", "n", "", "command name")
 	rootCmd.Flags().StringVarP(&exec, "exec", "e", "", `define the command (--exec "echo 'Hello World!'")`)
 	rootCmd.Flags().StringSliceVarP(&alias, "alias", "a", []string{}, `define alias (--alias 'a1,a2,a3')`)
