@@ -13,4 +13,5 @@ const (
 	ResetOp    Operation = "reset"
 	OpenOp     Operation = "open"
 	HistoryOp  Operation = "history"
+	RevertOp   Operation = "revert"
 )

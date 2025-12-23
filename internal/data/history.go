@@ -23,6 +23,18 @@ func NewHistory() History {
 	}
 }
 
+func (h *History) GetBeforeLast() *HistoryData {
+	if len(h.AllData) == 0 {
+		return nil
+	}
+
+	if len(h.AllData) < 2 {
+		return nil
+	}
+
+	return &h.AllData[len(h.AllData)-2]
+}
+
 func (h *History) GetLast() *HistoryData {
 	if len(h.AllData) == 0 {
 		return nil
@@ -47,6 +59,14 @@ func (h *History) Add(note string) {
 	}
 
 	h.AllData = append(h.AllData, data)
+}
+
+func (h *History) RemoveLast() {
+	if len(h.AllData) == 0 {
+		return
+	}
+
+	h.AllData = h.AllData[:len(h.AllData)-1]
 }
 
 func (h *History) List() {

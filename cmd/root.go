@@ -24,6 +24,7 @@ var alias []string
 var openOp bool
 var processOp bool
 var historyOp bool
+var revertOp bool
 
 var checkVersion bool
 
@@ -87,6 +88,8 @@ func getOperation() data.Operation {
 		return data.ProcessOp
 	} else if historyOp {
 		return data.HistoryOp
+	} else if revertOp {
+		return data.RevertOp
 	}
 
 	return data.ExecuteOp
@@ -122,6 +125,7 @@ func init() {
 	rootCmd.Flags().BoolVar(&openOp, "open", false, "open cfg file path")
 	rootCmd.Flags().BoolVar(&processOp, "process", false, "list all process")
 	rootCmd.Flags().BoolVar(&historyOp, "history", false, "list history")
+	rootCmd.Flags().BoolVar(&revertOp, "revert", false, "revert cfg to last one")
 	rootCmd.Flags().StringVarP(&name, "name", "n", "", "command name")
 	rootCmd.Flags().StringVarP(&exec, "exec", "e", "", `define the command (--exec "echo 'Hello World!'")`)
 	rootCmd.Flags().StringSliceVarP(&alias, "alias", "a", []string{}, `define alias (--alias 'a1,a2,a3')`)

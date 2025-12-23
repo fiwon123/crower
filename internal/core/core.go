@@ -59,7 +59,26 @@ func HandlePayload(payload data.Payload, app *data.App) {
 		processOp(payload, app)
 	case data.HistoryOp:
 		historyOp(app)
+	case data.RevertOp:
+		revertOp(app)
 	}
+}
+
+func revertOp(app *data.App) {
+	backHistory := app.History.GetBeforeLast()
+
+	if backHistory == nil {
+		app.LoggerInfo.Error("Error already in initial history")
+		return
+	}
+
+	err := history.RevertTo(backHistory, app)
+	if err != nil {
+		app.LoggerInfo.Error("Error revert history %v", err)
+		return
+	}
+	app.LoggerInfo.Info("reverted to history version ", backHistory.Version)
+	history.Save(app)
 }
 
 func historyOp(app *data.App) {
