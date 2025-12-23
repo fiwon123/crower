@@ -42,7 +42,7 @@ func TestDelete(t *testing.T) {
 		for _, test := range tests {
 			_, got := handlers.DeleteCommand(test.name, app)
 
-			assertDeletingTest(test.want, got, t)
+			assertDeleteTest(test.want, got, t)
 		}
 	})
 
@@ -81,13 +81,13 @@ func TestDelete(t *testing.T) {
 		for _, test := range tests {
 			_, got := handlers.DeleteCommand(test.alias, app)
 
-			assertDeletingTest(test.want, got, t)
+			assertDeleteTest(test.want, got, t)
 		}
 	})
 
 }
 
-func assertDeletingTest(want bool, got bool, t *testing.T) {
+func assertDeleteTest(want bool, got bool, t *testing.T) {
 	if got != want {
 		t.Errorf("got %v, want %v", got, want)
 	}
