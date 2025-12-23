@@ -52,13 +52,7 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		op := getOperation()
 
 		core.HandlePayload(
-			data.Payload{
-				Op:    op,
-				Args:  args,
-				Name:  name,
-				Alias: alias,
-				Exec:  exec,
-			},
+			data.NewPayload(op, args, name, alias, exec),
 			app,
 		)
 

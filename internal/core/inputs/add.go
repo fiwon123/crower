@@ -1,0 +1,5 @@
+package inputs
+
+func CheckAddInput() {
+
+}
