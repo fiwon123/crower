@@ -1,18 +1,15 @@
-package core
+package inputs
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"strconv"
-	"strings"
 	"unicode"
 
 	"github.com/fiwon123/crower/internal/data"
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
-func checkInputUpdate(key *string, name *string, allAlias *[]string, exec *string, app *data.App) error {
+func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *data.App) error {
 
 	if *key == "" {
 		handlers.List(app)
@@ -139,56 +136,4 @@ func selectInputKey(input string, app *data.App) (any, error) {
 	}
 
 	return app.OrderKeys[index], nil
-}
-
-func getUserInput(ask string, fnBefore func(), fnValid func(string, *data.App) (any, error), app *data.App) any {
-	ok := false
-	input := ""
-	var output any
-	var err error
-	for !ok {
-		if fnBefore != nil {
-			fnBefore()
-		}
-		fmt.Print(ask)
-		reader := bufio.NewReader(os.Stdin)
-		input, _ = reader.ReadString('\n')
-		input = strings.TrimSuffix(input, "\n")
-
-		if output, err = fnValid(input, app); err != nil {
-			fmt.Println(err)
-			continue
-		}
-
-		ok = true
-	}
-
-	return output
-}
-
-func checkValidAnswer(input string) bool {
-	if input == "y" ||
-		input == "n" ||
-		input == "yes" ||
-		input == "no" {
-		return true
-	}
-
-	return false
-}
-
-func checkNoAnswer(input string) bool {
-	if input == "n" || input == "no" {
-		return true
-	}
-
-	return false
-}
-
-func checkYesAnswer(input string) bool {
-	if input == "y" || input == "yes" {
-		return true
-	}
-
-	return false
 }

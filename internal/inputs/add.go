@@ -1,0 +1,3 @@
+package inputs
+
+func CheckAddInput
