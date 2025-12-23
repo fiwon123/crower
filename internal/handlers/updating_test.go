@@ -45,7 +45,7 @@ func TestUpdate(t *testing.T) {
 		for _, test := range tests {
 			newCommand := data.NewCommand(test.newName, []string{}, "")
 			key := test.oldName
-			err := handlers.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec, app)
+			_, _, err := handlers.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec, app)
 			got := err == nil
 			assertUpdatingTest(test.want, got, key, *newCommand, err, t)
 

@@ -10,7 +10,7 @@ import (
 )
 
 // Add command from the cfg file.
-func AddCommand(name string, alias []string, exec string, args []string, app *data.App) error {
+func AddCommand(name string, alias []string, exec string, args []string, app *data.App) (*data.Command, error) {
 
 	command := &data.Command{
 		Name:     name,
@@ -24,20 +24,20 @@ func AddCommand(name string, alias []string, exec string, args []string, app *da
 	}
 
 	if command.Name == "" {
-		return fmt.Errorf("empty name")
+		return nil, fmt.Errorf("empty name")
 	}
 
 	if command.Exec == "" {
-		return fmt.Errorf("empty exec")
+		return nil, fmt.Errorf("empty exec")
 	}
 
 	if app.AllCommandsByName.Get(command.Name) != nil {
-		return fmt.Errorf("found name, command already added")
+		return nil, fmt.Errorf("found name, command already added")
 	}
 
 	for _, alias := range command.AllAlias {
 		if app.AllCommandsByAlias.Get(alias) != nil || app.AllCommandsByName.Get(alias) != nil {
-			return fmt.Errorf("found alias, command already added")
+			return nil, fmt.Errorf("found alias, command already added")
 		}
 	}
 
@@ -47,10 +47,10 @@ func AddCommand(name string, alias []string, exec string, args []string, app *da
 		app.AllCommandsByAlias.Add(alias, command)
 	}
 
-	return nil
+	return command, nil
 }
 
-func AddProcess(name string, args []string, app *data.App) error {
+func AddProcess(name string, args []string, app *data.App) (*data.Command, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]
@@ -64,13 +64,13 @@ func AddProcess(name string, args []string, app *data.App) error {
 		processName = process
 		pathStr, err = utils.GetProcessPathByName(processName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	} else {
 
 		pathStr, err = utils.GetProcessPathByID(int32(pid))
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 	}
@@ -79,26 +79,34 @@ func AddProcess(name string, args []string, app *data.App) error {
 		if processName == "" {
 			processName, err = utils.GetProcessNameByID(int32(pid))
 			if err != nil {
-				return err
+				return nil, err
 			}
 		}
 
 		var appID string
 		appID, err = utils.GetFlatpakAppIDByName(processName)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		execCommand := fmt.Sprintf("flatpak run %s", appID)
-		AddCommand(name, nil, execCommand, nil, app)
+		command, err := AddCommand(name, nil, execCommand, nil, app)
 
-		return nil
+		if err != nil {
+			return nil, err
+		}
+
+		return command, nil
 	} else if pathStr != "" {
 		pathStr = fmt.Sprintf("'%s'", pathStr)
-		AddCommand(name, nil, pathStr, nil, app)
+		command, err := AddCommand(name, nil, pathStr, nil, app)
 
-		return nil
+		if err != nil {
+			return nil, err
+		}
+
+		return command, nil
 	}
 
-	return fmt.Errorf("couldn't find the process either by pid or name")
+	return nil, fmt.Errorf("couldn't find the process either by pid or name")
 }

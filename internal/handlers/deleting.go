@@ -3,14 +3,14 @@ package handlers
 import "github.com/fiwon123/crower/internal/data"
 
 // Delete command from the cfg file.
-func DeleteCommand(name string, app *data.App) bool {
+func DeleteCommand(name string, app *data.App) (*data.Command, bool) {
 	var command *data.Command
 
 	command = app.AllCommandsByName.Get(name)
 	if command == nil {
 		command = app.AllCommandsByAlias.Get(name)
 		if command == nil {
-			return false
+			return nil, false
 		}
 	}
 
@@ -20,5 +20,5 @@ func DeleteCommand(name string, app *data.App) bool {
 		app.AllCommandsByAlias.Remove(alias)
 	}
 
-	return true
+	return command, true
 }

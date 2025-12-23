@@ -8,7 +8,7 @@ import (
 
 // Update command based on the key value.
 // Old values will be used if not specified in the data.Command structure.
-func UpdateCommand(key string, newName string, newAlias []string, newExec string, app *data.App) error {
+func UpdateCommand(key string, newName string, newAlias []string, newExec string, app *data.App) (*data.Command, *data.Command, error) {
 
 	newCommand := &data.Command{
 		Name:     newName,
@@ -18,15 +18,15 @@ func UpdateCommand(key string, newName string, newAlias []string, newExec string
 
 	oldCommand := app.AllCommandsByName.Get(key)
 	if oldCommand != nil {
-		return performUpdate(oldCommand, newCommand, app)
+		return oldCommand, newCommand, performUpdate(oldCommand, newCommand, app)
 	}
 
 	oldCommand = app.AllCommandsByAlias.Get(key)
 	if oldCommand != nil {
-		return performUpdate(oldCommand, newCommand, app)
+		return oldCommand, newCommand, performUpdate(oldCommand, newCommand, app)
 	}
 
-	return fmt.Errorf("couldn't find command by name or alias")
+	return oldCommand, newCommand, fmt.Errorf("couldn't find command by name or alias")
 }
 
 func performUpdate(oldCommand *data.Command, newCommand *data.Command, app *data.App) error {

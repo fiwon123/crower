@@ -18,7 +18,7 @@ func TestAdd(t *testing.T) {
 		want := true
 		app := core.InitApp("")
 
-		error := handlers.AddCommand(command.Name, nil, "exec", nil, app)
+		_, error := handlers.AddCommand(command.Name, nil, "exec", nil, app)
 		got := error == nil
 		assertAddingTest(command, want, got, error, t)
 	})
@@ -46,7 +46,7 @@ func TestAdd(t *testing.T) {
 				Name: test.name,
 			}
 
-			err := handlers.AddCommand(command.Name, nil, "exec", nil, app)
+			_, err := handlers.AddCommand(command.Name, nil, "exec", nil, app)
 			got := err == nil
 			assertAddingTest(command, test.want, got, err, t)
 		}
@@ -78,7 +78,7 @@ func TestAdd(t *testing.T) {
 				Name:     test.name,
 			}
 
-			err := handlers.AddCommand(command.Name, command.AllAlias, "exec", nil, app)
+			_, err := handlers.AddCommand(command.Name, command.AllAlias, "exec", nil, app)
 			got := err == nil
 			assertAddingTest(command, test.want, got, err, t)
 		}
