@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -10,6 +11,12 @@ import (
 )
 
 func Add(payload payload.Data, app *app.Data) {
+	err := inputs.CheckAddInput(&payload.Name, &payload.Alias, &payload.Exec, app)
+
+	if err != nil {
+
+	}
+
 	command, err := handlers.AddCommand(payload.Name, payload.Alias, payload.Exec, payload.Args, app)
 
 	if err != nil {
