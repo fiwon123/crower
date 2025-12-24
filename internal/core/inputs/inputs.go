@@ -4,7 +4,9 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/fiwon123/crower/internal/data/app"
 )
@@ -43,15 +45,12 @@ func checkYesAnswer(input string) bool {
 	return false
 }
 
-func getUserInput(ask string, fnBefore func(), fnValid func(string, *app.Data) (any, error), app *app.Data) any {
+func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app *app.Data) any {
 	ok := false
 	input := ""
 	var output any
 	var err error
 	for !ok {
-		if fnBefore != nil {
-			fnBefore()
-		}
 		fmt.Print(ask)
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
@@ -68,22 +67,19 @@ func getUserInput(ask string, fnBefore func(), fnValid func(string, *app.Data) (
 	return output
 }
 
-func getUserConfirmation(ask string, fnBefore func(), fnValid func(string, *app.Data) (any, error), app *app.Data) any {
+func getUserConfirmation(ask string) bool {
 	ok := false
 	input := ""
-	var output any
+	var confirmation bool
 	var err error
 	for !ok {
-		if fnBefore != nil {
-			fnBefore()
-		}
 
 		fmt.Print(ask + " ([Y]es/[N]o): ")
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSuffix(input, "\n")
 
-		if output, err = fnValid(input, app); err != nil {
+		if confirmation, err = isValidConfirmation(input); err != nil {
 			fmt.Println(err)
 			continue
 		}
@@ -91,22 +87,10 @@ func getUserConfirmation(ask string, fnBefore func(), fnValid func(string, *app.
 		ok = true
 	}
 
-	return output
+	return confirmation
 }
 
-func selectInput(input string, app *app.Data) (any, error) {
-	if !checkValidAnswer(input) {
-		return "", fmt.Errorf("Invalid Input")
-	}
-
-	if checkNoAnswer(input) {
-		return "", nil
-	}
-
-	return input, nil
-}
-
-func isValidConfirmation(input string, app *app.Data) (any, error) {
+func isValidConfirmation(input string) (bool, error) {
 	if !checkValidAnswer(input) {
 		return false, fmt.Errorf("Invalid Input")
 	}
@@ -118,7 +102,7 @@ func isValidConfirmation(input string, app *app.Data) (any, error) {
 	return true, nil
 }
 
-func isEmpty(input string, app *app.Data) (any, error) {
+func isValidInput(input string, app *app.Data) (any, error) {
 	if input == "" {
 		return "", fmt.Errorf("input is empty")
 	}
@@ -126,14 +110,13 @@ func isEmpty(input string, app *app.Data) (any, error) {
 	return input, nil
 }
 
-func selectAliases(app *app.Data) []string {
+func inputAlias(app *app.Data) []string {
 	output := []string{}
 
-	fmt.Println()
 	alias := "none"
 	for alias != "" {
 		fmt.Println("current aliases: ", output)
-		alias = getUserInput("Add new alias (type enter to skip): ", nil, selectNewAlias, app).(string)
+		alias = getUserInput("Add new alias (type enter to skip): ", isValidAlias, app).(string)
 
 		if alias != "" {
 			output = append(output, alias)
@@ -141,4 +124,45 @@ func selectAliases(app *app.Data) []string {
 	}
 
 	return output
+}
+
+func inputName(app *app.Data) string {
+	name := ""
+	for name == "" {
+		name = getUserInput("Add new name: ", isValidInput, app).(string)
+	}
+
+	return name
+}
+
+func inputExec(app *app.Data) string {
+	exec := ""
+	for exec == "" {
+		exec = getUserInput("Add new exec: ", isValidInput, app).(string)
+	}
+
+	return exec
+}
+
+func isValidAlias(input string, app *app.Data) (any, error) {
+	for _, r := range input {
+		if !unicode.IsNumber(r) && !unicode.IsLetter(r) {
+			return "", fmt.Errorf("Only numbers and letters")
+		}
+	}
+
+	return input, nil
+}
+
+func isValidInputKey(input string, app *app.Data) (any, error) {
+	index, err := strconv.Atoi(input)
+	if err != nil {
+		return "", fmt.Errorf("Invalid row")
+	}
+
+	if index < 0 || index >= len(app.OrderKeys) {
+		return "", fmt.Errorf("Invalid row")
+	}
+
+	return app.OrderKeys[index], nil
 }
