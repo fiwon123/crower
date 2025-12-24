@@ -2,9 +2,9 @@ package inputs
 
 import "github.com/fiwon123/crower/internal/data/app"
 
-func CheckAddInput(name *string, alias *[]string, exec *string, app *app.Data) error {
+func CheckAddInput(name *string, alias *[]string, exec *string, app *app.Data) {
 	if *name == "" {
-		*name = getUserInput("New Name:", isValidInput, app).(string)
+		*name = getUserInput("New Name ", isValidInput, app).(string)
 	}
 
 	if len(*alias) == 0 {
@@ -16,8 +16,7 @@ func CheckAddInput(name *string, alias *[]string, exec *string, app *app.Data) e
 	}
 
 	if *exec == "" {
-		*exec = getUserInput("New Exec:", isValidInput, app).(string)
+		*exec = getUserInput("New Exec ", isValidInput, app).(string)
 	}
 
-	return nil
 }

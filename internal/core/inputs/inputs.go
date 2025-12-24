@@ -51,7 +51,7 @@ func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app 
 	var output any
 	var err error
 	for !ok {
-		fmt.Print(ask)
+		fmt.Print(ask + ": ")
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSuffix(input, "\n")

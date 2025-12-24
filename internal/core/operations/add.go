@@ -11,11 +11,7 @@ import (
 )
 
 func Add(payload payload.Data, app *app.Data) {
-	err := inputs.CheckAddInput(&payload.Name, &payload.Alias, &payload.Exec, app)
-
-	if err != nil {
-
-	}
+	inputs.CheckAddInput(&payload.Name, &payload.Alias, &payload.Exec, app)
 
 	command, err := handlers.AddCommand(payload.Name, payload.Alias, payload.Exec, payload.Args, app)
 

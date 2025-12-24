@@ -15,11 +15,8 @@ func Update(payload payload.Data, app *app.Data) {
 	if len(payload.Args) != 0 {
 		key = payload.Args[0]
 	}
-	err := inputs.CheckUpdateInput(&key, &payload.Name, &payload.Alias, &payload.Exec, app)
-	if err != nil {
-		app.LoggerInfo.Error("Error update command: ", err, payload)
-		return
-	}
+
+	inputs.CheckUpdateInput(&key, &payload.Name, &payload.Alias, &payload.Exec, app)
 
 	oldCommand, newCommand, err := handlers.UpdateCommand(key, payload.Name, payload.Alias, payload.Exec, app)
 	if err != nil {

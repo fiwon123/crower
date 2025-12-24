@@ -6,16 +6,16 @@ import (
 )
 
 // Delete command from the cfg file.
-func DeleteCommand(name string, app *app.Data) (*command.Data, bool) {
-	command := app.AllCommandsByName.Get(name)
+func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
+	command := app.AllCommandsByName.Get(key)
 	if command == nil {
-		command = app.AllCommandsByAlias.Get(name)
+		command = app.AllCommandsByAlias.Get(key)
 		if command == nil {
 			return nil, false
 		}
 	}
 
-	app.AllCommandsByName.Remove(name)
+	app.AllCommandsByName.Remove(key)
 
 	for _, alias := range command.AllAlias {
 		app.AllCommandsByAlias.Remove(alias)

@@ -7,11 +7,11 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
-func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) error {
+func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) {
 
 	if *key == "" {
 		handlers.List(app)
-		input := getUserInput("Select Row: ", isValidInputKey, app).(string)
+		input := getUserInput("Select Row", isValidInputKey, app).(string)
 		*key = input
 	}
 
@@ -45,6 +45,4 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 			*exec = inputExec(app)
 		}
 	}
-
-	return nil
 }
