@@ -15,7 +15,7 @@ func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
 		}
 	}
 
-	app.AllCommandsByName.Remove(key)
+	app.AllCommandsByName.Remove(command.Name)
 
 	for _, alias := range command.AllAlias {
 		app.AllCommandsByAlias.Remove(alias)

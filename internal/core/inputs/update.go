@@ -7,7 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
-func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) {
+func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) bool {
 
 	if *key == "" {
 		handlers.List(app)
@@ -16,10 +16,10 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 	}
 
 	fmt.Println("-----------------------------------------")
-	command := app.AllCommandsByName.Get(*key)
-	fmt.Println("Name:    ", command.Name)
-	fmt.Println("Aliases: ", command.AllAlias)
-	fmt.Println("Exec:    ", command.Exec)
+	updateCommand := app.AllCommandsByName.Get(*key)
+	fmt.Println("Name:    ", updateCommand.Name)
+	fmt.Println("Aliases: ", updateCommand.AllAlias)
+	fmt.Println("Exec:    ", updateCommand.Exec)
 	fmt.Println()
 
 	if *name == "" {
@@ -45,4 +45,18 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 			*exec = inputExec(app)
 		}
 	}
+	fmt.Println("-----------------------------------------")
+	fmt.Println("Old Command: ")
+	fmt.Println("Name:    ", updateCommand.Name)
+	fmt.Println("Aliases: ", updateCommand.AllAlias)
+	fmt.Println("Exec:    ", updateCommand.Exec)
+	fmt.Println("-----------------------------------------")
+	fmt.Println("New Command: ")
+	fmt.Println("Name:    ", *name)
+	fmt.Println("Aliases: ", *allAlias)
+	fmt.Println("Exec:    ", *exec)
+	fmt.Println()
+
+	ok := getUserConfirmation("Continue to update")
+	return ok
 }

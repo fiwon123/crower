@@ -1,6 +1,8 @@
 package operations
 
 import (
+	"fmt"
+
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/payload"
@@ -12,7 +14,11 @@ import (
 
 func Delete(payload payload.Data, app *app.Data) {
 
-	inputs.CheckDeleteInput(&payload.Name, &payload.Alias, app)
+	ok := inputs.CheckDeleteInput(&payload.Name, &payload.Alias, app)
+	if !ok {
+		fmt.Println("Cancelling delete...")
+		return
+	}
 
 	key := payload.Name
 	if key == "" {
