@@ -69,13 +69,40 @@ func (h *Data) RemoveLast() {
 	h.AllData = h.AllData[:len(h.AllData)-1]
 }
 
-func (h *Data) List() {
+func (h *Data) ListLast(steps int) {
 
+	stop := len(h.AllData) - steps
+	printHeader()
+	for i := len(h.AllData) - 1; i >= stop; i-- {
+		data := h.AllData[i]
+		printContent(data.Version, data.File, data.Timestemp, data.Note)
+	}
+}
+
+func (h *Data) ListGoBack(steps int) {
+	start := len(h.AllData) - 1 - steps
+
+	printHeader()
+	for i := start; i >= 0; i-- {
+		data := h.AllData[i]
+		printContent(data.Version, data.File, data.Timestemp, data.Note)
+	}
+}
+
+func (h *Data) List() {
+	printHeader()
+	for i := len(h.AllData) - 1; i >= 0; i-- {
+		data := h.AllData[i]
+		printContent(data.Version, data.File, data.Timestemp, data.Note)
+	}
+}
+
+func printContent(version int, file string, timestemp string, note string) {
+	fmt.Printf("%-8d %-16s %-32s %-3s \n", version, file, timestemp, note)
+}
+
+func printHeader() {
 	fmt.Println("----------------------------------------------------------------------------")
 	fmt.Printf("%-8s %-16s %-32s %-3s \n", "Version", "File", "Timestemp", "Note")
 	fmt.Println("----------------------------------------------------------------------------")
-	for i := len(h.AllData) - 1; i >= 0; i-- {
-		data := h.AllData[i]
-		fmt.Printf("%-8d %-16s %-32s %-3s \n", data.Version, data.File, data.Timestemp, data.Note)
-	}
 }

@@ -1,11 +1,19 @@
 package operations
 
 import (
+	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/history"
 )
 
 func Revert(app *app.Data) {
+
+	ok := inputs.CheckRevertInput(app)
+	if !ok {
+		println("Cancelling revert...")
+		return
+	}
+
 	backHistory := app.History.GetBeforeLast()
 
 	if backHistory == nil {
