@@ -1,12 +1,12 @@
-package data
+package commands
 
-type CommandsMap map[string]Command
+type MapData map[string]Data
 
-func NewCommandsMap() CommandsMap {
-	return make(CommandsMap)
+func NewMapData() MapData {
+	return make(MapData)
 }
 
-func (cm CommandsMap) Get(key string) *Command {
+func (cm MapData) Get(key string) *Data {
 	if key == "" {
 		return nil
 	}
@@ -19,11 +19,11 @@ func (cm CommandsMap) Get(key string) *Command {
 	return &command
 }
 
-func (cm CommandsMap) Add(key string, c *Command) {
+func (cm MapData) Add(key string, c *Data) {
 	cm[key] = *c
 }
 
-func (cm CommandsMap) Remove(key string) bool {
+func (cm MapData) Remove(key string) bool {
 	if cm.Get(key) == nil {
 		return false
 	}
@@ -33,7 +33,7 @@ func (cm CommandsMap) Remove(key string) bool {
 	return true
 }
 
-func (cm CommandsMap) Update(key string, c *Command) bool {
+func (cm MapData) Update(key string, c *Data) bool {
 
 	command := cm.Get(key)
 	if command == nil {

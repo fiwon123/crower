@@ -5,10 +5,10 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/commands"
 )
 
-func GenerateUpdateNote(oldCommand *data.Command, newCommand *data.Command) string {
+func GenerateUpdateNote(oldCommand *commands.Data, newCommand *commands.Data) string {
 
 	output := strings.Builder{}
 	output.WriteString("Updated:")

@@ -3,14 +3,15 @@ package handlers_test
 import (
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/commands"
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
 func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using name", func(t *testing.T) {
-		app := data.NewApp("", nil, data.NewCommandsMap(), data.NewCommandsMap())
+		app := app.NewApp("", nil, commands.NewMapData(), commands.NewMapData())
 
 		var mock = []struct {
 			name string
@@ -47,7 +48,7 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("Delete command using alias", func(t *testing.T) {
-		app := data.NewApp("", nil, data.NewCommandsMap(), data.NewCommandsMap())
+		app := app.NewApp("", nil, commands.NewMapData(), commands.NewMapData())
 
 		var mock = []struct {
 			name  string

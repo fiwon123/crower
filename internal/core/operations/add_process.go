@@ -1,13 +1,14 @@
 package operations
 
 import (
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func AddProcess(payload data.Payload, app *data.App) {
+func AddProcess(payload payload.Data, app *app.Data) {
 	command, err := handlers.AddProcess(payload.Name, payload.Args, app)
 	if err != nil {
 		app.LoggerInfo.Error("Error add command by process: ", err, payload)

@@ -5,11 +5,11 @@ import (
 	"strconv"
 	"unicode"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
-func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *data.App) error {
+func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) error {
 
 	if *key == "" {
 		handlers.List(app)
@@ -39,7 +39,7 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 	return nil
 }
 
-func selectInputName(input string, app *data.App) (any, error) {
+func selectInputName(input string, app *app.Data) (any, error) {
 	if !checkValidAnswer(input) {
 		return "", fmt.Errorf("Invalid Input")
 	}
@@ -57,7 +57,7 @@ func selectInputName(input string, app *data.App) (any, error) {
 	return name, nil
 }
 
-func selectInputExec(input string, app *data.App) (any, error) {
+func selectInputExec(input string, app *app.Data) (any, error) {
 	if !checkValidAnswer(input) {
 		return "", fmt.Errorf("Invalid Input")
 	}
@@ -75,7 +75,7 @@ func selectInputExec(input string, app *data.App) (any, error) {
 	return exec, nil
 }
 
-func selectInputAliases(input string, app *data.App) (any, error) {
+func selectInputAliases(input string, app *app.Data) (any, error) {
 	if !checkValidAnswer(input) {
 		return "", fmt.Errorf("Invalid Input")
 	}
@@ -99,7 +99,7 @@ func selectInputAliases(input string, app *data.App) (any, error) {
 	return output, nil
 }
 
-func selectNewExec(input string, app *data.App) (any, error) {
+func selectNewExec(input string, app *app.Data) (any, error) {
 	if input == "" {
 		return "", fmt.Errorf("input is empty")
 	}
@@ -107,7 +107,7 @@ func selectNewExec(input string, app *data.App) (any, error) {
 	return input, nil
 }
 
-func selectNewAlias(input string, app *data.App) (any, error) {
+func selectNewAlias(input string, app *app.Data) (any, error) {
 	if !hasOnlyNumbersAndLetters(input) {
 		return "", fmt.Errorf("only letters allowed")
 	}
@@ -125,7 +125,7 @@ func hasOnlyNumbersAndLetters(input string) bool {
 	return true
 }
 
-func selectInputKey(input string, app *data.App) (any, error) {
+func selectInputKey(input string, app *app.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
 		return "", fmt.Errorf("Invalid row")

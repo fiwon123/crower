@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
 )
 
 const (
@@ -43,7 +43,7 @@ func checkYesAnswer(input string) bool {
 	return false
 }
 
-func getUserInput(ask string, fnBefore func(), fnValid func(string, *data.App) (any, error), app *data.App) any {
+func getUserInput(ask string, fnBefore func(), fnValid func(string, *app.Data) (any, error), app *app.Data) any {
 	ok := false
 	input := ""
 	var output any

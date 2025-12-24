@@ -1,26 +1,28 @@
-package data
+package app
 
 import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/pkg/crowlog"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-type App struct {
+type Data struct {
 	CfgFilePath        string
 	HistoryFilePath    string
 	HistoryFolderPath  string
-	History            History
+	History            history.Data
 	LoggerInfo         crowlog.LoggerInfo
 	OrderKeys          []string
-	AllCommandsByAlias CommandsMap
-	AllCommandsByName  CommandsMap
+	AllCommandsByAlias commands.MapData
+	AllCommandsByName  commands.MapData
 }
 
 // Create a new App containing core structures to perform all crower operations.
-func NewApp(cfgFilePath string, orderKeys []string, allAliases CommandsMap, allCommands CommandsMap) *App {
+func NewApp(cfgFilePath string, orderKeys []string, allAliases commands.MapData, allCommands commands.MapData) *Data {
 
 	folderPath := filepath.Dir(cfgFilePath)
 
@@ -30,13 +32,13 @@ func NewApp(cfgFilePath string, orderKeys []string, allAliases CommandsMap, allC
 	historyFolderPath := filepath.Join(folderPath, "history")
 	utils.CreateFolderIfNotExists(historyFolderPath)
 
-	var history History
+	var history history.Data
 	err := utils.ReadJson(historyFilePath, &history)
 	if err != nil {
 		fmt.Printf("history error: %v \n", err)
 	}
 
-	return &App{
+	return &Data{
 		CfgFilePath:        cfgFilePath,
 		History:            history,
 		HistoryFilePath:    historyFilePath,

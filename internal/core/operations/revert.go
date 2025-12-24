@@ -1,11 +1,11 @@
 package operations
 
 import (
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/history"
 )
 
-func Revert(app *data.App) {
+func Revert(app *app.Data) {
 	backHistory := app.History.GetBeforeLast()
 
 	if backHistory == nil {

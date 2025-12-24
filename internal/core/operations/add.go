@@ -1,13 +1,14 @@
 package operations
 
 import (
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func AddOp(payload data.Payload, app *data.App) {
+func Add(payload payload.Data, app *app.Data) {
 	command, err := handlers.AddCommand(payload.Name, payload.Alias, payload.Exec, payload.Args, app)
 
 	if err != nil {

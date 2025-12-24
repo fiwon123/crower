@@ -1,29 +1,29 @@
-package data
+package history
 
 import (
 	"fmt"
 	"time"
 )
 
-type History struct {
-	AllData []HistoryData
+type Data struct {
+	AllData []Content
 }
 
-type HistoryData struct {
+type Content struct {
 	Version   int
 	File      string
 	Timestemp string
 	Note      string
 }
 
-func NewHistory() History {
+func NewHistory() Data {
 
-	return History{
-		AllData: []HistoryData{},
+	return Data{
+		AllData: []Content{},
 	}
 }
 
-func (h *History) GetBeforeLast() *HistoryData {
+func (h *Data) GetBeforeLast() *Content {
 	if len(h.AllData) == 0 {
 		return nil
 	}
@@ -35,7 +35,7 @@ func (h *History) GetBeforeLast() *HistoryData {
 	return &h.AllData[len(h.AllData)-2]
 }
 
-func (h *History) GetLast() *HistoryData {
+func (h *Data) GetLast() *Content {
 	if len(h.AllData) == 0 {
 		return nil
 	}
@@ -43,7 +43,7 @@ func (h *History) GetLast() *HistoryData {
 	return &h.AllData[len(h.AllData)-1]
 }
 
-func (h *History) Add(note string) {
+func (h *Data) Add(note string) {
 
 	version := 1
 	if len(h.AllData) != 0 {
@@ -51,7 +51,7 @@ func (h *History) Add(note string) {
 		version = lastData.Version + 1
 	}
 
-	data := HistoryData{
+	data := Content{
 		Version:   version,
 		File:      fmt.Sprintf("%05d.yaml", version),
 		Timestemp: time.Now().Format(time.RFC3339),
@@ -61,7 +61,7 @@ func (h *History) Add(note string) {
 	h.AllData = append(h.AllData, data)
 }
 
-func (h *History) RemoveLast() {
+func (h *Data) RemoveLast() {
 	if len(h.AllData) == 0 {
 		return
 	}
@@ -69,7 +69,7 @@ func (h *History) RemoveLast() {
 	h.AllData = h.AllData[:len(h.AllData)-1]
 }
 
-func (h *History) List() {
+func (h *Data) List() {
 
 	fmt.Println("----------------------------------------------------------------------------")
 	fmt.Printf("%-8s %-16s %-32s %-3s \n", "Version", "File", "Timestemp", "Note")

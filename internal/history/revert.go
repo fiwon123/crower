@@ -4,14 +4,16 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func RevertTo(historyData *data.HistoryData, app *data.App) error {
+func RevertTo(content *history.Content, app *app.Data) error {
 
-	allCommands := data.NewCommandsMap()
-	newDataPath := filepath.Join(app.HistoryFolderPath, historyData.File)
+	allCommands := commands.NewMapData()
+	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
 
 	err := utils.ReadToml(newDataPath, &allCommands)
 	if err != nil {
@@ -23,15 +25,15 @@ func RevertTo(historyData *data.HistoryData, app *data.App) error {
 		return err
 	}
 
-	removeUntilHistory(historyData, app)
+	removeUntilHistory(content, app)
 
 	return nil
 }
 
-func removeUntilHistory(historyData *data.HistoryData, app *data.App) {
+func removeUntilHistory(content *history.Content, app *app.Data) {
 
 	lastHistory := app.History.GetLast()
-	for lastHistory.Version != historyData.Version {
+	for lastHistory.Version != content.Version {
 		path := filepath.Join(app.HistoryFolderPath, lastHistory.File)
 		if _, err := os.Stat(path); err == nil {
 			os.Remove(path)

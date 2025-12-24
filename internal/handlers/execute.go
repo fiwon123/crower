@@ -6,11 +6,11 @@ import (
 	"regexp"
 	"runtime"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
 )
 
 // Execute command based on the user operational system (OS).
-func Execute(name string, args []string, app *data.App) ([]byte, error) {
+func Execute(name string, args []string, app *app.Data) ([]byte, error) {
 
 	if name == "" && len(args) > 0 {
 		fmt.Println("args", args)

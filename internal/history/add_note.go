@@ -3,13 +3,13 @@ package history
 import (
 	"fmt"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/commands"
 )
 
-func GenerateAddNote(command *data.Command) string {
+func GenerateAddNote(command *commands.Data) string {
 	return fmt.Sprintf("Added: %v", command.Name)
 }
 
-func GenerateAddProcessNote(command *data.Command) string {
+func GenerateAddProcessNote(command *commands.Data) string {
 	return fmt.Sprintf("Added By Process: %v", command.Name)
 }

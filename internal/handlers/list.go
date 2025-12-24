@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/commands"
 )
 
-func List(app *data.App) {
+func List(app *app.Data) {
 	fmt.Println("------------------------------------------------")
 	print(app.OrderKeys, app.AllCommandsByName)
 }
 
-func print(orderKeys []string, allCommands data.CommandsMap) {
+func print(orderKeys []string, allCommands commands.MapData) {
 	fmt.Printf("%-3s %-12s %-16s %-8s \n", "Row", "Name", "Aliases", "Exec")
 	fmt.Println("------------------------------------------------")
 

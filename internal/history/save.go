@@ -3,11 +3,11 @@ package history
 import (
 	"path/filepath"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func Save(app *data.App) {
+func Save(app *app.Data) {
 	data := app.History.GetLast()
 
 	newDataPath := filepath.Join(app.HistoryFolderPath, data.File)

@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
 // List all Process running on user operational system (OS).
-func Process(args []string, app *data.App) {
+func Process(args []string, app *app.Data) {
 
 	partName := ""
 	if len(args) > 0 {

@@ -7,7 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/spf13/cobra"
 )
 
@@ -52,41 +53,41 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		op := getOperation()
 
 		core.HandlePayload(
-			data.NewPayload(op, args, name, alias, exec),
+			payload.NewPayload(op, args, name, alias, exec),
 			app,
 		)
 
 	},
 }
 
-func getOperation() data.Operation {
+func getOperation() operations.Data {
 	if addOp {
 
 		if processOp {
-			return data.AddProcess
+			return operations.AddProcess
 		}
 
-		return data.AddOp
+		return operations.Add
 
 	} else if listOp {
-		return data.ListOp
+		return operations.List
 	} else if resetOp {
-		return data.ResetOp
+		return operations.Reset
 	} else if deleteOp {
-		return data.DeleteOp
+		return operations.Delete
 	} else if updateOp {
-		return data.UpdateOp
+		return operations.Update
 	} else if openOp {
-		return data.OpenOp
+		return operations.Open
 	} else if processOp {
-		return data.ProcessOp
+		return operations.Process
 	} else if historyOp {
-		return data.HistoryOp
+		return operations.History
 	} else if revertOp {
-		return data.RevertOp
+		return operations.Revert
 	}
 
-	return data.ExecuteOp
+	return operations.Execute
 
 }
 

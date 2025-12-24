@@ -3,13 +3,14 @@ package handlers_test
 import (
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/commands"
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
 func TestUpdate(t *testing.T) {
 	t.Run("Update command name", func(t *testing.T) {
-		app := data.NewApp("", nil, data.NewCommandsMap(), data.NewCommandsMap())
+		app := app.NewApp("", nil, commands.NewMapData(), commands.NewMapData())
 
 		var mock = []struct {
 			name  string
@@ -43,7 +44,7 @@ func TestUpdate(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			newCommand := data.NewCommand(test.newName, []string{}, "")
+			newCommand := commands.NewCommand(test.newName, []string{}, "")
 			key := test.oldName
 			_, _, err := handlers.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec, app)
 			got := err == nil
@@ -54,7 +55,7 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
-func assertUpdateTest(want bool, got bool, key string, newCommand data.Command, err error, t *testing.T) {
+func assertUpdateTest(want bool, got bool, key string, newCommand commands.Data, err error, t *testing.T) {
 	if want != got {
 		t.Errorf("error %v, key %v, command %v, got %v, want %v", err, key, newCommand, got, want)
 	}

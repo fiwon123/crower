@@ -1,8 +1,11 @@
 package handlers
 
-import "github.com/fiwon123/crower/internal/data"
+import (
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/commands"
+)
 
 // Reset all user cfg file.
-func Reset(app *data.App) {
-	app.AllCommandsByName = data.NewCommandsMap()
+func Reset(app *app.Data) {
+	app.AllCommandsByName = commands.NewMapData()
 }

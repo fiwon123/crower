@@ -5,15 +5,19 @@ import (
 	"path"
 
 	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/commands"
+	op "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/payload"
+
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
 // Initialize app based on the cfg file path.
-func InitApp(cfgFilePath string) *data.App {
+func InitApp(cfgFilePath string) *app.Data {
 	var orderKeys []string
-	allCommands := data.NewCommandsMap()
-	var allAliases data.CommandsMap
+	allCommands := commands.NewMapData()
+	var allAliases commands.MapData
 
 	if cfgFilePath != "" {
 		utils.CreateFolderIfNotExists(path.Dir(cfgFilePath))
@@ -28,37 +32,37 @@ func InitApp(cfgFilePath string) *data.App {
 		}
 		allAliases = getAliasMap(allCommands)
 	} else {
-		allCommands = data.NewCommandsMap()
-		allAliases = data.NewCommandsMap()
+		allCommands = commands.NewMapData()
+		allAliases = commands.NewMapData()
 	}
 
-	return data.NewApp(cfgFilePath, orderKeys, allAliases, allCommands)
+	return app.NewApp(cfgFilePath, orderKeys, allAliases, allCommands)
 }
 
 // Determine which operation will be performed for the user.
-func HandlePayload(payload data.Payload, app *data.App) {
+func HandlePayload(payload payload.Data, app *app.Data) {
 	switch payload.Op {
-	case data.ExecuteOp:
+	case op.Execute:
 		operations.Execute(payload, app)
-	case data.AddOp:
-		operations.AddOp(payload, app)
-	case data.AddProcess:
+	case op.Add:
+		operations.Add(payload, app)
+	case op.AddProcess:
 		operations.AddProcess(payload, app)
-	case data.DeleteOp:
+	case op.Delete:
 		operations.Delete(payload, app)
-	case data.UpdateOp:
+	case op.Update:
 		operations.Update(payload, app)
-	case data.ListOp:
+	case op.List:
 		operations.List(app)
-	case data.ResetOp:
+	case op.Reset:
 		operations.Reset(app)
-	case data.OpenOp:
+	case op.Open:
 		operations.Open(app)
-	case data.ProcessOp:
+	case op.Process:
 		operations.Process(payload, app)
-	case data.HistoryOp:
+	case op.History:
 		operations.History(app)
-	case data.RevertOp:
+	case op.Revert:
 		operations.Revert(app)
 	}
 }

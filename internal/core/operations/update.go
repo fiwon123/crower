@@ -2,13 +2,14 @@ package operations
 
 import (
 	"github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/data"
+	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func Update(payload data.Payload, app *data.App) {
+func Update(payload payload.Data, app *app.Data) {
 	key := ""
 	if len(payload.Args) != 0 {
 		key = payload.Args[0]
