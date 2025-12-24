@@ -1,4 +1,4 @@
-package history
+package notes
 
 func GenerateResetNote() string {
 	return "Reset"

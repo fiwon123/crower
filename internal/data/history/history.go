@@ -16,7 +16,7 @@ type Content struct {
 	Note      string
 }
 
-func NewHistory() Data {
+func New() Data {
 
 	return Data{
 		AllData: []Content{},

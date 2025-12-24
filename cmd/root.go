@@ -53,14 +53,14 @@ managing it with useful operations like add, edit, remove, list and more.`,
 		op := getOperation()
 
 		core.HandlePayload(
-			payload.NewPayload(op, args, name, alias, exec),
+			payload.New(op, args, name, alias, exec),
 			app,
 		)
 
 	},
 }
 
-func getOperation() operations.Data {
+func getOperation() operations.State {
 	if addOp {
 
 		if processOp {

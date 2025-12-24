@@ -1,9 +1,9 @@
 package core
 
-import "github.com/fiwon123/crower/internal/data/commands"
+import "github.com/fiwon123/crower/internal/data/command"
 
-func getAliasMap(commandMap commands.MapData) commands.MapData {
-	aliasMap := commands.NewMapData()
+func getAliasMap(commandMap command.MapData) command.MapData {
+	aliasMap := command.NewMapData()
 
 	for _, command := range commandMap {
 		for _, alias := range command.AllAlias {

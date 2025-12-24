@@ -4,13 +4,13 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
 func TestUpdate(t *testing.T) {
 	t.Run("Update command name", func(t *testing.T) {
-		app := app.NewApp("", nil, commands.NewMapData(), commands.NewMapData())
+		app := app.New("", nil, command.NewMapData(), command.NewMapData())
 
 		var mock = []struct {
 			name  string
@@ -44,7 +44,7 @@ func TestUpdate(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			newCommand := commands.NewCommand(test.newName, []string{}, "")
+			newCommand := command.New(test.newName, []string{}, "")
 			key := test.oldName
 			_, _, err := handlers.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec, app)
 			got := err == nil
@@ -55,7 +55,7 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
-func assertUpdateTest(want bool, got bool, key string, newCommand commands.Data, err error, t *testing.T) {
+func assertUpdateTest(want bool, got bool, key string, newCommand command.Data, err error, t *testing.T) {
 	if want != got {
 		t.Errorf("error %v, key %v, command %v, got %v, want %v", err, key, newCommand, got, want)
 	}

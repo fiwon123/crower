@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
 func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using name", func(t *testing.T) {
-		app := app.NewApp("", nil, commands.NewMapData(), commands.NewMapData())
+		app := app.New("", nil, command.NewMapData(), command.NewMapData())
 
 		var mock = []struct {
 			name string
@@ -48,7 +48,7 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("Delete command using alias", func(t *testing.T) {
-		app := app.NewApp("", nil, commands.NewMapData(), commands.NewMapData())
+		app := app.New("", nil, command.NewMapData(), command.NewMapData())
 
 		var mock = []struct {
 			name  string

@@ -6,14 +6,14 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
 // Add command from the cfg file.
-func AddCommand(name string, alias []string, exec string, args []string, app *app.Data) (*commands.Data, error) {
+func AddCommand(name string, alias []string, exec string, args []string, app *app.Data) (*command.Data, error) {
 
-	command := commands.NewCommand(name, alias, exec)
+	command := command.New(name, alias, exec)
 
 	if len(args) == 2 {
 		command.Name = args[0]
@@ -47,7 +47,7 @@ func AddCommand(name string, alias []string, exec string, args []string, app *ap
 	return command, nil
 }
 
-func AddProcess(name string, args []string, app *app.Data) (*commands.Data, error) {
+func AddProcess(name string, args []string, app *app.Data) (*command.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]

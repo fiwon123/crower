@@ -4,14 +4,14 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 )
 
 // Update command based on the key value.
 // Old values will be used if not specified in the data.Command structure.
-func UpdateCommand(key string, newName string, newAlias []string, newExec string, app *app.Data) (*commands.Data, *commands.Data, error) {
+func UpdateCommand(key string, newName string, newAlias []string, newExec string, app *app.Data) (*command.Data, *command.Data, error) {
 
-	newCommand := commands.NewCommand(newName, newAlias, newExec)
+	newCommand := command.New(newName, newAlias, newExec)
 
 	oldCommand := app.AllCommandsByName.Get(key)
 	if oldCommand != nil {
@@ -26,7 +26,7 @@ func UpdateCommand(key string, newName string, newAlias []string, newExec string
 	return oldCommand, newCommand, fmt.Errorf("couldn't find command by name or alias")
 }
 
-func performUpdate(oldCommand *commands.Data, newCommand *commands.Data, app *app.Data) error {
+func performUpdate(oldCommand *command.Data, newCommand *command.Data, app *app.Data) error {
 
 	err := canUpdate(newCommand, app)
 	if err != nil {
@@ -70,7 +70,7 @@ func performUpdate(oldCommand *commands.Data, newCommand *commands.Data, app *ap
 	return nil
 }
 
-func canUpdate(newCommand *commands.Data, app *app.Data) error {
+func canUpdate(newCommand *command.Data, app *app.Data) error {
 	if app.AllCommandsByName.Get(newCommand.Name) != nil {
 		return fmt.Errorf("command name already in use: %v", newCommand.Name)
 	}

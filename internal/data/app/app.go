@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/pkg/crowlog"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -17,12 +17,12 @@ type Data struct {
 	History            history.Data
 	LoggerInfo         crowlog.LoggerInfo
 	OrderKeys          []string
-	AllCommandsByAlias commands.MapData
-	AllCommandsByName  commands.MapData
+	AllCommandsByAlias command.MapData
+	AllCommandsByName  command.MapData
 }
 
 // Create a new App containing core structures to perform all crower operations.
-func NewApp(cfgFilePath string, orderKeys []string, allAliases commands.MapData, allCommands commands.MapData) *Data {
+func New(cfgFilePath string, orderKeys []string, allAliases command.MapData, allCommands command.MapData) *Data {
 
 	folderPath := filepath.Dir(cfgFilePath)
 

@@ -5,6 +5,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
+	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -19,6 +20,6 @@ func Add(payload payload.Data, app *app.Data) {
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.LoggerInfo.Info("added new command: ", app.AllCommandsByName)
 
-	app.History.Add(history.GenerateAddNote(command))
+	app.History.Add(notes.GenerateAddNote(command))
 	history.Save(app)
 }

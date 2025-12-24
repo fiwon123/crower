@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 
 	"github.com/fiwon123/crower/internal/handlers"
 )
@@ -12,7 +12,7 @@ import (
 func TestAdd(t *testing.T) {
 	t.Run("Add a single command using only name", func(t *testing.T) {
 
-		command := commands.NewCommand("c1", nil, "")
+		command := command.New("c1", nil, "")
 
 		want := true
 		app := core.InitApp("")
@@ -41,7 +41,7 @@ func TestAdd(t *testing.T) {
 		app := core.InitApp("")
 
 		for _, test := range tests {
-			command := commands.NewCommand(test.name, nil, "")
+			command := command.New(test.name, nil, "")
 
 			_, err := handlers.AddCommand(command.Name, nil, "exec", nil, app)
 			got := err == nil
@@ -70,7 +70,7 @@ func TestAdd(t *testing.T) {
 		app := core.InitApp("")
 
 		for _, test := range tests {
-			command := commands.NewCommand(test.name, []string{test.alias}, "")
+			command := command.New(test.name, []string{test.alias}, "")
 			_, err := handlers.AddCommand(command.Name, command.AllAlias, "exec", nil, app)
 			got := err == nil
 			assertAddTest(command, test.want, got, err, t)
@@ -79,7 +79,7 @@ func TestAdd(t *testing.T) {
 	})
 }
 
-func assertAddTest(command *commands.Data, want bool, got bool, err error, t *testing.T) {
+func assertAddTest(command *command.Data, want bool, got bool, err error, t *testing.T) {
 	if got != want {
 		t.Errorf("error %v, command %+v got %v, want %v", err, *command, got, want)
 	}

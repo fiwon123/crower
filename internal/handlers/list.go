@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 )
 
 func List(app *app.Data) {
@@ -13,7 +13,7 @@ func List(app *app.Data) {
 	print(app.OrderKeys, app.AllCommandsByName)
 }
 
-func print(orderKeys []string, allCommands commands.MapData) {
+func print(orderKeys []string, allCommands command.MapData) {
 	fmt.Printf("%-3s %-12s %-16s %-8s \n", "Row", "Name", "Aliases", "Exec")
 	fmt.Println("------------------------------------------------")
 

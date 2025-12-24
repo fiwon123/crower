@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
 func RevertTo(content *history.Content, app *app.Data) error {
 
-	allCommands := commands.NewMapData()
+	allCommands := command.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
 
 	err := utils.ReadToml(newDataPath, &allCommands)

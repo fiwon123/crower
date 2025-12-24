@@ -1,14 +1,14 @@
-package history
+package notes
 
 import (
 	"fmt"
 	"sort"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 )
 
-func GenerateUpdateNote(oldCommand *commands.Data, newCommand *commands.Data) string {
+func GenerateUpdateNote(oldCommand *command.Data, newCommand *command.Data) string {
 
 	output := strings.Builder{}
 	output.WriteString("Updated:")

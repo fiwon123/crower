@@ -1,4 +1,4 @@
-package commands
+package command
 
 type Data struct {
 	Name     string
@@ -7,7 +7,7 @@ type Data struct {
 }
 
 // Create new command.
-func NewCommand(name string, aliases []string, exec string) *Data {
+func New(name string, aliases []string, exec string) *Data {
 
 	if aliases == nil {
 		aliases = []string{}

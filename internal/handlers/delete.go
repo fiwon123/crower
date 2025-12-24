@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 )
 
 // Delete command from the cfg file.
-func DeleteCommand(name string, app *app.Data) (*commands.Data, bool) {
+func DeleteCommand(name string, app *app.Data) (*command.Data, bool) {
 	command := app.AllCommandsByName.Get(name)
 	if command == nil {
 		command = app.AllCommandsByAlias.Get(name)

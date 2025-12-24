@@ -5,6 +5,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
+	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -18,6 +19,6 @@ func AddProcess(payload payload.Data, app *app.Data) {
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.LoggerInfo.Info("added new command by process: ", app.AllCommandsByName)
 
-	app.History.Add(history.GenerateAddProcessNote(command))
+	app.History.Add(notes.GenerateAddProcessNote(command))
 	history.Save(app)
 }

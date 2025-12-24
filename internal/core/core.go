@@ -6,7 +6,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/core/operations"
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/commands"
+	"github.com/fiwon123/crower/internal/data/command"
 	op "github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/data/payload"
 
@@ -16,8 +16,8 @@ import (
 // Initialize app based on the cfg file path.
 func InitApp(cfgFilePath string) *app.Data {
 	var orderKeys []string
-	allCommands := commands.NewMapData()
-	var allAliases commands.MapData
+	allCommands := command.NewMapData()
+	var allAliases command.MapData
 
 	if cfgFilePath != "" {
 		utils.CreateFolderIfNotExists(path.Dir(cfgFilePath))
@@ -32,11 +32,11 @@ func InitApp(cfgFilePath string) *app.Data {
 		}
 		allAliases = getAliasMap(allCommands)
 	} else {
-		allCommands = commands.NewMapData()
-		allAliases = commands.NewMapData()
+		allCommands = command.NewMapData()
+		allAliases = command.NewMapData()
 	}
 
-	return app.NewApp(cfgFilePath, orderKeys, allAliases, allCommands)
+	return app.New(cfgFilePath, orderKeys, allAliases, allCommands)
 }
 
 // Determine which operation will be performed for the user.
