@@ -7,7 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/core/operations"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
-	op "github.com/fiwon123/crower/internal/data/operations"
+	op "github.com/fiwon123/crower/internal/data/operation"
 	"github.com/fiwon123/crower/internal/data/payload"
 
 	"github.com/fiwon123/crower/pkg/utils"

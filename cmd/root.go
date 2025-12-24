@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operation"
 	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +29,7 @@ var revertOp bool
 
 var checkVersion bool
 
-// Version is popualted when building with Makefile
+// Version is popualated when building with Makefile
 var Version = "vx.x.x"
 
 // rootCmd represents the base command when called without any subcommands
@@ -38,8 +38,7 @@ var rootCmd = &cobra.Command{
 	Short: "A dev tool that manages system commands to help developers in their daily workflow.",
 	Long: `A dev tool that manages system commands by executing commands via custom aliases and
 managing it with useful operations like add, edit, remove, list and more.`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:s
+
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if checkVersion {
@@ -60,34 +59,34 @@ managing it with useful operations like add, edit, remove, list and more.`,
 	},
 }
 
-func getOperation() operations.State {
+func getOperation() operation.State {
 	if addOp {
 
 		if processOp {
-			return operations.AddProcess
+			return operation.AddProcess
 		}
 
-		return operations.Add
+		return operation.Add
 
 	} else if listOp {
-		return operations.List
+		return operation.List
 	} else if resetOp {
-		return operations.Reset
+		return operation.Reset
 	} else if deleteOp {
-		return operations.Delete
+		return operation.Delete
 	} else if updateOp {
-		return operations.Update
+		return operation.Update
 	} else if openOp {
-		return operations.Open
+		return operation.Open
 	} else if processOp {
-		return operations.Process
+		return operation.Process
 	} else if historyOp {
-		return operations.History
+		return operation.History
 	} else if revertOp {
-		return operations.Revert
+		return operation.Revert
 	}
 
-	return operations.Execute
+	return operation.Execute
 
 }
 

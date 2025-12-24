@@ -1,4 +1,4 @@
-package operations
+package operation
 
 type State string
 
