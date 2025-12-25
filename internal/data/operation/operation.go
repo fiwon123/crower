@@ -4,7 +4,7 @@ type State string
 
 const (
 	Execute    State = "execute"
-	Add        State = "add"
+	Create     State = "create"
 	Process    State = "process"
 	AddProcess State = "addProcess"
 	Delete     State = "delete"

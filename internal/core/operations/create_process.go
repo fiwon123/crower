@@ -9,8 +9,8 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func AddProcess(payload payload.Data, app *app.Data) {
-	command, err := handlers.AddProcess(payload.Name, payload.Args, app)
+func CreateProcess(payload payload.Data, app *app.Data) {
+	command, err := handlers.CreateProcess(payload.Name, payload.Args, app)
 	if err != nil {
 		app.LoggerInfo.Error("Error add command by process: ", err, payload)
 		return

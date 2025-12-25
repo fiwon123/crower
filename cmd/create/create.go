@@ -30,7 +30,7 @@ crower create com1 "'echo com1'"`,
 		}
 
 		core.HandlePayload(
-			payload.New(operation.Add, args, name, allAlias, exec),
+			payload.New(operation.Create, args, name, allAlias, exec),
 			app,
 		)
 	},

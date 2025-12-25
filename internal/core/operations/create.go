@@ -10,10 +10,10 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func Add(payload payload.Data, app *app.Data) {
-	inputs.CheckAddInput(&payload.Name, &payload.Alias, &payload.Exec, app)
+func Create(payload payload.Data, app *app.Data) {
+	inputs.CheckCreateInput(&payload.Name, &payload.Alias, &payload.Exec, app)
 
-	command, err := handlers.AddCommand(payload.Name, payload.Alias, payload.Exec, payload.Args, app)
+	command, err := handlers.CreateCommand(payload.Name, payload.Alias, payload.Exec, payload.Args, app)
 
 	if err != nil {
 		app.LoggerInfo.Error("Error add command: ", err, payload)

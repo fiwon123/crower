@@ -9,20 +9,20 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
-func TestAdd(t *testing.T) {
-	t.Run("Add a single command using only name", func(t *testing.T) {
+func TestCreate(t *testing.T) {
+	t.Run("Create a single command using only name", func(t *testing.T) {
 
 		command := command.New("c1", nil, "")
 
 		want := true
 		app := core.InitApp("")
 
-		_, error := handlers.AddCommand(command.Name, nil, "exec", nil, app)
+		_, error := handlers.CreateCommand(command.Name, nil, "exec", nil, app)
 		got := error == nil
 		assertAddTest(command, want, got, error, t)
 	})
 
-	t.Run("Add multiple commands using only name", func(t *testing.T) {
+	t.Run("Create multiple commands using only name", func(t *testing.T) {
 
 		var tests = []struct {
 			name string
@@ -43,14 +43,14 @@ func TestAdd(t *testing.T) {
 		for _, test := range tests {
 			command := command.New(test.name, nil, "")
 
-			_, err := handlers.AddCommand(command.Name, nil, "exec", nil, app)
+			_, err := handlers.CreateCommand(command.Name, nil, "exec", nil, app)
 			got := err == nil
 			assertAddTest(command, test.want, got, err, t)
 		}
 
 	})
 
-	t.Run("Add multiple commands using only name, alias", func(t *testing.T) {
+	t.Run("Create multiple commands using only name, alias", func(t *testing.T) {
 
 		var tests = []struct {
 			name  string
@@ -71,7 +71,7 @@ func TestAdd(t *testing.T) {
 
 		for _, test := range tests {
 			command := command.New(test.name, []string{test.alias}, "")
-			_, err := handlers.AddCommand(command.Name, command.AllAlias, "exec", nil, app)
+			_, err := handlers.CreateCommand(command.Name, command.AllAlias, "exec", nil, app)
 			got := err == nil
 			assertAddTest(command, test.want, got, err, t)
 		}

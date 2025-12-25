@@ -11,7 +11,7 @@ import (
 )
 
 // Add command from the cfg file.
-func AddCommand(name string, alias []string, exec string, args []string, app *app.Data) (*command.Data, error) {
+func CreateCommand(name string, alias []string, exec string, args []string, app *app.Data) (*command.Data, error) {
 
 	command := command.New(name, alias, exec)
 
@@ -47,7 +47,7 @@ func AddCommand(name string, alias []string, exec string, args []string, app *ap
 	return command, nil
 }
 
-func AddProcess(name string, args []string, app *app.Data) (*command.Data, error) {
+func CreateProcess(name string, args []string, app *app.Data) (*command.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]
@@ -87,7 +87,7 @@ func AddProcess(name string, args []string, app *app.Data) (*command.Data, error
 		}
 
 		execCommand := fmt.Sprintf("flatpak run %s", appID)
-		command, err := AddCommand(name, nil, execCommand, nil, app)
+		command, err := CreateCommand(name, nil, execCommand, nil, app)
 
 		if err != nil {
 			return nil, err
@@ -96,7 +96,7 @@ func AddProcess(name string, args []string, app *app.Data) (*command.Data, error
 		return command, nil
 	} else if pathStr != "" {
 		pathStr = fmt.Sprintf("'%s'", pathStr)
-		command, err := AddCommand(name, nil, pathStr, nil, app)
+		command, err := CreateCommand(name, nil, pathStr, nil, app)
 
 		if err != nil {
 			return nil, err

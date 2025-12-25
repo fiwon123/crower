@@ -25,7 +25,7 @@ func TestUpdate(t *testing.T) {
 		}
 
 		for _, command := range mock {
-			handlers.AddCommand(
+			handlers.CreateCommand(
 				command.name, []string{command.alias}, "exec", nil,
 				app)
 		}

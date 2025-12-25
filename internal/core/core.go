@@ -44,10 +44,10 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 	switch payload.Op {
 	case op.Execute:
 		operations.Execute(payload, app)
-	case op.Add:
-		operations.Add(payload, app)
+	case op.Create:
+		operations.Create(payload, app)
 	case op.AddProcess:
-		operations.AddProcess(payload, app)
+		operations.CreateProcess(payload, app)
 	case op.Delete:
 		operations.Delete(payload, app)
 	case op.Update:
