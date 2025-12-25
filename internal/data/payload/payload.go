@@ -10,12 +10,17 @@ type Data struct {
 	Exec  string
 }
 
-func New(op operation.State, args []string, name string, alias []string, exec string) Data {
+func New(op operation.State, args []string, name string, allAlias []string, exec string) Data {
+
+	if allAlias == nil {
+		allAlias = []string{}
+	}
+
 	return Data{
 		Op:    op,
 		Args:  args,
 		Name:  name,
-		Alias: alias,
+		Alias: allAlias,
 		Exec:  exec,
 	}
 }

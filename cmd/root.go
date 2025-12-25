@@ -6,27 +6,21 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fiwon123/crower/cmd/create"
+	"github.com/fiwon123/crower/cmd/delete"
+	"github.com/fiwon123/crower/cmd/list"
+	"github.com/fiwon123/crower/cmd/open"
+	"github.com/fiwon123/crower/cmd/reset"
+	"github.com/fiwon123/crower/cmd/revert"
+	"github.com/fiwon123/crower/cmd/update"
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/data/operation"
 	"github.com/fiwon123/crower/internal/data/payload"
+	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
 var cfgFilePath string
-var addOp bool
-var deleteOp bool
-var updateOp bool
-var listOp bool
-var resetOp bool
-var index int
-var name string
-var exec string
-var alias []string
-var openOp bool
-var processOp bool
-var historyOp bool
-var revertOp bool
-
 var checkVersion bool
 
 // Version is popualated when building with Makefile
@@ -41,53 +35,21 @@ managing it with useful operations like add, edit, remove, list and more.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 
+		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
+
 		if checkVersion {
 			fmt.Println(Version)
 			return
 		}
 
-		fmt.Println("cfg", cfgFilePath)
 		app := core.InitApp(cfgFilePath)
 
-		op := getOperation()
-
 		core.HandlePayload(
-			payload.New(op, args, name, alias, exec),
+			payload.New(operation.Execute, args, "", nil, ""),
 			app,
 		)
 
 	},
-}
-
-func getOperation() operation.State {
-	if addOp {
-
-		if processOp {
-			return operation.AddProcess
-		}
-
-		return operation.Add
-
-	} else if listOp {
-		return operation.List
-	} else if resetOp {
-		return operation.Reset
-	} else if deleteOp {
-		return operation.Delete
-	} else if updateOp {
-		return operation.Update
-	} else if openOp {
-		return operation.Open
-	} else if processOp {
-		return operation.Process
-	} else if historyOp {
-		return operation.History
-	} else if revertOp {
-		return operation.Revert
-	}
-
-	return operation.Execute
-
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -100,6 +62,13 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.AddCommand(create.Cmd)
+	rootCmd.AddCommand(update.Cmd)
+	rootCmd.AddCommand(delete.Cmd)
+	rootCmd.AddCommand(list.Cmd)
+	rootCmd.AddCommand(open.Cmd)
+	rootCmd.AddCommand(reset.Cmd)
+	rootCmd.AddCommand(revert.Cmd)
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {
@@ -108,19 +77,9 @@ func init() {
 
 	defaultCfgFilePath := filepath.Join(homePath, "crower", "crower.yaml")
 
-	rootCmd.Flags().StringVar(&cfgFilePath, "config", defaultCfgFilePath, "config file (default is $HOME/.crower.yaml)")
-	rootCmd.Flags().IntVarP(&index, "index", "i", 0, "command index")
-	rootCmd.Flags().BoolVar(&addOp, "add", false, "add a command (--add ip ifconfig)")
+	// Persistent flags
+	rootCmd.PersistentFlags().StringVar(&cfgFilePath, "config", defaultCfgFilePath, "configuration path")
+
+	// Flags
 	rootCmd.Flags().BoolVarP(&checkVersion, "version", "v", false, "check current version")
-	rootCmd.Flags().BoolVar(&listOp, "list", false, "list all commands")
-	rootCmd.Flags().BoolVar(&resetOp, "reset", false, "reset all commands")
-	rootCmd.Flags().BoolVar(&updateOp, "update", false, "update command")
-	rootCmd.Flags().BoolVar(&deleteOp, "delete", false, "delete commands")
-	rootCmd.Flags().BoolVar(&openOp, "open", false, "open cfg file path")
-	rootCmd.Flags().BoolVar(&processOp, "process", false, "list all process")
-	rootCmd.Flags().BoolVar(&historyOp, "history", false, "list history")
-	rootCmd.Flags().BoolVar(&revertOp, "revert", false, "revert cfg to last one")
-	rootCmd.Flags().StringVarP(&name, "name", "n", "", "command name")
-	rootCmd.Flags().StringVarP(&exec, "exec", "e", "", `define the command (--exec "echo 'Hello World!'")`)
-	rootCmd.Flags().StringSliceVarP(&alias, "alias", "a", []string{}, `define alias (--alias 'a1,a2,a3')`)
 }
