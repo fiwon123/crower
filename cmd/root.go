@@ -30,8 +30,12 @@ var Version = "vx.x.x"
 var rootCmd = &cobra.Command{
 	Use:   "crower",
 	Short: "A dev tool that manages system commands to help developers in their daily workflow.",
-	Long: `A dev tool that manages system commands by executing commands via custom aliases and
-managing it with useful operations like add, edit, remove, list and more.`,
+	Long: `A dev tool that manages system commands to help developers in their daily workflow.
+
+It has useful operations like create, edit, remove, list and more.
+
+By default after created your first command just use it by typing "crower 'command'" or "cr 'command'"`,
+	Aliases: []string{"cr"},
 	Run: func(cmd *cobra.Command, args []string) {
 
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
