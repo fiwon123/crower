@@ -32,7 +32,6 @@ var rootCmd = &cobra.Command{
 	Short: "A dev tool that manages system commands to help developers in their daily workflow.",
 	Long: `A dev tool that manages system commands by executing commands via custom aliases and
 managing it with useful operations like add, edit, remove, list and more.`,
-
 	Run: func(cmd *cobra.Command, args []string) {
 
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
