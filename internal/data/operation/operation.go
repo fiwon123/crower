@@ -22,5 +22,6 @@ const (
 	ListHistory   State = "listHistory"
 	Reset         State = "reset"
 	Open          State = "open"
+	OpenFolder    State = "openFolder"
 	Revert        State = "revert"
 )

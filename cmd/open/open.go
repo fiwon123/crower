@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var folderFlag bool
+
 // Cmd represents the open command
 var Cmd = &cobra.Command{
 	Use:   "open",
@@ -18,12 +20,19 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
+		op := operation.Open
+		if folderFlag {
+			op = operation.OpenFolder
+		}
+
 		core.HandlePayload(
-			payload.New(operation.Open, args, "", nil, ""),
+			payload.New(op, args, "", nil, ""),
 			app,
 		)
 	},
 }
 
 func init() {
+
+	Cmd.Flags().BoolVarP(&folderFlag, "folder", "f", false, "open cfg folder")
 }

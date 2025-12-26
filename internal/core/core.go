@@ -80,7 +80,9 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 	case op.Reset:
 		operations.Reset(app)
 	case op.Open:
-		operations.Open(app)
+		operations.Open(payload.Args, app)
+	case op.OpenFolder:
+		operations.OpenFolder(payload.Args, app)
 	case op.ListProcess:
 		operations.ListProcess(payload, app)
 	case op.ListHistory:
