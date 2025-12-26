@@ -8,6 +8,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var folderFlag bool
+var fileFlag bool
+
 // Cmd represents the search command
 var Cmd = &cobra.Command{
 	Use:   "search",
@@ -20,13 +23,23 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
+		op := operation.Search
+		if folderFlag && fileFlag {
+			op = operation.SearchFileAndFolder
+		} else if folderFlag {
+			op = operation.SearchFolder
+		} else if fileFlag {
+			op = operation.SearchFile
+		}
+
 		core.HandlePayload(
-			payload.New(operation.Search, args, "", nil, ""),
+			payload.New(op, args, "", nil, ""),
 			app,
 		)
 	},
 }
 
 func init() {
-
+	Cmd.Flags().BoolVarP(&fileFlag, "file", "i", false, "search for file name")
+	Cmd.Flags().BoolVarP(&folderFlag, "folder", "f", false, "search for folder name")
 }
