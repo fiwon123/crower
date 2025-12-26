@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/core/operations"
 	"github.com/fiwon123/crower/internal/data/app"
@@ -20,7 +20,7 @@ func InitApp(cfgFilePath string) *app.Data {
 	var allAliases command.MapData
 
 	if cfgFilePath != "" {
-		utils.CreateFolderIfNotExists(path.Dir(cfgFilePath))
+		utils.CreateFolderIfNotExists(filepath.Dir(cfgFilePath))
 		utils.CreateFileIfNotExists(cfgFilePath)
 		fmt.Println("cfgfilepath: ", cfgFilePath)
 
