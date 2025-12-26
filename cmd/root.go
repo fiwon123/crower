@@ -23,6 +23,10 @@ import (
 var cfgFilePath string
 var checkVersion bool
 
+var last bool
+var createFlag bool
+var updateFlag bool
+
 // Version is popualated when building with Makefile
 var Version = "vx.x.x"
 
@@ -48,8 +52,17 @@ By default after created your first command just use it by typing "crower 'comma
 
 		app := core.InitApp(cfgFilePath)
 
+		op := operation.Execute
+		if last {
+			op = operation.ExecuteLast
+		} else if createFlag {
+			op = operation.ExecuteCreate
+		} else if updateFlag {
+			op = operation.ExecuteUpdate
+		}
+
 		core.HandlePayload(
-			payload.New(operation.Execute, args, "", nil, ""),
+			payload.New(op, args, "", nil, ""),
 			app,
 		)
 
@@ -86,4 +99,7 @@ func init() {
 
 	// Flags
 	rootCmd.Flags().BoolVarP(&checkVersion, "version", "v", false, "check current version")
+	rootCmd.Flags().BoolVarP(&last, "last", "l", false, "execute recent executed command")
+	rootCmd.Flags().BoolVarP(&createFlag, "create", "c", false, "execute recent created command")
+	rootCmd.Flags().BoolVarP(&updateFlag, "update", "x", false, "execute recent updated command")
 }

@@ -4,6 +4,9 @@ type State string
 
 const (
 	Execute       State = "execute"
+	ExecuteLast   State = "executeLast"
+	ExecuteCreate State = "executeCreate"
+	ExecuteUpdate State = "executeUpdate"
 	Create        State = "create"
 	CreateProcess State = "createProcess"
 	Delete        State = "delete"
