@@ -12,6 +12,10 @@ var name string
 var allAlias []string
 var exec string
 
+var last bool
+var create bool
+var execute bool
+
 // Cmd represents the update command
 var Cmd = &cobra.Command{
 	Use:   "update",
@@ -22,8 +26,17 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
+		op := operation.Update
+		if last {
+			op = operation.UpdateLast
+		} else if create {
+			op = operation.UpdateCreate
+		} else if execute {
+			op = operation.UpdateExecute
+		}
+
 		core.HandlePayload(
-			payload.New(operation.Update, args, name, allAlias, exec),
+			payload.New(op, args, name, allAlias, exec),
 			app,
 		)
 	},
@@ -33,4 +46,8 @@ func init() {
 	cmdsHelper.AddNameFlag(Cmd, &name)
 	cmdsHelper.AddAllAliasFlag(Cmd, &allAlias)
 	cmdsHelper.AddExecFlag(Cmd, &exec)
+
+	Cmd.Flags().BoolVarP(&last, "last", "l", false, "update recent updated command")
+	Cmd.Flags().BoolVarP(&create, "create", "c", false, "update recent created command")
+	Cmd.Flags().BoolVarP(&execute, "execute", "x", false, "update recent updated command")
 }

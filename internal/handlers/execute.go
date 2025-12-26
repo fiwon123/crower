@@ -7,10 +7,11 @@ import (
 	"runtime"
 
 	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/command"
 )
 
 // Execute command based on the user operational system (OS).
-func Execute(name string, args []string, app *app.Data) ([]byte, error) {
+func Execute(name string, args []string, app *app.Data) ([]byte, *command.Data, error) {
 
 	if name == "" && len(args) > 0 {
 		fmt.Println("args", args)
@@ -24,7 +25,7 @@ func Execute(name string, args []string, app *app.Data) ([]byte, error) {
 	}
 
 	if command == nil {
-		return nil, fmt.Errorf("command not found")
+		return nil, nil, fmt.Errorf("command not found")
 	}
 
 	if len(args) > 0 {
@@ -36,7 +37,7 @@ func Execute(name string, args []string, app *app.Data) ([]byte, error) {
 	fmt.Println(command.Exec)
 	out, err := PerformExecute(command.Exec)
 	app.LoggerInfo.Info(command.Exec)
-	return out, err
+	return out, command, err
 }
 
 func PerformExecute(ex string) ([]byte, error) {

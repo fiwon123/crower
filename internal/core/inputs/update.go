@@ -10,7 +10,7 @@ import (
 func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) bool {
 
 	if *key == "" {
-		handlers.List(app)
+		handlers.ListCommands(app)
 		input := getUserInput("Select Row", isValidInputKey, app).(string)
 		*key = input
 	}

@@ -11,7 +11,7 @@ import (
 func CheckDeleteInput(name *string, allAlias *[]string, app *app.Data) bool {
 
 	if *name == "" && len(*allAlias) == 0 {
-		handlers.List(app)
+		handlers.ListCommands(app)
 		input := getUserInput("Select Row", isValidInputKey, app).(string)
 		*name = input
 	}
@@ -24,7 +24,7 @@ func CheckDeleteInput(name *string, allAlias *[]string, app *app.Data) bool {
 	}
 
 	if command == nil {
-		handlers.List(app)
+		handlers.ListCommands(app)
 		fmt.Println("Command not found, try to select one.")
 		input := getUserInput("Select Row", isValidInputKey, app).(string)
 		*name = input

@@ -3,6 +3,8 @@ package history
 import (
 	"fmt"
 	"time"
+
+	"github.com/fiwon123/crower/internal/data/operation"
 )
 
 type Data struct {
@@ -10,10 +12,12 @@ type Data struct {
 }
 
 type Content struct {
-	Version   int
-	File      string
-	Timestemp string
-	Note      string
+	Version     int
+	File        string
+	Timestemp   string
+	Operation   operation.State
+	CommandName string
+	Note        string
 }
 
 func New() Data {
@@ -43,7 +47,31 @@ func (h *Data) GetLast() *Content {
 	return &h.AllData[len(h.AllData)-1]
 }
 
-func (h *Data) Add(note string) {
+func (h *Data) GetLastOperation(op operation.State) *Content {
+	lenAllData := len(h.AllData)
+
+	if lenAllData == 0 {
+		return nil
+	}
+
+	currentIndex := lenAllData - 1
+	for currentIndex >= 0 {
+		if h.AllData[currentIndex].Operation == op {
+			break
+
+		}
+
+		currentIndex -= 1
+	}
+
+	if currentIndex < 0 {
+		return nil
+	}
+
+	return &h.AllData[currentIndex]
+}
+
+func (h *Data) Add(op operation.State, commandName string, note string) {
 
 	version := 1
 	if len(h.AllData) != 0 {
@@ -52,10 +80,12 @@ func (h *Data) Add(note string) {
 	}
 
 	data := Content{
-		Version:   version,
-		File:      fmt.Sprintf("%05d.yaml", version),
-		Timestemp: time.Now().Format(time.RFC3339),
-		Note:      note,
+		Version:     version,
+		File:        fmt.Sprintf("%05d.yaml", version),
+		Timestemp:   time.Now().Format(time.RFC3339),
+		Operation:   op,
+		CommandName: commandName,
+		Note:        note,
 	}
 
 	h.AllData = append(h.AllData, data)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/operation"
 	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
@@ -36,6 +37,6 @@ func Delete(payload payload.Data, app *app.Data) {
 	app.LoggerInfo.Info("deleted command: ", app.AllCommandsByName)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
-	app.History.Add(notes.GenerateDeleteNote(command))
+	app.History.Add(operation.Delete, command.Name, notes.GenerateDeleteNote(command))
 	history.Save(app)
 }

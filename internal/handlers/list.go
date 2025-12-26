@@ -6,9 +6,10 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func List(app *app.Data) {
+func ListCommands(app *app.Data) {
 	fmt.Println("------------------------------------------------")
 	print(app.OrderKeys, app.AllCommandsByName)
 }
@@ -21,4 +22,25 @@ func print(orderKeys []string, allCommands command.MapData) {
 		command := allCommands.Get(key)
 		fmt.Printf("%-3d %-12s %-16v %-8s \n", i, command.Name, strings.Join(command.AllAlias, ","), command.Exec)
 	}
+}
+
+// List all ListProcess running on user operational system (OS).
+func ListProcess(args []string, app *app.Data) {
+
+	partName := ""
+	if len(args) > 0 {
+		partName = args[0]
+	}
+
+	err := utils.ListAllProcess(partName, true)
+	if err != nil {
+		app.LoggerInfo.Error("Error getting processes:", err)
+	}
+}
+
+func ListHistory(app *app.Data) error {
+
+	app.History.List()
+
+	return nil
 }

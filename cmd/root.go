@@ -36,6 +36,7 @@ It has useful operations like create, edit, remove, list and more.
 
 By default after created your first command just use it by typing "crower 'command'" or "cr 'command'"`,
 	Aliases: []string{"cr"},
+	Args:    cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)

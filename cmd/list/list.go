@@ -23,9 +23,9 @@ var Cmd = &cobra.Command{
 
 		op := operation.List
 		if process {
-			op = operation.Process
+			op = operation.ListProcess
 		} else if history {
-			op = operation.History
+			op = operation.ListHistory
 		}
 
 		core.HandlePayload(

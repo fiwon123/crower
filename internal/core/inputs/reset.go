@@ -9,7 +9,7 @@ import (
 
 func CheckResetInput(app *app.Data) bool {
 	fmt.Println("-----------------------------------------")
-	handlers.List(app)
+	handlers.ListCommands(app)
 
 	fmt.Println()
 	fmt.Println("All commands will be erased...")

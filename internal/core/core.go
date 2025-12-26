@@ -45,23 +45,34 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 	case op.Execute:
 		operations.Execute(payload, app)
 	case op.Create:
-		operations.Create(payload, app)
-	case op.AddProcess:
+		operations.CreateCommand(payload, app)
+	case op.CreateProcess:
 		operations.CreateProcess(payload, app)
 	case op.Delete:
 		operations.Delete(payload, app)
 	case op.Update:
-		operations.Update(payload, app)
+		key := ""
+		if len(payload.Args) != 0 {
+			key = payload.Args[0]
+		}
+
+		operations.Update(key, payload, app)
+	case op.UpdateLast:
+		operations.UpdateLast(payload, app)
+	case op.UpdateCreate:
+		operations.UpdateLastCreate(payload, app)
+	case op.UpdateExecute:
+		operations.UpdateLastExecute(payload, app)
 	case op.List:
-		operations.List(app)
+		operations.ListCommands(app)
 	case op.Reset:
 		operations.Reset(app)
 	case op.Open:
 		operations.Open(app)
-	case op.Process:
-		operations.Process(payload, app)
-	case op.History:
-		operations.History(app)
+	case op.ListProcess:
+		operations.ListProcess(payload, app)
+	case op.ListHistory:
+		operations.ListHistory(app)
 	case op.Revert:
 		operations.Revert(app)
 	}
