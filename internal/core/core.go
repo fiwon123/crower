@@ -89,5 +89,7 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 		operations.ListHistory(app)
 	case op.Revert:
 		operations.Revert(app)
+	case op.Search:
+		operations.Search(payload.Args, app)
 	}
 }

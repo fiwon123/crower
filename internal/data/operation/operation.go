@@ -24,4 +24,5 @@ const (
 	Open          State = "open"
 	OpenFolder    State = "openFolder"
 	Revert        State = "revert"
+	Search        State = "search"
 )
