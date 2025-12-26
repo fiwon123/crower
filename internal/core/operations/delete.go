@@ -40,3 +40,48 @@ func Delete(payload payload.Data, app *app.Data) {
 	app.History.Add(operation.Delete, command.Name, notes.GenerateDeleteNote(command))
 	history.Save(app)
 }
+
+func DeleteLastCreate(payload payload.Data, app *app.Data) {
+	payload.Op = operation.Create
+	content := history.GetLast(payload.Op, app)
+
+	if content == nil {
+		fmt.Println("command doesn't exist")
+		return
+	}
+
+	payload.Name = content.CommandName
+
+	payload.Op = operation.Delete
+	Delete(payload, app)
+}
+
+func DeleteLastUpdate(payload payload.Data, app *app.Data) {
+	payload.Op = operation.Update
+	content := history.GetLast(payload.Op, app)
+
+	if content == nil {
+		fmt.Println("command doesn't exist")
+		return
+	}
+
+	payload.Name = content.CommandName
+
+	payload.Op = operation.Delete
+	Delete(payload, app)
+}
+
+func DeleteLastExecute(payload payload.Data, app *app.Data) {
+	payload.Op = operation.Execute
+	content := history.GetLast(payload.Op, app)
+
+	if content == nil {
+		fmt.Println("command doesn't exist")
+		return
+	}
+
+	payload.Name = content.CommandName
+
+	payload.Op = operation.Delete
+	Delete(payload, app)
+}

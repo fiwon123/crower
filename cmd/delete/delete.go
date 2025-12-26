@@ -12,6 +12,10 @@ var name string
 var allAlias []string
 var exec string
 
+var createFlag bool
+var updateFlag bool
+var executeFlag bool
+
 // Cmd represents the delete command
 var Cmd = &cobra.Command{
 	Use:   "delete",
@@ -22,8 +26,17 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
+		op := operation.Delete
+		if createFlag {
+			op = operation.DeleteCreate
+		} else if updateFlag {
+			op = operation.DeleteUpdate
+		} else if executeFlag {
+			op = operation.DeleteExecute
+		}
+
 		core.HandlePayload(
-			payload.New(operation.Delete, args, name, allAlias, exec),
+			payload.New(op, args, name, allAlias, exec),
 			app,
 		)
 	},
@@ -33,4 +46,8 @@ func init() {
 	cmdsHelper.AddNameFlag(Cmd, &name)
 	cmdsHelper.AddAllAliasFlag(Cmd, &allAlias)
 	cmdsHelper.AddExecFlag(Cmd, &exec)
+
+	Cmd.Flags().BoolVarP(&createFlag, "create", "c", false, "delete recent created command")
+	Cmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "delete recent updated command")
+	Cmd.Flags().BoolVarP(&executeFlag, "execute", "x", false, "delete recent executed command")
 }

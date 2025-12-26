@@ -56,6 +56,12 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 		operations.CreateProcess(payload, app)
 	case op.Delete:
 		operations.Delete(payload, app)
+	case op.DeleteCreate:
+		operations.DeleteLastCreate(payload, app)
+	case op.DeleteUpdate:
+		operations.DeleteLastUpdate(payload, app)
+	case op.DeleteExecute:
+		operations.DeleteLastExecute(payload, app)
 	case op.Update:
 		key := ""
 		if len(payload.Args) != 0 {

@@ -101,5 +101,5 @@ func init() {
 	rootCmd.Flags().BoolVarP(&checkVersion, "version", "v", false, "check current version")
 	rootCmd.Flags().BoolVarP(&last, "last", "l", false, "execute recent executed command")
 	rootCmd.Flags().BoolVarP(&createFlag, "create", "c", false, "execute recent created command")
-	rootCmd.Flags().BoolVarP(&updateFlag, "update", "x", false, "execute recent updated command")
+	rootCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "execute recent updated command")
 }
