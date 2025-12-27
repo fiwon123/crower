@@ -1,18 +1,23 @@
 APP_NAME := crower
 APP_NAME_SHORT := cr
 BUILD_DIR := build
+SCRIPTS_DIR :=scripts
+SCRIPT_NAME := add_to_path
+INJECT_VERSION:= github.com/fiwon123/crower/cmd.Version
 
 # Detect last tag and increment patch
 VERSION := $(shell git describe --tags --dirty --always)
 
 WINDOWS_BIN := $(BUILD_DIR)/$(APP_NAME).exe
 SHORT_WINDOWS_BIN := $(BUILD_DIR)/$(APP_NAME_SHORT).exe
+WINDOWS_ZIP := $(BUILD_DIR)/$(APP_NAME)_$(VERSION)_windows.zip
+WINDOWS_SCRIPT :=  $(SCRIPTS_DIR)/$(SCRIPT_NAME).bat
 
 LINUX_BIN := $(BUILD_DIR)/$(APP_NAME)
 SHORT_LINUX_BIN := $(BUILD_DIR)/$(APP_NAME_SHORT)
-
-WINDOWS_ZIP := $(BUILD_DIR)/$(APP_NAME)_$(VERSION)_windows.zip
 LINUX_TAR := $(BUILD_DIR)/$(APP_NAME)_$(VERSION)_linux.tar.gz
+LINUX_SCRIPT :=  $(SCRIPTS_DIR)/$(SCRIPT_NAME).sh
+
 
 .PHONY: all windows linux zip_linux zip_windows clean release
 
@@ -24,21 +29,21 @@ $(BUILD_DIR):
 
 # Build Windows binary
 windows: $(BUILD_DIR)
-	GOOS=windows GOARCH=amd64 go build -ldflags "-X github.com/fiwon123/crower/cmd.Version=$(VERSION)" -o $(WINDOWS_BIN)
+	GOOS=windows GOARCH=amd64 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(WINDOWS_BIN)
 	cp $(WINDOWS_BIN) $(SHORT_WINDOWS_BIN)
 
 # Build Linux binary
 linux: $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build -ldflags "-X github.com/fiwon123/crower/cmd.Version=$(VERSION)" -o  $(LINUX_BIN)
+	GOOS=linux GOARCH=amd64 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(LINUX_BIN)
 	cp $(LINUX_BIN) $(SHORT_LINUX_BIN)
 
 # Compress Windows binary
 zip_windows: windows
-	zip -j $(WINDOWS_ZIP) $(WINDOWS_BIN) $(SHORT_WINDOWS_BIN) README.md LICENSE
+	zip -j $(WINDOWS_ZIP) $(WINDOWS_BIN) $(SHORT_WINDOWS_BIN) $(WINDOWS_SCRIPT) README.md LICENSE
 
 # Compress Linux binary
 zip_linux: linux
-	tar -czvf $(LINUX_TAR) -C $(BUILD_DIR) $(notdir $(LINUX_BIN)) $(notdir $(SHORT_LINUX_BIN)) ../README.md ../LICENSE
+	tar -czvf $(LINUX_TAR) -C $(BUILD_DIR) $(notdir $(LINUX_BIN)) $(notdir $(SHORT_LINUX_BIN)) $(notdir $(LINUX_SCRIPT)) ../README.md ../LICENSE
 
 # Clean build folder
 clean:
