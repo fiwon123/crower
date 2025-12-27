@@ -57,13 +57,14 @@ func PerformExecute(ex string) ([]byte, error) {
 }
 
 func getSplitCommand(ex string) []string {
-	tokenRe := regexp.MustCompile(`"([^"]+)"|'([^']+)'|([^\s]+)`)
+	tokenRe := regexp.MustCompile(`"([^"]*)"|'([^']*)'|([^\s]+)`)
 	matches := tokenRe.FindAllStringSubmatch(ex, -1)
 
 	var args []string
 	for _, m := range matches {
 		for i := 1; i <= 3; i++ {
 			if m[i] != "" {
+				fmt.Println(m[i])
 				args = append(args, m[i])
 				break
 			}

@@ -11,7 +11,7 @@ import (
 func Search(content string, app *app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`'start "https://duckduckgo.com/?q=%s" '`, content))
+		return PerformExecute(fmt.Sprintf(`start '' 'https://duckduckgo.com/?q=%s'`, content))
 	case "linux":
 		return PerformExecute(fmt.Sprintf(`'xdg-open "https://duckduckgo.com/?q=%s" '`, content))
 	}
