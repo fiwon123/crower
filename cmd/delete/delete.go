@@ -60,6 +60,6 @@ func init() {
 	Cmd.Flags().BoolVarP(&createFlag, "create", "c", false, "delete recent created command")
 	Cmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "delete recent updated command")
 	Cmd.Flags().BoolVarP(&executeFlag, "execute", "x", false, "delete recent executed command")
-	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "delete file by name")
-	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "delete folder by name")
+	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "delete file using folder location and name")
+	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "delete folder using folder location and name")
 }

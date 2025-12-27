@@ -9,6 +9,8 @@ const (
 	ExecuteUpdate       State = "executeUpdate"
 	Create              State = "create"
 	CreateProcess       State = "createProcess"
+	CreateFile          State = "createFile"
+	CreateFolder        State = "createFolder"
 	Delete              State = "delete"
 	DeleteCreate        State = "deleteCreate"
 	DeleteUpdate        State = "deleteUpdate"

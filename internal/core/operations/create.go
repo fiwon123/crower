@@ -1,6 +1,8 @@
 package operations
 
 import (
+	"fmt"
+
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/operation"
@@ -40,4 +42,41 @@ func CreateProcess(payload payload.Data, app *app.Data) {
 
 	app.History.Add(operation.Create, command.Name, notes.GenerateAddProcessNote(command))
 	history.Save(app)
+}
+
+func CreateFile(args []string, app *app.Data) {
+	currentPath := "./"
+	fileName := ""
+	if len(args) > 0 {
+
+		if len(args) > 1 {
+			currentPath = args[0]
+			fileName = args[1]
+		} else {
+			fileName = args[0]
+		}
+	} else {
+		fmt.Println("file name and/or folder path not specified")
+		return
+	}
+
+	handlers.CreateFile(currentPath, fileName, app)
+}
+
+func CreateFolder(args []string, app *app.Data) {
+	currentPath := "./"
+	folderName := ""
+	if len(args) > 0 {
+		if len(args) > 1 {
+			currentPath = args[0]
+			folderName = args[1]
+		} else {
+			folderName = args[0]
+		}
+	} else {
+		fmt.Println("file name and/or folder path not specified")
+		return
+	}
+
+	handlers.CreateFolder(currentPath, folderName, app)
 }

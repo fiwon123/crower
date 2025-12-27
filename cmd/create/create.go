@@ -13,6 +13,9 @@ var allAlias []string
 var exec string
 var process string
 
+var folderFlag bool
+var fileFlag bool
+
 // Cmd represents the create command
 var Cmd = &cobra.Command{
 	Use:   "create",
@@ -29,8 +32,15 @@ crower create com1 "'echo com1'"`,
 			name = process
 		}
 
+		op := operation.Create
+		if fileFlag {
+			op = operation.CreateFile
+		} else if folderFlag {
+			op = operation.CreateFolder
+		}
+
 		core.HandlePayload(
-			payload.New(operation.Create, args, name, allAlias, exec),
+			payload.New(op, args, name, allAlias, exec),
 			app,
 		)
 	},
@@ -42,4 +52,6 @@ func init() {
 	cmdsHelper.AddExecFlag(Cmd, &exec)
 
 	Cmd.Flags().StringVarP(&process, "process", "p", "", "process name or pid")
+	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "create file using folder location and name")
+	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "create folder using folder location and name")
 }

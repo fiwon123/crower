@@ -54,6 +54,10 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 		operations.CreateCommand(payload, app)
 	case op.CreateProcess:
 		operations.CreateProcess(payload, app)
+	case op.CreateFile:
+		operations.CreateFile(payload.Args, app)
+	case op.CreateFolder:
+		operations.CreateFolder(payload.Args, app)
 	case op.Delete:
 		operations.Delete(payload, app)
 	case op.DeleteCreate:
