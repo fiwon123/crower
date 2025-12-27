@@ -62,6 +62,10 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 		operations.DeleteLastUpdate(payload, app)
 	case op.DeleteExecute:
 		operations.DeleteLastExecute(payload, app)
+	case op.DeleteFile:
+		operations.DeleteFile(payload.Args, app)
+	case op.DeleteFolder:
+		operations.DeleteFolder(payload.Args, app)
 	case op.Update:
 		key := ""
 		if len(payload.Args) != 0 {

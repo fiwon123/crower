@@ -85,3 +85,40 @@ func DeleteLastExecute(payload payload.Data, app *app.Data) {
 	payload.Op = operation.Delete
 	Delete(payload, app)
 }
+
+func DeleteFile(args []string, app *app.Data) {
+	currentPath := "./"
+	fileName := ""
+	if len(args) > 0 {
+
+		if len(args) > 1 {
+			currentPath = args[0]
+			fileName = args[1]
+		} else {
+			fileName = args[0]
+		}
+	} else {
+		fmt.Println("file name and/or folder path not specified")
+		return
+	}
+
+	handlers.DeleteFile(currentPath, fileName, app)
+}
+
+func DeleteFolder(args []string, app *app.Data) {
+	currentPath := "./"
+	folderName := ""
+	if len(args) > 0 {
+		if len(args) > 1 {
+			currentPath = args[0]
+			folderName = args[1]
+		} else {
+			folderName = args[0]
+		}
+	} else {
+		fmt.Println("file name and/or folder path not specified")
+		return
+	}
+
+	handlers.DeleteFolder(currentPath, folderName, app)
+}

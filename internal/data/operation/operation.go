@@ -13,6 +13,8 @@ const (
 	DeleteCreate        State = "deleteCreate"
 	DeleteUpdate        State = "deleteUpdate"
 	DeleteExecute       State = "deleteExecute"
+	DeleteFile          State = "deleteFile"
+	DeleteFolder        State = "deleteFolder"
 	Update              State = "update"
 	UpdateLast          State = "updateLast"
 	UpdateCreate        State = "updateCreate"
