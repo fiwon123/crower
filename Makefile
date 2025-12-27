@@ -1,7 +1,7 @@
 APP_NAME := crower
 APP_NAME_SHORT := cr
 BUILD_DIR := build
-SCRIPTS_DIR :=scripts
+SCRIPTS_DIR := scripts
 SCRIPT_NAME := add_to_path
 INJECT_VERSION:= github.com/fiwon123/crower/cmd.Version
 
@@ -43,7 +43,9 @@ zip_windows: windows
 
 # Compress Linux binary
 zip_linux: linux
-	tar -czvf $(LINUX_TAR) -C $(BUILD_DIR) $(notdir $(LINUX_BIN)) $(notdir $(SHORT_LINUX_BIN)) $(notdir $(LINUX_SCRIPT)) ../README.md ../LICENSE
+	tar -czvf $(LINUX_TAR) \
+	          -C $(BUILD_DIR) $(notdir $(LINUX_BIN)) $(notdir $(SHORT_LINUX_BIN)) \
+	          -C ../$(SCRIPTS_DIR) $(notdir $(LINUX_SCRIPT)) ../README.md ../LICENSE
 
 # Clean build folder
 clean:
