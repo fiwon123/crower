@@ -28,4 +28,5 @@ const (
 	SearchFile          State = "searchFile"
 	SearchFolder        State = "searchFolder"
 	SearchFileAndFolder State = "searchFileAndFolder"
+	Extract             State = "extract"
 )

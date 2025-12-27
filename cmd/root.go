@@ -8,6 +8,7 @@ import (
 
 	"github.com/fiwon123/crower/cmd/create"
 	"github.com/fiwon123/crower/cmd/delete"
+	"github.com/fiwon123/crower/cmd/extract"
 	"github.com/fiwon123/crower/cmd/list"
 	"github.com/fiwon123/crower/cmd/open"
 	"github.com/fiwon123/crower/cmd/reset"
@@ -88,6 +89,7 @@ func init() {
 	rootCmd.AddCommand(reset.Cmd)
 	rootCmd.AddCommand(revert.Cmd)
 	rootCmd.AddCommand(search.Cmd)
+	rootCmd.AddCommand(extract.Cmd)
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {
