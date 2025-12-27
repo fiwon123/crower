@@ -64,7 +64,6 @@ func getSplitCommand(ex string) []string {
 	for _, m := range matches {
 		for i := 1; i <= 3; i++ {
 			if m[i] != "" {
-				fmt.Println(m[i])
 				args = append(args, m[i])
 				break
 			}

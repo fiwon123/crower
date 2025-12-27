@@ -23,7 +23,7 @@ func SearchFile(currentPath string, content string, app *app.Data) ([]byte, erro
 
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`'dir "%s" /s /b /a-d | findstr "%s"'`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b /a-d | findstr "%s"`, currentPath, content))
 	case "linux":
 		return PerformExecute(fmt.Sprintf(`'find "%s" -type f -name "%s"'`, currentPath, content))
 	}
@@ -35,7 +35,7 @@ func SearchFolder(currentPath string, content string, app *app.Data) ([]byte, er
 
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`'dir "%s" /s /b /ad | findstr "%s"'`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b /ad | findstr "%s"`, currentPath, content))
 	case "linux":
 		return PerformExecute(fmt.Sprintf(`'find "%s" -type d -name "%s"'`, currentPath, content))
 	}
@@ -46,7 +46,7 @@ func SearchFolder(currentPath string, content string, app *app.Data) ([]byte, er
 func SearchFileAndFolder(currentPath string, content string, app *app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`'dir "%s" /s /b | findstr "%s"'`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b | findstr "%s"`, currentPath, content))
 	case "linux":
 		return PerformExecute(fmt.Sprintf(`'find "%s" -name "%s"'`, currentPath, content))
 	}
