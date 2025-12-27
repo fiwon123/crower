@@ -1,18 +1,36 @@
 @echo off
-REM Get the folder of this batch file
-SET "SCRIPT_DIR=%~dp0"
-REM Remove trailing backslash
-SET "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+setlocal EnableExtensions EnableDelayedExpansion
 
-REM Check if already in PATH
-echo %PATH% | findstr /I /C:"%SCRIPT_DIR%" >nul
-IF %ERRORLEVEL% EQU 0 (
-    echo Folder %SCRIPT_DIR% already in PATH
-) ELSE (
-    REM Add to user PATH permanently
-    setx PATH "%PATH%;%SCRIPT_DIR%"
-    echo Folder %SCRIPT_DIR% added to PATH
-    echo Close and reopen cmd to see changes
+REM Get directory of this .bat file
+set "SCRIPT_DIR=%~dp0"
+set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
+
+REM Read User PATH
+for /f "tokens=2,*" %%A in (
+    'reg query HKCU\Environment /v Path 2^>nul'
+) do set "USERPATH=%%B"
+
+if not defined USERPATH set "USERPATH="
+
+REM Avoid duplicates
+echo !USERPATH! | find /I "%SCRIPT_DIR%" >nul
+if not errorlevel 1 (
+    echo Already in PATH:
+    echo %SCRIPT_DIR%
+    goto :notify
 )
 
+REM Write PATH
+reg add HKCU\Environment /v Path /t REG_EXPAND_SZ /d "!USERPATH!;%SCRIPT_DIR%" /f >nul
+
+echo Added to PATH:
+echo %SCRIPT_DIR%
+
+:notify
+REM Notify running applications (same as pressing Save)
+powershell -NoProfile -Command ^
+  "[Environment]::SetEnvironmentVariable('Path', [Environment]::GetEnvironmentVariable('Path','User'),'User')"
+
+echo.
+echo PATH updated. New terminals will see it immediately.
 pause
