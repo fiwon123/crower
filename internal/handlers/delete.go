@@ -40,7 +40,7 @@ func DeleteFile(folderPath string, fileName string, app *app.Data) {
 func DeleteFolder(folderPath string, folderName string, app *app.Data) {
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'rmdir /s %s'", filepath.Join(folderPath, folderName)))
+		PerformExecute(fmt.Sprintf("'rmdir %s'", filepath.Join(folderPath, folderName)))
 	case "linux":
 		PerformExecute(fmt.Sprintf("'rm -r %s'", filepath.Join(folderPath, folderName)))
 	}
