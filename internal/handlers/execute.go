@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"regexp"
 	"runtime"
+	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
@@ -44,15 +45,35 @@ func Execute(name string, args []string, app *app.Data) ([]byte, *command.Data, 
 func PerformExecute(ex string) ([]byte, error) {
 	var c *exec.Cmd
 
+	typeCommand := ""
+	splitCommands := []string{}
 	switch runtime.GOOS {
 	case "windows":
 		ex = fmt.Sprintf("/c %s", ex)
-		c = exec.Command("cmd", getSplitCommand(ex)...)
+		splitCommands = append(splitCommands, getSplitCommand(ex)...)
+		typeCommand = "cmd"
 	case "linux":
 		ex = fmt.Sprintf("-c %s", ex)
-		c = exec.Command("sh", getSplitCommand(ex)...)
+		splitCommands = append(splitCommands, getSplitCommand(ex)...)
+		typeCommand = "sh"
 	}
 
+	var commandString strings.Builder
+	commandString.WriteString("[")
+	commandString.WriteString("\"")
+	commandString.WriteString(typeCommand)
+	commandString.WriteString("\"")
+	for i := range splitCommands {
+		commandString.WriteString(", ")
+		commandString.WriteString("\"")
+		commandString.WriteString(splitCommands[i])
+		commandString.WriteString("\"")
+	}
+	commandString.WriteString("]")
+
+	fmt.Printf("Executing... : %s \n ", commandString.String())
+	fmt.Println()
+	c = exec.Command(typeCommand, splitCommands...)
 	out, err := c.CombinedOutput()
 	return out, err
 }

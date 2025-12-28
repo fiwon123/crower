@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"runtime"
+	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
 )
@@ -11,13 +12,27 @@ import (
 func Open(paths []string, app *app.Data) {
 
 	for _, f := range paths {
+		commandString := ""
+
+		var fstring strings.Builder
+		// fstring.WriteString("'")
+		fstring.WriteString(f)
+		// fstring.WriteString("'")
+
 		switch runtime.GOOS {
 		case "windows":
-			PerformExecute(fmt.Sprintf("'start %s'", f))
+			commandString = fmt.Sprintf(`start ' ' '%s'`, fstring.String())
 		case "linux":
-			PerformExecute(fmt.Sprintf("'xdg-open %s'", f))
+			commandString = fmt.Sprintf(`xdg-open ' ' '%s'`, fstring.String())
 		}
 
+		if commandString == "" {
+			fmt.Println("command")
+			return
+		}
+
+		fmt.Printf("performing execute...: %s \n", commandString)
+		PerformExecute(commandString)
 	}
 
 }
