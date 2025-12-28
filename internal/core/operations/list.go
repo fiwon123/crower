@@ -1,6 +1,8 @@
 package operations
 
 import (
+	"fmt"
+
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -16,4 +18,19 @@ func ListProcess(payload payload.Data, app *app.Data) {
 
 func ListHistory(app *app.Data) {
 	handlers.ListHistory(app)
+}
+
+func ListFolder(args []string, app *app.Data) {
+	currentPath := "./"
+	if len(args) > 0 {
+		currentPath = args[0]
+	}
+
+	out, err := handlers.ListFolder(currentPath, app)
+	if err != nil {
+		fmt.Println("failed to list folder: ", err)
+		return
+	}
+
+	fmt.Print(string(out))
 }

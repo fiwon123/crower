@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
@@ -43,4 +44,15 @@ func ListHistory(app *app.Data) error {
 	app.History.List()
 
 	return nil
+}
+
+func ListFolder(folderPath string, app *app.Data) ([]byte, error) {
+	switch runtime.GOOS {
+	case "windows":
+		return PerformExecute(fmt.Sprintf("'dir %s'", folderPath))
+	case "linux":
+		return PerformExecute(fmt.Sprintf("'ls %s'", folderPath))
+	}
+
+	return nil, nil
 }
