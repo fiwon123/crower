@@ -9,6 +9,7 @@ import (
 )
 
 var folderFlag bool
+var systemFlag bool
 
 // Cmd represents the open command
 var Cmd = &cobra.Command{
@@ -23,6 +24,8 @@ var Cmd = &cobra.Command{
 		op := operation.Open
 		if folderFlag {
 			op = operation.OpenFolder
+		} else if systemFlag {
+			op = operation.OpenSystem
 		}
 
 		core.HandlePayload(
@@ -35,4 +38,5 @@ var Cmd = &cobra.Command{
 func init() {
 
 	Cmd.Flags().BoolVarP(&folderFlag, "folder", "f", false, "open cfg folder")
+	Cmd.Flags().BoolVarP(&systemFlag, "system", "s", false, "open system variable")
 }

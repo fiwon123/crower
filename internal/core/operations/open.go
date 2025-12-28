@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"fmt"
 	"path"
 
 	"github.com/fiwon123/crower/internal/data/app"
@@ -23,4 +24,14 @@ func OpenFolder(args []string, app *app.Data) {
 	}
 
 	handlers.Open(path.Dir(currentPath), app)
+}
+
+func OpenSystem(app *app.Data) {
+	out, err := handlers.OpenSystem(app)
+	if err != nil {
+		fmt.Println("failed to open system variable: ", err)
+		return
+	}
+
+	fmt.Print(string(out))
 }

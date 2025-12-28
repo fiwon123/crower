@@ -30,6 +30,7 @@ const (
 	Reset               State = "reset"
 	Open                State = "open"
 	OpenFolder          State = "openFolder"
+	OpenSystem          State = "openSystem"
 	Revert              State = "revert"
 	Search              State = "search"
 	SearchFile          State = "searchFile"

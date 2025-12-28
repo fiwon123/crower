@@ -38,7 +38,7 @@ func ListFolder(args []string, app *app.Data) {
 func ListSystem(app *app.Data) {
 	out, err := handlers.ListSystem(app)
 	if err != nil {
-		fmt.Println("failed to list system variables")
+		fmt.Println("failed to list system variables: ", err)
 		return
 	}
 
@@ -48,7 +48,7 @@ func ListSystem(app *app.Data) {
 func ListSysPath(app *app.Data) {
 	out, err := handlers.ListSysPath(app)
 	if err != nil {
-		fmt.Println("failed to list path system variable")
+		fmt.Println("failed to list path system variable: ", err)
 		return
 	}
 

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 	"regexp"
 	"runtime"
@@ -54,6 +55,20 @@ func PerformExecute(ex string) ([]byte, error) {
 
 	out, err := c.CombinedOutput()
 	return out, err
+}
+
+func PerformInteractiveTerminal(commandName string, ex string) {
+	var c *exec.Cmd
+
+	switch runtime.GOOS {
+	case "linux":
+		c = exec.Command(commandName, ex)
+		c.Stdin = os.Stdin
+		c.Stdout = os.Stdout
+		c.Stderr = os.Stderr
+		c.Run()
+	}
+
 }
 
 func getSplitCommand(ex string) []string {

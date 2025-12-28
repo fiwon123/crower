@@ -17,3 +17,14 @@ func Open(cfgFilePath string, app *app.Data) {
 	}
 
 }
+
+func OpenSystem(app *app.Data) ([]byte, error) {
+	switch runtime.GOOS {
+	case "windows":
+		return PerformExecute("'sysdm.cpl'")
+	case "linux":
+		PerformInteractiveTerminal("nano", "~/.bashrc")
+	}
+
+	return nil, nil
+}
