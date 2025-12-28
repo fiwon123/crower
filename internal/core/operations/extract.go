@@ -7,23 +7,16 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
-func Extract(args []string, app *app.Data) {
-	folderPath := "./"
-	fileName := ""
-	outDir := folderPath
-	if len(args) > 1 {
-		folderPath = args[0]
-		fileName = args[1]
+func Extract(args []string, outDir string, app *app.Data) {
 
-		if len(args) > 2 {
-			outDir = args[2]
-		} else {
-			outDir = folderPath
-		}
-	} else {
-		fmt.Println("at least pass 3 parameters, folderPath, fileName, outDir")
+	if outDir == "" {
+		outDir = "./"
+	}
+
+	if len(args) == 0 {
+		fmt.Println("empty paths")
 		return
 	}
 
-	handlers.Extract(folderPath, fileName, outDir, app)
+	handlers.Extract(args, outDir, app)
 }

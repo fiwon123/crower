@@ -9,36 +9,23 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
-func Extract(folderPath string, fileName string, outDir string, app *app.Data) {
+func Extract(paths []string, outDir string, app *app.Data) {
 
-	currentPath := filepath.Join(folderPath, fileName)
-	multipleFiles := false
-	ext := ""
-	split := strings.Split(fileName, ".")
-	if len(split) > 0 {
-		if split[0] == "*" {
-			multipleFiles = true
+	for _, f := range paths {
+		base := filepath.Base(f)
+		split := strings.Split(base, ".")
+		ex := ""
+
+		if len(split) > 0 {
+			ex = split[len(split)-1]
 		}
 
-		ext = split[len(split)-1]
+		if ex == "" {
+			continue
+		}
+
+		performExtract(ex, f, outDir)
 	}
-
-	if multipleFiles {
-		files, err := filepath.Glob(currentPath)
-		if err != nil {
-			fmt.Println("failed invalid filename")
-			return
-		}
-
-		for _, f := range files {
-			performExtract(ext, f, outDir)
-		}
-
-		return
-
-	}
-
-	performExtract(ext, currentPath, outDir)
 
 }
 
@@ -61,6 +48,7 @@ func performExtract(ext string, filePath string, outDir string) {
 		case "windows":
 			PerformExecute(fmt.Sprintf("'tar -xf %s -C %s'", filePath, outDir))
 		case "linux":
+			fmt.Println("unzip")
 			PerformExecute(fmt.Sprintf("'unzip %s -d  %s'", filePath, outDir))
 		}
 	case "7z":

@@ -2,11 +2,12 @@ package extract
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
+	"github.com/fiwon123/crower/internal/core/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
+
+var outDirFlag string
 
 // Cmd represents the extract command
 var Cmd = &cobra.Command{
@@ -18,12 +19,10 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
-		core.HandlePayload(
-			payload.New(operation.Extract, args, "", nil, ""),
-			app,
-		)
+		operations.Extract(args, outDirFlag, app)
 	},
 }
 
 func init() {
+	Cmd.Flags().StringVarP(&outDirFlag, "out", "o", "", "out folder where to be extracted")
 }
