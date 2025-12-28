@@ -111,5 +111,9 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 		operations.CopyFile(payload.Args, app)
 	case op.CopyFolder:
 		operations.CopyFolder(payload.Args, app)
+	case op.MoveFile:
+		operations.MoveFile(payload.Args, app)
+	case op.MoveFolder:
+		operations.MoveFolder(payload.Args, app)
 	}
 }

@@ -35,4 +35,6 @@ const (
 	Extract             State = "extract"
 	CopyFile            State = "copyFile"
 	CopyFolder          State = "copyFolder"
+	MoveFile            State = "moveFile"
+	MoveFolder          State = "moveFolder"
 )
