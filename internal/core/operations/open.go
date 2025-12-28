@@ -10,20 +10,19 @@ import (
 
 func Open(args []string, app *app.Data) {
 	currentPath := app.CfgFilePath
-	if len(args) > 0 {
-		currentPath = args[0]
+	if len(args) == 0 {
+		args = append(args, currentPath)
 	}
-
-	handlers.Open(currentPath, app)
+	handlers.Open(args, app)
 }
 
 func OpenFolder(args []string, app *app.Data) {
 	currentPath := app.CfgFilePath
-	if len(args) > 0 {
-		currentPath = args[0]
+	if len(args) == 0 {
+		args = append(args, path.Dir(currentPath))
 	}
 
-	handlers.Open(path.Dir(currentPath), app)
+	handlers.Open(args, app)
 }
 
 func OpenSystem(app *app.Data) {

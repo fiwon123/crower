@@ -7,13 +7,17 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
-// Open cfg file based on user operational system(OS).
-func Open(cfgFilePath string, app *app.Data) {
-	switch runtime.GOOS {
-	case "windows":
-		PerformExecute(fmt.Sprintf("'start %s'", cfgFilePath))
-	case "linux":
-		PerformExecute(fmt.Sprintf("'xdg-open %s'", cfgFilePath))
+// Open filepath based on user operational system(OS).
+func Open(paths []string, app *app.Data) {
+
+	for _, f := range paths {
+		switch runtime.GOOS {
+		case "windows":
+			PerformExecute(fmt.Sprintf("'start %s'", f))
+		case "linux":
+			PerformExecute(fmt.Sprintf("'xdg-open %s'", f))
+		}
+
 	}
 
 }
