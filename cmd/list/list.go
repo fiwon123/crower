@@ -11,6 +11,8 @@ import (
 var process bool
 var history bool
 var folderFlag bool
+var sysPathFlag bool
+var systemFlag bool
 
 // Cmd represents the list command
 var Cmd = &cobra.Command{
@@ -29,6 +31,10 @@ var Cmd = &cobra.Command{
 			op = operation.ListHistory
 		} else if folderFlag {
 			op = operation.ListFolder
+		} else if systemFlag {
+			op = operation.ListSystem
+		} else if sysPathFlag {
+			op = operation.ListSysPath
 		}
 
 		core.HandlePayload(
@@ -43,4 +49,6 @@ func init() {
 	Cmd.Flags().BoolVarP(&process, "process", "p", false, "list all process")
 	Cmd.Flags().BoolVarP(&history, "history", "i", false, "list history")
 	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "list folder files")
+	Cmd.Flags().BoolVarP(&systemFlag, "system", "a", false, "list all system variables")
+	Cmd.Flags().BoolVarP(&sysPathFlag, "syspath", "s", false, "list path system variable")
 }

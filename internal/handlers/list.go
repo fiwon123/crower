@@ -56,3 +56,25 @@ func ListFolder(folderPath string, app *app.Data) ([]byte, error) {
 
 	return nil, nil
 }
+
+func ListSystem(*app.Data) ([]byte, error) {
+	switch runtime.GOOS {
+	case "windows":
+		return PerformExecute("'set'")
+	case "linux":
+		return PerformExecute("'printenv'")
+	}
+
+	return nil, nil
+}
+
+func ListSysPath(app *app.Data) ([]byte, error) {
+	switch runtime.GOOS {
+	case "windows":
+		return PerformExecute("'echo %PATH%'")
+	case "linux":
+		return PerformExecute("'echo $PATH'")
+	}
+
+	return nil, nil
+}

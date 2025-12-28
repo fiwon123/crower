@@ -34,3 +34,23 @@ func ListFolder(args []string, app *app.Data) {
 
 	fmt.Print(string(out))
 }
+
+func ListSystem(app *app.Data) {
+	out, err := handlers.ListSystem(app)
+	if err != nil {
+		fmt.Println("failed to list system variables")
+		return
+	}
+
+	fmt.Print(string(out))
+}
+
+func ListSysPath(app *app.Data) {
+	out, err := handlers.ListSysPath(app)
+	if err != nil {
+		fmt.Println("failed to list path system variable")
+		return
+	}
+
+	fmt.Print(string(out))
+}

@@ -25,6 +25,8 @@ const (
 	ListProcess         State = "listProcess"
 	ListHistory         State = "listHistory"
 	ListFolder          State = "listFolder"
+	ListSysPath         State = "listSysPath"
+	ListSystem          State = "listSystem"
 	Reset               State = "reset"
 	Open                State = "open"
 	OpenFolder          State = "openFolder"

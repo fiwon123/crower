@@ -91,6 +91,10 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 		operations.ListHistory(app)
 	case op.ListFolder:
 		operations.ListFolder(payload.Args, app)
+	case op.ListSystem:
+		operations.ListSystem(app)
+	case op.ListSysPath:
+		operations.ListSysPath(app)
 	case op.Reset:
 		operations.Reset(app)
 	case op.Open:
