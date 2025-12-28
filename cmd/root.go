@@ -6,10 +6,12 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/fiwon123/crower/cmd/copy"
 	"github.com/fiwon123/crower/cmd/create"
 	"github.com/fiwon123/crower/cmd/delete"
 	"github.com/fiwon123/crower/cmd/extract"
 	"github.com/fiwon123/crower/cmd/list"
+	"github.com/fiwon123/crower/cmd/move"
 	"github.com/fiwon123/crower/cmd/open"
 	"github.com/fiwon123/crower/cmd/reset"
 	"github.com/fiwon123/crower/cmd/revert"
@@ -90,6 +92,8 @@ func init() {
 	rootCmd.AddCommand(revert.Cmd)
 	rootCmd.AddCommand(search.Cmd)
 	rootCmd.AddCommand(extract.Cmd)
+	rootCmd.AddCommand(copy.Cmd)
+	rootCmd.AddCommand(move.Cmd)
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {

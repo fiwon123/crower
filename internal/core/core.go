@@ -107,5 +107,9 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 		operations.SearchFileAndFolder(payload.Args, app)
 	case op.Extract:
 		operations.Extract(payload.Args, app)
+	case op.CopyFile:
+		operations.CopyFile(payload.Args, app)
+	case op.CopyFolder:
+		operations.CopyFolder(payload.Args, app)
 	}
 }
