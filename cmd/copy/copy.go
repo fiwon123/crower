@@ -22,11 +22,8 @@ var Cmd = &cobra.Command{
 Type 'crower/cr copy "FILE_PATH" "OUTPUT_FOLDER_PATH"' to copy files to output folder
 Type 'crower/cr copy "FOLDER_PATH" "OUTPUT_FOLDER_PATH"' to copy folder to output folder
 
-You can use * to copy all name files based on file type
-
 Examples:
 	crower copy --file "C:\Users\Test\Desktop\Test\file.txt" "C:\Users\Test\Desktop\Test\Out"
-	crower copy --file "C:\Users\Test\Desktop\Test\*.txt" "C:\Users\Test\Desktop\Test\Out"
 	crower copy --folder "C:\Users\Test\Desktop\Test\Folder\" "C:\Users\Test\Desktop\Test\Out"
 `,
 	Run: func(cmd *cobra.Command, args []string) {
