@@ -14,8 +14,14 @@ var systemFlag bool
 // Cmd represents the open command
 var Cmd = &cobra.Command{
 	Use:   "open",
-	Short: "open current configuration file path",
-	Long:  `open current configuration file path`,
+	Short: "open current configuration file path, folder and system",
+	Long: `open current configuration file path, folder and system
+
+Examples:
+	crower open
+	crower open --folder "FOLDER_PATH"
+	crower open --system
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
