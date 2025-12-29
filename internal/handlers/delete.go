@@ -28,19 +28,37 @@ func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
 }
 
 func DeleteFile(filePath string, app *app.Data) {
+	var out []byte
+	var err error
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("del '%s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("del '%s'", filePath))
 	case "linux":
-		PerformExecute(fmt.Sprintf("rm '%s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("rm '%s'", filePath))
 	}
+
+	if err != nil {
+		fmt.Printf("out %s, error %v\n", out, err)
+		return
+	}
+
+	fmt.Println("result: ", string(out))
 }
 
 func DeleteFolder(folderPath string, app *app.Data) {
+	var out []byte
+	var err error
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("rmdir '%s'", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("rmdir /s /q '%s'", folderPath))
 	case "linux":
-		PerformExecute(fmt.Sprintf("rm -r '%s'", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("rm -r '%s'", folderPath))
 	}
+
+	if err != nil {
+		fmt.Printf("out %s, error %v\n", out, err)
+		return
+	}
+
+	fmt.Println("result: ", string(out))
 }

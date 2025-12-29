@@ -35,7 +35,7 @@ func Extract(paths []string, outDir string, app *app.Data) {
 			continue
 		}
 
-		fmt.Printf("result: %s \n", out)
+		fmt.Printf("result: %s \n", string(out))
 	}
 
 }
