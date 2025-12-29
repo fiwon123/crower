@@ -12,10 +12,10 @@ import (
 )
 
 const (
-	input_n   = "n"
-	input_no  = "no"
-	input_y   = "y"
-	input_yes = "yes"
+	input_n   string = "n"
+	input_no  string = "no"
+	input_y   string = "y"
+	input_yes string = "yes"
 )
 
 func checkValidAnswer(input string) bool {
@@ -55,6 +55,7 @@ func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app 
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSuffix(input, "\n")
+		input = strings.TrimSuffix(input, "\r")
 
 		if output, err = fnValid(input, app); err != nil {
 			fmt.Println(err)
@@ -78,6 +79,7 @@ func getUserConfirmation(ask string) bool {
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSuffix(input, "\n")
+		input = strings.TrimSuffix(input, "\r")
 
 		if confirmation, err = isValidConfirmation(input); err != nil {
 			fmt.Println(err)
