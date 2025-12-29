@@ -49,9 +49,9 @@ func ListHistory(app *app.Data) error {
 func ListFolder(folderPath string, app *app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf("'dir %s'", folderPath))
+		return PerformExecute(fmt.Sprintf("dir '%s'", folderPath))
 	case "linux":
-		return PerformExecute(fmt.Sprintf("'ls %s'", folderPath))
+		return PerformExecute(fmt.Sprintf("ls '%s'", folderPath))
 	}
 
 	return nil, nil
