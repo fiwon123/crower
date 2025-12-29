@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -110,20 +109,20 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 	return nil, fmt.Errorf("couldn't find the process either by pid or name")
 }
 
-func CreateFile(folderPath string, fileName string, app *app.Data) {
+func CreateFile(filePath string, app *app.Data) {
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'type nul > %s'", filepath.Join(folderPath, fileName)))
+		PerformExecute(fmt.Sprintf("'type nul > %s'", filePath))
 	case "linux":
-		PerformExecute(fmt.Sprintf("'touch %s'", filepath.Join(folderPath, fileName)))
+		PerformExecute(fmt.Sprintf("'touch %s'", filePath))
 	}
 }
 
-func CreateFolder(folderPath string, folderName string, app *app.Data) {
+func CreateFolder(folderPath string, app *app.Data) {
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'mkdir %s'", filepath.Join(folderPath, folderName)))
+		PerformExecute(fmt.Sprintf("'mkdir %s'", folderPath))
 	case "linux":
-		PerformExecute(fmt.Sprintf("'mkdir %s'", filepath.Join(folderPath, folderName)))
+		PerformExecute(fmt.Sprintf("'mkdir %s'", folderPath))
 	}
 }

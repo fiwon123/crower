@@ -45,38 +45,26 @@ func CreateProcess(payload payload.Data, app *app.Data) {
 }
 
 func CreateFile(args []string, app *app.Data) {
-	currentPath := "./"
-	fileName := ""
+	filePath := ""
 	if len(args) > 0 {
 
-		if len(args) > 1 {
-			currentPath = args[0]
-			fileName = args[1]
-		} else {
-			fileName = args[0]
-		}
+		filePath = args[0]
 	} else {
 		fmt.Println("file name and/or folder path not specified")
 		return
 	}
 
-	handlers.CreateFile(currentPath, fileName, app)
+	handlers.CreateFile(filePath, app)
 }
 
 func CreateFolder(args []string, app *app.Data) {
-	currentPath := "./"
-	folderName := ""
+	folderPath := ""
 	if len(args) > 0 {
-		if len(args) > 1 {
-			currentPath = args[0]
-			folderName = args[1]
-		} else {
-			folderName = args[0]
-		}
+		folderPath = args[0]
 	} else {
 		fmt.Println("file name and/or folder path not specified")
 		return
 	}
 
-	handlers.CreateFolder(currentPath, folderName, app)
+	handlers.CreateFolder(folderPath, app)
 }
