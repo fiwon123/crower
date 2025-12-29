@@ -20,7 +20,17 @@ var execute bool
 var Cmd = &cobra.Command{
 	Use:   "update",
 	Short: "update commands",
-	Long:  `update commands`,
+	Long: `update commands
+
+you can use interactive input just either typing 'crower update' or using optional flags as name, alias and exec
+
+Examples:
+	crower update
+	crower update --last
+	crower update --create
+	crower update --execute
+	crower update --name "test" --exec "echo t"
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
