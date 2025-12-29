@@ -2,30 +2,27 @@ package handlers
 
 import (
 	"fmt"
-	"path/filepath"
 	"runtime"
 
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
-func MoveFile(currentFolder string, fileName string, destFolder string, app *app.Data) {
-	fullPath := filepath.Join(currentFolder, fileName)
+func MoveFile(filePath string, destFolder string, app *app.Data) {
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'move %s %s'", fullPath, destFolder))
+		PerformExecute(fmt.Sprintf("move '%s' '%s'", filePath, destFolder))
 	case "linux":
-		PerformExecute(fmt.Sprintf("'mv %s %s'", fullPath, destFolder))
+		PerformExecute(fmt.Sprintf("mv '%s' '%s'", filePath, destFolder))
 	}
 
 }
 
-func MoveFolder(currentFolder string, folderName string, destFolder string, app *app.Data) {
-	fullPath := filepath.Join(currentFolder, folderName)
+func MoveFolder(folderPath string, destFolder string, app *app.Data) {
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'move %s %s'", fullPath, destFolder))
+		PerformExecute(fmt.Sprintf("move '%s' '%s'", folderPath, destFolder))
 	case "linux":
-		PerformExecute(fmt.Sprintf("'mv %s %s'", fullPath, destFolder))
+		PerformExecute(fmt.Sprintf("mv '%s' '%s'", folderPath, destFolder))
 	}
 
 }

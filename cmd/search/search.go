@@ -17,7 +17,7 @@ var Cmd = &cobra.Command{
 	Short: "search on browser by default.",
 	Long: `search on browser by default.
 
-	But can be used to search in folders too`,
+But can be used to search in folders too using either file flag or folder flag`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 

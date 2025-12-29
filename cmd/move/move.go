@@ -17,7 +17,12 @@ var folderFlag bool
 var Cmd = &cobra.Command{
 	Use:   "move",
 	Short: "move file or folder to other location",
-	Long:  `move file or folder to other location`,
+	Long: `move file or folder to other location
+
+Example:
+	crower move --file	"FILE_PATH" "OUTPUT_FOLDER_PATH"
+	crower move --folder "FOLDER_PATH" "OUTPUT_FOLDER_PATH"
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if !fileFlag && !folderFlag {
 			fmt.Println("file and folder flag not used")

@@ -8,33 +8,29 @@ import (
 )
 
 func MoveFile(args []string, app *app.Data) {
-	currentFolder := "./"
-	fileName := ""
+	filePath := ""
 	destFolder := ""
-	if len(args) > 2 {
-		currentFolder = args[0]
-		fileName = args[1]
-		destFolder = args[2]
+	if len(args) > 1 {
+		filePath = args[0]
+		destFolder = args[1]
 	} else {
-		fmt.Println("needs to specify current foder path, file name and dest folder")
+		fmt.Println("needs to specify file path and  output folder")
 		return
 	}
 
-	handlers.MoveFile(currentFolder, fileName, destFolder, app)
+	handlers.MoveFile(filePath, destFolder, app)
 }
 
 func MoveFolder(args []string, app *app.Data) {
-	currentFolder := "./"
-	folderName := ""
+	folderPath := ""
 	destFolder := ""
-	if len(args) > 2 {
-		currentFolder = args[0]
-		folderName = args[1]
-		destFolder = args[2]
+	if len(args) > 1 {
+		folderPath = args[0]
+		destFolder = args[1]
 	} else {
-		fmt.Println("needs to specify current foder path, file name and dest folder")
+		fmt.Println("needs to specify folder path and  output folder")
 		return
 	}
 
-	handlers.MoveFolder(currentFolder, folderName, destFolder, app)
+	handlers.MoveFolder(folderPath, destFolder, app)
 }
