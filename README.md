@@ -9,8 +9,8 @@ More information on Wiki page: [Link](https://github.com/fiwon123/crower/wiki)
 
 ## OS Support
 
-- Windows (cmd default to execute commands)
-- Linux (sh default to execute commands)
+- Windows (cmd to execute commands)
+- Linux (sh to execute commands)
 
 ## About
 
