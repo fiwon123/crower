@@ -110,19 +110,37 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 }
 
 func CreateFile(filePath string, app *app.Data) {
+	var out []byte
+	var err error
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'type nul > %s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("type nul > '%s'", filePath))
 	case "linux":
-		PerformExecute(fmt.Sprintf("'touch %s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("touch '%s'", filePath))
 	}
+
+	if err != nil {
+		fmt.Printf("out %s, error %v\n", out, err)
+		return
+	}
+
+	fmt.Println("result: ", string(out))
 }
 
 func CreateFolder(folderPath string, app *app.Data) {
+	var out []byte
+	var err error
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'mkdir %s'", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath))
 	case "linux":
-		PerformExecute(fmt.Sprintf("'mkdir %s'", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath))
 	}
+
+	if err != nil {
+		fmt.Printf("out %s, error %v\n", out, err)
+		return
+	}
+
+	fmt.Println("result: ", string(out))
 }
