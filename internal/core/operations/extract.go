@@ -9,10 +9,6 @@ import (
 
 func Extract(args []string, outDir string, app *app.Data) {
 
-	if outDir == "" {
-		outDir = "./"
-	}
-
 	if len(args) == 0 {
 		fmt.Println("empty paths")
 		return
