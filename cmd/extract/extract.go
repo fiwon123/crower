@@ -15,7 +15,7 @@ var Cmd = &cobra.Command{
 	Short: "extract compressed files (.zip, .tar, .tar.gz, .7z, .rar...)",
 	Long: `extract compressed files (.zip, .tar, .tar.gz, .7z, .rar...)
 
-Type 'crower/cr extract "PATH_TO_FILE"' to extract all content to the current folder
+Type 'crower/cr extract "FILE_PATH"' to extract all content to the current folder
 You can specify out to change output folder: 'crower/cr extract "COMPRESSED_FILE_PATH" --out/-o "OUTPUT_FOLDER_PATH"'
 If you have more than 1 compressed file to extract you can put * as the name file
 

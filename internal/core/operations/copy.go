@@ -8,33 +8,29 @@ import (
 )
 
 func CopyFile(args []string, app *app.Data) {
-	currentFolder := "./"
-	fileName := ""
-	destFolder := ""
-	if len(args) > 2 {
-		currentFolder = args[0]
-		fileName = args[1]
-		destFolder = args[2]
+	filePath := ""
+	outFolder := ""
+	if len(args) > 1 {
+		filePath = args[0]
+		outFolder = args[1]
 	} else {
-		fmt.Println("needs to specify current foder path, file name and dest folder")
+		fmt.Println("needs to specify file path and out folder")
 		return
 	}
 
-	handlers.CopyFile(currentFolder, fileName, destFolder, app)
+	handlers.CopyFile(filePath, outFolder, app)
 }
 
 func CopyFolder(args []string, app *app.Data) {
-	currentFolder := "./"
-	folderName := ""
-	destFolder := ""
-	if len(args) > 2 {
-		currentFolder = args[0]
-		folderName = args[1]
-		destFolder = args[2]
+	filePath := ""
+	outFolder := ""
+	if len(args) > 1 {
+		filePath = args[0]
+		outFolder = args[1]
 	} else {
-		fmt.Println("needs to specify current foder path, file name and dest folder")
+		fmt.Println("needs to specify file path and out folder")
 		return
 	}
 
-	handlers.CopyFolder(currentFolder, folderName, destFolder, app)
+	handlers.CopyFolder(filePath, outFolder, app)
 }

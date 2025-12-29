@@ -93,7 +93,7 @@ func PerformInteractiveTerminal(commandName string, ex string) {
 }
 
 func getSplitCommand(ex string) []string {
-	tokenRe := regexp.MustCompile(`"([^"]*)"|'([^']*)'|([^\s]+)`)
+	tokenRe := regexp.MustCompile(`"([^"]*)"|'([^']*)'|(\S+)`)
 	matches := tokenRe.FindAllStringSubmatch(ex, -1)
 
 	var args []string
