@@ -22,7 +22,10 @@ var Cmd = &cobra.Command{
 	Short: "create a command, file or folder",
 	Long: `create a command, file or folder
 
+you can use interactive input just either typing 'crower create' or using optional flags as name, alias and exec
+
 Example:
+	crower create
 	crower create com1 "'echo com1'"
 	crower create --file "C:\Users\Test\Desktop\Test\new_file.txt"
 	crower create --folder "C:\Users\Test\Desktop\Test\new_folder"`,
