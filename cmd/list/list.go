@@ -17,8 +17,19 @@ var systemFlag bool
 // Cmd represents the list command
 var Cmd = &cobra.Command{
 	Use:   "list",
-	Short: "list all commands by default",
-	Long:  `list all commands by default`,
+	Short: "list all commands, history, process, folder, system, path system",
+	Long: `list all commands, history, process, folder, system, path system
+
+list all commands by default
+
+Example:
+	crower --list
+	crower --list --history
+	crower --list --process
+	crower --list --folder "FOLDER_PATH"
+	crower --list --system
+	crower --list --syspath
+`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
