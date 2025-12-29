@@ -24,8 +24,13 @@ var fileFlag bool
 // Cmd represents the delete command
 var Cmd = &cobra.Command{
 	Use:   "delete",
-	Short: "delete commands",
-	Long:  `delete commands`,
+	Short: "delete command, file or folder",
+	Long: `delete command, file or folder
+
+Example:
+	crower delete com1"
+	crower delete --file "C:\Users\Test\Desktop\Test\new_file.txt"
+	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 

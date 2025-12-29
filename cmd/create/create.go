@@ -19,13 +19,13 @@ var fileFlag bool
 // Cmd represents the create command
 var Cmd = &cobra.Command{
 	Use:   "create",
-	Short: "Create a command, file or folder",
-	Long: `Create a command, file or folder
+	Short: "create a command, file or folder",
+	Long: `create a command, file or folder
 
 Example:
 	crower create com1 "'echo com1'"
-	crower create com1 "'echo com1'"
-	crower create com1 "'echo com1'"`,
+	crower create --file "C:\Users\Test\Desktop\Test\new_file.txt"
+	crower create --folder "C:\Users\Test\Desktop\Test\new_folder"`,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 

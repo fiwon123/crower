@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"path/filepath"
 	"runtime"
 
 	"github.com/fiwon123/crower/internal/data/app"
@@ -28,20 +27,20 @@ func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
 	return command, true
 }
 
-func DeleteFile(folderPath string, fileName string, app *app.Data) {
+func DeleteFile(filePath string, app *app.Data) {
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'del %s'", filepath.Join(folderPath, fileName)))
+		PerformExecute(fmt.Sprintf("del '%s'", filePath))
 	case "linux":
-		PerformExecute(fmt.Sprintf("'rm %s'", filepath.Join(folderPath, fileName)))
+		PerformExecute(fmt.Sprintf("rm '%s'", filePath))
 	}
 }
 
-func DeleteFolder(folderPath string, folderName string, app *app.Data) {
+func DeleteFolder(folderPath string, app *app.Data) {
 	switch runtime.GOOS {
 	case "windows":
-		PerformExecute(fmt.Sprintf("'rmdir %s'", filepath.Join(folderPath, folderName)))
+		PerformExecute(fmt.Sprintf("rmdir '%s'", folderPath))
 	case "linux":
-		PerformExecute(fmt.Sprintf("'rm -r %s'", filepath.Join(folderPath, folderName)))
+		PerformExecute(fmt.Sprintf("rm -r '%s'", folderPath))
 	}
 }
