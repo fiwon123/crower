@@ -7,6 +7,7 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+// Save history data on cfg file
 func Save(app *app.Data) {
 	data := app.History.GetLast()
 

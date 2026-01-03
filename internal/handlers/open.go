@@ -37,6 +37,7 @@ func Open(paths []string, app *app.Data) {
 
 }
 
+// Try to open system UI based on operational system (OS)
 func OpenSystem(app *app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":

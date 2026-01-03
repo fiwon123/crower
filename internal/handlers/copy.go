@@ -7,6 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
+// Copy file from a origin filepath to output folder
 func CopyFile(filePath string, destFolder string, app *app.Data) {
 	var out []byte
 	var err error
@@ -26,6 +27,7 @@ func CopyFile(filePath string, destFolder string, app *app.Data) {
 
 }
 
+// Copy file from a origin folderpath to output folder
 func CopyFolder(filePath string, destFolder string, app *app.Data) {
 	var out []byte
 	var err error

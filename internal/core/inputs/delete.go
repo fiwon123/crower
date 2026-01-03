@@ -8,6 +8,7 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
+// Verify parameters to process delete operation
 func CheckDeleteInput(name *string, allAlias *[]string, app *app.Data) bool {
 
 	if *name == "" && len(*allAlias) == 0 {

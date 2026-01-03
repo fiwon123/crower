@@ -20,6 +20,7 @@ type Content struct {
 	Note        string
 }
 
+// Create new History
 func New() Data {
 
 	return Data{
@@ -27,6 +28,7 @@ func New() Data {
 	}
 }
 
+// Get last content from lastIndex - 1 if possible
 func (h *Data) GetBeforeLast() *Content {
 	if len(h.AllData) == 0 {
 		return nil
@@ -39,6 +41,7 @@ func (h *Data) GetBeforeLast() *Content {
 	return &h.AllData[len(h.AllData)-2]
 }
 
+// Get last content from lastIndex
 func (h *Data) GetLast() *Content {
 	if len(h.AllData) == 0 {
 		return nil
@@ -47,6 +50,7 @@ func (h *Data) GetLast() *Content {
 	return &h.AllData[len(h.AllData)-1]
 }
 
+// Get last content based on the last operation using crower
 func (h *Data) GetLastOperation(op state.OperationEnum) *Content {
 	lenAllData := len(h.AllData)
 
@@ -71,6 +75,7 @@ func (h *Data) GetLastOperation(op state.OperationEnum) *Content {
 	return &h.AllData[currentIndex]
 }
 
+// Add new content history registering current operation, command name and a note
 func (h *Data) Add(op state.OperationEnum, commandName string, note string) {
 
 	version := 1
@@ -91,6 +96,7 @@ func (h *Data) Add(op state.OperationEnum, commandName string, note string) {
 	h.AllData = append(h.AllData, data)
 }
 
+// Remove last content
 func (h *Data) RemoveLast() {
 	if len(h.AllData) == 0 {
 		return
@@ -99,6 +105,7 @@ func (h *Data) RemoveLast() {
 	h.AllData = h.AllData[:len(h.AllData)-1]
 }
 
+// List from first to steps
 func (h *Data) ListLast(steps int) {
 
 	stop := len(h.AllData) - steps
@@ -109,6 +116,7 @@ func (h *Data) ListLast(steps int) {
 	}
 }
 
+// List from last to steps
 func (h *Data) ListGoBack(steps int) {
 	start := len(h.AllData) - 1 - steps
 
@@ -119,6 +127,7 @@ func (h *Data) ListGoBack(steps int) {
 	}
 }
 
+// List all history
 func (h *Data) List() {
 	printHeader()
 	for i := len(h.AllData) - 1; i >= 0; i-- {

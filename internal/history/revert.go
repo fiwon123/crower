@@ -10,6 +10,7 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+// Revert last operation
 func RevertTo(content *history.Content, app *app.Data) error {
 
 	allCommands := command.NewMapData()

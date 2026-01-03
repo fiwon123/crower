@@ -8,6 +8,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/command"
 )
 
+// Create a new update note
 func GenerateUpdateNote(oldCommand *command.Data, newCommand *command.Data) string {
 
 	output := strings.Builder{}

@@ -7,6 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
+// Verify parameters to process update operation
 func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) bool {
 
 	if *key == "" {

@@ -8,7 +8,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/command"
 )
 
-// Delete command from the cfg file.
+// Delete command using key
 func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
 	command := app.AllCommandsByName.Get(key)
 	if command == nil {
@@ -27,6 +27,7 @@ func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
 	return command, true
 }
 
+// Delete file from filepath
 func DeleteFile(filePath string, app *app.Data) {
 	var out []byte
 	var err error
@@ -45,6 +46,7 @@ func DeleteFile(filePath string, app *app.Data) {
 	fmt.Println("result: ", string(out))
 }
 
+// Delete folder from folderpath
 func DeleteFolder(folderPath string, app *app.Data) {
 	var out []byte
 	var err error

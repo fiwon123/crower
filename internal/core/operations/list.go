@@ -47,7 +47,7 @@ func ListSystem(app *app.Data) {
 func ListSysPath(app *app.Data) {
 	out, err := handlers.ListSysPath(app)
 	if err != nil {
-		fmt.Println("failed to list path system variable: ", err)
+		fmt.Println("failed to list system path variable: ", err)
 		return
 	}
 

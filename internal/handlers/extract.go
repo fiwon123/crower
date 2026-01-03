@@ -9,12 +9,13 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
-func Extract(paths []string, outDir string, app *app.Data) {
+// Extract compressed files in output folder path
+func Extract(paths []string, output string, app *app.Data) {
 
 	for _, f := range paths {
 
-		if outDir == "" {
-			outDir = filepath.Dir(f)
+		if output == "" {
+			output = filepath.Dir(f)
 		}
 
 		base := filepath.Base(f)
@@ -29,7 +30,7 @@ func Extract(paths []string, outDir string, app *app.Data) {
 			continue
 		}
 
-		out, err := performExtract(ext, f, outDir)
+		out, err := performExtract(ext, f, output)
 		if err != nil {
 			fmt.Printf("out %s , error %v \n", string(out), err)
 			continue

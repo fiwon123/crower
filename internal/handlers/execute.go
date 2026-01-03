@@ -13,6 +13,7 @@ import (
 )
 
 // Execute command based on the user operational system (OS).
+// Verify if command exists by name or alias and perform operation
 func Execute(name string, args []string, app *app.Data) ([]byte, *command.Data, error) {
 
 	if name == "" && len(args) > 0 {
@@ -42,6 +43,7 @@ func Execute(name string, args []string, app *app.Data) ([]byte, *command.Data, 
 	return out, command, err
 }
 
+// Perform execute operation
 func PerformExecute(ex string) ([]byte, error) {
 	var c *exec.Cmd
 
@@ -78,6 +80,7 @@ func PerformExecute(ex string) ([]byte, error) {
 	return out, err
 }
 
+// Perform operation that needs another terminal
 func PerformInteractiveTerminal(commandName string, ex string) {
 	var c *exec.Cmd
 

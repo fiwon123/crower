@@ -6,6 +6,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
+// Verify parameters to process revert operation
 func CheckRevertInput(app *app.Data) bool {
 	fmt.Println()
 	fmt.Println("New History")

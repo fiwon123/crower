@@ -19,6 +19,7 @@ func Search(content string, app *app.Data) ([]byte, error) {
 	return nil, nil
 }
 
+// Search files on folder path
 func SearchFile(currentPath string, content string, app *app.Data) ([]byte, error) {
 
 	switch runtime.GOOS {
@@ -31,6 +32,7 @@ func SearchFile(currentPath string, content string, app *app.Data) ([]byte, erro
 	return nil, nil
 }
 
+// Search folders on folder path
 func SearchFolder(currentPath string, content string, app *app.Data) ([]byte, error) {
 
 	switch runtime.GOOS {
@@ -43,6 +45,7 @@ func SearchFolder(currentPath string, content string, app *app.Data) ([]byte, er
 	return nil, nil
 }
 
+// Search files and folder on folder path
 func SearchFileAndFolder(currentPath string, content string, app *app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":

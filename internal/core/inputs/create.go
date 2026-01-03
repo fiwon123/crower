@@ -2,6 +2,7 @@ package inputs
 
 import "github.com/fiwon123/crower/internal/data/app"
 
+// Verify parameters to process create operation
 func CheckCreateInput(name *string, alias *[]string, exec *string, app *app.Data) {
 	if *name == "" {
 		*name = getUserInput("New Name ", isValidInput, app).(string)

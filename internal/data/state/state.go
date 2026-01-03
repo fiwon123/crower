@@ -1,5 +1,6 @@
 package state
 
+// all operations used on crower
 type OperationEnum string
 
 const (

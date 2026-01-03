@@ -7,6 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
+// Verify parameters to process reset operation
 func CheckResetInput(app *app.Data) bool {
 	fmt.Println("-----------------------------------------")
 	handlers.ListCommands(app)

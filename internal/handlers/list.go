@@ -10,6 +10,7 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+// List all commands in order
 func ListCommands(app *app.Data) {
 	fmt.Println("------------------------------------------------")
 	print(app.OrderKeys, app.AllCommandsByName)
@@ -39,6 +40,7 @@ func ListProcess(args []string, app *app.Data) {
 	}
 }
 
+// List all history
 func ListHistory(app *app.Data) error {
 
 	app.History.List()
@@ -46,6 +48,7 @@ func ListHistory(app *app.Data) error {
 	return nil
 }
 
+// List all files and folder from a folderpath
 func ListFolder(folderPath string, app *app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":
@@ -57,6 +60,7 @@ func ListFolder(folderPath string, app *app.Data) ([]byte, error) {
 	return nil, nil
 }
 
+// List all system variable
 func ListSystem(*app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":
@@ -68,6 +72,7 @@ func ListSystem(*app.Data) ([]byte, error) {
 	return nil, nil
 }
 
+// List system path variable
 func ListSysPath(app *app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":

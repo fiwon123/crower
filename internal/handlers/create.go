@@ -11,7 +11,7 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-// Add command from the cfg file.
+// Create command using name, alias and exec parameters
 func CreateCommand(name string, alias []string, exec string, args []string, app *app.Data) (*command.Data, error) {
 
 	command := command.New(name, alias, exec)
@@ -48,6 +48,7 @@ func CreateCommand(name string, alias []string, exec string, args []string, app 
 	return command, nil
 }
 
+// Create command based on process name or id process
 func CreateProcess(name string, args []string, app *app.Data) (*command.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
@@ -109,6 +110,7 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 	return nil, fmt.Errorf("couldn't find the process either by pid or name")
 }
 
+// Create a new file on filepath
 func CreateFile(filePath string, app *app.Data) {
 	var out []byte
 	var err error
@@ -127,6 +129,7 @@ func CreateFile(filePath string, app *app.Data) {
 	fmt.Println("result: ", string(out))
 }
 
+// Create a new folder on folderpath
 func CreateFolder(folderPath string, app *app.Data) {
 	var out []byte
 	var err error
