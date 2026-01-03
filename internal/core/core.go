@@ -95,16 +95,16 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 	// 	operations.ListSystem(app)
 	// case op.ListSysPath:
 	// 	operations.ListSysPath(app)
-	case op.Reset:
-		operations.Reset(app)
+	// case op.Reset:
+	// 	operations.Reset(app)
 	case op.Open:
 		operations.Open(payload.Args, app)
 	case op.OpenFolder:
 		operations.OpenFolder(payload.Args, app)
 	case op.OpenSystem:
 		operations.OpenSystem(app)
-	case op.Revert:
-		operations.Revert(app)
+	// case op.Revert:
+	// 	operations.Revert(app)
 	case op.Search:
 		operations.Search(payload.Args, app)
 	case op.SearchFolder:

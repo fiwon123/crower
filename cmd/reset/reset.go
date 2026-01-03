@@ -2,8 +2,7 @@ package reset
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
+	"github.com/fiwon123/crower/internal/core/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -18,10 +17,7 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
-		core.HandlePayload(
-			payload.New(operation.Reset, args, "", nil, ""),
-			app,
-		)
+		operations.Reset(app)
 	},
 }
 
