@@ -19,7 +19,8 @@ import (
 	"github.com/fiwon123/crower/cmd/update"
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/data/operation"
+	"github.com/fiwon123/crower/internal/data/state"
+
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -56,11 +57,11 @@ By default after created your first command just use it by typing "crower 'comma
 
 		app := core.InitApp(cfgFilePath)
 		if last {
-			operations.ExecuteLast(operation.Execute, args, app)
+			operations.ExecuteLast(state.Execute, args, app)
 		} else if createFlag {
-			operations.ExecuteLast(operation.Create, args, app)
+			operations.ExecuteLast(state.Create, args, app)
 		} else if updateFlag {
-			operations.ExecuteLast(operation.Update, args, app)
+			operations.ExecuteLast(state.Update, args, app)
 		} else {
 			operations.Execute("", args, app)
 		}

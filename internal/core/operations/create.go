@@ -5,7 +5,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/operation"
+	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
@@ -25,7 +25,7 @@ func CreateCommand(name string, allAlias []string, exec string, args []string, a
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.LoggerInfo.Info("added new command: ", app.AllCommandsByName)
 
-	app.History.Add(operation.Create, command.Name, notes.GenerateAddNote(command))
+	app.History.Add(state.Create, command.Name, notes.GenerateAddNote(command))
 	history.Save(app)
 }
 
@@ -39,7 +39,7 @@ func CreateProcess(name string, args []string, app *app.Data) {
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.LoggerInfo.Info("added new command by process: ", app.AllCommandsByName)
 
-	app.History.Add(operation.Create, command.Name, notes.GenerateAddProcessNote(command))
+	app.History.Add(state.Create, command.Name, notes.GenerateAddProcessNote(command))
 	history.Save(app)
 }
 

@@ -3,7 +3,8 @@ package update
 import (
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/data/operation"
+	"github.com/fiwon123/crower/internal/data/state"
+
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -37,11 +38,11 @@ Examples:
 		app := core.InitApp(cfgFilePath)
 
 		if last {
-			operations.UpdateLast(operation.Update, name, allAlias, exec, app)
+			operations.UpdateLast(state.Update, name, allAlias, exec, app)
 		} else if create {
-			operations.UpdateLast(operation.Create, name, allAlias, exec, app)
+			operations.UpdateLast(state.Update, name, allAlias, exec, app)
 		} else if execute {
-			operations.UpdateLast(operation.Execute, name, allAlias, exec, app)
+			operations.UpdateLast(state.Update, name, allAlias, exec, app)
 		} else {
 			key := ""
 			if len(args) != 0 {

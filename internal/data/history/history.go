@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/fiwon123/crower/internal/data/operation"
+	"github.com/fiwon123/crower/internal/data/state"
 )
 
 type Data struct {
@@ -15,7 +15,7 @@ type Content struct {
 	Version     int
 	File        string
 	Timestemp   string
-	Operation   operation.State
+	Operation   state.OperationEnum
 	CommandName string
 	Note        string
 }
@@ -47,7 +47,7 @@ func (h *Data) GetLast() *Content {
 	return &h.AllData[len(h.AllData)-1]
 }
 
-func (h *Data) GetLastOperation(op operation.State) *Content {
+func (h *Data) GetLastOperation(op state.OperationEnum) *Content {
 	lenAllData := len(h.AllData)
 
 	if lenAllData == 0 {
@@ -71,7 +71,7 @@ func (h *Data) GetLastOperation(op operation.State) *Content {
 	return &h.AllData[currentIndex]
 }
 
-func (h *Data) Add(op operation.State, commandName string, note string) {
+func (h *Data) Add(op state.OperationEnum, commandName string, note string) {
 
 	version := 1
 	if len(h.AllData) != 0 {

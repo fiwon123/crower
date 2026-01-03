@@ -5,7 +5,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/operation"
+	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
@@ -18,11 +18,11 @@ func Execute(name string, args []string, app *app.Data) {
 	}
 	fmt.Println(string(output))
 
-	app.History.Add(operation.Execute, command.Name, notes.GenerateExecuteNote(command))
+	app.History.Add(state.Execute, command.Name, notes.GenerateExecuteNote(command))
 	history.Save(app)
 }
 
-func ExecuteLast(op operation.State, args []string, app *app.Data) {
+func ExecuteLast(op state.OperationEnum, args []string, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {

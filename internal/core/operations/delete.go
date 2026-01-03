@@ -6,7 +6,8 @@ import (
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/operation"
+
+	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
@@ -37,11 +38,11 @@ func Delete(name string, allAlias []string, app *app.Data) {
 	app.LoggerInfo.Info("deleted command: ", app.AllCommandsByName)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
-	app.History.Add(operation.Delete, command.Name, notes.GenerateDeleteNote(command))
+	app.History.Add(state.Delete, command.Name, notes.GenerateDeleteNote(command))
 	history.Save(app)
 }
 
-func DeleteLast(op operation.State, name string, allAlias []string, app *app.Data) {
+func DeleteLast(op state.OperationEnum, name string, allAlias []string, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {

@@ -1,0 +1,35 @@
+package state
+
+type OperationEnum string
+
+const (
+	Execute             OperationEnum = "execute"
+	Create              OperationEnum = "create"
+	CreateProcess       OperationEnum = "createProcess"
+	CreateFile          OperationEnum = "createFile"
+	CreateFolder        OperationEnum = "createFolder"
+	Delete              OperationEnum = "delete"
+	DeleteFile          OperationEnum = "deleteFile"
+	DeleteFolder        OperationEnum = "deleteFolder"
+	Update              OperationEnum = "update"
+	List                OperationEnum = "list"
+	ListProcess         OperationEnum = "listProcess"
+	ListHistory         OperationEnum = "listHistory"
+	ListFolder          OperationEnum = "listFolder"
+	ListSysPath         OperationEnum = "listSysPath"
+	ListSystem          OperationEnum = "listSystem"
+	Reset               OperationEnum = "reset"
+	Open                OperationEnum = "open"
+	OpenFolder          OperationEnum = "openFolder"
+	OpenSystem          OperationEnum = "openSystem"
+	Revert              OperationEnum = "revert"
+	Search              OperationEnum = "search"
+	SearchFile          OperationEnum = "searchFile"
+	SearchFolder        OperationEnum = "searchFolder"
+	SearchFileAndFolder OperationEnum = "searchFileAndFolder"
+	Extract             OperationEnum = "extract"
+	CopyFile            OperationEnum = "copyFile"
+	CopyFolder          OperationEnum = "copyFolder"
+	MoveFile            OperationEnum = "moveFile"
+	MoveFolder          OperationEnum = "moveFolder"
+)
