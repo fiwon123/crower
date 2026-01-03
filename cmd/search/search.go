@@ -2,8 +2,7 @@ package search
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
+	"github.com/fiwon123/crower/internal/core/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -23,19 +22,15 @@ But can be used to search in folders too using either file flag or folder flag`,
 
 		app := core.InitApp(cfgFilePath)
 
-		op := operation.Search
 		if folderFlag && fileFlag {
-			op = operation.SearchFileAndFolder
+			operations.SearchFileAndFolder(args, app)
 		} else if folderFlag {
-			op = operation.SearchFolder
+			operations.SearchFolder(args, app)
 		} else if fileFlag {
-			op = operation.SearchFile
+			operations.SearchFile(args, app)
+		} else {
+			operations.Search(args, app)
 		}
-
-		core.HandlePayload(
-			payload.New(op, args, "", nil, ""),
-			app,
-		)
 	},
 }
 

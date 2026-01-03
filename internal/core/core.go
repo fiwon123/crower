@@ -105,14 +105,14 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 	// 	operations.OpenSystem(app)
 	// case op.Revert:
 	// 	operations.Revert(app)
-	case op.Search:
-		operations.Search(payload.Args, app)
-	case op.SearchFolder:
-		operations.SearchFolder(payload.Args, app)
-	case op.SearchFile:
-		operations.SearchFile(payload.Args, app)
-	case op.SearchFileAndFolder:
-		operations.SearchFileAndFolder(payload.Args, app)
+	// case op.Search:
+	// 	operations.Search(payload.Args, app)
+	// case op.SearchFolder:
+	// 	operations.SearchFolder(payload.Args, app)
+	// case op.SearchFile:
+	// 	operations.SearchFile(payload.Args, app)
+	// case op.SearchFileAndFolder:
+	// 	operations.SearchFileAndFolder(payload.Args, app)
 	// case op.Extract:
 	// 	operations.Extract(payload.Args, app)
 	case op.CopyFile:
