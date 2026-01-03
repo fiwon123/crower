@@ -2,8 +2,7 @@ package open
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
+	"github.com/fiwon123/crower/internal/core/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -27,17 +26,14 @@ Examples:
 
 		app := core.InitApp(cfgFilePath)
 
-		op := operation.Open
 		if folderFlag {
-			op = operation.OpenFolder
+			operations.OpenFolder(args, app)
 		} else if systemFlag {
-			op = operation.OpenSystem
+			operations.OpenSystem(app)
+		} else {
+			operations.Open(args, app)
 		}
 
-		core.HandlePayload(
-			payload.New(op, args, "", nil, ""),
-			app,
-		)
 	},
 }
 
