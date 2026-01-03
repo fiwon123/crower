@@ -2,8 +2,7 @@ package list
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
+	"github.com/fiwon123/crower/internal/core/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -35,23 +34,20 @@ Example:
 
 		app := core.InitApp(cfgFilePath)
 
-		op := operation.List
 		if process {
-			op = operation.ListProcess
+			operations.ListProcess(args, app)
 		} else if history {
-			op = operation.ListHistory
+			operations.ListHistory(app)
 		} else if folderFlag {
-			op = operation.ListFolder
+			operations.ListFolder(args, app)
 		} else if systemFlag {
-			op = operation.ListSystem
+			operations.ListSystem(app)
 		} else if sysPathFlag {
-			op = operation.ListSysPath
+			operations.ListSysPath(app)
+		} else {
+			operations.ListCommands(app)
 		}
 
-		core.HandlePayload(
-			payload.New(op, args, "", nil, ""),
-			app,
-		)
 	},
 }
 

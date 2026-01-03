@@ -83,18 +83,18 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 	// 	operations.UpdateLastCreate(payload, app)
 	// case op.UpdateExecute:
 	// 	operations.UpdateLastExecute(payload, app)
-	case op.List:
-		operations.ListCommands(app)
-	case op.ListProcess:
-		operations.ListProcess(payload, app)
-	case op.ListHistory:
-		operations.ListHistory(app)
-	case op.ListFolder:
-		operations.ListFolder(payload.Args, app)
-	case op.ListSystem:
-		operations.ListSystem(app)
-	case op.ListSysPath:
-		operations.ListSysPath(app)
+	// case op.List:
+	// 	operations.ListCommands(app)
+	// case op.ListProcess:
+	// 	operations.ListProcess(payload, app)
+	// case op.ListHistory:
+	// 	operations.ListHistory(app)
+	// case op.ListFolder:
+	// 	operations.ListFolder(payload.Args, app)
+	// case op.ListSystem:
+	// 	operations.ListSystem(app)
+	// case op.ListSysPath:
+	// 	operations.ListSysPath(app)
 	case op.Reset:
 		operations.Reset(app)
 	case op.Open:
