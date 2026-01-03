@@ -70,19 +70,19 @@ func HandlePayload(payload payload.Data, app *app.Data) {
 	// 	operations.DeleteFile(payload.Args, app)
 	// case op.DeleteFolder:
 	// 	operations.DeleteFolder(payload.Args, app)
-	case op.Update:
-		key := ""
-		if len(payload.Args) != 0 {
-			key = payload.Args[0]
-		}
+	// case op.Update:
+	// 	key := ""
+	// 	if len(payload.Args) != 0 {
+	// 		key = payload.Args[0]
+	// 	}
 
-		operations.Update(key, payload, app)
-	case op.UpdateLast:
-		operations.UpdateLast(payload, app)
-	case op.UpdateCreate:
-		operations.UpdateLastCreate(payload, app)
-	case op.UpdateExecute:
-		operations.UpdateLastExecute(payload, app)
+	// 	operations.Update(key, payload, app)
+	// case op.UpdateLast:
+	// 	operations.UpdateLast(payload, app)
+	// case op.UpdateCreate:
+	// 	operations.UpdateLastCreate(payload, app)
+	// case op.UpdateExecute:
+	// 	operations.UpdateLastExecute(payload, app)
 	case op.List:
 		operations.ListCommands(app)
 	case op.ListProcess:

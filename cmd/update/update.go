@@ -2,8 +2,8 @@ package update
 
 import (
 	"github.com/fiwon123/crower/internal/core"
+	"github.com/fiwon123/crower/internal/core/operations"
 	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -36,19 +36,21 @@ Examples:
 
 		app := core.InitApp(cfgFilePath)
 
-		op := operation.Update
 		if last {
-			op = operation.UpdateLast
+			operations.UpdateLast(operation.Update, name, allAlias, exec, app)
 		} else if create {
-			op = operation.UpdateCreate
+			operations.UpdateLast(operation.Create, name, allAlias, exec, app)
 		} else if execute {
-			op = operation.UpdateExecute
+			operations.UpdateLast(operation.Execute, name, allAlias, exec, app)
+		} else {
+			key := ""
+			if len(args) != 0 {
+				key = args[0]
+			}
+
+			operations.Update(key, name, allAlias, exec, app)
 		}
 
-		core.HandlePayload(
-			payload.New(op, args, name, allAlias, exec),
-			app,
-		)
 	},
 }
 
