@@ -1,11 +1,9 @@
 package delete
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core"
+	"github.com/fiwon123/crower/internal/core/operations"
 	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -39,24 +37,20 @@ Example:
 
 		app := core.InitApp(cfgFilePath)
 
-		op := operation.Delete
 		if createFlag {
-			op = operation.DeleteCreate
+			operations.DeleteLast(operation.Create, name, allAlias, app)
 		} else if updateFlag {
-			op = operation.DeleteUpdate
+			operations.DeleteLast(operation.Update, name, allAlias, app)
 		} else if executeFlag {
-			op = operation.DeleteExecute
+			operations.DeleteLast(operation.Execute, name, allAlias, app)
 		} else if fileFlag {
-			op = operation.DeleteFile
+			operations.DeleteFile(args, app)
 		} else if folderFlag {
-			op = operation.DeleteFolder
+			operations.DeleteFolder(args, app)
+		} else {
+			operations.Delete(name, allAlias, app)
 		}
 
-		fmt.Println(op)
-		core.HandlePayload(
-			payload.New(op, args, name, allAlias, exec),
-			app,
-		)
 	},
 }
 

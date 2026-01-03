@@ -4,33 +4,33 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/core/inputs"
+	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func Delete(payload payload.Data, app *app.Data) {
+func Delete(name string, allAlias []string, app *app.Data) {
 
-	ok := inputs.CheckDeleteInput(&payload.Name, &payload.Alias, app)
+	ok := inputs.CheckDeleteInput(&name, &allAlias, app)
 	if !ok {
 		fmt.Println("Cancelling delete...")
 		return
 	}
 
-	key := payload.Name
+	key := name
 	if key == "" {
-		if len(payload.Alias) > 0 {
-			key = payload.Alias[0]
+		if len(allAlias) > 0 {
+			key = allAlias[0]
 		}
 	}
 
 	command, ok := handlers.DeleteCommand(key, app)
 	if !ok {
-		app.LoggerInfo.Error("Error delete command: ", payload)
+		app.LoggerInfo.Error("Error delete command: ", name, allAlias)
 		return
 	}
 
@@ -41,49 +41,15 @@ func Delete(payload payload.Data, app *app.Data) {
 	history.Save(app)
 }
 
-func DeleteLastCreate(payload payload.Data, app *app.Data) {
-	payload.Op = operation.Create
-	content := history.GetLast(payload.Op, app)
+func DeleteLast(op operation.State, name string, allAlias []string, app *app.Data) {
+	content := history.GetLast(op, app)
 
 	if content == nil {
-		fmt.Println("command doesn't exist")
+		cterrors.PrintCommandNotFoundError()
 		return
 	}
 
-	payload.Name = content.CommandName
-
-	payload.Op = operation.Delete
-	Delete(payload, app)
-}
-
-func DeleteLastUpdate(payload payload.Data, app *app.Data) {
-	payload.Op = operation.Update
-	content := history.GetLast(payload.Op, app)
-
-	if content == nil {
-		fmt.Println("command doesn't exist")
-		return
-	}
-
-	payload.Name = content.CommandName
-
-	payload.Op = operation.Delete
-	Delete(payload, app)
-}
-
-func DeleteLastExecute(payload payload.Data, app *app.Data) {
-	payload.Op = operation.Execute
-	content := history.GetLast(payload.Op, app)
-
-	if content == nil {
-		fmt.Println("command doesn't exist")
-		return
-	}
-
-	payload.Name = content.CommandName
-
-	payload.Op = operation.Delete
-	Delete(payload, app)
+	Delete(name, allAlias, app)
 }
 
 func DeleteFile(args []string, app *app.Data) {
