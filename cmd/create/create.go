@@ -2,8 +2,7 @@ package create
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
+	"github.com/fiwon123/crower/internal/core/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -36,19 +35,15 @@ Example:
 
 		if process != "" {
 			name = process
-		}
-
-		op := operation.Create
-		if fileFlag {
-			op = operation.CreateFile
+			operations.CreateProcess(name, args, app)
+		} else if fileFlag {
+			operations.CreateFile(args, app)
 		} else if folderFlag {
-			op = operation.CreateFolder
+			operations.CreateFolder(args, app)
+		} else {
+			operations.CreateCommand(name, allAlias, exec, args, app)
 		}
 
-		core.HandlePayload(
-			payload.New(op, args, name, allAlias, exec),
-			app,
-		)
 	},
 }
 

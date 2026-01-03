@@ -6,20 +6,19 @@ import (
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func CreateCommand(payload payload.Data, app *app.Data) {
-	inputs.CheckCreateInput(&payload.Name, &payload.Alias, &payload.Exec, app)
+func CreateCommand(name string, allAlias []string, exec string, args []string, app *app.Data) {
+	inputs.CheckCreateInput(&name, &allAlias, &exec, app)
 
-	command, err := handlers.CreateCommand(payload.Name, payload.Alias, payload.Exec, payload.Args, app)
+	command, err := handlers.CreateCommand(name, allAlias, exec, args, app)
 
 	if err != nil {
-		app.LoggerInfo.Error("Error add command: ", err, payload)
+		app.LoggerInfo.Error("Error add command: ", err, name, allAlias, exec, args)
 		return
 	}
 
@@ -30,10 +29,10 @@ func CreateCommand(payload payload.Data, app *app.Data) {
 	history.Save(app)
 }
 
-func CreateProcess(payload payload.Data, app *app.Data) {
-	command, err := handlers.CreateProcess(payload.Name, payload.Args, app)
+func CreateProcess(name string, args []string, app *app.Data) {
+	command, err := handlers.CreateProcess(name, args, app)
 	if err != nil {
-		app.LoggerInfo.Error("Error add command by process: ", err, payload)
+		app.LoggerInfo.Error("Error add command by process: ", err, name, args)
 		return
 	}
 
