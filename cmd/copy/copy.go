@@ -4,8 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/operation"
-	"github.com/fiwon123/crower/internal/data/payload"
+	"github.com/fiwon123/crower/internal/core/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -37,15 +36,12 @@ Examples:
 
 		app := core.InitApp(cfgFilePath)
 
-		op := operation.CopyFile
 		if folderFlag {
-			op = operation.CopyFolder
+			operations.CopyFolder(args, app)
+		} else {
+			operations.CopyFile(args, app)
 		}
 
-		core.HandlePayload(
-			payload.New(op, args, "", []string{}, ""),
-			app,
-		)
 	},
 }
 
