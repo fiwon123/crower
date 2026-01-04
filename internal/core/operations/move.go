@@ -1,8 +1,7 @@
 package operations
 
 import (
-	"fmt"
-
+	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 )
@@ -14,7 +13,7 @@ func MoveFile(args []string, app *app.Data) {
 		filePath = args[0]
 		destFolder = args[1]
 	} else {
-		fmt.Println("needs to specify file path and  output folder")
+		cterrors.PrintNotFileAndOutputPath()
 		return
 	}
 
@@ -28,7 +27,7 @@ func MoveFolder(args []string, app *app.Data) {
 		folderPath = args[0]
 		destFolder = args[1]
 	} else {
-		fmt.Println("needs to specify folder path and  output folder")
+		cterrors.PrintNotFileAndOutputPath()
 		return
 	}
 

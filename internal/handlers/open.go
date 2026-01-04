@@ -15,9 +15,7 @@ func Open(paths []string, app *app.Data) {
 		commandString := ""
 
 		var fstring strings.Builder
-		// fstring.WriteString("'")
 		fstring.WriteString(f)
-		// fstring.WriteString("'")
 
 		switch runtime.GOOS {
 		case "windows":

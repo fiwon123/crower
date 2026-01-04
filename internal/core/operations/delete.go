@@ -58,7 +58,7 @@ func DeleteFile(args []string, app *app.Data) {
 	if len(args) > 0 {
 		filePath = args[0]
 	} else {
-		fmt.Println("file name and/or folder path not specified")
+		cterrors.PrintNotFileAndOutputPath()
 		return
 	}
 
@@ -70,7 +70,7 @@ func DeleteFolder(args []string, app *app.Data) {
 	if len(args) > 0 {
 		folderPath = args[0]
 	} else {
-		fmt.Println("file name and/or folder path not specified")
+		cterrors.PrintNotFileAndOutputPath()
 		return
 	}
 

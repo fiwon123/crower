@@ -19,6 +19,7 @@ import (
 	"github.com/fiwon123/crower/cmd/update"
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
+	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/state"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
@@ -93,7 +94,7 @@ func init() {
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal("Error could not get user home directory, ", err)
+		log.Fatal(cterrors.GetNotUserHomeFoundString(), err)
 	}
 
 	defaultCfgFilePath := filepath.Join(homePath, "crower", "crower.yaml")

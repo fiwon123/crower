@@ -1,9 +1,9 @@
 package operations
 
 import (
-	"fmt"
 	"path/filepath"
 
+	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 )
@@ -25,7 +25,7 @@ func Extract(args []string, outDir string, app *app.Data) {
 	}
 
 	if len(paths) == 0 {
-		fmt.Println("empty paths")
+		cterrors.PrintEmptyPaths()
 		return
 	}
 

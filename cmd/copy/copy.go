@@ -1,10 +1,9 @@
 package copy
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
+	"github.com/fiwon123/crower/internal/cterrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +27,7 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if !fileFlag && !folderFlag {
-			fmt.Println("file and folder flag not used")
+			cterrors.PrintFileAndFolderFlagsNotUsed()
 			return
 		}
 

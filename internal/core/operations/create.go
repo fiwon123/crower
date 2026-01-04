@@ -1,9 +1,8 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core/inputs"
+	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -49,7 +48,7 @@ func CreateFile(args []string, app *app.Data) {
 
 		filePath = args[0]
 	} else {
-		fmt.Println("file name and/or folder path not specified")
+		cterrors.PrintNotFileAndOutputPath()
 		return
 	}
 
@@ -61,7 +60,7 @@ func CreateFolder(args []string, app *app.Data) {
 	if len(args) > 0 {
 		folderPath = args[0]
 	} else {
-		fmt.Println("file name and/or folder path not specified")
+		cterrors.PrintNotFileAndOutputPath()
 		return
 	}
 

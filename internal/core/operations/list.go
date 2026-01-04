@@ -26,28 +26,22 @@ func ListFolder(args []string, app *app.Data) {
 	}
 
 	out, err := handlers.ListFolder(currentPath, app)
-	if err != nil {
-		fmt.Println("failed to list folder: ", err)
-		return
-	}
-
-	fmt.Print(string(out))
+	assertListResult(out, err)
 }
 
 func ListSystem(app *app.Data) {
 	out, err := handlers.ListSystem(app)
-	if err != nil {
-		fmt.Println("failed to list system variables: ", err)
-		return
-	}
-
-	fmt.Print(string(out))
+	assertListResult(out, err)
 }
 
 func ListSysPath(app *app.Data) {
 	out, err := handlers.ListSysPath(app)
+	assertListResult(out, err)
+}
+
+func assertListResult(out []byte, err error) {
 	if err != nil {
-		fmt.Println("failed to list system path variable: ", err)
+		fmt.Println("failed to list: ", err, string(out))
 		return
 	}
 

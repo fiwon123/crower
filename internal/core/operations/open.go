@@ -45,7 +45,7 @@ func OpenFolder(args []string, app *app.Data) {
 func OpenSystem(app *app.Data) {
 	out, err := handlers.OpenSystem(app)
 	if err != nil {
-		fmt.Println("failed to open system variable: ", err)
+		fmt.Println("failed to open system variable: ", err, string(out))
 		return
 	}
 
