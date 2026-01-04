@@ -8,7 +8,7 @@ import (
 )
 
 // Move file from origin path to output folder path
-func MoveFile(filePath string, destFolder string, app *app.Data) {
+func MoveFile(filePath string, destFolder string, app *app.Data) error {
 	var out []byte
 	var err error
 	switch runtime.GOOS {
@@ -19,15 +19,15 @@ func MoveFile(filePath string, destFolder string, app *app.Data) {
 	}
 
 	if err != nil {
-		fmt.Printf("out %s, error %v\n", out, err)
-		return
+		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
 	fmt.Println("result: ", string(out))
+	return nil
 }
 
 // Move folder from origin path to output folder path
-func MoveFolder(folderPath string, destFolder string, app *app.Data) {
+func MoveFolder(folderPath string, destFolder string, app *app.Data) error {
 	var out []byte
 	var err error
 	switch runtime.GOOS {
@@ -38,10 +38,9 @@ func MoveFolder(folderPath string, destFolder string, app *app.Data) {
 	}
 
 	if err != nil {
-		fmt.Printf("out %s, error %v\n", out, err)
-		return
+		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
 	fmt.Println("result: ", string(out))
-
+	return nil
 }
