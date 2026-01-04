@@ -118,7 +118,7 @@ func CreateFile(filePath string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("type nul > '%s'", filePath))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("'touch %s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("\"touch '%s'\"", filePath))
 	}
 
 	if err != nil {
@@ -137,7 +137,7 @@ func CreateFolder(folderPath string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("\"mkdir '%s'\"", folderPath))
 	}
 
 	if err != nil {

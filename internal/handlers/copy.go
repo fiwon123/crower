@@ -15,7 +15,7 @@ func CopyFile(filePath string, destFolder string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("copy '%s' '%s'", filePath, destFolder))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("'cp %s %s'", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("\"cp '%s' '%s'\"", filePath, destFolder))
 	}
 
 	if err != nil {
@@ -34,7 +34,7 @@ func CopyFolder(filePath string, destFolder string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("xcopy '%s' '%s' /E /I", filePath, destFolder))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("'cp -r %s %s'", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("\"cp -r '%s' '%s'\"", filePath, destFolder))
 	}
 
 	if err != nil {
