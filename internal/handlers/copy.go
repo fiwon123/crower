@@ -8,7 +8,7 @@ import (
 )
 
 // Copy file from a origin filepath to output folder
-func CopyFile(filePath string, destFolder string, app *app.Data) {
+func CopyFile(filePath string, destFolder string, app *app.Data) error {
 	var out []byte
 	var err error
 	switch runtime.GOOS {
@@ -19,16 +19,15 @@ func CopyFile(filePath string, destFolder string, app *app.Data) {
 	}
 
 	if err != nil {
-		fmt.Printf("out %s, error %v\n", out, err)
-		return
+		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
 	fmt.Println("result: ", string(out))
-
+	return nil
 }
 
 // Copy file from a origin folderpath to output folder
-func CopyFolder(filePath string, destFolder string, app *app.Data) {
+func CopyFolder(filePath string, destFolder string, app *app.Data) error {
 	var out []byte
 	var err error
 	switch runtime.GOOS {
@@ -39,9 +38,9 @@ func CopyFolder(filePath string, destFolder string, app *app.Data) {
 	}
 
 	if err != nil {
-		fmt.Printf("out %s, error %v\n", out, err)
-		return
+		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
 	fmt.Println("result: ", string(out))
+	return nil
 }

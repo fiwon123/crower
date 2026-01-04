@@ -111,26 +111,26 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 }
 
 // Create a new file on filepath
-func CreateFile(filePath string, app *app.Data) {
+func CreateFile(filePath string, app *app.Data) error {
 	var out []byte
 	var err error
 	switch runtime.GOOS {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("type nul > '%s'", filePath))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("touch '%s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("'touch %s'", filePath))
 	}
 
 	if err != nil {
-		fmt.Printf("out %s, error %v\n", out, err)
-		return
+		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
 	fmt.Println("result: ", string(out))
+	return nil
 }
 
 // Create a new folder on folderpath
-func CreateFolder(folderPath string, app *app.Data) {
+func CreateFolder(folderPath string, app *app.Data) error {
 	var out []byte
 	var err error
 	switch runtime.GOOS {
@@ -141,9 +141,9 @@ func CreateFolder(folderPath string, app *app.Data) {
 	}
 
 	if err != nil {
-		fmt.Printf("out %s, error %v\n", out, err)
-		return
+		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
 	fmt.Println("result: ", string(out))
+	return nil
 }

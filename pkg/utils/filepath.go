@@ -16,8 +16,10 @@ func CreateFileIfNotExists(filePath string) {
 	defer file.Close()
 }
 
-func CreateFolderIfNotExists(path string) {
+func CreateFolderIfNotExists(path string) error {
 	if err := os.MkdirAll(path, 0o755); err != nil {
-		fmt.Println("Failed to create directory:", err)
+		return fmt.Errorf("Failed to create directory: %v", err)
 	}
+
+	return nil
 }

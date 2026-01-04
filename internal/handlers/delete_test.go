@@ -3,15 +3,18 @@ package handlers_test
 import (
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/handlers"
+	"github.com/fiwon123/crower/internal/helper/crtests"
 )
 
 func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using name", func(t *testing.T) {
-		app := app.New("", nil, command.NewMapData(), command.NewMapData())
+
+		app, err := crtests.InitCrowerTests()
+		if err != nil {
+			t.Fatalf("error before test: %v", err)
+		}
 
 		var mock = []struct {
 			name string
@@ -48,7 +51,11 @@ func TestDelete(t *testing.T) {
 	})
 
 	t.Run("Delete command using alias", func(t *testing.T) {
-		app := app.New("", nil, command.NewMapData(), command.NewMapData())
+
+		app, err := crtests.InitCrowerTests()
+		if err != nil {
+			t.Fatalf("error before test: %v", err)
+		}
 
 		var mock = []struct {
 			name  string
