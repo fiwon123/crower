@@ -23,7 +23,7 @@ func Open(paths []string, app *app.Data) {
 		case "windows":
 			commandString = fmt.Sprintf(`start ' ' '%s'`, fstring.String())
 		case "linux":
-			commandString = fmt.Sprintf(`xdg-open ' ' '%s'`, fstring.String())
+			commandString = fmt.Sprintf(`'xdg-open %s'`, fstring.String())
 		}
 
 		if commandString == "" {
@@ -32,7 +32,15 @@ func Open(paths []string, app *app.Data) {
 		}
 
 		fmt.Printf("performing execute...: %s \n", commandString)
-		PerformExecute(commandString)
+
+		out, err := PerformExecute(commandString)
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println(string(out))
+			return
+		}
+
+		fmt.Println(string(out))
 	}
 
 }
