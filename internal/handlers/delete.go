@@ -35,7 +35,7 @@ func DeleteFile(filePath string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("del '%s'", filePath))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("rm '%s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("\"rm '%s'\"", filePath))
 	}
 
 	if err != nil {
@@ -54,7 +54,7 @@ func DeleteFolder(folderPath string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("rmdir /s /q '%s'", folderPath))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("rm -r '%s'", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("\"rm -r '%s'\"", folderPath))
 	}
 
 	if err != nil {

@@ -21,7 +21,7 @@ func Open(paths []string, app *app.Data) error {
 		case "windows":
 			commandString = fmt.Sprintf(`start ' ' '%s'`, fstring.String())
 		case "linux":
-			commandString = fmt.Sprintf(`'xdg-open %s'`, fstring.String())
+			commandString = fmt.Sprintf(`"xdg-open '%s'"`, fstring.String())
 		}
 
 		if commandString == "" {

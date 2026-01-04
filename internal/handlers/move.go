@@ -15,7 +15,7 @@ func MoveFile(filePath string, destFolder string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("move '%s' '%s'", filePath, destFolder))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("mv '%s' '%s'", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("\"mv '%s' '%s'\"", filePath, destFolder))
 	}
 
 	if err != nil {
@@ -34,7 +34,7 @@ func MoveFolder(folderPath string, destFolder string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("move '%s' '%s'", folderPath, destFolder))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("mv '%s' '%s'", folderPath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("\"mv '%s' '%s'\"", folderPath, destFolder))
 	}
 
 	if err != nil {
