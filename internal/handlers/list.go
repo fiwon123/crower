@@ -27,7 +27,7 @@ func print(orderKeys []string, allCommands command.MapData) {
 }
 
 // List all ListProcess running on user operational system (OS).
-func ListProcess(args []string, app *app.Data) {
+func ListProcess(args []string, app *app.Data) error {
 
 	partName := ""
 	if len(args) > 0 {
@@ -37,7 +37,11 @@ func ListProcess(args []string, app *app.Data) {
 	err := utils.ListAllProcess(partName, true)
 	if err != nil {
 		app.LoggerInfo.Error("Error getting processes:", err)
+		return err
 	}
+
+	return nil
+
 }
 
 // List all history
