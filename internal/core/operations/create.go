@@ -45,7 +45,6 @@ func CreateProcess(name string, args []string, app *app.Data) {
 func CreateFile(args []string, app *app.Data) {
 	filePath := ""
 	if len(args) > 0 {
-
 		filePath = args[0]
 	} else {
 		cterrors.PrintNotFileAndOutputPath()

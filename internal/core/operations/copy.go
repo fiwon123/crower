@@ -21,15 +21,15 @@ func CopyFile(args []string, app *app.Data) {
 }
 
 func CopyFolder(args []string, app *app.Data) {
-	filePath := ""
+	folderPath := ""
 	outFolder := ""
 	if len(args) > 1 {
-		filePath = args[0]
+		folderPath = args[0]
 		outFolder = args[1]
 	} else {
 		cterrors.PrintNotFileAndOutputPath()
 		return
 	}
 
-	handlers.CopyFolder(filePath, outFolder, app)
+	handlers.CopyFolder(folderPath, outFolder, app)
 }

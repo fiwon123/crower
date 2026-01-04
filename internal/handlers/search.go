@@ -7,8 +7,8 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
-// Search based on user operational system(OS).
-func Search(content string, app *app.Data) ([]byte, error) {
+// SearchBrowser based on user operational system(OS).
+func SearchBrowser(content string, app *app.Data) ([]byte, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return PerformExecute(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s'`, content))

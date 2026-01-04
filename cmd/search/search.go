@@ -29,7 +29,7 @@ But can be used to search in folders too using either file flag or folder flag`,
 		} else if fileFlag {
 			operations.SearchFile(args, app)
 		} else {
-			operations.Search(args, app)
+			operations.SearchBrowser(args, app)
 		}
 	},
 }
