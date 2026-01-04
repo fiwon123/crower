@@ -25,7 +25,7 @@ func TestCopyFile(t *testing.T) {
 
 		err = handlers.CopyFile(newFilePath, testPaths[0], app)
 		if err != nil {
-			t.Fatalf("error before test create file: %v", err)
+			t.Fatalf("error: %v", err)
 		}
 	})
 
@@ -44,7 +44,7 @@ func TestCopyFile(t *testing.T) {
 
 		err = handlers.CopyFile(newFilePath, testPaths[0], app)
 		if err != nil {
-			t.Fatalf("error before test create file: %v", err)
+			t.Fatalf("error: %v", err)
 		}
 	})
 
@@ -67,7 +67,7 @@ func TestCopyFolder(t *testing.T) {
 
 		err = handlers.CopyFolder(newFolderPath, testPaths[0], app)
 		if err != nil {
-			t.Fatalf("error before test create folder: %v", err)
+			t.Fatalf("error: %v", err)
 		}
 	})
 
@@ -86,7 +86,7 @@ func TestCopyFolder(t *testing.T) {
 
 		err = handlers.CopyFolder(newFolderPath, testPaths[0], app)
 		if err != nil {
-			t.Fatalf("error before test create folder: %v", err)
+			t.Fatalf("error: %v", err)
 		}
 	})
 }

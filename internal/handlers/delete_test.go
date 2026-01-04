@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/handlers"
@@ -93,6 +94,87 @@ func TestDelete(t *testing.T) {
 		}
 	})
 
+}
+
+func TestDeleteFile(t *testing.T) {
+	t.Run("Delete File single name", func(t *testing.T) {
+		app, _, err := crtests.InitCrowerTests()
+		if err != nil {
+			t.Fatalf("error before test: %v", err)
+		}
+
+		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+
+		err = handlers.CreateFile(newFilePath, app)
+		if err != nil {
+			t.Fatalf("error before test create file: %v", err)
+		}
+
+		err = handlers.DeleteFile(newFilePath, app)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+	})
+
+	t.Run("Delete File using name with space", func(t *testing.T) {
+		app, _, err := crtests.InitCrowerTests()
+		if err != nil {
+			t.Fatalf("error before test: %v", err)
+		}
+
+		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file")
+
+		err = handlers.CreateFile(newFolderPath, app)
+		if err != nil {
+			t.Fatalf("error before test create file: %v", err)
+		}
+
+		err = handlers.DeleteFile(newFolderPath, app)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+	})
+}
+
+func TestDeleteFolder(t *testing.T) {
+
+	t.Run("Delete Folder single name", func(t *testing.T) {
+		app, _, err := crtests.InitCrowerTests()
+		if err != nil {
+			t.Fatalf("error before test: %v", err)
+		}
+
+		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+
+		err = handlers.CreateFolder(newFolderPath, app)
+		if err != nil {
+			t.Fatalf("error before test create folder: %v", err)
+		}
+
+		err = handlers.DeleteFolder(newFolderPath, app)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+	})
+
+	t.Run("Delete Folder using name with space", func(t *testing.T) {
+		app, _, err := crtests.InitCrowerTests()
+		if err != nil {
+			t.Fatalf("error before test: %v", err)
+		}
+
+		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
+
+		err = handlers.CreateFolder(newFolderPath, app)
+		if err != nil {
+			t.Fatalf("error before test create folder: %v", err)
+		}
+
+		err = handlers.DeleteFolder(newFolderPath, app)
+		if err != nil {
+			t.Fatalf("error: %v", err)
+		}
+	})
 }
 
 func assertDeleteTest(want bool, got bool, t *testing.T) {
