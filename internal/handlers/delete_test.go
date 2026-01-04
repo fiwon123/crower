@@ -11,7 +11,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using name", func(t *testing.T) {
 
-		app, err := crtests.InitCrowerTests()
+		app, _, err := crtests.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -52,7 +52,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using alias", func(t *testing.T) {
 
-		app, err := crtests.InitCrowerTests()
+		app, _, err := crtests.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

@@ -12,7 +12,7 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("Update command name", func(t *testing.T) {
 
-		app, err := crtests.InitCrowerTests()
+		app, _, err := crtests.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

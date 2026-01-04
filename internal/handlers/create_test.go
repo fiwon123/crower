@@ -14,7 +14,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("Create a single command using only name", func(t *testing.T) {
 
-		app, err := crtests.InitCrowerTests()
+		app, _, err := crtests.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -30,7 +30,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("Create multiple commands using only name", func(t *testing.T) {
 
-		app, err := crtests.InitCrowerTests()
+		app, _, err := crtests.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -61,7 +61,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("Create multiple commands using only name, alias", func(t *testing.T) {
 
-		app, err := crtests.InitCrowerTests()
+		app, _, err := crtests.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -93,7 +93,7 @@ func TestCreate(t *testing.T) {
 
 func TestCreateFile(t *testing.T) {
 
-	app, err := crtests.InitCrowerTests()
+	app, _, err := crtests.InitCrowerTests()
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -106,17 +106,35 @@ func TestCreateFile(t *testing.T) {
 			t.Errorf("error create file on %s: %v", newFilePath, err)
 		}
 	})
+
+	t.Run("Create file using name with space", func(t *testing.T) {
+		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file.txt")
+		err := handlers.CreateFile(newFilePath, app)
+
+		if err != nil {
+			t.Errorf("error create file on %s: %v", newFilePath, err)
+		}
+	})
 }
 
 func TestCreateFolder(t *testing.T) {
 
-	app, err := crtests.InitCrowerTests()
+	app, _, err := crtests.InitCrowerTests()
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
 
 	t.Run("Create folder using single name", func(t *testing.T) {
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+		err := handlers.CreateFile(newFolderPath, app)
+
+		if err != nil {
+			t.Errorf("error create folder on %s: %v", newFolderPath, err)
+		}
+	})
+
+	t.Run("Create folder using name with space", func(t *testing.T) {
+		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
 		err := handlers.CreateFile(newFolderPath, app)
 
 		if err != nil {
