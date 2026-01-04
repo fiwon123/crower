@@ -43,8 +43,7 @@ func Execute(name string, args []string, app *app.Data) ([]byte, *command.Data, 
 	return out, command, err
 }
 
-// Perform execute operation
-func PerformExecute(ex string) ([]byte, error) {
+func buildCMD(ex string) (*exec.Cmd, string, []string) {
 	var c *exec.Cmd
 
 	typeCommand := ""
@@ -75,9 +74,24 @@ func PerformExecute(ex string) ([]byte, error) {
 
 	fmt.Printf("Executing... : %s \n ", commandString.String())
 	fmt.Println()
+
+	return c, typeCommand, splitCommands
+}
+
+// Perform execute operation
+func PerformExecute(ex string) ([]byte, error) {
+
+	c, typeCommand, splitCommands := buildCMD(ex)
 	c = exec.Command(typeCommand, splitCommands...)
 	out, err := c.CombinedOutput()
 	return out, err
+}
+
+func PerformExecuteStart(ex string) error {
+	c, typeCommand, splitCommands := buildCMD(ex)
+	c = exec.Command(typeCommand, splitCommands...)
+	err := c.Start()
+	return err
 }
 
 // Perform operation that needs another terminal

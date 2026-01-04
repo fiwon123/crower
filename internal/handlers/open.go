@@ -9,7 +9,7 @@ import (
 )
 
 // Open filepath based on user operational system(OS).
-func Open(paths []string, app *app.Data) {
+func Open(paths []string, app *app.Data) error {
 
 	for _, f := range paths {
 		commandString := ""
@@ -25,32 +25,31 @@ func Open(paths []string, app *app.Data) {
 		}
 
 		if commandString == "" {
-			fmt.Println("command")
-			return
+			continue
 		}
 
 		fmt.Printf("performing execute...: %s \n", commandString)
 
 		out, err := PerformExecute(commandString)
 		if err != nil {
-			fmt.Println(err)
-			fmt.Println(string(out))
-			return
+			return fmt.Errorf("error %v out %v", err, string(out))
 		}
 
 		fmt.Println(string(out))
+		return nil
 	}
 
+	return nil
 }
 
 // Try to open system UI based on operational system (OS)
-func OpenSystem(app *app.Data) ([]byte, error) {
+func OpenSystem(app *app.Data) error {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute("'sysdm.cpl'")
+		return PerformExecuteStart("sysdm.cpl")
 	case "linux":
 		PerformInteractiveTerminal("nano", "~/.bashrc")
 	}
 
-	return nil, nil
+	return nil
 }
