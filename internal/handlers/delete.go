@@ -54,7 +54,7 @@ func DeleteFolder(folderPath string, app *app.Data) error {
 	case "windows":
 		out, err = PerformExecute(fmt.Sprintf("rmdir /s /q '%s'", folderPath))
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("\"rm -r '%s'\"", folderPath))
+		out, err = PerformExecute(fmt.Sprintf(`"rm -r '%s'"`, folderPath))
 	}
 
 	if err != nil {
