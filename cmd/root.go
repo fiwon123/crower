@@ -29,6 +29,8 @@ import (
 
 var cfgFilePath string
 var checkVersion bool
+var checkNewVersion bool
+var upgradeFlag bool
 
 var last bool
 var createFlag bool
@@ -58,6 +60,17 @@ By default after created your first command just use it by typing "crower 'comma
 		}
 
 		app := core.InitApp(cfgFilePath)
+
+		if checkNewVersion {
+			operations.CheckNewVersion(Version, app)
+			return
+		}
+
+		if upgradeFlag {
+			operations.UpgradeApp(Version, app)
+			return
+		}
+
 		if last {
 			operations.ExecuteLast(state.Execute, args, app)
 		} else if createFlag {
@@ -105,6 +118,8 @@ func init() {
 
 	// Flags
 	rootCmd.Flags().BoolVarP(&checkVersion, "version", "v", false, "check current version")
+	rootCmd.Flags().BoolVar(&upgradeFlag, "upgrade", false, "upgrade to new version")
+	rootCmd.Flags().BoolVar(&checkNewVersion, "check", false, "check new version")
 	rootCmd.Flags().BoolVarP(&last, "last", "l", false, "execute recent executed command")
 	rootCmd.Flags().BoolVarP(&createFlag, "create", "c", false, "execute recent created command")
 	rootCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "execute recent updated command")
