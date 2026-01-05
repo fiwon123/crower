@@ -1,8 +1,9 @@
 package operations
 
 import (
+	"fmt"
+
 	"github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -12,9 +13,14 @@ import (
 )
 
 func CreateCommand(name string, allAlias []string, exec string, args []string, app *app.Data) {
-	inputs.CheckCreateInput(&name, &allAlias, &exec, app)
+	if len(args) == 2 {
+		name = args[0]
+		exec = args[1]
+	} else {
+		inputs.CheckCreateInput(&name, &allAlias, &exec, app)
+	}
 
-	command, err := handlers.CreateCommand(name, allAlias, exec, args, app)
+	command, err := handlers.CreateCommand(name, allAlias, exec, app)
 
 	if err != nil {
 		app.LoggerInfo.Error("Error add command: ", err, name, allAlias, exec, args)
@@ -43,25 +49,19 @@ func CreateProcess(name string, args []string, app *app.Data) {
 }
 
 func CreateFile(args []string, app *app.Data) {
-	filePath := ""
-	if len(args) > 0 {
-		filePath = args[0]
-	} else {
-		cterrors.PrintNotFileAndOutputPath()
-		return
+	for _, path := range args {
+		err := handlers.CreateFile(path, app)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
-
-	handlers.CreateFile(filePath, app)
 }
 
 func CreateFolder(args []string, app *app.Data) {
-	folderPath := ""
-	if len(args) > 0 {
-		folderPath = args[0]
-	} else {
-		cterrors.PrintNotFileAndOutputPath()
-		return
+	for _, path := range args {
+		err := handlers.CreateFolder(path, app)
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
-
-	handlers.CreateFolder(folderPath, app)
 }

@@ -28,8 +28,7 @@ func TestDelete(t *testing.T) {
 		}
 
 		for _, command := range mock {
-			handlers.CreateCommand(command.name, nil, "exec", nil,
-				app)
+			handlers.CreateCommand(command.name, nil, "exec", app)
 		}
 
 		var tests = []struct {
@@ -71,8 +70,7 @@ func TestDelete(t *testing.T) {
 
 		for _, command := range mock {
 			handlers.CreateCommand(
-				command.name, []string{command.alias}, "exec", nil,
-				app)
+				command.name, []string{command.alias}, "exec", app)
 		}
 
 		var tests = []struct {
