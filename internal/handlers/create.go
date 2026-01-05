@@ -12,14 +12,9 @@ import (
 )
 
 // Create command using name, alias and exec parameters
-func CreateCommand(name string, alias []string, exec string, args []string, app *app.Data) (*command.Data, error) {
+func CreateCommand(name string, alias []string, exec string, app *app.Data) (*command.Data, error) {
 
 	command := command.New(name, alias, exec)
-
-	if len(args) == 2 {
-		command.Name = args[0]
-		command.Exec = args[1]
-	}
 
 	if command.Name == "" {
 		return nil, fmt.Errorf("empty name")
@@ -89,7 +84,7 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 		}
 
 		execCommand := fmt.Sprintf("flatpak run %s", appID)
-		command, err := CreateCommand(name, nil, execCommand, nil, app)
+		command, err := CreateCommand(name, nil, execCommand, app)
 
 		if err != nil {
 			return nil, err
@@ -98,7 +93,7 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 		return command, nil
 	} else if pathStr != "" {
 		pathStr = fmt.Sprintf("'%s'", pathStr)
-		command, err := CreateCommand(name, nil, pathStr, nil, app)
+		command, err := CreateCommand(name, nil, pathStr, app)
 
 		if err != nil {
 			return nil, err
@@ -112,7 +107,7 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 
 // Create a new file on filepath
 func CreateFile(filePath string, app *app.Data) error {
-	var out []byte
+	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
@@ -125,13 +120,13 @@ func CreateFile(filePath string, app *app.Data) error {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", string(out))
+	fmt.Println("result: ", out)
 	return nil
 }
 
 // Create a new folder on folderpath
 func CreateFolder(folderPath string, app *app.Data) error {
-	var out []byte
+	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
@@ -144,6 +139,6 @@ func CreateFolder(folderPath string, app *app.Data) error {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", string(out))
+	fmt.Println("result: ", out)
 	return nil
 }

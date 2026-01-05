@@ -8,7 +8,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/fiwon123/crower/internal/cterrors"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
@@ -95,7 +95,7 @@ func getUserConfirmation(ask string) bool {
 
 func isValidConfirmation(input string) (bool, error) {
 	if !checkValidAnswer(input) {
-		return false, cterrors.InvalidInput()
+		return false, crerrors.InvalidInput()
 	}
 
 	if checkNoAnswer(input) {
@@ -107,7 +107,7 @@ func isValidConfirmation(input string) (bool, error) {
 
 func isValidInput(input string, app *app.Data) (any, error) {
 	if input == "" {
-		return "", cterrors.EmptyInput()
+		return "", crerrors.EmptyInput()
 	}
 
 	return input, nil
@@ -150,7 +150,7 @@ func inputExec(app *app.Data) string {
 func isValidAlias(input string, app *app.Data) (any, error) {
 	for _, r := range input {
 		if !unicode.IsNumber(r) && !unicode.IsLetter(r) {
-			return "", cterrors.OnlyLettersAndNumbers()
+			return "", crerrors.OnlyLettersAndNumbers()
 		}
 	}
 
@@ -160,11 +160,11 @@ func isValidAlias(input string, app *app.Data) (any, error) {
 func isValidInputKey(input string, app *app.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
-		return "", cterrors.InvalidRows()
+		return "", crerrors.InvalidRows()
 	}
 
 	if index < 0 || index >= len(app.OrderKeys) {
-		return "", cterrors.InvalidRows()
+		return "", crerrors.InvalidRows()
 	}
 
 	return app.OrderKeys[index], nil

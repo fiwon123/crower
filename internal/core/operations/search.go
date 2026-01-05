@@ -42,16 +42,16 @@ func assertArgs(args []string) (string, string) {
 	currentPath := "."
 
 	if len(args) > 1 {
-		currentPath = args[0]
-		content = args[1]
+		content = args[0]
+		currentPath = args[1]
 	}
 
 	return content, currentPath
 }
 
-func assertSearchResult(out []byte, err error, app *app.Data) {
+func assertSearchResult(out string, err error, app *app.Data) {
 	if err != nil {
-		app.LoggerInfo.Error("Error trying to search: ", string(out), err)
+		app.LoggerInfo.Error("Error trying to search: ", out, err)
 	}
-	fmt.Println(string(out))
+	fmt.Println(out)
 }

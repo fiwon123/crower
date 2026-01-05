@@ -3,6 +3,7 @@ package update
 import (
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/state"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
@@ -23,14 +24,19 @@ var Cmd = &cobra.Command{
 	Short: "update commands",
 	Long: `update commands
 
-you can use interactive input just either typing 'crower update' or using optional flags as name, alias and exec
+update command:
+	- Use interactive input just typing 'crower update' without arguments
+	- Use argument key (command name or command alias) 'crower update "COMMAND_KEY"'
+	- using flags --last (update), --create or --execute to update last operation flag
 
 Examples:
 	crower update
+	crower update com_name
+	crower update com_alias
 	crower update --last
 	crower update --create
 	crower update --execute
-	crower update --name "test" --exec "echo t"
+	crower update com_name --name "test" --exec "echo t"
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
@@ -40,16 +46,18 @@ Examples:
 		if last {
 			operations.UpdateLast(state.Update, name, allAlias, exec, app)
 		} else if create {
-			operations.UpdateLast(state.Update, name, allAlias, exec, app)
+			operations.UpdateLast(state.Create, name, allAlias, exec, app)
 		} else if execute {
-			operations.UpdateLast(state.Update, name, allAlias, exec, app)
-		} else {
+			operations.UpdateLast(state.Execute, name, allAlias, exec, app)
+		} else if len(args) > 0 {
 			key := ""
 			if len(args) != 0 {
 				key = args[0]
 			}
 
 			operations.Update(key, name, allAlias, exec, app)
+		} else {
+			crerrors.PrintCmdHelp("update")
 		}
 
 	},

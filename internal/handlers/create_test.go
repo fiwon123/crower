@@ -23,7 +23,7 @@ func TestCreate(t *testing.T) {
 
 		want := true
 
-		_, error := handlers.CreateCommand(command.Name, nil, "exec", nil, app)
+		_, error := handlers.CreateCommand(command.Name, nil, "exec", app)
 		got := error == nil
 		assertCreateTest(command, want, got, error, t)
 	})
@@ -52,7 +52,7 @@ func TestCreate(t *testing.T) {
 		for _, test := range tests {
 			command := command.New(test.name, nil, "")
 
-			_, err := handlers.CreateCommand(command.Name, nil, "exec", nil, app)
+			_, err := handlers.CreateCommand(command.Name, nil, "exec", app)
 			got := err == nil
 			assertCreateTest(command, test.want, got, err, t)
 		}
@@ -83,7 +83,7 @@ func TestCreate(t *testing.T) {
 
 		for _, test := range tests {
 			command := command.New(test.name, []string{test.alias}, "")
-			_, err := handlers.CreateCommand(command.Name, command.AllAlias, "exec", nil, app)
+			_, err := handlers.CreateCommand(command.Name, command.AllAlias, "exec", app)
 			got := err == nil
 			assertCreateTest(command, test.want, got, err, t)
 		}

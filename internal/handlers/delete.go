@@ -29,7 +29,7 @@ func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
 
 // Delete file from filepath
 func DeleteFile(filePath string, app *app.Data) error {
-	var out []byte
+	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
@@ -42,13 +42,13 @@ func DeleteFile(filePath string, app *app.Data) error {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", string(out))
+	fmt.Println("result: ", out)
 	return nil
 }
 
 // Delete folder from folderpath
 func DeleteFolder(folderPath string, app *app.Data) error {
-	var out []byte
+	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
@@ -61,6 +61,6 @@ func DeleteFolder(folderPath string, app *app.Data) error {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", string(out))
+	fmt.Println("result: ", out)
 	return nil
 }
