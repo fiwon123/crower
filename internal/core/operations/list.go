@@ -2,6 +2,7 @@ package operations
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -63,7 +64,7 @@ func ListSysPath(app *app.Data) {
 
 func formatVariable(name string, paths string) string {
 	outBuilder := strings.Builder{}
-	splitted := strings.Split(paths, ";")
+	splitted := strings.Split(paths, string(os.PathListSeparator))
 	outBuilder.WriteString(name)
 	outBuilder.WriteString("\n")
 	for i, path := range splitted {
