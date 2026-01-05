@@ -14,25 +14,19 @@ import (
 
 // Execute command based on the user operational system (OS).
 // Verify if command exists by name or alias and perform operation
-func Execute(name string, args []string, app *app.Data) (string, *command.Data, error) {
+func Execute(key string, params []string, app *app.Data) (string, *command.Data, error) {
 
-	if name == "" && len(args) > 0 {
-		fmt.Println("args", args)
-		name = args[0]
-		args = args[1:]
-	}
-
-	command := app.AllCommandsByName.Get(name)
+	command := app.AllCommandsByName.Get(key)
 	if command == nil {
-		command = app.AllCommandsByAlias.Get(name)
+		command = app.AllCommandsByAlias.Get(key)
 	}
 
 	if command == nil {
 		return "", nil, fmt.Errorf("command not found")
 	}
 
-	if len(args) > 0 {
-		for _, param := range args {
+	if len(params) > 0 {
+		for _, param := range params {
 			command.Exec += param
 		}
 	}
