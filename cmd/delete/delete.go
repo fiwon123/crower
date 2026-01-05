@@ -24,7 +24,6 @@ var Cmd = &cobra.Command{
 	Short: "delete command, file or folder",
 	Long: `delete command, file or folder
 
-you can use interactive input just either typing 'crower delete' or using optional flags as name, alias and exec
 delete commands:
 	- Use interactive input just typing 'crower delete' without parameter
 	- Using either 'crower delete "COMMAND_NAME"' or 'crower delete "COMMAND_ALIAS"'

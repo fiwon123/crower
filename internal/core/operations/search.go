@@ -42,8 +42,8 @@ func assertArgs(args []string) (string, string) {
 	currentPath := "."
 
 	if len(args) > 1 {
-		currentPath = args[0]
-		content = args[1]
+		content = args[0]
+		currentPath = args[1]
 	}
 
 	return content, currentPath
