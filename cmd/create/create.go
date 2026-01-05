@@ -9,9 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var name string
 var allAlias []string
-var exec string
 var process string
 
 var folderFlag bool
@@ -24,9 +22,9 @@ var Cmd = &cobra.Command{
 	Long: `create a command, file or folder
 
 create commands:
-	- Use interactive input just typing 'crower create' without parameter
+	- Use interactive input just typing 'crower create' without arguments
 	- Using 'crower create "COMAND_NAME" "COMMAND_EXEC"'
-	- Using flag --name, --alias or --exec in 'crower create'
+	- Using flag --alias in 'crower create' to already put an alias
 
 create file:
 	- Using 'crower create "FILE_PATH"'
@@ -49,8 +47,7 @@ Example:
 		app := core.InitApp(cfgFilePath)
 
 		if process != "" {
-			name = process
-			operations.CreateProcess(name, args, app)
+			operations.CreateProcess(process, args, app)
 		} else if fileFlag {
 			operations.CreateFile(args, app)
 		} else if folderFlag {
@@ -61,7 +58,7 @@ Example:
 			} else if utils.IsValidFolderPath(args[0]) {
 				operations.CreateFolder(args, app)
 			} else {
-				operations.CreateCommand(name, allAlias, exec, args, app)
+				operations.CreateCommand(allAlias, args, app)
 			}
 		} else {
 			crerrors.PrintCmdHelp("create")
@@ -71,9 +68,7 @@ Example:
 }
 
 func init() {
-	cmdsHelper.AddNameFlag(Cmd, &name)
 	cmdsHelper.AddAllAliasFlag(Cmd, &allAlias)
-	cmdsHelper.AddExecFlag(Cmd, &exec)
 
 	Cmd.Flags().StringVarP(&process, "process", "p", "", "process name or pid")
 	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")

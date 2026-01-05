@@ -12,7 +12,9 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func CreateCommand(name string, allAlias []string, exec string, args []string, app *app.Data) {
+func CreateCommand(allAlias []string, args []string, app *app.Data) {
+	name := ""
+	exec := ""
 	if len(args) == 2 {
 		name = args[0]
 		exec = args[1]
