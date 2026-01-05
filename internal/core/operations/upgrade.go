@@ -7,7 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
-func CheckNewVersion(currentVersion string, app *app.Data) {
+func UpgradeApp(currentVersion string, app *app.Data) {
 	newVersion, err := handlers.CheckNewVersion(currentVersion, app)
 	if err != nil {
 		fmt.Println(err)
@@ -20,7 +20,11 @@ func CheckNewVersion(currentVersion string, app *app.Data) {
 		return
 	}
 
-	fmt.Printf("Current Version: %s \n", currentVersion)
-	fmt.Printf("New Version Found: %s \n", newVersion)
-	fmt.Println("Check: https://github.com/fiwon123/crower/releases/latest")
+	err = handlers.UpgradeApp(newVersion, app)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Printf("crower upgraded from %s to %s \n", currentVersion, newVersion)
 }

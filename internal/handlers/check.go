@@ -8,10 +8,10 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
-func CheckNewVersion(currentVersion string, app *app.Data) error {
+func CheckNewVersion(currentVersion string, app *app.Data) (string, error) {
 	resp, err := http.Get("https://api.github.com/repos/fiwon123/crower/releases/latest")
 	if err != nil {
-		return fmt.Errorf("error: %v \n", err)
+		return "", fmt.Errorf("error: %v \n", err)
 	}
 	defer resp.Body.Close()
 
@@ -20,17 +20,12 @@ func CheckNewVersion(currentVersion string, app *app.Data) error {
 	}
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return fmt.Errorf("error: %v \n", err)
+		return "", fmt.Errorf("error: %v \n", err)
 	}
 
-	if data.TagName != currentVersion {
-		fmt.Printf("Current Version: %s \n", currentVersion)
-		fmt.Printf("New Version Found: %s \n", data.TagName)
-		fmt.Println("Check: https://github.com/fiwon123/crower/releases/latest")
-	} else {
-		fmt.Printf("Current Version: %s \n", currentVersion)
-		fmt.Println("already up-to-date")
+	if data.TagName == currentVersion {
+		return currentVersion, nil
 	}
 
-	return nil
+	return data.TagName, nil
 }

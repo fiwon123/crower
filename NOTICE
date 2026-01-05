@@ -1,4 +1,7 @@
 This product includes software developed by
-The Cobra Authors (https://github.com/spf13/cobra).
 
-Cobra is licensed under the Apache License, Version 2.0.
+cobra (https://github.com/spf13/cobra).
+cobra is licensed under the Apache License, Version 2.0.
+
+selfupdate (https://github.com/minio/selfupdate)
+selfupdate is licensed under the Apache License, Version 2.0.
