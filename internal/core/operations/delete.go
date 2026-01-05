@@ -14,24 +14,22 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func Delete(name string, allAlias []string, app *app.Data) {
+func Delete(args []string, app *app.Data) {
 
-	ok := inputs.CheckDeleteInput(&name, &allAlias, app)
+	key := ""
+	if len(args) > 0 {
+		key = args[0]
+	}
+
+	ok := inputs.CheckDeleteInput(&key, app)
 	if !ok {
 		fmt.Println("Cancelling delete...")
 		return
 	}
 
-	key := name
-	if key == "" {
-		if len(allAlias) > 0 {
-			key = allAlias[0]
-		}
-	}
-
 	command, ok := handlers.DeleteCommand(key, app)
 	if !ok {
-		app.LoggerInfo.Error("Error delete command: ", name, allAlias)
+		app.LoggerInfo.Error("Error delete command: ", key)
 		return
 	}
 
@@ -42,7 +40,7 @@ func Delete(name string, allAlias []string, app *app.Data) {
 	history.Save(app)
 }
 
-func DeleteLast(op state.OperationEnum, name string, allAlias []string, app *app.Data) {
+func DeleteLast(op state.OperationEnum, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
@@ -50,7 +48,7 @@ func DeleteLast(op state.OperationEnum, name string, allAlias []string, app *app
 		return
 	}
 
-	Delete(name, allAlias, app)
+	Delete([]string{content.CommandName}, app)
 }
 
 func DeleteFile(args []string, app *app.Data) {

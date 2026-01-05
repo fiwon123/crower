@@ -25,7 +25,7 @@ var Cmd = &cobra.Command{
 
 create commands:
 	- Use interactive input just typing 'crower create' without parameter
-	- Using 'crower "COMAND_NAME" "COMMAND_EXEC"'
+	- Using 'crower create "COMAND_NAME" "COMMAND_EXEC"'
 	- Using flag --name, --alias or --exec in 'crower create'
 
 create file:
@@ -76,6 +76,6 @@ func init() {
 	cmdsHelper.AddExecFlag(Cmd, &exec)
 
 	Cmd.Flags().StringVarP(&process, "process", "p", "", "process name or pid")
-	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure argument is filepath")
-	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure argument is folderpath")
+	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
+	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
 }

@@ -9,28 +9,29 @@ import (
 )
 
 // Verify parameters to process delete operation
-func CheckDeleteInput(name *string, allAlias *[]string, app *app.Data) bool {
+func CheckDeleteInput(key *string, app *app.Data) bool {
 
-	if *name == "" && len(*allAlias) == 0 {
+	if *key == "" {
 		handlers.ListCommands(app)
 		input := getUserInput("Select Row", isValidInputKey, app).(string)
-		*name = input
+		*key = input
 	}
 
 	var command *command.Data
-	if *name != "" {
-		command = app.AllCommandsByName.Get(*name)
-	} else if len(*allAlias) > 0 {
-		command = app.AllCommandsByAlias.Get((*allAlias)[0])
+	if *key != "" {
+		command = app.AllCommandsByName.Get(*key)
+		if command == nil {
+			command = app.AllCommandsByAlias.Get(*key)
+		}
 	}
 
 	if command == nil {
 		handlers.ListCommands(app)
 		fmt.Println("Command not found, try to select one.")
 		input := getUserInput("Select Row", isValidInputKey, app).(string)
-		*name = input
+		*key = input
 
-		command = app.AllCommandsByName.Get(*name)
+		command = app.AllCommandsByName.Get(*key)
 	}
 
 	fmt.Println("-----------------------------------------")
