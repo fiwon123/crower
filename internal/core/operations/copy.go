@@ -20,7 +20,7 @@ func Copy(args []string, app *app.Data) {
 	args = args[:lastIndex]
 	for _, path := range args {
 		var err error
-		if utils.IsFilePath(path) {
+		if utils.IsValidFilePath(path) {
 			err = handlers.CopyFile(path, output, app)
 		} else {
 			err = handlers.CopyFolder(path, output, app)
