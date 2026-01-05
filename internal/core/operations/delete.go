@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/cterrors"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 
 	"github.com/fiwon123/crower/internal/data/state"
@@ -44,7 +44,7 @@ func DeleteLast(op state.OperationEnum, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		cterrors.PrintCommandNotFoundError()
+		crerrors.PrintCommandNotFoundError()
 		return
 	}
 
@@ -56,7 +56,7 @@ func DeleteFile(args []string, app *app.Data) {
 	if len(args) > 0 {
 		filePath = args[0]
 	} else {
-		cterrors.PrintNotFileAndOutputPath()
+		crerrors.PrintNotFileAndOutputPath()
 		return
 	}
 
@@ -68,7 +68,7 @@ func DeleteFolder(args []string, app *app.Data) {
 	if len(args) > 0 {
 		folderPath = args[0]
 	} else {
-		cterrors.PrintNotFileAndOutputPath()
+		crerrors.PrintNotFileAndOutputPath()
 		return
 	}
 

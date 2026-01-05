@@ -3,7 +3,7 @@ package delete
 import (
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/cterrors"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/pkg/utils"
 
@@ -69,7 +69,7 @@ Example:
 				operations.Delete(args, app)
 			}
 		} else {
-			cterrors.PrintCmdHelp("delete")
+			crerrors.PrintCmdHelp("delete")
 		}
 
 	},

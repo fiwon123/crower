@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/cterrors"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -38,7 +38,7 @@ func UpdateLast(op state.OperationEnum, name string, allAlias []string, exec str
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		cterrors.PrintCommandNotFoundError()
+		crerrors.PrintCommandNotFoundError()
 		return
 	}
 

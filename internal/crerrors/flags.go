@@ -1,4 +1,4 @@
-package cterrors
+package crerrors
 
 import "fmt"
 

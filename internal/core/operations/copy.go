@@ -3,7 +3,7 @@ package operations
 import (
 	"fmt"
 
-	"github.com/fiwon123/crower/internal/cterrors"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -11,7 +11,7 @@ import (
 
 func Copy(args []string, app *app.Data) {
 	if len(args) == 0 {
-		cterrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument")
+		crerrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument")
 		return
 	}
 
