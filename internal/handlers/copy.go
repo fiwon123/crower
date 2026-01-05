@@ -9,7 +9,7 @@ import (
 
 // Copy file from a origin filepath to output folder
 func CopyFile(filePath string, destFolder string, app *app.Data) error {
-	var out []byte
+	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
@@ -22,13 +22,13 @@ func CopyFile(filePath string, destFolder string, app *app.Data) error {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", string(out))
+	fmt.Println("output: ", out)
 	return nil
 }
 
 // Copy file from a origin folderpath to output folder
 func CopyFolder(filePath string, destFolder string, app *app.Data) error {
-	var out []byte
+	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
@@ -41,6 +41,6 @@ func CopyFolder(filePath string, destFolder string, app *app.Data) error {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", string(out))
+	fmt.Println("output: ", out)
 	return nil
 }

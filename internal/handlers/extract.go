@@ -41,7 +41,7 @@ func Extract(paths []string, output string, app *app.Data) {
 
 }
 
-func performExtract(ext string, filePath string, outDir string) ([]byte, error) {
+func performExtract(ext string, filePath string, outDir string) (string, error) {
 	switch ext {
 	case "tar":
 		return PerformExecute(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
@@ -66,5 +66,5 @@ func performExtract(ext string, filePath string, outDir string) ([]byte, error) 
 		return PerformExecute(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
 	}
 
-	return nil, fmt.Errorf("failed to extract \n")
+	return "", fmt.Errorf("failed to extract \n")
 }

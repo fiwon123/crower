@@ -39,11 +39,11 @@ func ListSysPath(app *app.Data) {
 	assertListResult(out, err)
 }
 
-func assertListResult(out []byte, err error) {
+func assertListResult(out string, err error) {
 	if err != nil {
-		fmt.Println("failed to list: ", err, string(out))
+		fmt.Println("failed to list: ", err, out)
 		return
 	}
 
-	fmt.Print(string(out))
+	fmt.Print(out)
 }

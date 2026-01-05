@@ -1,35 +1,33 @@
 package operations
 
 import (
+	"fmt"
+
 	"github.com/fiwon123/crower/internal/cterrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func CopyFile(args []string, app *app.Data) {
-	filePath := ""
-	outFolder := ""
-	if len(args) > 1 {
-		filePath = args[0]
-		outFolder = args[1]
-	} else {
-		cterrors.PrintNotFileAndOutputPath()
+func Copy(args []string, app *app.Data) {
+	if len(args) == 0 {
+		cterrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument")
 		return
 	}
 
-	handlers.CopyFile(filePath, outFolder, app)
-}
+	lastIndex := len(args) - 1
+	output := args[lastIndex]
+	args = args[:lastIndex]
+	for _, path := range args {
+		var err error
+		if utils.IsFilePath(path) {
+			err = handlers.CopyFile(path, output, app)
+		} else {
+			err = handlers.CopyFolder(path, output, app)
+		}
 
-func CopyFolder(args []string, app *app.Data) {
-	folderPath := ""
-	outFolder := ""
-	if len(args) > 1 {
-		folderPath = args[0]
-		outFolder = args[1]
-	} else {
-		cterrors.PrintNotFileAndOutputPath()
-		return
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
-
-	handlers.CopyFolder(folderPath, outFolder, app)
 }

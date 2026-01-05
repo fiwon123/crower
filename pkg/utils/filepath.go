@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 )
 
 func CreateFileIfNotExists(filePath string) {
@@ -22,4 +24,12 @@ func CreateFolderIfNotExists(path string) error {
 	}
 
 	return nil
+}
+
+func IsFilePath(path string) bool {
+
+	base := filepath.Base(path)
+	splitted := strings.Split(base, ".")
+
+	return len(splitted) == 2
 }

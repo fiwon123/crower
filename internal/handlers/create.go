@@ -112,7 +112,7 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 
 // Create a new file on filepath
 func CreateFile(filePath string, app *app.Data) error {
-	var out []byte
+	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
@@ -125,13 +125,13 @@ func CreateFile(filePath string, app *app.Data) error {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", string(out))
+	fmt.Println("result: ", out)
 	return nil
 }
 
 // Create a new folder on folderpath
 func CreateFolder(folderPath string, app *app.Data) error {
-	var out []byte
+	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
@@ -144,6 +144,6 @@ func CreateFolder(folderPath string, app *app.Data) error {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", string(out))
+	fmt.Println("result: ", out)
 	return nil
 }

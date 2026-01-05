@@ -49,9 +49,9 @@ func assertArgs(args []string) (string, string) {
 	return content, currentPath
 }
 
-func assertSearchResult(out []byte, err error, app *app.Data) {
+func assertSearchResult(out string, err error, app *app.Data) {
 	if err != nil {
-		app.LoggerInfo.Error("Error trying to search: ", string(out), err)
+		app.LoggerInfo.Error("Error trying to search: ", out, err)
 	}
-	fmt.Println(string(out))
+	fmt.Println(out)
 }

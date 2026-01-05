@@ -53,7 +53,7 @@ func ListHistory(app *app.Data) error {
 }
 
 // List all files and folder from a folderpath
-func ListFolder(folderPath string, app *app.Data) ([]byte, error) {
+func ListFolder(folderPath string, app *app.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return PerformExecute(fmt.Sprintf("dir '%s'", folderPath))
@@ -61,11 +61,11 @@ func ListFolder(folderPath string, app *app.Data) ([]byte, error) {
 		return PerformExecute(fmt.Sprintf("ls '%s'", folderPath))
 	}
 
-	return nil, nil
+	return "", nil
 }
 
 // List all system variable
-func ListSystem(*app.Data) ([]byte, error) {
+func ListSystem(*app.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return PerformExecute("'set'")
@@ -73,11 +73,11 @@ func ListSystem(*app.Data) ([]byte, error) {
 		return PerformExecute("'printenv'")
 	}
 
-	return nil, nil
+	return "", nil
 }
 
 // List system path variable
-func ListSysPath(app *app.Data) ([]byte, error) {
+func ListSysPath(app *app.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return PerformExecute("'echo %PATH%'")
@@ -85,5 +85,5 @@ func ListSysPath(app *app.Data) ([]byte, error) {
 		return PerformExecute("'echo $PATH'")
 	}
 
-	return nil, nil
+	return "", nil
 }
