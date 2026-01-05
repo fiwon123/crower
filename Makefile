@@ -6,7 +6,7 @@ SCRIPT_NAME := add_to_path
 INJECT_VERSION:= github.com/fiwon123/crower/cmd.Version
 
 # Detect last tag and increment patch
-VERSION := $(shell git describe --tags --dirty --always)
+VERSION := $(shell git describe --tags --always)
 
 WINDOWS_BIN := $(BUILD_DIR)/$(APP_NAME).exe
 SHORT_WINDOWS_BIN := $(BUILD_DIR)/$(APP_NAME_SHORT).exe
@@ -39,13 +39,13 @@ linux: $(BUILD_DIR)
 
 # Compress Windows binary
 zip_windows: windows
-	zip -j $(WINDOWS_ZIP) $(WINDOWS_BIN) $(SHORT_WINDOWS_BIN) $(WINDOWS_SCRIPT) README.md LICENSE
+	zip -j $(WINDOWS_ZIP) $(WINDOWS_BIN) $(SHORT_WINDOWS_BIN) $(WINDOWS_SCRIPT) README.md LICENSE LICENSE-APACHE NOTICE
 
 # Compress Linux binary
 zip_linux: linux
 	tar -czvf $(LINUX_TAR) \
 	          -C $(BUILD_DIR) $(notdir $(LINUX_BIN)) $(notdir $(SHORT_LINUX_BIN)) \
-	          -C ../$(SCRIPTS_DIR) $(notdir $(LINUX_SCRIPT)) ../README.md ../LICENSE
+	          -C ../$(SCRIPTS_DIR) $(notdir $(LINUX_SCRIPT)) ../README.md ../LICENSE ../LICENSE-APACHE ../NOTICE
 
 # Clean build folder
 clean:
