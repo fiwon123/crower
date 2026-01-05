@@ -9,6 +9,7 @@ import (
 	"github.com/fiwon123/crower/cmd/copy"
 	"github.com/fiwon123/crower/cmd/create"
 	"github.com/fiwon123/crower/cmd/delete"
+	"github.com/fiwon123/crower/cmd/execute"
 	"github.com/fiwon123/crower/cmd/extract"
 	"github.com/fiwon123/crower/cmd/list"
 	"github.com/fiwon123/crower/cmd/move"
@@ -21,8 +22,6 @@ import (
 	"github.com/fiwon123/crower/internal/core/operations"
 	"github.com/fiwon123/crower/internal/crerrors"
 
-	"github.com/fiwon123/crower/internal/data/state"
-
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -31,10 +30,6 @@ var cfgFilePath string
 var checkVersion bool
 var checkNewVersion bool
 var upgradeFlag bool
-
-var last bool
-var createFlag bool
-var updateFlag bool
 
 // Version is popualated when building with Makefile
 var Version = "vx.x.x"
@@ -47,7 +42,9 @@ var rootCmd = &cobra.Command{
 
 It has useful operations like create, edit, remove, list and more.
 
-By default after created your first command just use it by typing "crower 'command'" or "cr 'command'"`,
+Execute Command:
+	- Use 'crower "command"' or 'cr "command"'
+	- Use 'crower execute "command"' or 'cr execute "command"'`,
 	Aliases: []string{"cr"},
 	Args:    cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -71,14 +68,10 @@ By default after created your first command just use it by typing "crower 'comma
 			return
 		}
 
-		if last {
-			operations.ExecuteLast(state.Execute, args, app)
-		} else if createFlag {
-			operations.ExecuteLast(state.Create, args, app)
-		} else if updateFlag {
-			operations.ExecuteLast(state.Update, args, app)
+		if len(args) > 0 {
+			operations.Execute(args, app)
 		} else {
-			operations.Execute("", args, app)
+			crerrors.PrintCmdHelp("")
 		}
 
 	},
@@ -105,6 +98,7 @@ func init() {
 	rootCmd.AddCommand(extract.Cmd)
 	rootCmd.AddCommand(copy.Cmd)
 	rootCmd.AddCommand(move.Cmd)
+	rootCmd.AddCommand(execute.Cmd)
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {
@@ -120,7 +114,4 @@ func init() {
 	rootCmd.Flags().BoolVarP(&checkVersion, "version", "v", false, "check current version")
 	rootCmd.Flags().BoolVar(&upgradeFlag, "upgrade", false, "upgrade to new version")
 	rootCmd.Flags().BoolVar(&checkNewVersion, "check", false, "check new version")
-	rootCmd.Flags().BoolVarP(&last, "last", "l", false, "execute recent executed command")
-	rootCmd.Flags().BoolVarP(&createFlag, "create", "c", false, "execute recent created command")
-	rootCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "execute recent updated command")
 }
