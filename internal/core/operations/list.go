@@ -2,6 +2,8 @@ package operations
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -36,6 +38,20 @@ func ListSystem(app *app.Data) {
 
 func ListSysPath(app *app.Data) {
 	out, err := handlers.ListSysPath(app)
+	fmt.Println()
+	if err == nil {
+		outBuilder := strings.Builder{}
+		splitted := strings.Split(out, ";")
+		for i, path := range splitted {
+			outBuilder.WriteString(strconv.Itoa(i))
+			outBuilder.WriteString(" - ")
+			outBuilder.WriteString(path)
+			outBuilder.WriteString("\n")
+		}
+
+		out = outBuilder.String()
+	}
+
 	assertListResult(out, err)
 }
 
