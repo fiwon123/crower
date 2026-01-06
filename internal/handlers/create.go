@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"path/filepath"
 	"slices"
 
 	"golang.org/x/sys/windows/registry"
@@ -156,6 +157,7 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 		if err != nil {
 			return "", err
 		}
+
 		ok := checkNewVarValue(value, path)
 		if !ok {
 			return "", fmt.Errorf("value already in PATH")
@@ -182,13 +184,17 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 }
 
 func checkNewVarValue(value string, from string) bool {
-	splitted := strings.Split(from, string(os.PathListSeparator))
+	splitted := splitPath(from)
 	ok := true
 	if slices.Contains(splitted, value) {
 		return false
 	}
 
 	return ok
+}
+
+func splitPath(path string) []string {
+	return filepath.SplitList(path)
 }
 
 // Create a new file on filepath
