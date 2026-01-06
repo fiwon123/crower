@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"slices"
 
-	"golang.org/x/sys/windows/registry"
-
 	"log"
 	"os"
 	"os/exec"
@@ -134,50 +132,8 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 		if err != nil {
 			return "", fmt.Errorf("Create System Variable error: %v \n", err)
 		}
-		println("Added to .bashrc. Restart terminal to take effect.")
-	}
 
-	return "", fmt.Errorf("Couldn't find OS to excute command")
-}
-
-func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		key, err := registry.OpenKey(
-			registry.CURRENT_USER,
-			`Environment`,
-			registry.QUERY_VALUE|registry.SET_VALUE,
-		)
-		if err != nil {
-			return "", err
-		}
-		defer key.Close()
-
-		path, _, err := key.GetStringValue("Path")
-		if err != nil {
-			return "", err
-		}
-
-		ok := checkNewVarValue(value, path)
-		if !ok {
-			return "", fmt.Errorf("value already in PATH")
-		}
-
-		newPath := path + string(os.PathListSeparator) + value
-
-		err = key.SetStringValue("Path", newPath)
-
-		return "Added to PATH", err
-	case "linux":
-		line := fmt.Sprintf(`export PATH="$PATH:%s"`, value)
-
-		err := os.WriteFile(
-			os.Getenv("HOME")+"/.profile",
-			[]byte(line+"\n"),
-			0644,
-		)
-
-		return "Added to PATH", err
+		return "Added to .bashrc. Restart terminal to take effect.", nil
 	}
 
 	return "", fmt.Errorf("Couldn't find OS to excute command")
