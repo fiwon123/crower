@@ -13,7 +13,9 @@ import (
 
 func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 
-	lineSlice := getProfileFileSlice()
+	home := os.Getenv("HOME")
+	profileFile := home + "/.profile"
+	lineSlice := getFileSlice(profileFile)
 
 	pathLinePrefix := "export PATH="
 	pathLinePrefix2 := "export PATH"
@@ -53,20 +55,6 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 	}
 
 	return "Added to PATH", err
-}
-
-func getProfileFileSlice() []string {
-	home := os.Getenv("HOME")
-	profileFile := home + "/.profile"
-
-	lines, err := os.ReadFile(profileFile)
-	if err != nil {
-		lines = []byte{}
-	}
-
-	lineSlice := strings.Split(string(lines), "\n")
-
-	return lineSlice
 }
 
 func writeProfileFile(lineSlice []string) error {

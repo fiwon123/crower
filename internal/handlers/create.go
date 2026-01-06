@@ -120,13 +120,22 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 
 		return "System variable set. You may need to restart or log off for it to take effect.", nil
 	case "linux":
-		f, err := os.OpenFile(os.Getenv("HOME")+"/.bashrc", os.O_APPEND|os.O_WRONLY, 0644)
+		bashrcPath := os.Getenv("HOME") + "/.bashrc"
+		fileSlice := getFileSlice(bashrcPath)
+
+		for _, s := range fileSlice {
+			if strings.Contains(s, fmt.Sprintf("export %s=", newVar)) {
+				return "", fmt.Errorf("variable already added")
+			}
+		}
+
+		f, err := os.OpenFile(bashrcPath, os.O_APPEND|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer f.Close()
 
-		_, err = fmt.Fprintf(f, "\nexport %s=%s\n", newVar, value)
+		_, err = fmt.Fprintf(f, "\nexport %s=%s", newVar, value)
 		if err != nil {
 			return "", fmt.Errorf("Create System Variable error: %v \n", err)
 		}
@@ -135,6 +144,18 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 	}
 
 	return "", fmt.Errorf("Couldn't find OS to excute command")
+}
+
+func getFileSlice(filePath string) []string {
+
+	lines, err := os.ReadFile(filePath)
+	if err != nil {
+		lines = []byte{}
+	}
+
+	lineSlice := strings.Split(string(lines), "\n")
+
+	return lineSlice
 }
 
 // Create a new file on filepath
