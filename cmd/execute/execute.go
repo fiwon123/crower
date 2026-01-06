@@ -3,7 +3,6 @@ package execute
 import (
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/state"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -30,10 +29,8 @@ var Cmd = &cobra.Command{
 			operations.ExecuteLast(state.Create, args, app)
 		} else if updateFlag {
 			operations.ExecuteLast(state.Update, args, app)
-		} else if len(args) > 0 {
-			operations.Execute(args, app)
 		} else {
-			crerrors.PrintCmdHelp("execute")
+			operations.Execute(args, app)
 		}
 	},
 }

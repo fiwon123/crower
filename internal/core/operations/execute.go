@@ -3,6 +3,7 @@ package operations
 import (
 	"fmt"
 
+	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
@@ -20,8 +21,11 @@ func Execute(args []string, app *app.Data) {
 		key = args[0]
 		params = args[1:]
 	} else {
-		crerrors.PrintEmptyArgs()
-		return
+		ok := inputs.CheckExecuteInput(&key, &params, app)
+		if !ok {
+			fmt.Println("Cancelling execute...")
+			return
+		}
 	}
 
 	output, command, err := handlers.Execute(key, params, app)

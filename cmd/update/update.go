@@ -3,7 +3,6 @@ package update
 import (
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/state"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
@@ -57,7 +56,7 @@ Examples:
 
 			operations.Update(key, name, allAlias, exec, app)
 		} else {
-			crerrors.PrintCmdHelp("update")
+			operations.Update("", name, allAlias, exec, app)
 		}
 
 	},
