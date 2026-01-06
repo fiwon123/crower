@@ -2,8 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"path/filepath"
-	"slices"
 
 	"log"
 	"os"
@@ -137,20 +135,6 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 	}
 
 	return "", fmt.Errorf("Couldn't find OS to excute command")
-}
-
-func checkNewVarValue(value string, from string) bool {
-	splitted := splitPath(from)
-	ok := true
-	if slices.Contains(splitted, value) {
-		return false
-	}
-
-	return ok
-}
-
-func splitPath(path string) []string {
-	return filepath.SplitList(path)
 }
 
 // Create a new file on filepath
