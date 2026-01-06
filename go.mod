@@ -24,5 +24,5 @@ require (
 	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.0.0-20211209193657-4570a0811e8b // indirect
-	golang.org/x/sys v0.20.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
 )

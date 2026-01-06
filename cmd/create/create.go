@@ -13,6 +13,8 @@ var process string
 
 var folderFlag bool
 var fileFlag bool
+var sysPathFlag bool
+var systemFlag bool
 
 // Cmd represents the create command
 var Cmd = &cobra.Command{
@@ -51,6 +53,10 @@ Example:
 			operations.CreateFile(args, app)
 		} else if folderFlag {
 			operations.CreateFolder(args, app)
+		} else if sysPathFlag {
+			operations.CreateSystemPathVariable(args, app)
+		} else if systemFlag {
+			operations.CreateSystemVariable(args, app)
 		} else if len(args) > 0 {
 			if utils.IsValidFilePath(args[0]) {
 				operations.CreateFile(args, app)
@@ -72,4 +78,6 @@ func init() {
 	Cmd.Flags().StringVarP(&process, "process", "p", "", "process name or pid")
 	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
 	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
+	Cmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
+	Cmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/core/inputs"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -50,11 +51,49 @@ func CreateProcess(name string, args []string, app *app.Data) {
 	history.Save(app)
 }
 
+func CreateSystemVariable(args []string, app *app.Data) {
+	newVar := ""
+	value := ""
+	if len(args) >= 2 {
+		newVar = args[0]
+		value = args[1]
+	} else {
+		crerrors.PrintNotArgs("var name and var value")
+		return
+	}
+
+	out, err := handlers.CreateSystemVariable(newVar, value, app)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(out)
+}
+
+func CreateSystemPathVariable(args []string, app *app.Data) {
+	newPath := ""
+	if len(args) > 0 {
+		newPath = args[0]
+	} else {
+		crerrors.PrintNotArgs("path")
+		return
+	}
+
+	out, err := handlers.CreateSystemPathVariable(newPath, app)
+	if err != nil {
+		fmt.Printf("err: %s \n", err)
+		return
+	}
+
+	fmt.Println(out)
+}
+
 func CreateFile(args []string, app *app.Data) {
 	for _, path := range args {
 		err := handlers.CreateFile(path, app)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("err: %s \n", err)
 		}
 	}
 }

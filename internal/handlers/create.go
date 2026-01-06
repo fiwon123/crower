@@ -2,6 +2,13 @@ package handlers
 
 import (
 	"fmt"
+	"slices"
+
+	"golang.org/x/sys/windows/registry"
+
+	"log"
+	"os"
+	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -103,6 +110,85 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 	}
 
 	return nil, fmt.Errorf("couldn't find the process either by pid or name")
+}
+
+func CreateSystemVariable(newVar string, value string, app *app.Data) (string, error) {
+	switch runtime.GOOS {
+	case "windows":
+		cmd := exec.Command("reg", "add", `HKCU\Environment`, "/v", newVar, "/t", "REG_SZ", "/d", value, "/f")
+		err := cmd.Run()
+		if err != nil {
+			return "", fmt.Errorf("Create System Variable error: %v \n", err)
+		}
+
+		return "System variable set. You may need to restart or log off for it to take effect.", nil
+	case "linux":
+		f, err := os.OpenFile(os.Getenv("HOME")+"/.bashrc", os.O_APPEND|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+
+		_, err = fmt.Fprintf(f, "\nexport %s=%s\n", newVar, value)
+		if err != nil {
+			return "", fmt.Errorf("Create System Variable error: %v \n", err)
+		}
+		println("Added to .bashrc. Restart terminal to take effect.")
+	}
+
+	return "", fmt.Errorf("Couldn't find OS to excute command")
+}
+
+func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
+	switch runtime.GOOS {
+	case "windows":
+		key, err := registry.OpenKey(
+			registry.CURRENT_USER,
+			`Environment`,
+			registry.QUERY_VALUE|registry.SET_VALUE,
+		)
+		if err != nil {
+			return "", err
+		}
+		defer key.Close()
+
+		path, _, err := key.GetStringValue("Path")
+		if err != nil {
+			return "", err
+		}
+		ok := checkNewVarValue(value, path)
+		if !ok {
+			return "", fmt.Errorf("value already in PATH")
+		}
+
+		newPath := path + string(os.PathListSeparator) + value
+
+		err = key.SetStringValue("Path", newPath)
+
+		return "Added to PATH", err
+	case "linux":
+		line := fmt.Sprintf(`export PATH="$PATH:%s"`, value)
+
+		err := os.WriteFile(
+			os.Getenv("HOME")+"/.profile",
+			[]byte(line+"\n"),
+			0644,
+		)
+
+		return "Added to PATH", err
+	}
+
+	return "", fmt.Errorf("Couldn't find OS to excute command")
+}
+
+func checkNewVarValue(value string, from string) bool {
+	splitted := strings.Split(from, string(os.PathListSeparator))
+	ok := true
+	if slices.Contains(splitted, value) {
+		return false
+	}
+
+	return ok
 }
 
 // Create a new file on filepath
