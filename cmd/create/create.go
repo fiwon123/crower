@@ -3,7 +3,6 @@ package create
 import (
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/crerrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
@@ -61,7 +60,7 @@ Example:
 				operations.CreateCommand(allAlias, args, app)
 			}
 		} else {
-			crerrors.PrintCmdHelp("create")
+			operations.CreateCommand(allAlias, args, app)
 		}
 
 	},
