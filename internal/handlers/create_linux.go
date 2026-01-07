@@ -15,7 +15,7 @@ import (
 func CreateSystemVariable(newVar string, value string, app *app.Data) (string, error) {
 
 	bashrcPath := os.Getenv("HOME") + "/.bashrc"
-	fileSlice := getFileSlice(bashrcPath)
+	fileSlice := getFileLineSlice(bashrcPath)
 
 	for _, s := range fileSlice {
 		if strings.Contains(s, fmt.Sprintf("export %s=", newVar)) {
@@ -29,7 +29,7 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 	}
 	defer f.Close()
 
-	_, err = fmt.Fprintf(f, "\nexport %s=%s", newVar, value)
+	_, err = fmt.Fprintf(f, "\nexport %s=\"%s\"", newVar, value)
 	if err != nil {
 		return "", fmt.Errorf("Create System Variable error: %v \n", err)
 	}
@@ -40,8 +40,8 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 
 	home := os.Getenv("HOME")
-	profileFile := home + "/.profile"
-	lineSlice := getFileSlice(profileFile)
+	profileFilePath := home + "/.profile"
+	lineSlice := getFileLineSlice(profileFilePath)
 
 	pathLinePrefix := "export PATH="
 	pathLinePrefix2 := "export PATH"
@@ -75,7 +75,7 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 		lineSlice = append(lineSlice, fmt.Sprintf("export PATH=\"$PATH:%s\"", value))
 	}
 
-	err := writeProfileFile(lineSlice)
+	err := writeFile(lineSlice, profileFilePath)
 	if err != nil {
 		return "", err
 	}
@@ -83,11 +83,21 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 	return "Added to PATH", err
 }
 
-func writeProfileFile(lineSlice []string) error {
-	home := os.Getenv("HOME")
-	profileFile := home + "/.profile"
+func getFileLineSlice(filePath string) []string {
 
-	err := os.WriteFile(profileFile, []byte(strings.Join(lineSlice, "\n")), 0644)
+	lines, err := os.ReadFile(filePath)
+	if err != nil {
+		lines = []byte{}
+	}
+
+	lineSlice := strings.Split(string(lines), "\n")
+
+	return lineSlice
+}
+
+func writeFile(lineSlice []string, filePath string) error {
+
+	err := os.WriteFile(filePath, []byte(strings.Join(lineSlice, "\n")), 0644)
 	if err != nil {
 		return fmt.Errorf("Error writing .profile: %v", err)
 	}

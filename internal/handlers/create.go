@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"fmt"
+	"path/filepath"
+	"slices"
 
-	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -107,18 +108,6 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 	return nil, fmt.Errorf("couldn't find the process either by pid or name")
 }
 
-func getFileSlice(filePath string) []string {
-
-	lines, err := os.ReadFile(filePath)
-	if err != nil {
-		lines = []byte{}
-	}
-
-	lineSlice := strings.Split(string(lines), "\n")
-
-	return lineSlice
-}
-
 // Create a new file on filepath
 func CreateFile(filePath string, app *app.Data) error {
 	var out string
@@ -155,4 +144,18 @@ func CreateFolder(folderPath string, app *app.Data) error {
 
 	fmt.Println("result: ", out)
 	return nil
+}
+
+func checkNewVarValue(value string, from string) bool {
+	splitted := splitPath(from)
+	ok := true
+	if slices.Contains(splitted, value) {
+		return false
+	}
+
+	return ok
+}
+
+func splitPath(path string) []string {
+	return filepath.SplitList(path)
 }
