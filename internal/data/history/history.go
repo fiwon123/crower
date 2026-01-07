@@ -28,17 +28,17 @@ func New() Data {
 	}
 }
 
-// Get last content from lastIndex - 1 if possible
-func (h *Data) GetBeforeLast() *Content {
+// Get last content from lastIndex - steps if possible
+func (h *Data) GetBeforeLast(steps int) (*Content, error) {
 	if len(h.AllData) == 0 {
-		return nil
+		return nil, fmt.Errorf("history is empty")
 	}
 
-	if len(h.AllData) < 2 {
-		return nil
+	if len(h.AllData)-steps < 0 {
+		return nil, fmt.Errorf("step value is greater than quantity of history registry")
 	}
 
-	return &h.AllData[len(h.AllData)-2]
+	return &h.AllData[len(h.AllData)-steps], nil
 }
 
 // Get last content from lastIndex
@@ -105,23 +105,28 @@ func (h *Data) RemoveLast() {
 	h.AllData = h.AllData[:len(h.AllData)-1]
 }
 
-// List from first to steps
-func (h *Data) ListLast(steps int) {
+// Get Index from last index - steps
+func (h *Data) GetIndexFromLastTo(steps int) int {
+	return len(h.AllData) - steps
+}
 
-	stop := len(h.AllData) - steps
+// List from first to steps
+func (h *Data) ListFirstHistory(steps int) {
+
+	start := steps - 1
 	printHeader()
-	for i := len(h.AllData) - 1; i >= stop; i-- {
+	for i := start; i >= 0; i-- {
 		data := h.AllData[i]
 		printContent(data.Version, data.File, data.Timestemp, data.Note)
 	}
 }
 
 // List from last to steps
-func (h *Data) ListGoBack(steps int) {
-	start := len(h.AllData) - 1 - steps
-
+func (h *Data) ListLastHistory(steps int) {
+	start := len(h.AllData) - 1
+	stop := len(h.AllData) - steps
 	printHeader()
-	for i := start; i >= 0; i-- {
+	for i := start; i >= stop; i-- {
 		data := h.AllData[i]
 		printContent(data.Version, data.File, data.Timestemp, data.Note)
 	}
