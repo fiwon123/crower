@@ -3,7 +3,6 @@
 package handlers
 
 import (
-	"bufio"
 	"fmt"
 	"log"
 	"os"
@@ -15,7 +14,7 @@ import (
 func CreateSystemVariable(newVar string, value string, app *app.Data) (string, error) {
 
 	bashrcPath := os.Getenv("HOME") + "/.bashrc"
-	fileSlice := getFileSlice(bashrcPath)
+	fileSlice := getFileLineSlice(bashrcPath)
 
 	for _, s := range fileSlice {
 		if strings.Contains(s, fmt.Sprintf("export %s=", newVar)) {
@@ -29,7 +28,7 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 	}
 	defer f.Close()
 
-	_, err = fmt.Fprintf(f, "\nexport %s=%s", newVar, value)
+	_, err = fmt.Fprintf(f, "\nexport %s=\"%s\"", newVar, value)
 	if err != nil {
 		return "", fmt.Errorf("Create System Variable error: %v \n", err)
 	}
@@ -40,8 +39,8 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 
 	home := os.Getenv("HOME")
-	profileFile := home + "/.profile"
-	lineSlice := getFileSlice(profileFile)
+	profileFilePath := home + "/.profile"
+	lineSlice := getFileLineSlice(profileFilePath)
 
 	pathLinePrefix := "export PATH="
 	pathLinePrefix2 := "export PATH"
@@ -75,38 +74,10 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 		lineSlice = append(lineSlice, fmt.Sprintf("export PATH=\"$PATH:%s\"", value))
 	}
 
-	err := writeProfileFile(lineSlice)
+	err := writeFile(lineSlice, profileFilePath)
 	if err != nil {
 		return "", err
 	}
 
 	return "Added to PATH", err
-}
-
-func writeProfileFile(lineSlice []string) error {
-	home := os.Getenv("HOME")
-	profileFile := home + "/.profile"
-
-	err := os.WriteFile(profileFile, []byte(strings.Join(lineSlice, "\n")), 0644)
-	if err != nil {
-		return fmt.Errorf("Error writing .profile: %v", err)
-	}
-
-	return nil
-}
-
-func lineExists(file, line string) bool {
-	f, err := os.Open(file)
-	if err != nil {
-		return false
-	}
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		if strings.TrimSpace(scanner.Text()) == line {
-			return true
-		}
-	}
-	return false
 }

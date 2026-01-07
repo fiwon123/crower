@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bufio"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -109,7 +110,7 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 	return nil, fmt.Errorf("couldn't find the process either by pid or name")
 }
 
-func getFileSlice(filePath string) []string {
+func getFileLineSlice(filePath string) []string {
 
 	lines, err := os.ReadFile(filePath)
 	if err != nil {
@@ -119,6 +120,32 @@ func getFileSlice(filePath string) []string {
 	lineSlice := strings.Split(string(lines), "\n")
 
 	return lineSlice
+}
+
+func writeFile(lineSlice []string, filePath string) error {
+
+	err := os.WriteFile(filePath, []byte(strings.Join(lineSlice, "\n")), 0644)
+	if err != nil {
+		return fmt.Errorf("Error writing .profile: %v", err)
+	}
+
+	return nil
+}
+
+func lineExists(file, line string) bool {
+	f, err := os.Open(file)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if strings.TrimSpace(scanner.Text()) == line {
+			return true
+		}
+	}
+	return false
 }
 
 // Create a new file on filepath
