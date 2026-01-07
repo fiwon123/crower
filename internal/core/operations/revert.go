@@ -1,27 +1,46 @@
 package operations
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/fiwon123/crower/internal/core/inputs"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/history"
 )
 
-func Revert(app *app.Data) {
+func Revert(args []string, app *app.Data) {
 
-	ok := inputs.CheckRevertInput(app)
+	steps := 1
+	var err error
+	if len(args) > 0 {
+		steps, err = strconv.Atoi(args[0])
+
+		if err != nil {
+			crerrors.PrintNotArgs("need to pass an int number")
+			return
+		}
+
+	} else {
+		crerrors.PrintNotArgs("steps")
+		return
+	}
+
+	ok, err := inputs.CheckRevertInput(steps, app)
 	if !ok {
-		println("Cancelling revert...")
+		fmt.Printf("error %v\n", err)
 		return
 	}
 
-	backHistory := app.History.GetBeforeLast()
+	backHistory, err := app.History.GetBeforeLast(steps)
 
-	if backHistory == nil {
-		app.LoggerInfo.Error("Error already in initial history")
+	if err != nil {
+		app.LoggerInfo.Error("error: ", err)
 		return
 	}
 
-	err := history.RevertTo(backHistory, app)
+	err = history.RevertTo(backHistory, app)
 	if err != nil {
 		app.LoggerInfo.Error("Error revert history %v", err)
 		return

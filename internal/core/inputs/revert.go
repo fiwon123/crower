@@ -7,17 +7,31 @@ import (
 )
 
 // Verify parameters to process revert operation
-func CheckRevertInput(app *app.Data) bool {
-	fmt.Println()
-	fmt.Println("New History")
-	app.History.ListGoBack(1)
+func CheckRevertInput(steps int, app *app.Data) (bool, error) {
+	if steps < 0 {
+		return false, fmt.Errorf("steps is negative number")
+	}
+
+	stopIndex := app.History.GetIndexFromLastTo(steps)
+	if stopIndex < 0 {
+		return false, fmt.Errorf("can't revert steps is greater than quantity of history registry")
+	}
 
 	fmt.Println()
 	fmt.Println("Deleted History")
-	app.History.ListLast(1)
+	app.History.ListLastHistory(steps)
 
 	fmt.Println()
-	fmt.Println("History will revert 1 commit.")
+	fmt.Println("New History")
+	app.History.ListFirstHistory(stopIndex)
+
+	fmt.Println()
+	fmt.Printf("History will revert %d registries \n", steps)
 	ok := getUserConfirmation("Continue to revert")
-	return ok
+
+	if !ok {
+		return false, fmt.Errorf("cancelling revert...")
+	}
+
+	return ok, nil
 }

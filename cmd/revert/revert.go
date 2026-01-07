@@ -17,10 +17,9 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
-		operations.Revert(app)
+		operations.Revert(args, app)
 	},
 }
 
 func init() {
-
 }
