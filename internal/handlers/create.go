@@ -3,9 +3,7 @@ package handlers
 import (
 	"fmt"
 
-	"log"
 	"os"
-	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -107,43 +105,6 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 	}
 
 	return nil, fmt.Errorf("couldn't find the process either by pid or name")
-}
-
-func CreateSystemVariable(newVar string, value string, app *app.Data) (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		cmd := exec.Command("reg", "add", `HKCU\Environment`, "/v", newVar, "/t", "REG_SZ", "/d", value, "/f")
-		err := cmd.Run()
-		if err != nil {
-			return "", fmt.Errorf("Create System Variable error: %v \n", err)
-		}
-
-		return "System variable set. You may need to restart or log off for it to take effect.", nil
-	case "linux":
-		bashrcPath := os.Getenv("HOME") + "/.bashrc"
-		fileSlice := getFileSlice(bashrcPath)
-
-		for _, s := range fileSlice {
-			if strings.Contains(s, fmt.Sprintf("export %s=", newVar)) {
-				return "", fmt.Errorf("variable already added")
-			}
-		}
-
-		f, err := os.OpenFile(bashrcPath, os.O_APPEND|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer f.Close()
-
-		_, err = fmt.Fprintf(f, "\nexport %s=%s", newVar, value)
-		if err != nil {
-			return "", fmt.Errorf("Create System Variable error: %v \n", err)
-		}
-
-		return "Added to .bashrc. Restart terminal to take effect.", nil
-	}
-
-	return "", fmt.Errorf("Couldn't find OS to excute command")
 }
 
 func getFileSlice(filePath string) []string {

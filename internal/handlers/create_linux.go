@@ -5,11 +5,37 @@ package handlers
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
 )
+
+func CreateSystemVariable(newVar string, value string, app *app.Data) (string, error) {
+
+	bashrcPath := os.Getenv("HOME") + "/.bashrc"
+	fileSlice := getFileSlice(bashrcPath)
+
+	for _, s := range fileSlice {
+		if strings.Contains(s, fmt.Sprintf("export %s=", newVar)) {
+			return "", fmt.Errorf("variable already added")
+		}
+	}
+
+	f, err := os.OpenFile(bashrcPath, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer f.Close()
+
+	_, err = fmt.Fprintf(f, "\nexport %s=%s", newVar, value)
+	if err != nil {
+		return "", fmt.Errorf("Create System Variable error: %v \n", err)
+	}
+
+	return "Added to .bashrc. Restart terminal to take effect.", nil
+}
 
 func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 

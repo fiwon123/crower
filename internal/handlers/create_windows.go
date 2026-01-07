@@ -5,12 +5,39 @@ package handlers
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"golang.org/x/sys/windows/registry"
 )
+
+func CreateSystemVariable(newVar string, value string, app *app.Data) (string, error) {
+	key, err := registry.OpenKey(
+		registry.CURRENT_USER,
+		`Environment`,
+		registry.QUERY_VALUE,
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer key.Close()
+
+	_, _, err = key.GetStringValue(newVar)
+	if err == nil {
+		return "", fmt.Errorf("value already exists")
+	}
+
+	cmd := exec.Command("reg", "add", `HKCU\Environment`, "/v", newVar, "/t", "REG_SZ", "/d", value, "/f")
+	err = cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("Create System Variable error: %v \n", err)
+	}
+
+	return "System variable set. You may need to restart or log off for it to take effect.", nil
+
+}
 
 func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 	key, err := registry.OpenKey(
