@@ -51,6 +51,42 @@ func DeleteLast(op state.OperationEnum, app *app.Data) {
 	Delete([]string{content.CommandName}, app)
 }
 
+func DeleteSystemVariable(args []string, app *app.Data) {
+	newVar := ""
+	if len(args) >= 1 {
+		newVar = args[0]
+	} else {
+		crerrors.PrintNotArgs("var name")
+		return
+	}
+
+	out, err := handlers.DeleteSystemVariable(newVar, app)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(out)
+}
+
+func DeleteSystemPathVariable(args []string, app *app.Data) {
+	newPath := ""
+	if len(args) > 0 {
+		newPath = args[0]
+	} else {
+		crerrors.PrintNotArgs("path")
+		return
+	}
+
+	out, err := handlers.DeleteSystemPathVariable(newPath, app)
+	if err != nil {
+		fmt.Printf("err: %s \n", err)
+		return
+	}
+
+	fmt.Println(out)
+}
+
 func DeleteFile(args []string, app *app.Data) {
 	filePath := ""
 	if len(args) > 0 {

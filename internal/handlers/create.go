@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"fmt"
+	"path/filepath"
+	"slices"
 
 	"os"
 	"runtime"
@@ -155,4 +157,18 @@ func CreateFolder(folderPath string, app *app.Data) error {
 
 	fmt.Println("result: ", out)
 	return nil
+}
+
+func checkNewVarValue(value string, from string) bool {
+	splitted := splitPath(from)
+	ok := true
+	if slices.Contains(splitted, value) {
+		return false
+	}
+
+	return ok
+}
+
+func splitPath(path string) []string {
+	return filepath.SplitList(path)
 }

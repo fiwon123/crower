@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
-	"slices"
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"golang.org/x/sys/windows/registry"
@@ -66,18 +64,4 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 
 	return "Added to PATH", err
 
-}
-
-func checkNewVarValue(value string, from string) bool {
-	splitted := splitPath(from)
-	ok := true
-	if slices.Contains(splitted, value) {
-		return false
-	}
-
-	return ok
-}
-
-func splitPath(path string) []string {
-	return filepath.SplitList(path)
 }
