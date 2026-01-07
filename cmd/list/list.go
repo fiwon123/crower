@@ -56,6 +56,6 @@ func init() {
 	Cmd.Flags().BoolVarP(&process, "process", "p", false, "list all process")
 	Cmd.Flags().BoolVarP(&history, "history", "i", false, "list history")
 	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "list folder files")
-	Cmd.Flags().BoolVarP(&systemFlag, "system", "a", false, "list all system variables")
-	Cmd.Flags().BoolVarP(&sysPathFlag, "syspath", "s", false, "list path system variable")
+	Cmd.Flags().BoolVar(&systemFlag, "system", false, "list all system variables")
+	Cmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "list path system variable")
 }

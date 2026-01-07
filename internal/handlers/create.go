@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"fmt"
+
+	"os"
 	"runtime"
 	"strconv"
 	"strings"
@@ -103,6 +105,18 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 	}
 
 	return nil, fmt.Errorf("couldn't find the process either by pid or name")
+}
+
+func getFileSlice(filePath string) []string {
+
+	lines, err := os.ReadFile(filePath)
+	if err != nil {
+		lines = []byte{}
+	}
+
+	lineSlice := strings.Split(string(lines), "\n")
+
+	return lineSlice
 }
 
 // Create a new file on filepath
