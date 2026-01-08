@@ -110,14 +110,44 @@ func (h *Data) GetIndexFromLastTo(steps int) int {
 	return len(h.AllData) - steps
 }
 
+func (h *Data) ListOperation(op state.OperationEnum) {
+	printHeader()
+	line := 0
+	for i := len(h.AllData) - 1; i >= 0; i-- {
+		data := h.AllData[i]
+		if data.Operation != op {
+			continue
+		}
+
+		printContent(line, data.Version, data.File, data.Timestemp, data.Note)
+		line += 1
+	}
+}
+
+func (h *Data) GetListOperation(op state.OperationEnum) []Content {
+	contents := []Content{}
+	for i := len(h.AllData) - 1; i >= 0; i-- {
+		data := h.AllData[i]
+		if data.Operation != op {
+			continue
+		}
+
+		contents = append(contents, data)
+	}
+
+	return contents
+}
+
 // List from first to steps
 func (h *Data) ListFirstHistory(steps int) {
 
 	start := steps - 1
 	printHeader()
+	line := 0
 	for i := start; i >= 0; i-- {
 		data := h.AllData[i]
-		printContent(data.Version, data.File, data.Timestemp, data.Note)
+		printContent(line, data.Version, data.File, data.Timestemp, data.Note)
+		line += 1
 	}
 }
 
@@ -126,27 +156,31 @@ func (h *Data) ListLastHistory(steps int) {
 	start := len(h.AllData) - 1
 	stop := len(h.AllData) - steps
 	printHeader()
+	line := 0
 	for i := start; i >= stop; i-- {
 		data := h.AllData[i]
-		printContent(data.Version, data.File, data.Timestemp, data.Note)
+		printContent(line, data.Version, data.File, data.Timestemp, data.Note)
+		line += 1
 	}
 }
 
 // List all history
 func (h *Data) List() {
 	printHeader()
+	line := 0
 	for i := len(h.AllData) - 1; i >= 0; i-- {
 		data := h.AllData[i]
-		printContent(data.Version, data.File, data.Timestemp, data.Note)
+		printContent(line, data.Version, data.File, data.Timestemp, data.Note)
+		line += 1
 	}
 }
 
-func printContent(version int, file string, timestemp string, note string) {
-	fmt.Printf("%-8d %-16s %-32s %-3s \n", version, file, timestemp, note)
+func printContent(line int, version int, file string, timestemp string, note string) {
+	fmt.Printf("%-4d %-8d %-16s %-32s %-3s \n", line, version, file, timestemp, note)
 }
 
 func printHeader() {
 	fmt.Println("----------------------------------------------------------------------------")
-	fmt.Printf("%-8s %-16s %-32s %-3s \n", "Version", "File", "Timestemp", "Note")
+	fmt.Printf("%-4s %-8s %-16s %-32s %-3s \n", "line", "Version", "File", "Timestemp", "Note")
 	fmt.Println("----------------------------------------------------------------------------")
 }
