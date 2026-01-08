@@ -110,3 +110,21 @@ func DeleteFolder(args []string, app *app.Data) {
 
 	handlers.DeleteFolder(folderPath, app)
 }
+
+func DeleteHistoryContent(args []string, app *app.Data) {
+	content, ok := inputs.CheckDeleteHistoryContentInput(app)
+	if !ok {
+		fmt.Println("Cancelling Delete History Content...")
+		return
+	}
+
+	out, err := handlers.DeleteHistoryContent(content, app)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(out)
+
+	history.SaveOnlyHistory(app)
+}

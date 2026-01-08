@@ -6,6 +6,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/history"
 )
 
 // Delete command using key
@@ -63,4 +64,13 @@ func DeleteFolder(folderPath string, app *app.Data) error {
 
 	fmt.Println("result: ", out)
 	return nil
+}
+
+func DeleteHistoryContent(content history.Content, app *app.Data) (string, error) {
+	ok := app.History.RemoveContent(content)
+	if !ok {
+		return "", fmt.Errorf("Content not found \n")
+	}
+
+	return "Content deleted", nil
 }

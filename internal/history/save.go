@@ -17,3 +17,7 @@ func Save(app *app.Data) {
 
 	utils.WriteJson(app.History, app.HistoryFilePath)
 }
+
+func SaveOnlyHistory(app *app.Data) {
+	utils.WriteJson(app.History, app.HistoryFilePath)
+}
