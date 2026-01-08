@@ -64,7 +64,7 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 			break
 		} else if strings.HasPrefix(line, pathLinePrefix2) {
 			if !strings.Contains(line, value) {
-				lineSlice[i] = line[:len(line)] + "=\"$PATH:" + value + "\""
+				lineSlice[i] = line[:] + "=\"$PATH:" + value + "\""
 			}
 			found = true
 			break

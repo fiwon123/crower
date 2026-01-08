@@ -33,4 +33,5 @@ const (
 	CopyFolder          OperationEnum = "copyFolder"
 	MoveFile            OperationEnum = "moveFile"
 	MoveFolder          OperationEnum = "moveFolder"
+	Restore             OperationEnum = "restore"
 )
