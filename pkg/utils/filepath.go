@@ -26,6 +26,11 @@ func CreateFolderIfNotExists(path string) error {
 	return nil
 }
 
+func DeleteFile(path string) error {
+	err := os.RemoveAll(path)
+	return err
+}
+
 func FilePathExists(path string) bool {
 	info, err := os.Stat(path)
 	if err != nil {
