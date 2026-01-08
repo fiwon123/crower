@@ -169,3 +169,18 @@ func isValidInputKey(input string, app *app.Data) (any, error) {
 
 	return app.OrderKeys[index], nil
 }
+
+func isValidContentKey(input string, app *app.Data) (any, error) {
+	index, err := strconv.Atoi(input)
+	if err != nil {
+		return "", crerrors.InvalidRows()
+	}
+
+	contents := app.History.AllData
+	correctIndex := len(contents) - 1 - index
+	if correctIndex < 0 || correctIndex >= len(contents) {
+		return "", crerrors.InvalidRows()
+	}
+
+	return contents[correctIndex], nil
+}

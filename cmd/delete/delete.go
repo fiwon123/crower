@@ -18,6 +18,7 @@ var folderFlag bool
 var fileFlag bool
 var sysPathFlag bool
 var systemFlag bool
+var historyFlag bool
 
 // Cmd represents the delete command
 var Cmd = &cobra.Command{
@@ -65,6 +66,8 @@ Example:
 			operations.DeleteSystemVariable(args, app)
 		} else if sysPathFlag {
 			operations.DeleteSystemPathVariable(args, app)
+		} else if historyFlag {
+			operations.DeleteHistoryContent(args, app)
 		} else if len(args) > 0 {
 			if utils.IsValidFilePath(args[0]) {
 				operations.DeleteFile(args, app)
@@ -88,4 +91,5 @@ func init() {
 	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
 	Cmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
 	Cmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
+	Cmd.Flags().BoolVar(&historyFlag, "history", false, "delete a history content and linked backup cfg")
 }

@@ -105,6 +105,24 @@ func (h *Data) RemoveLast() {
 	h.AllData = h.AllData[:len(h.AllData)-1]
 }
 
+// Remove Content
+func (h *Data) RemoveContent(content Content) bool {
+	if len(h.AllData) == 0 {
+		return false
+	}
+
+	var newContents []Content
+	for i, c := range h.AllData {
+		if c.Version == content.Version {
+			newContents = append(h.AllData[:i], h.AllData[i+1:]...)
+			break
+		}
+	}
+
+	h.AllData = newContents
+	return true
+}
+
 // Get Index from last index - steps
 func (h *Data) GetIndexFromLastTo(steps int) int {
 	return len(h.AllData) - steps
