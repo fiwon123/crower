@@ -6,7 +6,7 @@ on:
       - dev
 
 jobs:
-  restrict-pr:
+  restrict-pr-dev:
     runs-on: ubuntu-latest
     steps:
       - name: Check PR source branch
