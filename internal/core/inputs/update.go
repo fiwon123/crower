@@ -1,8 +1,6 @@
 package inputs
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 )
@@ -16,15 +14,15 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 		*key = input
 	}
 
-	fmt.Println("-----------------------------------------")
+	app.Logger.Info("-----------------------------------------")
 	updateCommand := app.AllCommandsByName.Get(*key)
-	fmt.Println("Name:    ", updateCommand.Name)
-	fmt.Println("Aliases: ", updateCommand.AllAlias)
-	fmt.Println("Exec:    ", updateCommand.Exec)
-	fmt.Println()
+	app.Logger.Info("Name:    ", "name", updateCommand.Name)
+	app.Logger.Info("Aliases: ", "alias", updateCommand.AllAlias)
+	app.Logger.Info("Exec:    ", "exec", updateCommand.Exec)
+	app.Logger.Info("")
 
 	if *name == "" {
-		ok := getUserConfirmation("Do you want to update name")
+		ok := getUserConfirmation("Do you want to update name", app)
 
 		if ok {
 			*name = inputName(app)
@@ -32,7 +30,7 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 	}
 
 	if len(*allAlias) == 0 {
-		ok := getUserConfirmation("Do you want to update alias")
+		ok := getUserConfirmation("Do you want to update alias", app)
 
 		if ok {
 			*allAlias = inputAlias(app)
@@ -40,24 +38,24 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 	}
 
 	if *exec == "" {
-		ok := getUserConfirmation("Do you want to update exec")
+		ok := getUserConfirmation("Do you want to update exec", app)
 
 		if ok {
 			*exec = inputExec(app)
 		}
 	}
-	fmt.Println("-----------------------------------------")
-	fmt.Println("Old Command: ")
-	fmt.Println("Name:    ", updateCommand.Name)
-	fmt.Println("Aliases: ", updateCommand.AllAlias)
-	fmt.Println("Exec:    ", updateCommand.Exec)
-	fmt.Println("-----------------------------------------")
-	fmt.Println("New Command: ")
-	fmt.Println("Name:    ", *name)
-	fmt.Println("Aliases: ", *allAlias)
-	fmt.Println("Exec:    ", *exec)
-	fmt.Println()
+	app.Logger.Info("-----------------------------------------")
+	app.Logger.Info("Old Command: ")
+	app.Logger.Info("Name:    ", "name", updateCommand.Name)
+	app.Logger.Info("Aliases: ", "alias", updateCommand.AllAlias)
+	app.Logger.Info("Exec:    ", "exec", updateCommand.Exec)
+	app.Logger.Info("-----------------------------------------")
+	app.Logger.Info("New Command: ")
+	app.Logger.Info("Name:    ", "name", *name)
+	app.Logger.Info("Aliases: ", "alias", *allAlias)
+	app.Logger.Info("Exec:    ", "exec", *exec)
+	app.Logger.Info("")
 
-	ok := getUserConfirmation("Continue to update")
+	ok := getUserConfirmation("Continue to update", app)
 	return ok
 }

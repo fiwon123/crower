@@ -33,7 +33,7 @@ func Execute(key string, params []string, app *app.Data) (string, *command.Data,
 
 	fmt.Println(command.Exec)
 	out, err := PerformExecute(command.Exec)
-	app.LoggerInfo.Info(command.Exec)
+	app.Logger.Info(command.Exec)
 	return out, command, err
 }
 

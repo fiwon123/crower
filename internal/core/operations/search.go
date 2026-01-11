@@ -51,7 +51,7 @@ func assertArgs(args []string) (string, string) {
 
 func assertSearchResult(out string, err error, app *app.Data) {
 	if err != nil {
-		app.LoggerInfo.Error("Error trying to search: ", out, err)
+		app.Logger.Error("Error trying to search: ", out, err)
 	}
 	fmt.Println(out)
 }

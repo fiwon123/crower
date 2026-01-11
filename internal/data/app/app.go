@@ -15,7 +15,7 @@ type Data struct {
 	HistoryFilePath    string
 	HistoryFolderPath  string
 	History            history.Data
-	LoggerInfo         crowlog.LoggerInfo
+	Logger             crowlog.Logger
 	OrderKeys          []string
 	AllCommandsByAlias command.MapData
 	AllCommandsByName  command.MapData
@@ -32,6 +32,8 @@ func New(cfgFilePath string, orderKeys []string, allAliases command.MapData, all
 	historyFolderPath := filepath.Join(folderPath, "history")
 	utils.CreateFolderIfNotExists(historyFolderPath)
 
+	logPath := filepath.Join(folderPath, "crower.log")
+
 	var history history.Data
 	err := utils.ReadJson(historyFilePath, &history)
 	if err != nil {
@@ -43,7 +45,7 @@ func New(cfgFilePath string, orderKeys []string, allAliases command.MapData, all
 		History:            history,
 		HistoryFilePath:    historyFilePath,
 		HistoryFolderPath:  historyFolderPath,
-		LoggerInfo:         *crowlog.New(),
+		Logger:             *crowlog.New(logPath),
 		OrderKeys:          orderKeys,
 		AllCommandsByAlias: allAliases,
 		AllCommandsByName:  allCommands,

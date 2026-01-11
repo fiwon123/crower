@@ -1,8 +1,6 @@
 package inputs
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -26,19 +24,19 @@ func CheckExecuteInput(key *string, params *[]string, app *app.Data) bool {
 
 	if command == nil {
 		handlers.ListCommands(app)
-		fmt.Println("Command not found, try to select one.")
+		app.Logger.Info("Command not found, try to select one.")
 		input := getUserInput("Select Row", isValidInputKey, app).(string)
 		*key = input
 
 		command = app.AllCommandsByName.Get(*key)
 	}
 
-	fmt.Println("-----------------------------------------")
-	fmt.Println("Name:    ", command.Name)
-	fmt.Println("Aliases: ", command.AllAlias)
-	fmt.Println("Exec:    ", command.Exec)
-	fmt.Println()
+	app.Logger.Info("-----------------------------------------")
+	app.Logger.Info("Name:    ", "name", command.Name)
+	app.Logger.Info("Aliases: ", "alias", command.AllAlias)
+	app.Logger.Info("Exec:    ", "exec", command.Exec)
+	app.Logger.Info("")
 
-	ok := getUserConfirmation("Continue to execute")
+	ok := getUserConfirmation("Continue to execute", app)
 	return ok
 }

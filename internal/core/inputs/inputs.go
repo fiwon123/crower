@@ -69,14 +69,14 @@ func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app 
 	return output
 }
 
-func getUserConfirmation(ask string) bool {
+func getUserConfirmation(ask string, app *app.Data) bool {
 	ok := false
 	input := ""
 	var confirmation bool
 	var err error
 	for !ok {
 
-		fmt.Print(ask + " ([Y]es/[N]o): ")
+		app.Logger.Info(ask + " ([Y]es/[N]o): ")
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSuffix(input, "\n")
@@ -118,7 +118,7 @@ func inputAlias(app *app.Data) []string {
 
 	alias := "none"
 	for alias != "" {
-		fmt.Println("current aliases: ", output)
+		app.Logger.Info("current aliases: ", output)
 		alias = getUserInput("Add new alias (type enter to skip): ", isValidAlias, app).(string)
 
 		if alias != "" {

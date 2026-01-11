@@ -1,8 +1,6 @@
 package inputs
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/history"
 )
@@ -14,13 +12,13 @@ func CheckRestoreInput(app *app.Data) (history.Content, bool) {
 	app.History.List()
 	content = getUserInput("Select Row", isValidContentKey, app).(history.Content)
 
-	fmt.Println("-----------------------------------------")
-	fmt.Println("Content")
-	fmt.Println("Version:    ", content.Version)
-	fmt.Println("File:    ", content.File)
-	fmt.Println("Note:    ", content.Note)
-	fmt.Println()
+	app.Logger.Info("-----------------------------------------")
+	app.Logger.Info("Content")
+	app.Logger.Info("Version:    ", "version", content.Version)
+	app.Logger.Info("File:    ", "file", content.File)
+	app.Logger.Info("Note:    ", "note", content.Note)
+	app.Logger.Info("")
 
-	ok := getUserConfirmation("Continue to restore")
+	ok := getUserConfirmation("Continue to restore", app)
 	return content, ok
 }

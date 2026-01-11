@@ -20,7 +20,7 @@ func Reset(app *app.Data) {
 		return
 	}
 
-	app.LoggerInfo.Info("reset all commands: ", app.AllCommandsByName)
+	app.Logger.Info("reset all commands: ", app.AllCommandsByName)
 	handlers.Reset(app)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 

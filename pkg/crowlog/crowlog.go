@@ -22,13 +22,9 @@ type Logger struct {
 }
 
 // Create a new LoggerInfo pointer.
-func New(logpath string, verbose bool) *Logger {
+func New(logpath string) *Logger {
 
 	terminalLevel := slog.LevelInfo
-	if verbose {
-		terminalLevel = slog.LevelDebug
-	}
-
 	fileLevel := slog.LevelDebug
 
 	dirpath := filepath.Dir(logpath)

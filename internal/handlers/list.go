@@ -36,7 +36,7 @@ func ListProcess(args []string, app *app.Data) error {
 
 	err := utils.ListAllProcess(partName, true)
 	if err != nil {
-		app.LoggerInfo.Error("Error getting processes:", err)
+		app.Logger.Error("Error getting processes:", err)
 		return err
 	}
 

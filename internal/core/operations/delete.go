@@ -29,11 +29,11 @@ func Delete(args []string, app *app.Data) {
 
 	command, ok := handlers.DeleteCommand(key, app)
 	if !ok {
-		app.LoggerInfo.Error("Error delete command: ", key)
+		app.Logger.Error("Error delete command: ", key)
 		return
 	}
 
-	app.LoggerInfo.Info("deleted command: ", app.AllCommandsByName)
+	app.Logger.Info("deleted command: ", app.AllCommandsByName)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
 	app.History.Add(state.Delete, command.Name, notes.GenerateDeleteNote(command))

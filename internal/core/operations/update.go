@@ -23,11 +23,11 @@ func Update(key string, name string, allAlias []string, exec string, app *app.Da
 
 	oldCommand, newCommand, err := handlers.UpdateCommand(key, name, allAlias, exec, app)
 	if err != nil {
-		app.LoggerInfo.Error("Error update command: ", err, key, name, allAlias, exec)
+		app.Logger.Error("Error update command: ", err, key, name, allAlias, exec)
 		return
 	}
 
-	app.LoggerInfo.Info("updated command: ", app.AllCommandsByName)
+	app.Logger.Info("updated command: ", app.AllCommandsByName)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
 	app.History.Add(state.Update, newCommand.Name, notes.GenerateUpdateNote(oldCommand, newCommand))

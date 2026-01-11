@@ -36,15 +36,15 @@ func Revert(args []string, app *app.Data) {
 	backHistory, err := app.History.GetBeforeLast(steps)
 
 	if err != nil {
-		app.LoggerInfo.Error("error: ", err)
+		app.Logger.Error("error: ", err)
 		return
 	}
 
 	err = history.RevertTo(backHistory, app)
 	if err != nil {
-		app.LoggerInfo.Error("Error revert history %v", err)
+		app.Logger.Error("Error revert history %v", err)
 		return
 	}
-	app.LoggerInfo.Info("reverted to history version ", backHistory.Version)
+	app.Logger.Info("reverted to history version ", backHistory.Version)
 	history.Save(app)
 }

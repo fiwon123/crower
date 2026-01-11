@@ -46,7 +46,8 @@ func ExecuteLast(op state.OperationEnum, args []string, app *app.Data) {
 
 func assertExecute(output string, command *command.Data, err error, app *app.Data) {
 	if err != nil {
-		app.LoggerInfo.Error("Error trying to run command: ", string(output), err)
+		app.Logger.Error("Error trying to run command: ", "out", string(output), "err", err)
+		return
 	}
 	fmt.Println(string(output))
 
