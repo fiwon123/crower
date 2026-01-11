@@ -36,16 +36,16 @@ func DeleteFile(filePath string, app *app.Data) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = PerformExecute(fmt.Sprintf("del '%s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("del '%s'", filePath), app)
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("\"rm '%s'\"", filePath))
+		out, err = PerformExecute(fmt.Sprintf("\"rm '%s'\"", filePath), app)
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", out)
+	app.Logger.Info("output: ", "out", out)
 	return nil
 }
 
@@ -55,16 +55,16 @@ func DeleteFolder(folderPath string, app *app.Data) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = PerformExecute(fmt.Sprintf("rmdir /s /q '%s'", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("rmdir /s /q '%s'", folderPath), app)
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf(`"rm -r '%s'"`, folderPath))
+		out, err = PerformExecute(fmt.Sprintf(`"rm -r '%s'"`, folderPath), app)
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", out)
+	app.Logger.Info("output: ", "out", out)
 	return nil
 }
 

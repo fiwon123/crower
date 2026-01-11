@@ -13,16 +13,16 @@ func CopyFile(filePath string, destFolder string, app *app.Data) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = PerformExecute(fmt.Sprintf("copy '%s' '%s'", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("copy '%s' '%s'", filePath, destFolder), app)
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("\"cp '%s' '%s'\"", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("\"cp '%s' '%s'\"", filePath, destFolder), app)
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("output: ", out)
+	app.Logger.Info("output: ", "out", out)
 	return nil
 }
 
@@ -32,15 +32,15 @@ func CopyFolder(filePath string, destFolder string, app *app.Data) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = PerformExecute(fmt.Sprintf("xcopy '%s' '%s' /E /I", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("xcopy '%s' '%s' /E /I", filePath, destFolder), app)
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("\"cp -r '%s' '%s'\"", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("\"cp -r '%s' '%s'\"", filePath, destFolder), app)
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("output: ", out)
+	app.Logger.Info("output: ", "out", out)
 	return nil
 }

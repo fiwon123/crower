@@ -28,14 +28,14 @@ func Open(paths []string, app *app.Data) error {
 			continue
 		}
 
-		fmt.Printf("performing execute...: %s \n", commandString)
+		app.Logger.Info("performing execute...: ", "exec", commandString)
 
-		out, err := PerformExecute(commandString)
+		out, err := PerformExecute(commandString, app)
 		if err != nil {
 			return fmt.Errorf("error %v out %v", err, string(out))
 		}
 
-		fmt.Println(string(out))
+		app.Logger.Info(string(out))
 		return nil
 	}
 
@@ -46,7 +46,7 @@ func Open(paths []string, app *app.Data) error {
 func OpenSystem(app *app.Data) error {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecuteStart("sysdm.cpl")
+		return PerformExecuteStart("sysdm.cpl", app)
 	case "linux":
 		PerformInteractiveTerminal("nano", "~/.bashrc")
 	}

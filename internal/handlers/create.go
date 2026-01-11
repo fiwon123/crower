@@ -114,16 +114,16 @@ func CreateFile(filePath string, app *app.Data) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = PerformExecute(fmt.Sprintf("type nul > '%s'", filePath))
+		out, err = PerformExecute(fmt.Sprintf("type nul > '%s'", filePath), app)
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("\"touch '%s'\"", filePath))
+		out, err = PerformExecute(fmt.Sprintf("\"touch '%s'\"", filePath), app)
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", out)
+	app.Logger.Info("output: ", "out", out)
 	return nil
 }
 
@@ -133,16 +133,16 @@ func CreateFolder(folderPath string, app *app.Data) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath), app)
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("\"mkdir '%s'\"", folderPath))
+		out, err = PerformExecute(fmt.Sprintf("\"mkdir '%s'\"", folderPath), app)
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", out)
+	app.Logger.Info("output: ", "out", out)
 	return nil
 }
 

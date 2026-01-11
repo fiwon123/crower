@@ -1,11 +1,11 @@
 package app
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
+
 	"github.com/fiwon123/crower/pkg/crowlog"
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -37,7 +37,7 @@ func New(cfgFilePath string, orderKeys []string, allAliases command.MapData, all
 	var history history.Data
 	err := utils.ReadJson(historyFilePath, &history)
 	if err != nil {
-		fmt.Printf("history error: %v \n", err)
+		panic(err)
 	}
 
 	return &Data{

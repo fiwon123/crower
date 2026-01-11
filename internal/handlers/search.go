@@ -11,9 +11,9 @@ import (
 func SearchBrowser(content string, app *app.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s'`, content))
+		return PerformExecute(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s'`, content), app)
 	case "linux":
-		return "", PerformExecuteStart(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" '`, content))
+		return "", PerformExecuteStart(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" '`, content), app)
 	}
 
 	return "", nil
@@ -24,9 +24,9 @@ func SearchFile(currentPath string, content string, app *app.Data) (string, erro
 
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b /a-d | findstr "%s"`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b /a-d | findstr "%s"`, currentPath, content), app)
 	case "linux":
-		return PerformExecute(fmt.Sprintf(`find "%s" -type f -name "%s"`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`find "%s" -type f -name "%s"`, currentPath, content), app)
 	}
 
 	return "", nil
@@ -37,9 +37,9 @@ func SearchFolder(currentPath string, content string, app *app.Data) (string, er
 
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b /ad | findstr "%s"`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b /ad | findstr "%s"`, currentPath, content), app)
 	case "linux":
-		return PerformExecute(fmt.Sprintf(`find "%s" -type d -name "%s"`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`find "%s" -type d -name "%s"`, currentPath, content), app)
 	}
 
 	return "", nil
@@ -49,9 +49,9 @@ func SearchFolder(currentPath string, content string, app *app.Data) (string, er
 func SearchFileAndFolder(currentPath string, content string, app *app.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b | findstr "%s"`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`dir "%s" /s /b | findstr "%s"`, currentPath, content), app)
 	case "linux":
-		return PerformExecute(fmt.Sprintf(`find "%s" -name "%s"`, currentPath, content))
+		return PerformExecute(fmt.Sprintf(`find "%s" -name "%s"`, currentPath, content), app)
 	}
 
 	return "", nil
