@@ -34,11 +34,13 @@ func ListProcess(args []string, app *app.Data) error {
 		partName = args[0]
 	}
 
-	err := utils.ListAllProcess(partName, true)
+	out, err := utils.GetAllProcess(partName, true)
 	if err != nil {
 		app.Logger.Error("Error getting processes:", err)
 		return err
 	}
+
+	app.Logger.Info(out)
 
 	return nil
 
