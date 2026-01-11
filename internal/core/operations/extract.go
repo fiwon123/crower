@@ -25,7 +25,7 @@ func Extract(args []string, outDir string, app *app.Data) {
 	}
 
 	if len(paths) == 0 {
-		crerrors.PrintEmptyPaths()
+		crerrors.PrintEmptyPaths(app)
 		return
 	}
 

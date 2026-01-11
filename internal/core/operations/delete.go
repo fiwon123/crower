@@ -42,7 +42,7 @@ func DeleteLast(op state.OperationEnum, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError()
+		crerrors.PrintCommandNotFoundError(app)
 		return
 	}
 
@@ -54,7 +54,7 @@ func DeleteSystemVariable(args []string, app *app.Data) {
 	if len(args) >= 1 {
 		newVar = args[0]
 	} else {
-		crerrors.PrintNotArgs("var name")
+		crerrors.PrintNotArgs("var name", app)
 		return
 	}
 
@@ -72,7 +72,7 @@ func DeleteSystemPathVariable(args []string, app *app.Data) {
 	if len(args) > 0 {
 		newPath = args[0]
 	} else {
-		crerrors.PrintNotArgs("path")
+		crerrors.PrintNotArgs("path", app)
 		return
 	}
 
@@ -90,7 +90,7 @@ func DeleteFile(args []string, app *app.Data) {
 	if len(args) > 0 {
 		filePath = args[0]
 	} else {
-		crerrors.PrintNotFileAndOutputPath()
+		crerrors.PrintNotFileAndOutputPath(app)
 		return
 	}
 
@@ -102,7 +102,7 @@ func DeleteFolder(args []string, app *app.Data) {
 	if len(args) > 0 {
 		folderPath = args[0]
 	} else {
-		crerrors.PrintNotFileAndOutputPath()
+		crerrors.PrintNotFileAndOutputPath(app)
 		return
 	}
 

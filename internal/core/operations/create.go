@@ -56,7 +56,7 @@ func CreateSystemVariable(args []string, app *app.Data) {
 		newVar = args[0]
 		value = args[1]
 	} else {
-		crerrors.PrintNotArgs("var name and var value")
+		crerrors.PrintNotArgs("var name and var value", app)
 		return
 	}
 
@@ -74,7 +74,7 @@ func CreateSystemPathVariable(args []string, app *app.Data) {
 	if len(args) > 0 {
 		newPath = args[0]
 	} else {
-		crerrors.PrintNotArgs("path")
+		crerrors.PrintNotArgs("path", app)
 		return
 	}
 

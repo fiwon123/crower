@@ -36,7 +36,7 @@ func UpdateLast(op state.OperationEnum, name string, allAlias []string, exec str
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError()
+		crerrors.PrintCommandNotFoundError(app)
 		return
 	}
 

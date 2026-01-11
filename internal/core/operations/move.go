@@ -11,7 +11,7 @@ import (
 
 func Move(args []string, app *app.Data) {
 	if len(args) == 0 {
-		crerrors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument")
+		crerrors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument", app)
 		return
 	}
 

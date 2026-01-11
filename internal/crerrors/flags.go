@@ -1,23 +1,25 @@
 package crerrors
 
-import "fmt"
+import (
+	"github.com/fiwon123/crower/internal/data/app"
+)
 
-func PrintFileAndFolderFlagsNotUsed() {
-	fmt.Println("file and folder flag not used")
+func PrintFileAndFolderFlagsNotUsed(app *app.Data) {
+	app.Logger.Error("file and folder flag not used")
 }
 
-func PrintNotFileAndOutputPath() {
-	fmt.Println("needs to specify file path and out folder")
+func PrintNotFileAndOutputPath(app *app.Data) {
+	app.Logger.Error("needs to specify file path and out folder")
 }
 
-func PrintNotArgs(msg string) {
+func PrintNotArgs(msg string, app *app.Data) {
 	if msg == "" {
-		fmt.Println("need to pass arguments")
+		app.Logger.Error("need to pass arguments")
 	} else {
-		fmt.Printf("need to pass arguments: %s \n", msg)
+		app.Logger.Error("need to pass arguments: ", msg)
 	}
 }
 
-func PrintEmptyPaths() {
-	fmt.Println("empty paths")
+func PrintEmptyPaths(app *app.Data) {
+	app.Logger.Error("empty paths")
 }

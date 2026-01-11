@@ -34,7 +34,7 @@ func ExecuteLast(op state.OperationEnum, args []string, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError()
+		crerrors.PrintCommandNotFoundError(app)
 		return
 	}
 

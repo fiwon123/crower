@@ -9,7 +9,7 @@ import (
 
 func Copy(args []string, app *app.Data) {
 	if len(args) == 0 {
-		crerrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument")
+		crerrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument", app)
 		return
 	}
 

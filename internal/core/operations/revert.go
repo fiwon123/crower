@@ -17,12 +17,12 @@ func Revert(args []string, app *app.Data) {
 		steps, err = strconv.Atoi(args[0])
 
 		if err != nil {
-			crerrors.PrintNotArgs("steps int number")
+			crerrors.PrintNotArgs("steps int number", app)
 			return
 		}
 
 	} else {
-		crerrors.PrintNotArgs("steps int number")
+		crerrors.PrintNotArgs("steps int number", app)
 		return
 	}
 
