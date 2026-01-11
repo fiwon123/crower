@@ -10,7 +10,7 @@ import (
 func UpgradeApp(currentVersion string, app *app.Data) {
 	newVersion, err := handlers.CheckNewVersion(currentVersion, app)
 	if err != nil {
-		fmt.Println(err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
