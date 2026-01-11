@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/fiwon123/crower/internal/core/inputs"
@@ -29,14 +28,14 @@ func Revert(args []string, app *app.Data) {
 
 	ok, err := inputs.CheckRevertInput(steps, app)
 	if !ok {
-		fmt.Printf("error %v\n", err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
 	backHistory, err := app.History.GetBeforeLast(steps)
 
 	if err != nil {
-		app.Logger.Error("error: ", err)
+		app.Logger.Error(err.Error())
 		return
 	}
 

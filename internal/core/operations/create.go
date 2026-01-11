@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
@@ -64,11 +62,11 @@ func CreateSystemVariable(args []string, app *app.Data) {
 
 	out, err := handlers.CreateSystemVariable(newVar, value, app)
 	if err != nil {
-		fmt.Println(err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Println(out)
+	app.Logger.Info(out)
 }
 
 func CreateSystemPathVariable(args []string, app *app.Data) {
@@ -82,18 +80,18 @@ func CreateSystemPathVariable(args []string, app *app.Data) {
 
 	out, err := handlers.CreateSystemPathVariable(newPath, app)
 	if err != nil {
-		fmt.Printf("err: %s \n", err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Println(out)
+	app.Logger.Info(out)
 }
 
 func CreateFile(args []string, app *app.Data) {
 	for _, path := range args {
 		err := handlers.CreateFile(path, app)
 		if err != nil {
-			fmt.Printf("err: %s \n", err)
+			app.Logger.Error(err.Error())
 		}
 	}
 }
@@ -102,7 +100,7 @@ func CreateFolder(args []string, app *app.Data) {
 	for _, path := range args {
 		err := handlers.CreateFolder(path, app)
 		if err != nil {
-			fmt.Println(err)
+			app.Logger.Error(err.Error())
 		}
 	}
 }

@@ -2,7 +2,6 @@ package inputs
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -52,14 +51,14 @@ func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app 
 	var output any
 	var err error
 	for !ok {
-		fmt.Print(ask + ": ")
+		app.Logger.Info(ask + ": ")
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSuffix(input, "\n")
 		input = strings.TrimSuffix(input, "\r")
 
 		if output, err = fnValid(input, app); err != nil {
-			fmt.Println(err)
+			app.Logger.Info(err.Error())
 			continue
 		}
 
@@ -83,7 +82,7 @@ func getUserConfirmation(ask string, app *app.Data) bool {
 		input = strings.TrimSuffix(input, "\r")
 
 		if confirmation, err = isValidConfirmation(input); err != nil {
-			fmt.Println(err)
+			app.Logger.Info(err.Error())
 			continue
 		}
 

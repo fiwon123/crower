@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
@@ -17,13 +15,13 @@ func Update(key string, name string, allAlias []string, exec string, app *app.Da
 
 	ok := inputs.CheckUpdateInput(&key, &name, &allAlias, &exec, app)
 	if !ok {
-		fmt.Println("Cancelling update...")
+		app.Logger.Info("Cancelling update...")
 		return
 	}
 
 	oldCommand, newCommand, err := handlers.UpdateCommand(key, name, allAlias, exec, app)
 	if err != nil {
-		app.Logger.Error("Error update command: ", err, key, name, allAlias, exec)
+		app.Logger.Error("Error update command: ", "error", err, "key", key, "name", name, "alias", allAlias, "exec", exec)
 		return
 	}
 

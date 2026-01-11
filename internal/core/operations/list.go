@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -29,12 +28,12 @@ func ListFolder(args []string, app *app.Data) {
 	}
 
 	out, err := handlers.ListFolder(currentPath, app)
-	assertListResult(out, err)
+	assertListResult(out, err, app)
 }
 
 func ListSystem(app *app.Data) {
 	out, err := handlers.ListSystem(app)
-	fmt.Println()
+	app.Logger.Info("")
 	if err == nil {
 		allSysVariables := strings.Split(out, "\n")
 		out = ""
@@ -49,17 +48,17 @@ func ListSystem(app *app.Data) {
 			out += "\n"
 		}
 	}
-	assertListResult(out, err)
+	assertListResult(out, err, app)
 }
 
 func ListSysPath(app *app.Data) {
 	out, err := handlers.ListSysPath(app)
-	fmt.Println()
+	app.Logger.Info("")
 	if err == nil {
 		out = formatVariable("PATH", out)
 	}
 
-	assertListResult(out, err)
+	assertListResult(out, err, app)
 }
 
 func formatVariable(name string, paths string) string {
@@ -77,11 +76,11 @@ func formatVariable(name string, paths string) string {
 	return outBuilder.String()
 }
 
-func assertListResult(out string, err error) {
+func assertListResult(out string, err error, app *app.Data) {
 	if err != nil {
-		fmt.Println("failed to list: ", err, out)
+		app.Logger.Error("failed to list: ", "error", err, "out", out)
 		return
 	}
 
-	fmt.Print(out)
+	app.Logger.Info(out)
 }

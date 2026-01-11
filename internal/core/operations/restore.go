@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
@@ -19,16 +17,17 @@ func Restore(args []string, app *app.Data) {
 
 	content, ok := inputs.CheckRestoreInput(app)
 	if !ok {
-		fmt.Println("Cancelling Restore...")
+		app.Logger.Info("Cancelling Restore...")
+		return
 	}
 
 	out, err := handlers.RestoreHistory(key, content, app)
 	if err != nil {
-		fmt.Printf("err: %v\n", err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Println("restored command: ", out)
+	app.Logger.Info("restored command: ", "out", out)
 
 	app.History.Add(state.Restore, "", notes.GenerateRestoreNote(out))
 	history.Save(app)

@@ -26,7 +26,7 @@ func CheckRevertInput(steps int, app *app.Data) (bool, error) {
 	app.History.ListFirstHistory(stopIndex)
 
 	app.Logger.Info("")
-	app.Logger.Info("History will revert %d registries \n", "steps", steps)
+	app.Logger.Info("History will revert ", "steps", steps)
 	ok := getUserConfirmation("Continue to revert", app)
 
 	if !ok {

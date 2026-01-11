@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/data/app"
@@ -24,7 +23,7 @@ func InitApp(cfgFilePath string) *app.Data {
 		orderKeys, err = utils.ReadKeysTomlInOrder(cfgFilePath)
 		err = utils.ReadToml(cfgFilePath, &allCommands)
 		if err != nil {
-			fmt.Println("error to read toml: ", err)
+			panic(err)
 		}
 		allAliases = getAliasMap(allCommands)
 	} else {
