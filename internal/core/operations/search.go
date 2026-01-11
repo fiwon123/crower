@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 )
@@ -53,5 +51,6 @@ func assertSearchResult(out string, err error, app *app.Data) {
 	if err != nil {
 		app.Logger.Error("Error trying to search: ", out, err)
 	}
-	fmt.Println(out)
+	
+	app.Logger.Info(out)
 }

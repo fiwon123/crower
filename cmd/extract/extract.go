@@ -35,7 +35,7 @@ Examples:
 		if len(args) > 0 {
 			operations.Extract(args, outDirFlag, app)
 		} else {
-			crerrors.PrintCmdHelp("extract")
+			crerrors.PrintCmdHelp("extract", app)
 		}
 	},
 }

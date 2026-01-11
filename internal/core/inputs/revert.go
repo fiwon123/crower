@@ -19,11 +19,11 @@ func CheckRevertInput(steps int, app *app.Data) (bool, error) {
 
 	app.Logger.Info("")
 	app.Logger.Info("Deleted History")
-	app.History.ListLastHistory(steps)
+	app.Logger.Info(app.History.GetListLastHistory(steps))
 
 	app.Logger.Info("")
 	app.Logger.Info("New History")
-	app.History.ListFirstHistory(stopIndex)
+	app.Logger.Info(app.History.GetListFirstHistory(stopIndex))
 
 	app.Logger.Info("")
 	app.Logger.Info("History will revert ", "steps", steps)

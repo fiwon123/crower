@@ -9,7 +9,7 @@ import (
 func CheckRestoreInput(app *app.Data) (history.Content, bool) {
 
 	var content history.Content
-	app.History.List()
+	app.Logger.Info(app.History.GetList())
 	content = getUserInput("Select Row", isValidContentKey, app).(history.Content)
 
 	app.Logger.Info("-----------------------------------------")

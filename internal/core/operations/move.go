@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -27,7 +25,8 @@ func Move(args []string, app *app.Data) {
 		}
 
 		if err != nil {
-			fmt.Println(err)
+			app.Logger.Error(err.Error())
+			return
 		}
 	}
 }

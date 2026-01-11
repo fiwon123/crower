@@ -47,7 +47,7 @@ func ListProcess(args []string, app *app.Data) error {
 // List all history
 func ListHistory(app *app.Data) error {
 
-	app.History.List()
+	app.Logger.Info(app.History.GetList())
 
 	return nil
 }

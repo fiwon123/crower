@@ -2,6 +2,7 @@ package history
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/fiwon123/crower/internal/data/state"
@@ -128,8 +129,9 @@ func (h *Data) GetIndexFromLastTo(steps int) int {
 	return len(h.AllData) - steps
 }
 
-func (h *Data) ListOperation(op state.OperationEnum) {
-	printHeader()
+func (h *Data) GetListOperation(op state.OperationEnum) string {
+	var builder strings.Builder
+	builder.WriteString(getHeader())
 	line := 0
 	for i := len(h.AllData) - 1; i >= 0; i-- {
 		data := h.AllData[i]
@@ -137,12 +139,13 @@ func (h *Data) ListOperation(op state.OperationEnum) {
 			continue
 		}
 
-		printContent(line, data.Version, data.File, data.Timestemp, data.Note)
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
 		line += 1
 	}
+	return builder.String()
 }
 
-func (h *Data) GetListOperation(op state.OperationEnum) []Content {
+func (h *Data) GetOperationContents(op state.OperationEnum) []Content {
 	contents := []Content{}
 	for i := len(h.AllData) - 1; i >= 0; i-- {
 		data := h.AllData[i]
@@ -157,48 +160,56 @@ func (h *Data) GetListOperation(op state.OperationEnum) []Content {
 }
 
 // List from first to steps
-func (h *Data) ListFirstHistory(steps int) {
+func (h *Data) GetListFirstHistory(steps int) string {
 
 	start := steps - 1
-	printHeader()
+	var builder strings.Builder
+	builder.WriteString(getHeader())
 	line := 0
 	for i := start; i >= 0; i-- {
 		data := h.AllData[i]
-		printContent(line, data.Version, data.File, data.Timestemp, data.Note)
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
 		line += 1
 	}
+	return builder.String()
 }
 
 // List from last to steps
-func (h *Data) ListLastHistory(steps int) {
+func (h *Data) GetListLastHistory(steps int) string {
 	start := len(h.AllData) - 1
 	stop := len(h.AllData) - steps
-	printHeader()
+	var builder strings.Builder
+	builder.WriteString(getHeader())
 	line := 0
 	for i := start; i >= stop; i-- {
 		data := h.AllData[i]
-		printContent(line, data.Version, data.File, data.Timestemp, data.Note)
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
 		line += 1
 	}
+	return builder.String()
 }
 
-// List all history
-func (h *Data) List() {
-	printHeader()
+// GetList all history
+func (h *Data) GetList() string {
+	var builder strings.Builder
+	builder.WriteString(getHeader())
 	line := 0
 	for i := len(h.AllData) - 1; i >= 0; i-- {
 		data := h.AllData[i]
-		printContent(line, data.Version, data.File, data.Timestemp, data.Note)
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
 		line += 1
 	}
+	return builder.String()
 }
 
-func printContent(line int, version int, file string, timestemp string, note string) {
-	fmt.Printf("%-4d %-8d %-16s %-32s %-3s \n", line, version, file, timestemp, note)
+func getContent(line int, version int, file string, timestemp string, note string) string {
+	return fmt.Sprintf("%-4d %-8d %-16s %-32s %-3s \n", line, version, file, timestemp, note)
 }
 
-func printHeader() {
-	fmt.Println("----------------------------------------------------------------------------")
-	fmt.Printf("%-4s %-8s %-16s %-32s %-3s \n", "line", "Version", "File", "Timestemp", "Note")
-	fmt.Println("----------------------------------------------------------------------------")
+func getHeader() string {
+	var builder strings.Builder
+	builder.WriteString("----------------------------------------------------------------------------\n")
+	fmt.Fprintf(&builder, "%-4s %-8s %-16s %-32s %-3s \n", "line", "Version", "File", "Timestemp", "Note")
+	builder.WriteString("----------------------------------------------------------------------------\n")
+	return builder.String()
 }

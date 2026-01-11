@@ -44,7 +44,7 @@ search on browser:
 		} else if len(args) > 0 {
 			operations.SearchFileAndFolder(args, app)
 		} else {
-			crerrors.PrintCmdHelp("search")
+			crerrors.PrintCmdHelp("search", app)
 		}
 
 	},

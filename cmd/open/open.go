@@ -34,7 +34,7 @@ Examples:
 		} else if len(args) > 0 {
 			operations.Open(args, app)
 		} else {
-			crerrors.PrintCmdHelp("open")
+			crerrors.PrintCmdHelp("open", app)
 		}
 
 	},
