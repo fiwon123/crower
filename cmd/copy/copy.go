@@ -29,7 +29,7 @@ Examples:
 		if len(args) > 0 {
 			operations.Copy(args, app)
 		} else {
-			crerrors.PrintCmdHelp("copy")
+			crerrors.PrintCmdHelp("copy", app)
 		}
 
 	},

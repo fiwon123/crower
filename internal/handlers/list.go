@@ -12,17 +12,17 @@ import (
 
 // List all commands in order
 func ListCommands(app *app.Data) {
-	fmt.Println("------------------------------------------------")
-	print(app.OrderKeys, app.AllCommandsByName)
+	app.Logger.Info("------------------------------------------------")
+	print(app.OrderKeys, app.AllCommandsByName, app)
 }
 
-func print(orderKeys []string, allCommands command.MapData) {
-	fmt.Printf("%-3s %-12s %-16s %-8s \n", "Row", "Name", "Aliases", "Exec")
-	fmt.Println("------------------------------------------------")
+func print(orderKeys []string, allCommands command.MapData, app *app.Data) {
+	app.Logger.Info(fmt.Sprintf("%-3s %-12s %-16s %-8s \n", "Row", "Name", "Aliases", "Exec"))
+	app.Logger.Info("------------------------------------------------")
 
 	for i, key := range orderKeys {
 		command := allCommands.Get(key)
-		fmt.Printf("%-3d %-12s %-16v %-8s \n", i, command.Name, strings.Join(command.AllAlias, ","), command.Exec)
+		app.Logger.Info(fmt.Sprintf("%-3d %-12s %-16v %-8s \n", i, command.Name, strings.Join(command.AllAlias, ","), command.Exec))
 	}
 }
 
@@ -34,11 +34,13 @@ func ListProcess(args []string, app *app.Data) error {
 		partName = args[0]
 	}
 
-	err := utils.ListAllProcess(partName, true)
+	out, err := utils.GetAllProcess(partName, true)
 	if err != nil {
-		app.LoggerInfo.Error("Error getting processes:", err)
+		app.Logger.Error("Error getting processes:", err)
 		return err
 	}
+
+	app.Logger.Info(out)
 
 	return nil
 
@@ -47,7 +49,7 @@ func ListProcess(args []string, app *app.Data) error {
 // List all history
 func ListHistory(app *app.Data) error {
 
-	app.History.List()
+	app.Logger.Info(app.History.GetList())
 
 	return nil
 }
@@ -56,21 +58,21 @@ func ListHistory(app *app.Data) error {
 func ListFolder(folderPath string, app *app.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf("dir '%s'", folderPath))
+		return PerformExecute(fmt.Sprintf("dir '%s'", folderPath), app)
 	case "linux":
-		return PerformExecute(fmt.Sprintf("ls '%s'", folderPath))
+		return PerformExecute(fmt.Sprintf("ls '%s'", folderPath), app)
 	}
 
 	return "", nil
 }
 
 // List all system variable
-func ListSystem(*app.Data) (string, error) {
+func ListSystem(app *app.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute("'set'")
+		return PerformExecute("'set'", app)
 	case "linux":
-		return PerformExecute("'printenv'")
+		return PerformExecute("'printenv'", app)
 	}
 
 	return "", nil
@@ -80,9 +82,9 @@ func ListSystem(*app.Data) (string, error) {
 func ListSysPath(app *app.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute("'echo %PATH%'")
+		return PerformExecute("'echo %PATH%'", app)
 	case "linux":
-		return PerformExecute("'echo $PATH'")
+		return PerformExecute("'echo $PATH'", app)
 	}
 
 	return "", nil

@@ -1,19 +1,17 @@
 package inputs
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 )
 
 // Verify parameters to process reset operation
 func CheckResetInput(app *app.Data) bool {
-	fmt.Println("-----------------------------------------")
+	app.Logger.Info("-----------------------------------------")
 	handlers.ListCommands(app)
 
-	fmt.Println()
-	fmt.Println("All commands will be erased...")
-	ok := getUserConfirmation("Continue to reset")
+	app.Logger.Info("")
+	app.Logger.Info("All commands will be erased...")
+	ok := getUserConfirmation("Continue to reset", app)
 	return ok
 }

@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
@@ -23,17 +21,17 @@ func Delete(args []string, app *app.Data) {
 
 	ok := inputs.CheckDeleteInput(&key, app)
 	if !ok {
-		fmt.Println("Cancelling delete...")
+		app.Logger.Info("Cancelling delete...")
 		return
 	}
 
 	command, ok := handlers.DeleteCommand(key, app)
 	if !ok {
-		app.LoggerInfo.Error("Error delete command: ", key)
+		app.Logger.Error("Error delete command: ", key)
 		return
 	}
 
-	app.LoggerInfo.Info("deleted command: ", app.AllCommandsByName)
+	app.Logger.Info("deleted command: ", app.AllCommandsByName)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
 	app.History.Add(state.Delete, command.Name, notes.GenerateDeleteNote(command))
@@ -44,7 +42,7 @@ func DeleteLast(op state.OperationEnum, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError()
+		crerrors.PrintCommandNotFoundError(app)
 		return
 	}
 
@@ -56,17 +54,17 @@ func DeleteSystemVariable(args []string, app *app.Data) {
 	if len(args) >= 1 {
 		newVar = args[0]
 	} else {
-		crerrors.PrintNotArgs("var name")
+		crerrors.PrintNotArgs("var name", app)
 		return
 	}
 
 	out, err := handlers.DeleteSystemVariable(newVar, app)
 	if err != nil {
-		fmt.Println(err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Println(out)
+	app.Logger.Info(out)
 }
 
 func DeleteSystemPathVariable(args []string, app *app.Data) {
@@ -74,17 +72,17 @@ func DeleteSystemPathVariable(args []string, app *app.Data) {
 	if len(args) > 0 {
 		newPath = args[0]
 	} else {
-		crerrors.PrintNotArgs("path")
+		crerrors.PrintNotArgs("path", app)
 		return
 	}
 
 	out, err := handlers.DeleteSystemPathVariable(newPath, app)
 	if err != nil {
-		fmt.Printf("err: %s \n", err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Println(out)
+	app.Logger.Info(out)
 }
 
 func DeleteFile(args []string, app *app.Data) {
@@ -92,7 +90,7 @@ func DeleteFile(args []string, app *app.Data) {
 	if len(args) > 0 {
 		filePath = args[0]
 	} else {
-		crerrors.PrintNotFileAndOutputPath()
+		crerrors.PrintNotFileAndOutputPath(app)
 		return
 	}
 
@@ -104,7 +102,7 @@ func DeleteFolder(args []string, app *app.Data) {
 	if len(args) > 0 {
 		folderPath = args[0]
 	} else {
-		crerrors.PrintNotFileAndOutputPath()
+		crerrors.PrintNotFileAndOutputPath(app)
 		return
 	}
 
@@ -114,17 +112,17 @@ func DeleteFolder(args []string, app *app.Data) {
 func DeleteHistoryContent(args []string, app *app.Data) {
 	content, ok := inputs.CheckDeleteHistoryContentInput(app)
 	if !ok {
-		fmt.Println("Cancelling Delete History Content...")
+		app.Logger.Info("Cancelling Delete History Content...")
 		return
 	}
 
 	out, err := handlers.DeleteHistoryContent(content, app)
 	if err != nil {
-		fmt.Println(err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Println(out)
+	app.Logger.Info(out)
 
 	history.SaveOnlyHistory(app)
 }

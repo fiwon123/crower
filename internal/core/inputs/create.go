@@ -9,7 +9,7 @@ func CheckCreateInput(name *string, alias *[]string, exec *string, app *app.Data
 	}
 
 	if len(*alias) == 0 {
-		ok := getUserConfirmation("Do you want to add alias")
+		ok := getUserConfirmation("Do you want to add alias", app)
 
 		if ok {
 			*alias = inputAlias(app)

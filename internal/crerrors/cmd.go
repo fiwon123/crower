@@ -1,11 +1,15 @@
 package crerrors
 
-import "fmt"
+import (
+	"fmt"
 
-func PrintCmdHelp(cmdName string) {
-	fmt.Printf("Type 'crower %s --help' for more information \n", cmdName)
+	"github.com/fiwon123/crower/internal/data/app"
+)
+
+func PrintCmdHelp(cmdName string, app *app.Data) {
+	app.Logger.Info(fmt.Sprintf("Type 'crower %s --help' for more information", cmdName))
 }
 
-func PrintEmptyArgs() {
-	fmt.Println("args is empty")
+func PrintEmptyArgs(app *app.Data) {
+	app.Logger.Info("args is empty")
 }

@@ -17,17 +17,17 @@ func CheckRevertInput(steps int, app *app.Data) (bool, error) {
 		return false, fmt.Errorf("can't revert steps is greater than quantity of history registry")
 	}
 
-	fmt.Println()
-	fmt.Println("Deleted History")
-	app.History.ListLastHistory(steps)
+	app.Logger.Info("")
+	app.Logger.Info("Deleted History")
+	app.Logger.Info(app.History.GetListLastHistory(steps))
 
-	fmt.Println()
-	fmt.Println("New History")
-	app.History.ListFirstHistory(stopIndex)
+	app.Logger.Info("")
+	app.Logger.Info("New History")
+	app.Logger.Info(app.History.GetListFirstHistory(stopIndex))
 
-	fmt.Println()
-	fmt.Printf("History will revert %d registries \n", steps)
-	ok := getUserConfirmation("Continue to revert")
+	app.Logger.Info("")
+	app.Logger.Info("History will revert ", "steps", steps)
+	ok := getUserConfirmation("Continue to revert", app)
 
 	if !ok {
 		return false, fmt.Errorf("cancelling revert...")

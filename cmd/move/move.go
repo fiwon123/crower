@@ -28,7 +28,7 @@ Examples:
 		if len(args) > 0 {
 			operations.Move(args, app)
 		} else {
-			crerrors.PrintCmdHelp("move")
+			crerrors.PrintCmdHelp("move", app)
 		}
 	},
 }

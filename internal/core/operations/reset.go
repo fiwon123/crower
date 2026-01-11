@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
@@ -16,11 +14,11 @@ func Reset(app *app.Data) {
 	ok := inputs.CheckResetInput(app)
 
 	if !ok {
-		fmt.Println("Cancelling reset...")
+		app.Logger.Info("Cancelling reset...")
 		return
 	}
 
-	app.LoggerInfo.Info("reset all commands: ", app.AllCommandsByName)
+	app.Logger.Info("reset all commands: ", app.AllCommandsByName)
 	handlers.Reset(app)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 

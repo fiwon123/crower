@@ -31,14 +31,13 @@ func Execute(key string, params []string, app *app.Data) (string, *command.Data,
 		}
 	}
 
-	fmt.Println(command.Exec)
-	out, err := PerformExecute(command.Exec)
-	app.LoggerInfo.Info(command.Exec)
+	app.Logger.Info(command.Exec)
+	out, err := PerformExecute(command.Exec, app)
 	return out, command, err
 }
 
-func buildCMD(ex string) (*exec.Cmd, string, []string) {
-	fmt.Println()
+func buildCMD(ex string, app *app.Data) (*exec.Cmd, string, []string) {
+	app.Logger.Info("")
 	var c *exec.Cmd
 
 	typeCommand := ""
@@ -67,22 +66,22 @@ func buildCMD(ex string) (*exec.Cmd, string, []string) {
 	}
 	commandString.WriteString("]")
 
-	fmt.Printf("Executing... : %s \n", commandString.String())
+	app.Logger.Info("Executing... : ", "exec", commandString.String())
 
 	return c, typeCommand, splitCommands
 }
 
 // Perform execute operation
-func PerformExecute(ex string) (string, error) {
+func PerformExecute(ex string, app *app.Data) (string, error) {
 
-	c, typeCommand, splitCommands := buildCMD(ex)
+	c, typeCommand, splitCommands := buildCMD(ex, app)
 	c = exec.Command(typeCommand, splitCommands...)
 	out, err := c.CombinedOutput()
 	return string(out), err
 }
 
-func PerformExecuteStart(ex string) error {
-	c, typeCommand, splitCommands := buildCMD(ex)
+func PerformExecuteStart(ex string, app *app.Data) error {
+	c, typeCommand, splitCommands := buildCMD(ex, app)
 	c = exec.Command(typeCommand, splitCommands...)
 	err := c.Start()
 	return err

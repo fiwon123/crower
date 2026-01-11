@@ -10,21 +10,21 @@ import (
 func UpgradeApp(currentVersion string, app *app.Data) {
 	newVersion, err := handlers.CheckNewVersion(currentVersion, app)
 	if err != nil {
-		fmt.Println(err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
 	if newVersion == currentVersion {
-		fmt.Printf("Current Version: %s \n", currentVersion)
-		fmt.Println("already up-to-date")
+		app.Logger.Info("Current Version: ", "currentVersion", currentVersion)
+		app.Logger.Info("already up-to-date")
 		return
 	}
 
 	err = handlers.UpgradeApp(newVersion, app)
 	if err != nil {
-		fmt.Println(err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Printf("crower upgraded from %s to %s \n", currentVersion, newVersion)
+	app.Logger.Info(fmt.Sprintf("crower upgraded from %s to %s \n", currentVersion, newVersion))
 }

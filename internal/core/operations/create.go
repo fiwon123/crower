@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
@@ -26,12 +24,12 @@ func CreateCommand(allAlias []string, args []string, app *app.Data) {
 	command, err := handlers.CreateCommand(name, allAlias, exec, app)
 
 	if err != nil {
-		app.LoggerInfo.Error("Error add command: ", err, name, allAlias, exec, args)
+		app.Logger.Error("Error add command: ", err, name, allAlias, exec, args)
 		return
 	}
 
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
-	app.LoggerInfo.Info("added new command: ", app.AllCommandsByName)
+	app.Logger.Info("added new command: ", app.AllCommandsByName)
 
 	app.History.Add(state.Create, command.Name, notes.GenerateAddNote(command))
 	history.Save(app)
@@ -40,12 +38,12 @@ func CreateCommand(allAlias []string, args []string, app *app.Data) {
 func CreateProcess(name string, args []string, app *app.Data) {
 	command, err := handlers.CreateProcess(name, args, app)
 	if err != nil {
-		app.LoggerInfo.Error("Error add command by process: ", err, name, args)
+		app.Logger.Error("Error add command by process: ", err, name, args)
 		return
 	}
 
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
-	app.LoggerInfo.Info("added new command by process: ", app.AllCommandsByName)
+	app.Logger.Info("added new command by process: ", app.AllCommandsByName)
 
 	app.History.Add(state.Create, command.Name, notes.GenerateAddProcessNote(command))
 	history.Save(app)
@@ -58,17 +56,17 @@ func CreateSystemVariable(args []string, app *app.Data) {
 		newVar = args[0]
 		value = args[1]
 	} else {
-		crerrors.PrintNotArgs("var name and var value")
+		crerrors.PrintNotArgs("var name and var value", app)
 		return
 	}
 
 	out, err := handlers.CreateSystemVariable(newVar, value, app)
 	if err != nil {
-		fmt.Println(err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Println(out)
+	app.Logger.Info(out)
 }
 
 func CreateSystemPathVariable(args []string, app *app.Data) {
@@ -76,24 +74,24 @@ func CreateSystemPathVariable(args []string, app *app.Data) {
 	if len(args) > 0 {
 		newPath = args[0]
 	} else {
-		crerrors.PrintNotArgs("path")
+		crerrors.PrintNotArgs("path", app)
 		return
 	}
 
 	out, err := handlers.CreateSystemPathVariable(newPath, app)
 	if err != nil {
-		fmt.Printf("err: %s \n", err)
+		app.Logger.Error(err.Error())
 		return
 	}
 
-	fmt.Println(out)
+	app.Logger.Info(out)
 }
 
 func CreateFile(args []string, app *app.Data) {
 	for _, path := range args {
 		err := handlers.CreateFile(path, app)
 		if err != nil {
-			fmt.Printf("err: %s \n", err)
+			app.Logger.Error(err.Error())
 		}
 	}
 }
@@ -102,7 +100,7 @@ func CreateFolder(args []string, app *app.Data) {
 	for _, path := range args {
 		err := handlers.CreateFolder(path, app)
 		if err != nil {
-			fmt.Println(err)
+			app.Logger.Error(err.Error())
 		}
 	}
 }

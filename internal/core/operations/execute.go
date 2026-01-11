@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
@@ -17,13 +15,13 @@ func Execute(args []string, app *app.Data) {
 	var params []string
 	key := ""
 	if len(args) > 0 {
-		fmt.Println("args", args)
+		app.Logger.Debug("args", args)
 		key = args[0]
 		params = args[1:]
 	} else {
 		ok := inputs.CheckExecuteInput(&key, &params, app)
 		if !ok {
-			fmt.Println("Cancelling execute...")
+			app.Logger.Info("Cancelling execute...")
 			return
 		}
 	}
@@ -36,7 +34,7 @@ func ExecuteLast(op state.OperationEnum, args []string, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError()
+		crerrors.PrintCommandNotFoundError(app)
 		return
 	}
 
@@ -46,9 +44,10 @@ func ExecuteLast(op state.OperationEnum, args []string, app *app.Data) {
 
 func assertExecute(output string, command *command.Data, err error, app *app.Data) {
 	if err != nil {
-		app.LoggerInfo.Error("Error trying to run command: ", string(output), err)
+		app.Logger.Error("Error trying to run command: ", "out", string(output), "err", err)
+		return
 	}
-	fmt.Println(string(output))
+	app.Logger.Info(string(output))
 
 	app.History.Add(state.Execute, command.Name, notes.GenerateExecuteNote(command))
 	history.Save(app)

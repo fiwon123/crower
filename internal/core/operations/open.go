@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"fmt"
 	"path"
 	"path/filepath"
 
@@ -45,7 +44,7 @@ func OpenFolder(args []string, app *app.Data) {
 func OpenSystem(app *app.Data) {
 	err := handlers.OpenSystem(app)
 	if err != nil {
-		fmt.Println("failed to open system variable: ", err)
+		app.Logger.Error("failed to open system variable: ", "error", err)
 		return
 	}
 }

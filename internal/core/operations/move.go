@@ -1,8 +1,6 @@
 package operations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -11,7 +9,7 @@ import (
 
 func Move(args []string, app *app.Data) {
 	if len(args) == 0 {
-		crerrors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument")
+		crerrors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument", app)
 		return
 	}
 
@@ -27,7 +25,8 @@ func Move(args []string, app *app.Data) {
 		}
 
 		if err != nil {
-			fmt.Println(err)
+			app.Logger.Error(err.Error())
+			return
 		}
 	}
 }

@@ -1,7 +1,9 @@
 package crerrors
 
-import "fmt"
+import (
+	"github.com/fiwon123/crower/internal/data/app"
+)
 
-func PrintCommandNotFoundError() {
-	fmt.Println("command not found")
+func PrintCommandNotFoundError(app *app.Data) {
+	app.Logger.Error("command not found")
 }

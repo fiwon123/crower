@@ -1,8 +1,6 @@
 package inputs
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
@@ -28,20 +26,20 @@ func CheckDeleteInput(key *string, app *app.Data) bool {
 
 	if command == nil {
 		handlers.ListCommands(app)
-		fmt.Println("Command not found, try to select one.")
+		app.Logger.Info("Command not found, try to select one.")
 		input := getUserInput("Select Row", isValidInputKey, app).(string)
 		*key = input
 
 		command = app.AllCommandsByName.Get(*key)
 	}
 
-	fmt.Println("-----------------------------------------")
-	fmt.Println("Name:    ", command.Name)
-	fmt.Println("Aliases: ", command.AllAlias)
-	fmt.Println("Exec:    ", command.Exec)
-	fmt.Println()
+	app.Logger.Info("-----------------------------------------")
+	app.Logger.Info("Name:    ", "name", command.Name)
+	app.Logger.Info("Aliases: ", "alias", command.AllAlias)
+	app.Logger.Info("Exec:    ", "exec", command.Exec)
+	app.Logger.Info("")
 
-	ok := getUserConfirmation("Continue to delete")
+	ok := getUserConfirmation("Continue to delete", app)
 	return ok
 
 }
@@ -50,16 +48,16 @@ func CheckDeleteInput(key *string, app *app.Data) bool {
 func CheckDeleteHistoryContentInput(app *app.Data) (history.Content, bool) {
 
 	var content history.Content
-	app.History.List()
+	app.Logger.Info(app.History.GetList())
 	content = getUserInput("Select Row", isValidContentKey, app).(history.Content)
 
-	fmt.Println("-----------------------------------------")
-	fmt.Println("Content")
-	fmt.Println("Version:    ", content.Version)
-	fmt.Println("File:    ", content.File)
-	fmt.Println("Note:    ", content.Note)
-	fmt.Println()
+	app.Logger.Info("-----------------------------------------")
+	app.Logger.Info("Content")
+	app.Logger.Info("Version:    ", "version", content.Version)
+	app.Logger.Info("File:    ", "file", content.File)
+	app.Logger.Info("Note:    ", "note", content.Note)
+	app.Logger.Info("")
 
-	ok := getUserConfirmation("Continue to restore")
+	ok := getUserConfirmation("Continue to restore", app)
 	return content, ok
 }

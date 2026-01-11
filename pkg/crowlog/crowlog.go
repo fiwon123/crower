@@ -3,112 +3,145 @@
 package crowlog
 
 import (
+	"fmt"
+	"io"
 	"os"
-	"strconv"
+	"path/filepath"
+	"runtime/debug"
+	"strings"
 
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"log/slog"
 )
 
 // The Crowlog wrapper to access logger provider.
-type LoggerInfo struct {
-	logger *zap.Logger
-}
-
-type field struct {
-	key  string
-	data any
+type Logger struct {
+	terminalLogger *slog.Logger
+	fullTerminal   bool
+	fileLogger     *slog.Logger
+	logFile        *os.File
 }
 
 // Create a new LoggerInfo pointer.
-func New() *LoggerInfo {
+func New(logpath string) *Logger {
 
-	encoderCfg := zapcore.EncoderConfig{
-		TimeKey:       "time",
-		LevelKey:      "level",
-		NameKey:       "logger",
-		CallerKey:     "caller",
-		MessageKey:    "msg",
-		StacktraceKey: "stack",
-		LineEnding:    zapcore.DefaultLineEnding,
-		EncodeLevel:   zapcore.CapitalColorLevelEncoder, // colored levels
-		EncodeTime:    zapcore.ISO8601TimeEncoder,
-		EncodeCaller:  zapcore.ShortCallerEncoder,
+	terminalLevel := slog.LevelInfo
+	fileLevel := slog.LevelDebug
+
+	dirpath := filepath.Dir(logpath)
+	base := filepath.Base(logpath)
+	base = "old_" + base
+	err := copyFile(logpath, filepath.Join(dirpath, base))
+	if err != nil {
+		panic("Failed to copy to old log file: " + err.Error())
 	}
 
-	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encoderCfg),
-		zapcore.AddSync(os.Stdout),
-		zap.DebugLevel,
-	)
-
-	logger := zap.New(
-		core,
-		zap.AddStacktrace(zapcore.ErrorLevel),
-		zap.AddCaller(),
-		zap.AddCallerSkip(1),
-	)
-	defer logger.Sync()
-
-	return &LoggerInfo{
-		logger: logger,
-	}
-}
-
-// Create a new raw field to represent logger provider field used in LoggerInfo struct.
-func NewField(key string, data any) field {
-	return field{
-		key:  key,
-		data: data,
-	}
-}
-
-// Translate raw fields to logger provider field used in LoggerInfo struct.
-func translateData(data []any) []zap.Field {
-	var zapFields []zap.Field
-	for i, d := range data {
-		zapFields = append(zapFields, zap.Any("data"+strconv.Itoa(i), d))
+	logFile, err := os.OpenFile(logpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		panic("Failed to open log file: " + err.Error())
 	}
 
-	return zapFields
-}
+	termHandler := slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: terminalLevel,
+	})
 
-// Translate raw fields to logger provider field used in LoggerInfo struct.
-func translateDataWithKeys(rawFields []field) []zap.Field {
-	var zapFields []zap.Field
-	for _, field := range rawFields {
-		zapFields = append(zapFields, zap.Any(field.key, field.data))
-	}
+	// File handler
+	fileHandler := slog.NewTextHandler(logFile, &slog.HandlerOptions{
+		Level:     fileLevel,
+		AddSource: true,
+	})
 
-	return zapFields
+	newLogger := &Logger{
+		terminalLogger: slog.New(termHandler),
+		fullTerminal:   false,
+		fileLogger:     slog.New(fileHandler),
+		logFile:        logFile}
+
+	return newLogger
 }
 
 // Print info message and data of any type.
 // data can be string, int, slices, etc.
-func (infoData LoggerInfo) Info(msg string, data ...any) {
-	fields := translateData(data)
-	infoData.logger.Info(msg, fields...)
-}
+func (logger Logger) Info(msg string, data ...any) {
+	if logger.fullTerminal {
+		logger.terminalLogger.Info(msg, data...)
+	} else {
+		printTerminal(msg, data)
+	}
 
-// Print info message and data of any type.
-// rawFields can be create using NewField method
-// data can be string, int, slices, etc.
-func (infoData LoggerInfo) InfoWithKeys(msg string, rawFields ...field) {
-	fields := translateDataWithKeys(rawFields)
-	infoData.logger.Info(msg, fields...)
+	logger.fileLogger.Info(msg, data...)
 }
 
 // Print error message and data of any type.
 // data can be string, int, slices, etc.
-func (infoData LoggerInfo) Error(msg string, data ...any) {
-	fields := translateData(data)
-	infoData.logger.Error(msg, fields...)
+func (logger Logger) Error(msg string, data ...any) {
+	if logger.fullTerminal {
+		logger.terminalLogger.Error(msg, data...)
+	} else {
+		printTerminal(msg, data)
+	}
+
+	logger.fileLogger.Error(msg, data...)
+	stack(logger.logFile)
 }
 
-// Print error message and data of any type.
-// rawFields can be create using NewField method
+// Print warning message and data of any type.
 // data can be string, int, slices, etc.
-func (infoData LoggerInfo) ErrorWithKeys(msg string, rawFields ...field) {
-	fields := translateDataWithKeys(rawFields)
-	infoData.logger.Error(msg, fields...)
+func (logger Logger) Warning(msg string, data ...any) {
+	if logger.fullTerminal {
+		logger.terminalLogger.Warn(msg, data...)
+	} else {
+		printTerminal(msg, data)
+	}
+
+	logger.fileLogger.Warn(msg, data...)
+}
+
+// Print debug message and data of any type.
+// data can be string, int, slices, etc.
+func (logger Logger) Debug(msg string, data ...any) {
+	if logger.fullTerminal {
+		logger.terminalLogger.Debug(msg, data...)
+	} else {
+		printTerminal(msg, data)
+	}
+
+	logger.fileLogger.Debug(msg, data...)
+}
+
+func printTerminal(msg string, data []any) {
+	dataBuilder := strings.Builder{}
+	for i := 1; i < len(data); i += 2 {
+		d := data[i]
+		fmt.Fprintf(&dataBuilder, "%v ", d)
+	}
+
+	fmt.Println(msg, dataBuilder.String())
+}
+
+func stack(logFile *os.File) {
+	fmt.Fprintln(logFile, "Stacktrace: ")
+	stack := strings.SplitSeq(string(debug.Stack()), "\n")
+	for line := range stack {
+		fmt.Fprintln(logFile, line)
+	}
+}
+
+func copyFile(src, dst string) error {
+	source, err := os.Open(src)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	defer source.Close()
+
+	dest, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer dest.Close()
+
+	_, err = io.Copy(dest, source)
+	return err
 }

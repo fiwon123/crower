@@ -13,16 +13,16 @@ func MoveFile(filePath string, destFolder string, app *app.Data) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = PerformExecute(fmt.Sprintf("move '%s' '%s'", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("move '%s' '%s'", filePath, destFolder), app)
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("\"mv '%s' '%s'\"", filePath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("\"mv '%s' '%s'\"", filePath, destFolder), app)
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", out)
+	app.Logger.Info("output: ", "out", out)
 	return nil
 }
 
@@ -32,15 +32,15 @@ func MoveFolder(folderPath string, destFolder string, app *app.Data) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = PerformExecute(fmt.Sprintf("move '%s' '%s'", folderPath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("move '%s' '%s'", folderPath, destFolder), app)
 	case "linux":
-		out, err = PerformExecute(fmt.Sprintf("\"mv '%s' '%s'\"", folderPath, destFolder))
+		out, err = PerformExecute(fmt.Sprintf("\"mv '%s' '%s'\"", folderPath, destFolder), app)
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	fmt.Println("result: ", out)
+	app.Logger.Info("output: ", "out", out)
 	return nil
 }
