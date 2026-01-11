@@ -6,6 +6,7 @@ import (
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
@@ -23,29 +24,38 @@ func CreateCommand(allAlias []string, args []string, app *app.Data) {
 		inputs.CheckCreateInput(&name, &allAlias, &exec, app)
 	}
 
+	command := performCreateCommand(name, allAlias, exec, app)
+	if command == nil {
+		return
+	}
+
+	app.History.Add(state.Create, notes.GenerateCreateCommandNote(command, args))
+	history.Save(app)
+}
+
+func performCreateCommand(name string, allAlias []string, exec string, app *app.Data) *command.Data {
 	command, err := handlers.CreateCommand(name, allAlias, exec, app)
 
 	if err != nil {
-		app.Logger.Error("Error add command: ", err, name, allAlias, exec, args)
-		return
+		app.Logger.Error("Error add command: ", "error", err, "name", name, "alias", allAlias, "exec", exec)
+		return nil
 	}
 
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.Logger.Info("added new command: ", app.AllCommandsByName)
 
-	app.History.Add(state.Create, notes.GenerateCreateNote(command, args))
-	history.Save(app)
+	return command
 }
 
 func CreateProcess(name string, args []string, app *app.Data) {
 	command, err := handlers.CreateProcess(name, args, app)
 	if err != nil {
-		app.Logger.Error("Error add command by process: ", err, name, args)
+		app.Logger.Error("Error add command by process: ", "error", err, "name", name, "args", args)
 		return
 	}
 
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
-	app.Logger.Info("added new command by process: ", app.AllCommandsByName)
+	app.Logger.Info("added new command by process: ", "allCommands", app.AllCommandsByName)
 
 	app.History.Add(state.Create, notes.GenerateCreateProcessNote(command, args))
 	history.Save(app)
@@ -102,6 +112,9 @@ func CreateFile(args []string, app *app.Data) {
 			app.Logger.Error(err.Error())
 		}
 	}
+
+	app.History.Add(state.Create, notes.GenerateCreateFile(args))
+	history.Save(app)
 }
 
 func CreateFolder(args []string, app *app.Data) {
@@ -111,6 +124,9 @@ func CreateFolder(args []string, app *app.Data) {
 			app.Logger.Error(err.Error())
 		}
 	}
+
+	app.History.Add(state.Create, notes.GenerateCreateFolder(args))
+	history.Save(app)
 }
 
 func CreateLastCommand(op state.MainOperationEnum, name string, app *app.Data) {
@@ -134,5 +150,11 @@ func CreateLastCommand(op state.MainOperationEnum, name string, app *app.Data) {
 		}
 	}
 
-	CreateCommand([]string{}, []string{name, exec}, app)
+	command := performCreateCommand(name, []string{}, exec, app)
+	if command == nil {
+		return
+	}
+
+	app.History.Add(state.Create, notes.GenerateCreateCommandLastExecuteNote(command))
+	history.Save(app)
 }

@@ -1,10 +1,14 @@
 package notes
 
+import "github.com/fiwon123/crower/internal/data/state"
+
 // Create a new restore note
 func GenerateRestoreNote(msg string) string {
 	noteBuilder := New()
-	noteBuilder.AddCrowerExec("restore", nil)
 
-	return noteBuilder.Build()
+	return noteBuilder.
+		AddMainOperation(state.Restore).
+		AddCrowerExec("restore", nil).
+		Build()
 
 }

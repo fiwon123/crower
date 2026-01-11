@@ -1,34 +1,42 @@
 package notes
 
 import (
-	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/state"
 )
 
 // Create a new update note
-func GenerateUpdateNote(oldCommand *command.Data, newCommand *command.Data) string {
+func GenerateUpdateCommmandNote(oldCommand *command.Data, newCommand *command.Data, args []string) string {
 
-	output := strings.Builder{}
-	output.WriteString("Updated:")
+	noteBuilder := New()
+
+	noteBuilder.
+		AddMainOperation(state.Update).
+		AddSubOperation(state.Command)
+
 	if oldCommand.Name != newCommand.Name {
-		changes := fmt.Sprintf(";oldName=%s;newName=%s", oldCommand.Name, newCommand.Name)
-		output.WriteString(changes)
+		noteBuilder.
+			AddOldCommandName(oldCommand.Name).
+			AddCommandName(newCommand.Name)
 	}
 
 	if hasDiffAlieses(oldCommand.AllAlias, newCommand.AllAlias) {
-		changes := fmt.Sprintf(";oldAlias=%s;newAlias=%s", oldCommand.AllAlias, newCommand.AllAlias)
-		output.WriteString(changes)
+		noteBuilder.
+			AddOldCommandAlias(oldCommand.AllAlias).
+			AddCommandAlias(newCommand.AllAlias)
 	}
 
 	if oldCommand.Exec != newCommand.Exec {
-		changes := fmt.Sprintf(";oldExec=\"%s\";newExec=\"%s\"", oldCommand.Exec, newCommand.Exec)
-		output.WriteString(changes)
+		noteBuilder.
+			AddOldCommandExec(oldCommand.Exec).
+			AddCommandExec(newCommand.Exec)
 	}
 
-	return output.String()
+	return noteBuilder.
+		AddCrowerExec("update", args).
+		Build()
 }
 
 func hasDiffAlieses(old []string, new []string) bool {

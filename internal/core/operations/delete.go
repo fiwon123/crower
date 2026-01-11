@@ -4,6 +4,7 @@ import (
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/command"
 
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -25,17 +26,27 @@ func Delete(args []string, app *app.Data) {
 		return
 	}
 
+	command := performDeleteCommand(key, app)
+	if command != nil {
+		return
+	}
+
+	app.History.Add(state.Delete, notes.GenerateDeleteCommandNote(command, args))
+	history.Save(app)
+}
+
+func performDeleteCommand(key string, app *app.Data) *command.Data {
+
 	command, ok := handlers.DeleteCommand(key, app)
 	if !ok {
 		app.Logger.Error("Error delete command: ", key)
-		return
+		return nil
 	}
 
 	app.Logger.Info("deleted command: ", app.AllCommandsByName)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
-	app.History.Add(state.Delete, command.Name, notes.GenerateDeleteCommandNote(command))
-	history.Save(app)
+	return command
 }
 
 func DeleteLast(op state.MainOperationEnum, app *app.Data) {
@@ -46,7 +57,13 @@ func DeleteLast(op state.MainOperationEnum, app *app.Data) {
 		return
 	}
 
-	Delete([]string{content.CommandName}, app)
+	command := performDeleteCommand(content.CommandName, app)
+	if command != nil {
+		return
+	}
+
+	app.History.Add(state.Delete, notes.GenerateDeleteLastNote(op, command))
+	history.Save(app)
 }
 
 func DeleteSystemVariable(args []string, app *app.Data) {
@@ -65,6 +82,9 @@ func DeleteSystemVariable(args []string, app *app.Data) {
 	}
 
 	app.Logger.Info(out)
+
+	app.History.Add(state.Delete, notes.GenerateDeleteSystemVariable(args))
+	history.Save(app)
 }
 
 func DeleteSystemPathVariable(args []string, app *app.Data) {
@@ -83,6 +103,9 @@ func DeleteSystemPathVariable(args []string, app *app.Data) {
 	}
 
 	app.Logger.Info(out)
+
+	app.History.Add(state.Delete, notes.GenerateDeleteSystemPathVariable(args))
+	history.Save(app)
 }
 
 func DeleteFile(args []string, app *app.Data) {
@@ -110,6 +133,9 @@ func DeleteFolder(args []string, app *app.Data) {
 	}
 
 	handlers.DeleteFolder(folderPath, app)
+
+	app.History.Add(state.Execute, notes.GenerateDeleteFolderNote(args))
+	history.Save(app)
 }
 
 func DeleteHistoryContent(args []string, app *app.Data) {

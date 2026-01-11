@@ -28,7 +28,7 @@ func Update(key string, name string, allAlias []string, exec string, app *app.Da
 	app.Logger.Info("updated command: ", app.AllCommandsByName)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
-	app.History.Add(state.Update, newCommand.Name, notes.GenerateUpdateNote(oldCommand, newCommand))
+	app.History.Add(state.Update, newCommand.Name, notes.GenerateUpdateCommmandNote(oldCommand, newCommand))
 	history.Save(app)
 }
 

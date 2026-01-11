@@ -24,11 +24,13 @@ const (
 
 // sub
 const (
-	Command SubOperationEnum = "command"
-	Process SubOperationEnum = "process"
-	File    SubOperationEnum = "file"
-	Folder  SubOperationEnum = "folder"
-	History SubOperationEnum = "history"
-	SysPath SubOperationEnum = "syspath"
-	System  SubOperationEnum = "system"
+	Command       SubOperationEnum = "command"
+	Process       SubOperationEnum = "process"
+	File          SubOperationEnum = "file"
+	Folder        SubOperationEnum = "folder"
+	FileAndFolder SubOperationEnum = "file_and_folder"
+	History       SubOperationEnum = "history"
+	SysPath       SubOperationEnum = "syspath"
+	System        SubOperationEnum = "system"
+	Last          SubOperationEnum = "last"
 )

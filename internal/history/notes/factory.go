@@ -32,6 +32,21 @@ func (note *Note) AddCommandExec(exec string) *Note {
 	return note
 }
 
+func (note *Note) AddOldCommandName(name string) *Note {
+	fmt.Fprintf(&note.builder, ";old_command_name=%s", name)
+	return note
+}
+
+func (note *Note) AddOldCommandAlias(aliases []string) *Note {
+	fmt.Fprintf(&note.builder, ";old_command_alias=%v", aliases)
+	return note
+}
+
+func (note *Note) AddOldCommandExec(exec string) *Note {
+	fmt.Fprintf(&note.builder, ";old_command_exec=%s", exec)
+	return note
+}
+
 func (note *Note) AddCrowerExec(command string, args []string) *Note {
 	var execBuilder strings.Builder
 	fmt.Fprintf(&execBuilder, "crower %s", command)
