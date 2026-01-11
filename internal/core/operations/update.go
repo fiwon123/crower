@@ -32,7 +32,7 @@ func Update(key string, name string, allAlias []string, exec string, app *app.Da
 	history.Save(app)
 }
 
-func UpdateLast(op state.OperationEnum, name string, allAlias []string, exec string, app *app.Data) {
+func UpdateLast(op state.MainOperationEnum, name string, allAlias []string, exec string, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {

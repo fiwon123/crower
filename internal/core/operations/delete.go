@@ -34,11 +34,11 @@ func Delete(args []string, app *app.Data) {
 	app.Logger.Info("deleted command: ", app.AllCommandsByName)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
-	app.History.Add(state.Delete, command.Name, notes.GenerateDeleteNote(command))
+	app.History.Add(state.Delete, command.Name, notes.GenerateDeleteCommandNote(command))
 	history.Save(app)
 }
 
-func DeleteLast(op state.OperationEnum, app *app.Data) {
+func DeleteLast(op state.MainOperationEnum, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
@@ -95,6 +95,9 @@ func DeleteFile(args []string, app *app.Data) {
 	}
 
 	handlers.DeleteFile(filePath, app)
+
+	app.History.Add(state.Execute, notes.GenerateDeleteFileNote(args))
+	history.Save(app)
 }
 
 func DeleteFolder(args []string, app *app.Data) {

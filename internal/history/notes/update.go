@@ -14,17 +14,17 @@ func GenerateUpdateNote(oldCommand *command.Data, newCommand *command.Data) stri
 	output := strings.Builder{}
 	output.WriteString("Updated:")
 	if oldCommand.Name != newCommand.Name {
-		changes := fmt.Sprintf(" name from %s to %s,", oldCommand.Name, newCommand.Name)
+		changes := fmt.Sprintf(";oldName=%s;newName=%s", oldCommand.Name, newCommand.Name)
 		output.WriteString(changes)
 	}
 
 	if hasDiffAlieses(oldCommand.AllAlias, newCommand.AllAlias) {
-		changes := fmt.Sprintf(" aliases from %v to %v,", oldCommand.AllAlias, newCommand.AllAlias)
+		changes := fmt.Sprintf(";oldAlias=%s;newAlias=%s", oldCommand.AllAlias, newCommand.AllAlias)
 		output.WriteString(changes)
 	}
 
 	if oldCommand.Exec != newCommand.Exec {
-		changes := fmt.Sprintf(" exec from \"%s\" to \"%s\"", oldCommand.Exec, newCommand.Exec)
+		changes := fmt.Sprintf(";oldExec=\"%s\";newExec=\"%s\"", oldCommand.Exec, newCommand.Exec)
 		output.WriteString(changes)
 	}
 

@@ -3,7 +3,10 @@ package operations
 import (
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
+	"github.com/fiwon123/crower/internal/history"
+	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -28,4 +31,7 @@ func Copy(args []string, app *app.Data) {
 			app.Logger.Info(err.Error())
 		}
 	}
+
+	app.History.Add(state.Copy, notes.GenerateCopyNote(args))
+	history.Save(app)
 }

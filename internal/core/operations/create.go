@@ -1,6 +1,8 @@
 package operations
 
 import (
+	"strings"
+
 	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
@@ -31,7 +33,7 @@ func CreateCommand(allAlias []string, args []string, app *app.Data) {
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.Logger.Info("added new command: ", app.AllCommandsByName)
 
-	app.History.Add(state.Create, command.Name, notes.GenerateAddNote(command))
+	app.History.Add(state.Create, notes.GenerateCreateNote(command, args))
 	history.Save(app)
 }
 
@@ -45,7 +47,7 @@ func CreateProcess(name string, args []string, app *app.Data) {
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.Logger.Info("added new command by process: ", app.AllCommandsByName)
 
-	app.History.Add(state.Create, command.Name, notes.GenerateAddProcessNote(command))
+	app.History.Add(state.Create, notes.GenerateCreateProcessNote(command, args))
 	history.Save(app)
 }
 
@@ -67,6 +69,9 @@ func CreateSystemVariable(args []string, app *app.Data) {
 	}
 
 	app.Logger.Info(out)
+
+	app.History.Add(state.Create, notes.GenerateCreateSystemVariableNote(args))
+	history.Save(app)
 }
 
 func CreateSystemPathVariable(args []string, app *app.Data) {
@@ -85,6 +90,9 @@ func CreateSystemPathVariable(args []string, app *app.Data) {
 	}
 
 	app.Logger.Info(out)
+
+	app.History.Add(state.Create, notes.GenerateCreateSystemPathVariableNote(args))
+	history.Save(app)
 }
 
 func CreateFile(args []string, app *app.Data) {
@@ -103,4 +111,28 @@ func CreateFolder(args []string, app *app.Data) {
 			app.Logger.Error(err.Error())
 		}
 	}
+}
+
+func CreateLastCommand(op state.MainOperationEnum, name string, app *app.Data) {
+	content := history.GetLast(op, app)
+
+	if content == nil {
+		crerrors.PrintCommandNotFoundError(app)
+		return
+	}
+
+	exec := ""
+	key := content.CommandName
+	if key == "" {
+		splitted := strings.SplitSeq(content.Note, ";")
+		for keyValRaw := range splitted {
+			keyVal := strings.Split(keyValRaw, "=")
+			if keyVal[0] == "exec" {
+				exec = keyVal[1]
+				break
+			}
+		}
+	}
+
+	CreateCommand([]string{}, []string{name, exec}, app)
 }

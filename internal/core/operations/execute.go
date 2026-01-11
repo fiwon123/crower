@@ -30,7 +30,7 @@ func Execute(args []string, app *app.Data) {
 	assertExecute(output, command, err, app)
 }
 
-func ExecuteLast(op state.OperationEnum, args []string, app *app.Data) {
+func ExecuteLast(op state.MainOperationEnum, args []string, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {

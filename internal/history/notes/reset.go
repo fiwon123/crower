@@ -2,5 +2,8 @@ package notes
 
 // Create a new reset note
 func GenerateResetNote() string {
-	return "Reset"
+	noteBuilder := New()
+	noteBuilder.AddCrowerExec("reset", nil)
+
+	return noteBuilder.Build()
 }
