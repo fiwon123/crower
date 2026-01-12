@@ -9,6 +9,7 @@ import (
 )
 
 var folderFlag bool
+var fileFlag bool
 var systemFlag bool
 
 // Cmd represents the open command
@@ -29,6 +30,8 @@ Examples:
 
 		if folderFlag {
 			operations.OpenFolder(args, app)
+		} else if fileFlag {
+			operations.OpenFile(args, app)
 		} else if systemFlag {
 			operations.OpenSystem(app)
 		} else if len(args) > 0 {
@@ -42,6 +45,7 @@ Examples:
 
 func init() {
 
-	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "open cfg folder")
+	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "open cfg file or other file")
+	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "open cfg folder or other folder")
 	Cmd.Flags().BoolVarP(&systemFlag, "system", "s", false, "open system variable")
 }

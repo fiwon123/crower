@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"path"
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/data/app"
@@ -12,7 +11,6 @@ import (
 )
 
 func Open(args []string, app *app.Data) {
-	currentPath := app.CfgFilePath
 
 	paths := []string{}
 	for _, arg := range args {
@@ -28,20 +26,28 @@ func Open(args []string, app *app.Data) {
 		}
 	}
 
-	if len(paths) == 0 {
-		paths = append(paths, currentPath)
-	}
-
 	handlers.Open(paths, app)
 
 	app.History.Add(state.Open, notes.GenerateOpenNote(args))
 	history.Save(app)
 }
 
+func OpenFile(args []string, app *app.Data) {
+	currentPath := app.CfgFilePath
+	if len(args) == 0 {
+		args = append(args, currentPath)
+	}
+
+	handlers.Open(args, app)
+
+	app.History.Add(state.Open, notes.GenerateOpenFolderNote(args))
+	history.Save(app)
+}
+
 func OpenFolder(args []string, app *app.Data) {
 	currentPath := app.CfgFilePath
 	if len(args) == 0 {
-		args = append(args, path.Dir(currentPath))
+		args = append(args, filepath.Dir(currentPath))
 	}
 
 	handlers.Open(args, app)
