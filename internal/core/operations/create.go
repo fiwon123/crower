@@ -1,6 +1,8 @@
 package operations
 
 import (
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/core/inputs"
@@ -42,7 +44,7 @@ func performCreateCommand(name string, allAlias []string, exec string, app *app.
 	}
 
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
-	app.Logger.Info("added new command: ", app.AllCommandsByName)
+	app.Logger.Info("added new command: ", "allCommands", app.AllCommandsByName)
 
 	return command
 }
@@ -164,5 +166,37 @@ func CreateLastCommand(op state.MainOperationEnum, args []string, app *app.Data)
 	}
 
 	app.History.Add(state.Create, notes.GenerateCreateCommandLastExecuteNote(command))
+	history.Save(app)
+}
+
+func CreateScriptCommand(args []string, app *app.Data) {
+	name := ""
+	if len(args) > 0 {
+		name = args[0]
+	} else {
+		crerrors.PrintNotArgs("name", app)
+	}
+
+	scriptFilePath, err := handlers.CreateScriptCommand(name, app)
+	if err != nil {
+		app.Logger.Error(err.Error())
+		return
+	}
+
+	var command *command.Data
+	switch runtime.GOOS {
+	case "windows":
+		command = performCreateCommand(name, []string{}, scriptFilePath, app)
+	case "linux":
+		command = performCreateCommand(name, []string{}, scriptFilePath, app)
+	}
+
+	if command == nil {
+		return
+	}
+
+	handlers.Open([]string{filepath.Dir(scriptFilePath)}, app)
+
+	app.History.Add(state.Create, notes.GenerateCreateScriptCommandNote(command, args))
 	history.Save(app)
 }

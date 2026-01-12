@@ -19,6 +19,19 @@ func GenerateCreateCommandNote(command *command.Data, args []string) string {
 		Build()
 }
 
+func GenerateCreateScriptCommandNote(command *command.Data, args []string) string {
+	noteBuilder := New()
+
+	return noteBuilder.
+		AddMainOperation(state.Create).
+		AddSubOperation(state.Script).
+		AddCommandName(command.Name).
+		AddCommandAlias(command.AllAlias).
+		AddCommandExec(command.Exec).
+		AddCrowerExec("create", args).
+		Build()
+}
+
 func GenerateCreateCommandLastExecuteNote(command *command.Data) string {
 	noteBuilder := New()
 

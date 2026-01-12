@@ -146,6 +146,32 @@ func CreateFolder(folderPath string, app *app.Data) error {
 	return nil
 }
 
+func CreateScriptCommand(name string, app *app.Data) (string, error) {
+	cfgFolderPath := filepath.Dir(app.CfgFilePath)
+	scriptFolderPath := filepath.Join(cfgFolderPath, "scripts")
+	err := utils.CreateFolderIfNotExists(scriptFolderPath)
+	if err != nil {
+		return "", err
+	}
+
+	switch runtime.GOOS {
+	case "windows":
+		scriptFilePath := filepath.Join(scriptFolderPath, name+".bat")
+
+		utils.CreateFileIfNotExists(scriptFilePath)
+
+		return scriptFilePath, nil
+	case "linux":
+		scriptFilePath := filepath.Join(scriptFolderPath, name+".sh")
+
+		utils.CreateFileIfNotExists(scriptFilePath)
+
+		return scriptFilePath, nil
+	}
+
+	return "", fmt.Errorf("can't find specific OS to create script command")
+}
+
 func checkNewVarValue(value string, from string) bool {
 	splitted := splitPath(from)
 	ok := true
