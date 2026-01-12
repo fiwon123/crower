@@ -16,8 +16,8 @@ func Move(args []string, app *app.Data) {
 		return
 	}
 
-	isCopyFile := false
-	isCopyFolder := false
+	isMoveFile := false
+	isMoveFolder := false
 	lastIndex := len(args) - 1
 	output := args[lastIndex]
 	args = args[:lastIndex]
@@ -25,10 +25,10 @@ func Move(args []string, app *app.Data) {
 		var err error
 		if utils.FilePathExists(path) {
 			err = handlers.MoveFile(path, output, app)
-			isCopyFile = true
+			isMoveFile = true
 		} else {
 			err = handlers.MoveFolder(path, output, app)
-			isCopyFolder = true
+			isMoveFolder = true
 		}
 
 		if err != nil {
@@ -37,12 +37,12 @@ func Move(args []string, app *app.Data) {
 		}
 	}
 
-	if isCopyFile && isCopyFolder {
-		app.History.Add(state.Copy, notes.GenerateMoveNote(state.FileAndFolder, args))
-	} else if isCopyFile {
-		app.History.Add(state.Copy, notes.GenerateMoveNote(state.File, args))
-	} else if isCopyFolder {
-		app.History.Add(state.Copy, notes.GenerateMoveNote(state.Folder, args))
+	if isMoveFile && isMoveFolder {
+		app.History.Add(state.Move, notes.GenerateMoveNote(state.FileAndFolder, args))
+	} else if isMoveFile {
+		app.History.Add(state.Move, notes.GenerateMoveNote(state.File, args))
+	} else if isMoveFolder {
+		app.History.Add(state.Move, notes.GenerateMoveNote(state.Folder, args))
 	}
 
 	history.Save(app)

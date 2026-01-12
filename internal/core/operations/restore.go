@@ -29,6 +29,6 @@ func Restore(args []string, app *app.Data) {
 
 	app.Logger.Info("restored command: ", "out", out)
 
-	app.History.Add(state.Restore, "", notes.GenerateRestoreNote(out))
+	app.History.Add(state.Restore, notes.GenerateRestoreNote(out))
 	history.Save(app)
 }

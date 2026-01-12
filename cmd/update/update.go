@@ -3,6 +3,7 @@ package update
 import (
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
+	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/state"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
@@ -49,14 +50,9 @@ Examples:
 		} else if execute {
 			operations.UpdateLast(state.Execute, name, allAlias, exec, app)
 		} else if len(args) > 0 {
-			key := ""
-			if len(args) != 0 {
-				key = args[0]
-			}
-
-			operations.Update(key, name, allAlias, exec, app)
+			operations.UpdateCommand(args, name, allAlias, exec, app)
 		} else {
-			operations.Update("", name, allAlias, exec, app)
+			crerrors.PrintCmdHelp("update", app)
 		}
 
 	},

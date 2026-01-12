@@ -22,6 +22,6 @@ func Reset(app *app.Data) {
 	handlers.Reset(app)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
-	app.History.Add(state.Reset, "", notes.GenerateResetNote())
+	app.History.Add(state.Reset, notes.GenerateResetNote())
 	history.Save(app)
 }

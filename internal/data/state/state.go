@@ -20,6 +20,7 @@ const (
 	Move    MainOperationEnum = "move"
 	Restore MainOperationEnum = "restore"
 	Check   MainOperationEnum = "check"
+	Upgrade MainOperationEnum = "upgrade"
 )
 
 // sub
@@ -33,4 +34,5 @@ const (
 	SysPath       SubOperationEnum = "syspath"
 	System        SubOperationEnum = "system"
 	Last          SubOperationEnum = "last"
+	Browser       SubOperationEnum = "browser"
 )

@@ -7,8 +7,7 @@ func GenerateUpgradeNote() string {
 	noteBuilder := New()
 
 	return noteBuilder.
-		AddMainOperation(state.Update).
-		AddSubOperation(state.Command).
+		AddMainOperation(state.Upgrade).
 		AddCrowerExec("--upgrade", nil).
 		Build()
 }
