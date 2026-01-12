@@ -5,15 +5,26 @@ import (
 	"runtime"
 
 	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 // SearchBrowser based on user operational system(OS).
 func SearchBrowser(content string, app *app.Data) (string, error) {
+
 	switch runtime.GOOS {
 	case "windows":
-		return PerformExecute(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s'`, content), app)
+		if utils.IsURL(content) {
+			return "", PerformExecuteStart(fmt.Sprintf(`start ' ' '%s' `, content), app)
+		} else {
+			return "", PerformExecuteStart(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s' `, content), app)
+		}
 	case "linux":
-		return "", PerformExecuteStart(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" '`, content), app)
+		if utils.IsURL(content) {
+			return "", PerformExecuteStart(fmt.Sprintf(`xdg-open "%s" `, content), app)
+		} else {
+			return "", PerformExecuteStart(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" `, content), app)
+		}
+
 	}
 
 	return "", nil
