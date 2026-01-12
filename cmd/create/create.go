@@ -3,6 +3,7 @@ package create
 import (
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/core/operations"
+	"github.com/fiwon123/crower/internal/data/state"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
@@ -15,6 +16,8 @@ var folderFlag bool
 var fileFlag bool
 var sysPathFlag bool
 var systemFlag bool
+
+var executeFlag bool
 
 // Cmd represents the create command
 var Cmd = &cobra.Command{
@@ -57,6 +60,8 @@ Example:
 			operations.CreateSystemPathVariable(args, app)
 		} else if systemFlag {
 			operations.CreateSystemVariable(args, app)
+		} else if executeFlag {
+			operations.CreateLastCommand(state.Execute, args, app)
 		} else if len(args) > 0 {
 			if utils.IsValidFilePath(args[0]) {
 				operations.CreateFile(args, app)
@@ -80,4 +85,5 @@ func init() {
 	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
 	Cmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
 	Cmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
+	Cmd.Flags().BoolVar(&executeFlag, "execute", false, "create based on last executed command")
 }

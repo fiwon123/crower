@@ -70,7 +70,7 @@ Execute Command:
 		}
 
 		if len(args) > 0 {
-			operations.Execute(args, app)
+			operations.ExecuteCommand(args, app)
 		} else {
 			crerrors.PrintCmdHelp("", app)
 		}

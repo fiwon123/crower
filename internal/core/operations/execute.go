@@ -11,7 +11,7 @@ import (
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
-func Execute(args []string, app *app.Data) {
+func ExecuteCommand(args []string, app *app.Data) {
 	var params []string
 	key := ""
 	if len(args) > 0 {
@@ -28,9 +28,12 @@ func Execute(args []string, app *app.Data) {
 
 	output, command, err := handlers.Execute(key, params, app)
 	assertExecute(output, command, err, app)
+
+	app.History.Add(state.Execute, notes.GenerateExecuteCommandNote(command))
+	history.Save(app)
 }
 
-func ExecuteLast(op state.OperationEnum, args []string, app *app.Data) {
+func ExecuteLast(op state.MainOperationEnum, args []string, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
@@ -40,6 +43,9 @@ func ExecuteLast(op state.OperationEnum, args []string, app *app.Data) {
 
 	output, command, err := handlers.Execute(content.CommandName, args, app)
 	assertExecute(output, command, err, app)
+
+	app.History.Add(state.Execute, notes.GenerateExecuteLastNote(op, command))
+	history.Save(app)
 }
 
 func assertExecute(output string, command *command.Data, err error, app *app.Data) {
@@ -48,7 +54,4 @@ func assertExecute(output string, command *command.Data, err error, app *app.Dat
 		return
 	}
 	app.Logger.Info(string(output))
-
-	app.History.Add(state.Execute, command.Name, notes.GenerateExecuteNote(command))
-	history.Save(app)
 }

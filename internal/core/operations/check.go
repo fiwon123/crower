@@ -2,7 +2,10 @@ package operations
 
 import (
 	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
+	"github.com/fiwon123/crower/internal/history"
+	"github.com/fiwon123/crower/internal/history/notes"
 )
 
 func CheckNewVersion(currentVersion string, app *app.Data) {
@@ -21,4 +24,7 @@ func CheckNewVersion(currentVersion string, app *app.Data) {
 	app.Logger.Info("Current Version: ", "currentVersion", currentVersion)
 	app.Logger.Info("New Version Found: ", "newVersion", newVersion)
 	app.Logger.Info("Check: https://github.com/fiwon123/crower/releases/latest")
+
+	app.History.Add(state.Check, notes.GenerateCheckNote())
+	history.Save(app)
 }

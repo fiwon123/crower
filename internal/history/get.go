@@ -7,6 +7,6 @@ import (
 )
 
 // Get last operation
-func GetLast(state state.OperationEnum, app *app.Data) *history.Content {
+func GetLast(state state.MainOperationEnum, app *app.Data) *history.Content {
 	return app.History.GetLastOperation(state)
 }

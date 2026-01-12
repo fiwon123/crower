@@ -6,19 +6,31 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
+	"github.com/fiwon123/crower/internal/history"
+	"github.com/fiwon123/crower/internal/history/notes"
 )
 
 func ListCommands(app *app.Data) {
 	handlers.ListCommands(app)
+
+	app.History.Add(state.List, notes.GenerateListCommandsNote())
+	history.Save(app)
 }
 
 func ListProcess(args []string, app *app.Data) {
 	handlers.ListProcess(args, app)
+
+	app.History.Add(state.List, notes.GenerateListProcessNote(args))
+	history.Save(app)
 }
 
 func ListHistory(app *app.Data) {
 	handlers.ListHistory(app)
+
+	app.History.Add(state.List, notes.GenerateListHistoriesNote())
+	history.Save(app)
 }
 
 func ListFolder(args []string, app *app.Data) {
@@ -29,6 +41,9 @@ func ListFolder(args []string, app *app.Data) {
 
 	out, err := handlers.ListFolder(currentPath, app)
 	assertListResult(out, err, app)
+
+	app.History.Add(state.List, notes.GenerateListFolderNote(args))
+	history.Save(app)
 }
 
 func ListSystem(app *app.Data) {
@@ -49,6 +64,9 @@ func ListSystem(app *app.Data) {
 		}
 	}
 	assertListResult(out, err, app)
+
+	app.History.Add(state.List, notes.GenerateListSystemNote())
+	history.Save(app)
 }
 
 func ListSysPath(app *app.Data) {
@@ -59,6 +77,9 @@ func ListSysPath(app *app.Data) {
 	}
 
 	assertListResult(out, err, app)
+
+	app.History.Add(state.List, notes.GenerateListSystemPathNote())
+	history.Save(app)
 }
 
 func formatVariable(name string, paths string) string {

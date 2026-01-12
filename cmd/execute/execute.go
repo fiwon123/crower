@@ -30,7 +30,7 @@ var Cmd = &cobra.Command{
 		} else if updateFlag {
 			operations.ExecuteLast(state.Update, args, app)
 		} else {
-			operations.Execute(args, app)
+			operations.ExecuteCommand(args, app)
 		}
 	},
 }

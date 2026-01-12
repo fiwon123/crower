@@ -1,10 +1,14 @@
 package notes
 
-import (
-	"fmt"
-)
+import "github.com/fiwon123/crower/internal/data/state"
 
 // Create a new restore note
 func GenerateRestoreNote(msg string) string {
-	return fmt.Sprintf("Restore: %v", msg)
+	noteBuilder := New()
+
+	return noteBuilder.
+		AddMainOperation(state.Restore).
+		AddCrowerExec("restore", nil).
+		Build()
+
 }

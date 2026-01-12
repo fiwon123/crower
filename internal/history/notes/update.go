@@ -1,34 +1,79 @@
 package notes
 
 import (
-	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/state"
 )
 
 // Create a new update note
-func GenerateUpdateNote(oldCommand *command.Data, newCommand *command.Data) string {
+func GenerateUpdateCommmandNote(args []string, oldCommand *command.Data, newCommand *command.Data) string {
 
-	output := strings.Builder{}
-	output.WriteString("Updated:")
+	noteBuilder := New()
+
+	noteBuilder.
+		AddMainOperation(state.Update).
+		AddSubOperation(state.Command)
+
 	if oldCommand.Name != newCommand.Name {
-		changes := fmt.Sprintf(" name from %s to %s,", oldCommand.Name, newCommand.Name)
-		output.WriteString(changes)
+		noteBuilder.
+			AddOldCommandName(oldCommand.Name).
+			AddCommandName(newCommand.Name)
 	}
 
 	if hasDiffAlieses(oldCommand.AllAlias, newCommand.AllAlias) {
-		changes := fmt.Sprintf(" aliases from %v to %v,", oldCommand.AllAlias, newCommand.AllAlias)
-		output.WriteString(changes)
+		noteBuilder.
+			AddOldCommandAlias(oldCommand.AllAlias).
+			AddCommandAlias(newCommand.AllAlias)
 	}
 
 	if oldCommand.Exec != newCommand.Exec {
-		changes := fmt.Sprintf(" exec from \"%s\" to \"%s\"", oldCommand.Exec, newCommand.Exec)
-		output.WriteString(changes)
+		noteBuilder.
+			AddOldCommandExec(oldCommand.Exec).
+			AddCommandExec(newCommand.Exec)
 	}
 
-	return output.String()
+	return noteBuilder.
+		AddCrowerExec("update", args).
+		Build()
+}
+
+func GenerateUpdateLastNote(op state.MainOperationEnum, oldCommand *command.Data, newCommand *command.Data) string {
+	noteBuilder := New()
+
+	noteBuilder.
+		AddMainOperation(state.Update).
+		AddSubOperation(state.Command)
+
+	if oldCommand.Name != newCommand.Name {
+		noteBuilder.
+			AddOldCommandName(oldCommand.Name).
+			AddCommandName(newCommand.Name)
+	}
+
+	if hasDiffAlieses(oldCommand.AllAlias, newCommand.AllAlias) {
+		noteBuilder.
+			AddOldCommandAlias(oldCommand.AllAlias).
+			AddCommandAlias(newCommand.AllAlias)
+	}
+
+	if oldCommand.Exec != newCommand.Exec {
+		noteBuilder.
+			AddOldCommandExec(oldCommand.Exec).
+			AddCommandExec(newCommand.Exec)
+	}
+
+	switch op {
+	case state.Update:
+		noteBuilder.AddCrowerExec("update --last", nil)
+	case state.Create:
+		noteBuilder.AddCrowerExec("update --create", nil)
+	case state.Execute:
+		noteBuilder.AddCrowerExec("update --execute", nil)
+	}
+
+	return noteBuilder.Build()
 }
 
 func hasDiffAlieses(old []string, new []string) bool {

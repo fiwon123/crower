@@ -1,6 +1,13 @@
 package notes
 
+import "github.com/fiwon123/crower/internal/data/state"
+
 // Create a new reset note
 func GenerateResetNote() string {
-	return "Reset"
+	noteBuilder := New()
+
+	return noteBuilder.
+		AddMainOperation(state.Reset).
+		AddCrowerExec("reset", nil).
+		Build()
 }
