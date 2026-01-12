@@ -129,7 +129,15 @@ func CreateFolder(args []string, app *app.Data) {
 	history.Save(app)
 }
 
-func CreateLastCommand(op state.MainOperationEnum, name string, app *app.Data) {
+func CreateLastCommand(op state.MainOperationEnum, args []string, app *app.Data) {
+	name := ""
+	if len(args) > 0 {
+		name = args[0]
+	} else {
+		crerrors.PrintNotArgs("name", app)
+		return
+	}
+
 	content := history.GetLast(op, app)
 
 	if content == nil {
