@@ -16,6 +16,7 @@ var folderFlag bool
 var fileFlag bool
 var sysPathFlag bool
 var systemFlag bool
+var scriptFlag bool
 
 var executeFlag bool
 
@@ -62,6 +63,8 @@ Example:
 			operations.CreateSystemVariable(args, app)
 		} else if executeFlag {
 			operations.CreateLastCommand(state.Execute, args, app)
+		} else if scriptFlag {
+			operations.CreateScriptCommand(args, app)
 		} else if len(args) > 0 {
 			if utils.IsValidFilePath(args[0]) {
 				operations.CreateFile(args, app)
@@ -86,4 +89,5 @@ func init() {
 	Cmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
 	Cmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
 	Cmd.Flags().BoolVar(&executeFlag, "execute", false, "create based on last executed command")
+	Cmd.Flags().BoolVar(&scriptFlag, "script", false, "create a script file to help user create a complex command")
 }

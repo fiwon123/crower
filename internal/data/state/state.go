@@ -26,6 +26,7 @@ const (
 // sub
 const (
 	Command       SubOperationEnum = "command"
+	Script        SubOperationEnum = "script"
 	Process       SubOperationEnum = "process"
 	File          SubOperationEnum = "file"
 	Folder        SubOperationEnum = "folder"
