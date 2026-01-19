@@ -1,6 +1,7 @@
-package inputs
+package updateinputs
 
 import (
+	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 )
@@ -10,7 +11,7 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 
 	if *key == "" {
 		handlers.ListCommands(app)
-		input := getUserInput("Select Row", isValidInputKey, app).(string)
+		input := inputs.GetUserInput("Select Row", inputs.IsValidInputKey, app).(string)
 		*key = input
 	}
 
@@ -22,26 +23,26 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 	app.Logger.Info("")
 
 	if *name == "" {
-		ok := getUserConfirmation("Do you want to update name", app)
+		ok := inputs.GetUserConfirmation("Do you want to update name", app)
 
 		if ok {
-			*name = inputName(app)
+			*name = inputs.InputName(app)
 		}
 	}
 
 	if len(*allAlias) == 0 {
-		ok := getUserConfirmation("Do you want to update alias", app)
+		ok := inputs.GetUserConfirmation("Do you want to update alias", app)
 
 		if ok {
-			*allAlias = inputAlias(app)
+			*allAlias = inputs.InputAlias(app)
 		}
 	}
 
 	if *exec == "" {
-		ok := getUserConfirmation("Do you want to update exec", app)
+		ok := inputs.GetUserConfirmation("Do you want to update exec", app)
 
 		if ok {
-			*exec = inputExec(app)
+			*exec = inputs.InputExec(app)
 		}
 	}
 	app.Logger.Info("-----------------------------------------")
@@ -56,6 +57,6 @@ func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *strin
 	app.Logger.Info("Exec:    ", "exec", *exec)
 	app.Logger.Info("")
 
-	ok := getUserConfirmation("Continue to update", app)
+	ok := inputs.GetUserConfirmation("Continue to update", app)
 	return ok
 }

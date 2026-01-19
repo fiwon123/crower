@@ -1,4 +1,4 @@
-package crtests
+package crowertests
 
 import (
 	"os"

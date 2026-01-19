@@ -1,6 +1,7 @@
-package inputs
+package executeinputs
 
 import (
+	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -10,7 +11,7 @@ import (
 func CheckExecuteInput(key *string, params *[]string, app *app.Data) bool {
 	if *key == "" {
 		handlers.ListCommands(app)
-		input := getUserInput("Select Row", isValidInputKey, app).(string)
+		input := inputs.GetUserInput("Select Row", inputs.IsValidInputKey, app).(string)
 		*key = input
 	}
 
@@ -25,7 +26,7 @@ func CheckExecuteInput(key *string, params *[]string, app *app.Data) bool {
 	if command == nil {
 		handlers.ListCommands(app)
 		app.Logger.Info("Command not found, try to select one.")
-		input := getUserInput("Select Row", isValidInputKey, app).(string)
+		input := inputs.GetUserInput("Select Row", inputs.IsValidInputKey, app).(string)
 		*key = input
 
 		command = app.AllCommandsByName.Get(*key)
@@ -37,6 +38,6 @@ func CheckExecuteInput(key *string, params *[]string, app *app.Data) bool {
 	app.Logger.Info("Exec:    ", "exec", command.Exec)
 	app.Logger.Info("")
 
-	ok := getUserConfirmation("Continue to execute", app)
+	ok := inputs.GetUserConfirmation("Continue to execute", app)
 	return ok
 }

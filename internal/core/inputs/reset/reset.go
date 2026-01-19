@@ -1,6 +1,7 @@
-package inputs
+package resetinputs
 
 import (
+	"github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/handlers"
 )
@@ -12,6 +13,6 @@ func CheckResetInput(app *app.Data) bool {
 
 	app.Logger.Info("")
 	app.Logger.Info("All commands will be erased...")
-	ok := getUserConfirmation("Continue to reset", app)
+	ok := inputs.GetUserConfirmation("Continue to reset", app)
 	return ok
 }
