@@ -1,4 +1,4 @@
-package crerrors
+package crowererrors
 
 import (
 	"github.com/fiwon123/crower/internal/data/app"

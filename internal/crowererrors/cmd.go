@@ -1,4 +1,4 @@
-package crerrors
+package crowererrors
 
 import (
 	"fmt"

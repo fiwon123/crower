@@ -7,7 +7,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
@@ -94,7 +94,7 @@ func GetUserConfirmation(ask string, app *app.Data) bool {
 
 func IsValidConfirmation(input string) (bool, error) {
 	if !CheckValidAnswer(input) {
-		return false, crerrors.InvalidInput()
+		return false, crowererrors.InvalidInput()
 	}
 
 	if CheckNoAnswer(input) {
@@ -106,7 +106,7 @@ func IsValidConfirmation(input string) (bool, error) {
 
 func IsValidInput(input string, app *app.Data) (any, error) {
 	if input == "" {
-		return "", crerrors.EmptyInput()
+		return "", crowererrors.EmptyInput()
 	}
 
 	return input, nil
@@ -149,7 +149,7 @@ func InputExec(app *app.Data) string {
 func isValidAlias(input string, app *app.Data) (any, error) {
 	for _, r := range input {
 		if !unicode.IsNumber(r) && !unicode.IsLetter(r) {
-			return "", crerrors.OnlyLettersAndNumbers()
+			return "", crowererrors.OnlyLettersAndNumbers()
 		}
 	}
 
@@ -159,11 +159,11 @@ func isValidAlias(input string, app *app.Data) (any, error) {
 func IsValidInputKey(input string, app *app.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
-		return "", crerrors.InvalidRows()
+		return "", crowererrors.InvalidRows()
 	}
 
 	if index < 0 || index >= len(app.OrderKeys) {
-		return "", crerrors.InvalidRows()
+		return "", crowererrors.InvalidRows()
 	}
 
 	return app.OrderKeys[index], nil
@@ -172,13 +172,13 @@ func IsValidInputKey(input string, app *app.Data) (any, error) {
 func IsValidContentKey(input string, app *app.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
-		return "", crerrors.InvalidRows()
+		return "", crowererrors.InvalidRows()
 	}
 
 	contents := app.History.AllData
 	correctIndex := len(contents) - 1 - index
 	if correctIndex < 0 || correctIndex >= len(contents) {
-		return "", crerrors.InvalidRows()
+		return "", crowererrors.InvalidRows()
 	}
 
 	return contents[correctIndex], nil
