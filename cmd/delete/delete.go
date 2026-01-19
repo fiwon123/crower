@@ -2,7 +2,7 @@ package delete
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	deleteoperations "github.com/fiwon123/crower/internal/core/operations/delete"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/pkg/utils"
 
@@ -53,31 +53,31 @@ Example:
 		app := core.InitApp(cfgFilePath)
 
 		if createFlag {
-			operations.DeleteLast(state.Create, app)
+			deleteoperations.DeleteLast(state.Create, app)
 		} else if updateFlag {
-			operations.DeleteLast(state.Update, app)
+			deleteoperations.DeleteLast(state.Update, app)
 		} else if executeFlag {
-			operations.DeleteLast(state.Execute, app)
+			deleteoperations.DeleteLast(state.Execute, app)
 		} else if fileFlag {
-			operations.DeleteFile(args, app)
+			deleteoperations.DeleteFile(args, app)
 		} else if folderFlag {
-			operations.DeleteFolder(args, app)
+			deleteoperations.DeleteFolder(args, app)
 		} else if systemFlag {
-			operations.DeleteSystemVariable(args, app)
+			deleteoperations.DeleteSystemVariable(args, app)
 		} else if sysPathFlag {
-			operations.DeleteSystemPathVariable(args, app)
+			deleteoperations.DeleteSystemPathVariable(args, app)
 		} else if historyFlag {
-			operations.DeleteHistoryContent(args, app)
+			deleteoperations.DeleteHistoryContent(args, app)
 		} else if len(args) > 0 {
 			if utils.IsValidFilePath(args[0]) {
-				operations.DeleteFile(args, app)
+				deleteoperations.DeleteFile(args, app)
 			} else if utils.IsValidFolderPath(args[0]) {
-				operations.DeleteFolder(args, app)
+				deleteoperations.DeleteFolder(args, app)
 			} else {
-				operations.Delete(args, app)
+				deleteoperations.Delete(args, app)
 			}
 		} else {
-			operations.Delete(args, app)
+			deleteoperations.Delete(args, app)
 		}
 
 	},

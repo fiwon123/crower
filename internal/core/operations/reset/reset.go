@@ -1,7 +1,7 @@
-package operations
+package resetoperations
 
 import (
-	"github.com/fiwon123/crower/internal/core/inputs"
+	resetinputs "github.com/fiwon123/crower/internal/core/inputs/reset"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -11,7 +11,7 @@ import (
 )
 
 func Reset(app *app.Data) {
-	ok := inputs.CheckResetInput(app)
+	ok := resetinputs.CheckResetInput(app)
 
 	if !ok {
 		app.Logger.Info("Cancelling reset...")

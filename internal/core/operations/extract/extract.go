@@ -1,4 +1,4 @@
-package operations
+package extractoperations
 
 import (
 	"path/filepath"

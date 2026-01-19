@@ -3,7 +3,7 @@ package revertinputs
 import (
 	"fmt"
 
-	"github.com/fiwon123/crower/internal/core/inputs"
+	inputscore "github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
@@ -28,7 +28,7 @@ func CheckRevertInput(steps int, app *app.Data) (bool, error) {
 
 	app.Logger.Info("")
 	app.Logger.Info("History will revert ", "steps", steps)
-	ok := inputs.GetUserConfirmation("Continue to revert", app)
+	ok := inputscore.GetUserConfirmation("Continue to revert", app)
 
 	if !ok {
 		return false, fmt.Errorf("cancelling revert...")

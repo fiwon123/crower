@@ -1,4 +1,4 @@
-package operations
+package openoperations
 
 import (
 	"path/filepath"

@@ -2,7 +2,7 @@ package execute
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	executeoperations "github.com/fiwon123/crower/internal/core/operations/execute"
 	"github.com/fiwon123/crower/internal/data/state"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -24,13 +24,13 @@ var Cmd = &cobra.Command{
 		app := core.InitApp(cfgFilePath)
 
 		if last {
-			operations.ExecuteLast(state.Execute, args, app)
+			executeoperations.ExecuteLast(state.Execute, args, app)
 		} else if createFlag {
-			operations.ExecuteLast(state.Create, args, app)
+			executeoperations.ExecuteLast(state.Create, args, app)
 		} else if updateFlag {
-			operations.ExecuteLast(state.Update, args, app)
+			executeoperations.ExecuteLast(state.Update, args, app)
 		} else {
-			operations.ExecuteCommand(args, app)
+			executeoperations.ExecuteCommand(args, app)
 		}
 	},
 }

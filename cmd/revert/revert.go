@@ -2,7 +2,7 @@ package revert
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	revertoperations "github.com/fiwon123/crower/internal/core/operations/revert"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +17,7 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
-		operations.Revert(args, app)
+		revertoperations.Revert(args, app)
 	},
 }
 

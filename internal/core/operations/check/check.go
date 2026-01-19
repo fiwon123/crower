@@ -1,8 +1,6 @@
-package operations
+package checkoperations
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -10,7 +8,7 @@ import (
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
-func UpgradeApp(currentVersion string, app *app.Data) {
+func CheckNewVersion(currentVersion string, app *app.Data) {
 	newVersion, err := handlers.CheckNewVersion(currentVersion, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
@@ -23,14 +21,10 @@ func UpgradeApp(currentVersion string, app *app.Data) {
 		return
 	}
 
-	err = handlers.UpgradeApp(newVersion, app)
-	if err != nil {
-		app.Logger.Error(err.Error())
-		return
-	}
+	app.Logger.Info("Current Version: ", "currentVersion", currentVersion)
+	app.Logger.Info("New Version Found: ", "newVersion", newVersion)
+	app.Logger.Info("Check: https://github.com/fiwon123/crower/releases/latest")
 
-	app.Logger.Info(fmt.Sprintf("crower upgraded from %s to %s \n", currentVersion, newVersion))
-
-	app.History.Add(state.Upgrade, notes.GenerateUpgradeNote())
+	app.History.Add(state.Check, notes.GenerateCheckNote())
 	history.Save(app)
 }

@@ -1,4 +1,4 @@
-package operations
+package searchoperations
 
 import (
 	"github.com/fiwon123/crower/internal/data/app"

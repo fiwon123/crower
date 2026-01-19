@@ -1,7 +1,7 @@
-package operations
+package executeoperations
 
 import (
-	"github.com/fiwon123/crower/internal/core/inputs"
+	executeinputs "github.com/fiwon123/crower/internal/core/inputs/execute"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
@@ -19,7 +19,7 @@ func ExecuteCommand(args []string, app *app.Data) {
 		key = args[0]
 		params = args[1:]
 	} else {
-		ok := inputs.CheckExecuteInput(&key, &params, app)
+		ok := executeinputs.CheckExecuteInput(&key, &params, app)
 		if !ok {
 			app.Logger.Info("Cancelling execute...")
 			return

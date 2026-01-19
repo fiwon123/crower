@@ -1,7 +1,7 @@
-package operations
+package deleteoperations
 
 import (
-	"github.com/fiwon123/crower/internal/core/inputs"
+	deleteinputs "github.com/fiwon123/crower/internal/core/inputs/delete"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
@@ -20,7 +20,7 @@ func Delete(args []string, app *app.Data) {
 		key = args[0]
 	}
 
-	ok := inputs.CheckDeleteInput(&key, app)
+	ok := deleteinputs.CheckDeleteInput(&key, app)
 	if !ok {
 		app.Logger.Info("Cancelling delete...")
 		return
@@ -139,7 +139,7 @@ func DeleteFolder(args []string, app *app.Data) {
 }
 
 func DeleteHistoryContent(args []string, app *app.Data) {
-	content, ok := inputs.CheckDeleteHistoryContentInput(app)
+	content, ok := deleteinputs.CheckDeleteHistoryContentInput(app)
 	if !ok {
 		app.Logger.Info("Cancelling Delete History Content...")
 		return

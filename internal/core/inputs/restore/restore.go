@@ -1,7 +1,7 @@
 package restoreinputs
 
 import (
-	"github.com/fiwon123/crower/internal/core/inputs"
+	inputscore "github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/history"
 )
@@ -11,7 +11,7 @@ func CheckRestoreInput(app *app.Data) (history.Content, bool) {
 
 	var content history.Content
 	app.Logger.Info(app.History.GetList())
-	content = inputs.GetUserInput("Select Row", inputs.IsValidContentKey, app).(history.Content)
+	content = inputscore.GetUserInput("Select Row", inputscore.IsValidContentKey, app).(history.Content)
 
 	app.Logger.Info("-----------------------------------------")
 	app.Logger.Info("Content")
@@ -20,6 +20,6 @@ func CheckRestoreInput(app *app.Data) (history.Content, bool) {
 	app.Logger.Info("Note:    ", "note", content.Note)
 	app.Logger.Info("")
 
-	ok := inputs.GetUserConfirmation("Continue to restore", app)
+	ok := inputscore.GetUserConfirmation("Continue to restore", app)
 	return content, ok
 }

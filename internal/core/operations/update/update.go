@@ -1,7 +1,7 @@
-package operations
+package updateoperations
 
 import (
-	"github.com/fiwon123/crower/internal/core/inputs"
+	updateinputs "github.com/fiwon123/crower/internal/core/inputs/update"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
@@ -19,7 +19,7 @@ func UpdateCommand(args []string, name string, allAlias []string, exec string, a
 		key = args[0]
 	}
 
-	ok := inputs.CheckUpdateInput(&key, &name, &allAlias, &exec, app)
+	ok := updateinputs.CheckUpdateInput(&key, &name, &allAlias, &exec, app)
 	if !ok {
 		app.Logger.Info("Cancelling update...")
 		return

@@ -1,7 +1,7 @@
-package operations
+package restoreoperations
 
 import (
-	"github.com/fiwon123/crower/internal/core/inputs"
+	restoreinputs "github.com/fiwon123/crower/internal/core/inputs/restore"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/handlers"
@@ -15,7 +15,7 @@ func Restore(args []string, app *app.Data) {
 		key = args[0]
 	}
 
-	content, ok := inputs.CheckRestoreInput(app)
+	content, ok := restoreinputs.CheckRestoreInput(app)
 	if !ok {
 		app.Logger.Info("Cancelling Restore...")
 		return

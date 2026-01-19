@@ -1,11 +1,11 @@
-package operations
+package createoperations
 
 import (
 	"path/filepath"
 	"runtime"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/core/inputs"
+	createinputs "github.com/fiwon123/crower/internal/core/inputs/create"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
@@ -23,7 +23,7 @@ func CreateCommand(allAlias []string, args []string, app *app.Data) {
 		name = args[0]
 		exec = args[1]
 	} else {
-		inputs.CheckCreateInput(&name, &allAlias, &exec, app)
+		createinputs.CheckCreateInput(&name, &allAlias, &exec, app)
 	}
 
 	command := performCreateCommand(name, allAlias, exec, app)

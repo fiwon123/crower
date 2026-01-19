@@ -1,4 +1,4 @@
-package operations
+package copyoperations
 
 import (
 	"github.com/fiwon123/crower/internal/crerrors"

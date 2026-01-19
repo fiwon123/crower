@@ -1,9 +1,9 @@
-package operations
+package revertoperations
 
 import (
 	"strconv"
 
-	"github.com/fiwon123/crower/internal/core/inputs"
+	revertinputs "github.com/fiwon123/crower/internal/core/inputs/revert"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
@@ -28,7 +28,7 @@ func Revert(args []string, app *app.Data) {
 		return
 	}
 
-	ok, err := inputs.CheckRevertInput(steps, app)
+	ok, err := revertinputs.CheckRevertInput(steps, app)
 	if !ok {
 		app.Logger.Error(err.Error())
 		return

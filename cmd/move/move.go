@@ -2,7 +2,7 @@ package move
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	moveoperations "github.com/fiwon123/crower/internal/core/operations/move"
 	"github.com/fiwon123/crower/internal/crerrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -26,7 +26,7 @@ Examples:
 		app := core.InitApp(cfgFilePath)
 
 		if len(args) > 0 {
-			operations.Move(args, app)
+			moveoperations.Move(args, app)
 		} else {
 			crerrors.PrintCmdHelp("move", app)
 		}

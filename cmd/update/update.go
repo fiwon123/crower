@@ -2,7 +2,7 @@ package update
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	updateoperations "github.com/fiwon123/crower/internal/core/operations/update"
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/state"
 
@@ -44,13 +44,13 @@ Examples:
 		app := core.InitApp(cfgFilePath)
 
 		if last {
-			operations.UpdateLast(state.Update, name, allAlias, exec, app)
+			updateoperations.UpdateLast(state.Update, name, allAlias, exec, app)
 		} else if create {
-			operations.UpdateLast(state.Create, name, allAlias, exec, app)
+			updateoperations.UpdateLast(state.Create, name, allAlias, exec, app)
 		} else if execute {
-			operations.UpdateLast(state.Execute, name, allAlias, exec, app)
+			updateoperations.UpdateLast(state.Execute, name, allAlias, exec, app)
 		} else if len(args) > 0 {
-			operations.UpdateCommand(args, name, allAlias, exec, app)
+			updateoperations.UpdateCommand(args, name, allAlias, exec, app)
 		} else {
 			crerrors.PrintCmdHelp("update", app)
 		}

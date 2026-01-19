@@ -6,12 +6,13 @@ import (
 
 	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/helper/crtests"
+	crowertests "github.com/fiwon123/crower/internal/helper/tests"
 )
 
 func TestCopyFile(t *testing.T) {
 
 	t.Run("Copy File single name", func(t *testing.T) {
-		app, testPaths, err := crtests.InitCrowerTests()
+		app, testPaths, err := crowertests.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

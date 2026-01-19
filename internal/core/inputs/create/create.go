@@ -1,26 +1,26 @@
 package createinputs
 
 import (
-	"github.com/fiwon123/crower/internal/core/inputs"
+	inputscore "github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
 )
 
 // Verify parameters to process create operation
 func CheckCreateInput(name *string, alias *[]string, exec *string, app *app.Data) {
 	if *name == "" {
-		*name = inputs.GetUserInput("New Name ", inputs.IsValidInput, app).(string)
+		*name = inputscore.GetUserInput("New Name ", inputscore.IsValidInput, app).(string)
 	}
 
 	if len(*alias) == 0 {
-		ok := inputs.GetUserConfirmation("Do you want to add alias", app)
+		ok := inputscore.GetUserConfirmation("Do you want to add alias", app)
 
 		if ok {
-			*alias = inputs.InputAlias(app)
+			*alias = inputscore.InputAlias(app)
 		}
 	}
 
 	if *exec == "" {
-		*exec = inputs.GetUserInput("New Exec ", inputs.IsValidInput, app).(string)
+		*exec = inputscore.GetUserInput("New Exec ", inputscore.IsValidInput, app).(string)
 	}
 
 }

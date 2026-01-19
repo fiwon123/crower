@@ -20,7 +20,9 @@ import (
 	"github.com/fiwon123/crower/cmd/search"
 	"github.com/fiwon123/crower/cmd/update"
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	checkoperations "github.com/fiwon123/crower/internal/core/operations/check"
+	executeoperations "github.com/fiwon123/crower/internal/core/operations/execute"
+	upgradeoperations "github.com/fiwon123/crower/internal/core/operations/upgrade"
 	"github.com/fiwon123/crower/internal/crerrors"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
@@ -60,17 +62,17 @@ Execute Command:
 		app := core.InitApp(cfgFilePath)
 
 		if checkNewVersion {
-			operations.CheckNewVersion(Version, app)
+			checkoperations.CheckNewVersion(Version, app)
 			return
 		}
 
 		if upgradeFlag {
-			operations.UpgradeApp(Version, app)
+			upgradeoperations.UpgradeApp(Version, app)
 			return
 		}
 
 		if len(args) > 0 {
-			operations.ExecuteCommand(args, app)
+			executeoperations.ExecuteCommand(args, app)
 		} else {
 			crerrors.PrintCmdHelp("", app)
 		}

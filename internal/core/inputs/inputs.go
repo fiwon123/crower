@@ -1,4 +1,4 @@
-package inputs
+package inputscore
 
 import (
 	"bufio"
@@ -18,7 +18,7 @@ const (
 	input_yes string = "yes"
 )
 
-func checkValidAnswer(input string) bool {
+func CheckValidAnswer(input string) bool {
 	if input == input_y ||
 		input == input_n ||
 		input == input_yes ||
@@ -29,7 +29,7 @@ func checkValidAnswer(input string) bool {
 	return false
 }
 
-func checkNoAnswer(input string) bool {
+func CheckNoAnswer(input string) bool {
 	if input == input_n || input == input_no {
 		return true
 	}
@@ -37,7 +37,7 @@ func checkNoAnswer(input string) bool {
 	return false
 }
 
-func checkYesAnswer(input string) bool {
+func CheckYesAnswer(input string) bool {
 	if input == input_y || input == input_yes {
 		return true
 	}
@@ -45,7 +45,7 @@ func checkYesAnswer(input string) bool {
 	return false
 }
 
-func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app *app.Data) any {
+func GetUserInput(ask string, fnValid func(string, *app.Data) (any, error), app *app.Data) any {
 	ok := false
 	input := ""
 	var output any
@@ -68,7 +68,7 @@ func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app 
 	return output
 }
 
-func getUserConfirmation(ask string, app *app.Data) bool {
+func GetUserConfirmation(ask string, app *app.Data) bool {
 	ok := false
 	input := ""
 	var confirmation bool
@@ -81,7 +81,7 @@ func getUserConfirmation(ask string, app *app.Data) bool {
 		input = strings.TrimSuffix(input, "\n")
 		input = strings.TrimSuffix(input, "\r")
 
-		if confirmation, err = isValidConfirmation(input); err != nil {
+		if confirmation, err = IsValidConfirmation(input); err != nil {
 			app.Logger.Info(err.Error())
 			continue
 		}
@@ -92,19 +92,19 @@ func getUserConfirmation(ask string, app *app.Data) bool {
 	return confirmation
 }
 
-func isValidConfirmation(input string) (bool, error) {
-	if !checkValidAnswer(input) {
+func IsValidConfirmation(input string) (bool, error) {
+	if !CheckValidAnswer(input) {
 		return false, crerrors.InvalidInput()
 	}
 
-	if checkNoAnswer(input) {
+	if CheckNoAnswer(input) {
 		return false, nil
 	}
 
 	return true, nil
 }
 
-func isValidInput(input string, app *app.Data) (any, error) {
+func IsValidInput(input string, app *app.Data) (any, error) {
 	if input == "" {
 		return "", crerrors.EmptyInput()
 	}
@@ -112,13 +112,13 @@ func isValidInput(input string, app *app.Data) (any, error) {
 	return input, nil
 }
 
-func inputAlias(app *app.Data) []string {
+func InputAlias(app *app.Data) []string {
 	output := []string{}
 
 	alias := "none"
 	for alias != "" {
 		app.Logger.Info("current aliases: ", output)
-		alias = getUserInput("Add new alias (type enter to skip): ", isValidAlias, app).(string)
+		alias = GetUserInput("Add new alias (type enter to skip): ", isValidAlias, app).(string)
 
 		if alias != "" {
 			output = append(output, alias)
@@ -128,19 +128,19 @@ func inputAlias(app *app.Data) []string {
 	return output
 }
 
-func inputName(app *app.Data) string {
+func InputName(app *app.Data) string {
 	name := ""
 	for name == "" {
-		name = getUserInput("Add new name: ", isValidInput, app).(string)
+		name = GetUserInput("Add new name: ", IsValidInput, app).(string)
 	}
 
 	return name
 }
 
-func inputExec(app *app.Data) string {
+func InputExec(app *app.Data) string {
 	exec := ""
 	for exec == "" {
-		exec = getUserInput("Add new exec: ", isValidInput, app).(string)
+		exec = GetUserInput("Add new exec: ", IsValidInput, app).(string)
 	}
 
 	return exec
@@ -156,7 +156,7 @@ func isValidAlias(input string, app *app.Data) (any, error) {
 	return input, nil
 }
 
-func isValidInputKey(input string, app *app.Data) (any, error) {
+func IsValidInputKey(input string, app *app.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
 		return "", crerrors.InvalidRows()
@@ -169,7 +169,7 @@ func isValidInputKey(input string, app *app.Data) (any, error) {
 	return app.OrderKeys[index], nil
 }
 
-func isValidContentKey(input string, app *app.Data) (any, error) {
+func IsValidContentKey(input string, app *app.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
 		return "", crerrors.InvalidRows()

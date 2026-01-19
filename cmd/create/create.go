@@ -2,7 +2,7 @@ package create
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	createoperations "github.com/fiwon123/crower/internal/core/operations/create"
 	"github.com/fiwon123/crower/internal/data/state"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -52,29 +52,29 @@ Example:
 		app := core.InitApp(cfgFilePath)
 
 		if process != "" {
-			operations.CreateProcess(process, args, app)
+			createoperations.CreateProcess(process, args, app)
 		} else if fileFlag {
-			operations.CreateFile(args, app)
+			createoperations.CreateFile(args, app)
 		} else if folderFlag {
-			operations.CreateFolder(args, app)
+			createoperations.CreateFolder(args, app)
 		} else if sysPathFlag {
-			operations.CreateSystemPathVariable(args, app)
+			createoperations.CreateSystemPathVariable(args, app)
 		} else if systemFlag {
-			operations.CreateSystemVariable(args, app)
+			createoperations.CreateSystemVariable(args, app)
 		} else if executeFlag {
-			operations.CreateLastCommand(state.Execute, args, app)
+			createoperations.CreateLastCommand(state.Execute, args, app)
 		} else if scriptFlag {
-			operations.CreateScriptCommand(args, app)
+			createoperations.CreateScriptCommand(args, app)
 		} else if len(args) > 0 {
 			if utils.IsValidFilePath(args[0]) {
-				operations.CreateFile(args, app)
+				createoperations.CreateFile(args, app)
 			} else if utils.IsValidFolderPath(args[0]) {
-				operations.CreateFolder(args, app)
+				createoperations.CreateFolder(args, app)
 			} else {
-				operations.CreateCommand(allAlias, args, app)
+				createoperations.CreateCommand(allAlias, args, app)
 			}
 		} else {
-			operations.CreateCommand(allAlias, args, app)
+			createoperations.CreateCommand(allAlias, args, app)
 		}
 
 	},
