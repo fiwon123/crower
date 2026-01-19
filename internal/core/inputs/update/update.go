@@ -3,14 +3,14 @@ package updateinputs
 import (
 	inputscore "github.com/fiwon123/crower/internal/core/inputs"
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/handlers"
+	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 )
 
 // Verify parameters to process update operation
 func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) bool {
 
 	if *key == "" {
-		handlers.ListCommands(app)
+		listhandlers.ListCommands(app)
 		input := inputscore.GetUserInput("Select Row", inputscore.IsValidInputKey, app).(string)
 		*key = input
 	}

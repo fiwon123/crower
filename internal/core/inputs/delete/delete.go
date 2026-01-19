@@ -6,14 +6,14 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/handlers"
+	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 )
 
 // Verify parameters to process delete operation
 func CheckDeleteInput(key *string, app *app.Data) bool {
 
 	if *key == "" {
-		handlers.ListCommands(app)
+		listhandlers.ListCommands(app)
 		input := coreinputs.GetUserInput("Select Row", coreinputs.IsValidInputKey, app).(string)
 		*key = input
 	}
@@ -27,7 +27,7 @@ func CheckDeleteInput(key *string, app *app.Data) bool {
 	}
 
 	if command == nil {
-		handlers.ListCommands(app)
+		listhandlers.ListCommands(app)
 		app.Logger.Info("Command not found, try to select one.")
 		input := coreinputs.GetUserInput("Select Row", coreinputs.IsValidInputKey, app).(string)
 		*key = input

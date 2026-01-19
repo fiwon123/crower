@@ -10,7 +10,8 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
+	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -36,7 +37,7 @@ func CreateCommand(allAlias []string, args []string, app *app.Data) {
 }
 
 func performCreateCommand(name string, allAlias []string, exec string, app *app.Data) *command.Data {
-	command, err := handlers.CreateCommand(name, allAlias, exec, app)
+	command, err := createhandlers.CreateCommand(name, allAlias, exec, app)
 
 	if err != nil {
 		app.Logger.Error("Error add command: ", "error", err, "name", name, "alias", allAlias, "exec", exec)
@@ -50,7 +51,7 @@ func performCreateCommand(name string, allAlias []string, exec string, app *app.
 }
 
 func CreateProcess(name string, args []string, app *app.Data) {
-	command, err := handlers.CreateProcess(name, args, app)
+	command, err := createhandlers.CreateProcess(name, args, app)
 	if err != nil {
 		app.Logger.Error("Error add command by process: ", "error", err, "name", name, "args", args)
 		return
@@ -74,7 +75,7 @@ func CreateSystemVariable(args []string, app *app.Data) {
 		return
 	}
 
-	out, err := handlers.CreateSystemVariable(newVar, value, app)
+	out, err := createhandlers.CreateSystemVariable(newVar, value, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
@@ -95,7 +96,7 @@ func CreateSystemPathVariable(args []string, app *app.Data) {
 		return
 	}
 
-	out, err := handlers.CreateSystemPathVariable(newPath, app)
+	out, err := createhandlers.CreateSystemPathVariable(newPath, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
@@ -109,7 +110,7 @@ func CreateSystemPathVariable(args []string, app *app.Data) {
 
 func CreateFile(args []string, app *app.Data) {
 	for _, path := range args {
-		err := handlers.CreateFile(path, app)
+		err := createhandlers.CreateFile(path, app)
 		if err != nil {
 			app.Logger.Error(err.Error())
 		}
@@ -121,7 +122,7 @@ func CreateFile(args []string, app *app.Data) {
 
 func CreateFolder(args []string, app *app.Data) {
 	for _, path := range args {
-		err := handlers.CreateFolder(path, app)
+		err := createhandlers.CreateFolder(path, app)
 		if err != nil {
 			app.Logger.Error(err.Error())
 		}
@@ -177,7 +178,7 @@ func CreateScriptCommand(args []string, app *app.Data) {
 		crerrors.PrintNotArgs("name", app)
 	}
 
-	scriptFilePath, err := handlers.CreateScriptCommand(name, app)
+	scriptFilePath, err := createhandlers.CreateScriptCommand(name, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
@@ -195,7 +196,7 @@ func CreateScriptCommand(args []string, app *app.Data) {
 		return
 	}
 
-	handlers.Open([]string{filepath.Dir(scriptFilePath)}, app)
+	openhandlers.Open([]string{filepath.Dir(scriptFilePath)}, app)
 
 	app.History.Add(state.Create, notes.GenerateCreateScriptCommandNote(command, args))
 	history.Save(app)

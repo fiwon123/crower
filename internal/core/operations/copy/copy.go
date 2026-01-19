@@ -4,7 +4,8 @@ import (
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	copyhandlers "github.com/fiwon123/crower/internal/handlers/copy"
+
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -24,10 +25,10 @@ func Copy(args []string, app *app.Data) {
 	for _, path := range args {
 		var err error
 		if utils.FilePathExists(path) {
-			err = handlers.CopyFile(path, output, app)
+			err = copyhandlers.CopyFile(path, output, app)
 			isCopyFile = true
 		} else {
-			err = handlers.CopyFolder(path, output, app)
+			err = copyhandlers.CopyFolder(path, output, app)
 			isCopyFolder = true
 		}
 

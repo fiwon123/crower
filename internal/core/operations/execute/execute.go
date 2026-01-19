@@ -6,7 +6,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
@@ -26,7 +26,7 @@ func ExecuteCommand(args []string, app *app.Data) {
 		}
 	}
 
-	output, command, err := handlers.Execute(key, params, app)
+	output, command, err := executehandlers.Execute(key, params, app)
 	assertExecute(output, command, err, app)
 
 	app.History.Add(state.Execute, notes.GenerateExecuteCommandNote(command))
@@ -41,7 +41,7 @@ func ExecuteLast(op state.MainOperationEnum, args []string, app *app.Data) {
 		return
 	}
 
-	output, command, err := handlers.Execute(content.CommandName, args, app)
+	output, command, err := executehandlers.Execute(content.CommandName, args, app)
 	assertExecute(output, command, err, app)
 
 	app.History.Add(state.Execute, notes.GenerateExecuteLastNote(op, command))

@@ -7,27 +7,27 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
 func ListCommands(app *app.Data) {
-	handlers.ListCommands(app)
+	listhandlers.ListCommands(app)
 
 	app.History.Add(state.List, notes.GenerateListCommandsNote())
 	history.Save(app)
 }
 
 func ListProcess(args []string, app *app.Data) {
-	handlers.ListProcess(args, app)
+	listhandlers.ListProcess(args, app)
 
 	app.History.Add(state.List, notes.GenerateListProcessNote(args))
 	history.Save(app)
 }
 
 func ListHistory(app *app.Data) {
-	handlers.ListHistory(app)
+	listhandlers.ListHistory(app)
 
 	app.History.Add(state.List, notes.GenerateListHistoriesNote())
 	history.Save(app)
@@ -39,7 +39,7 @@ func ListFolder(args []string, app *app.Data) {
 		currentPath = args[0]
 	}
 
-	out, err := handlers.ListFolder(currentPath, app)
+	out, err := listhandlers.ListFolder(currentPath, app)
 	assertListResult(out, err, app)
 
 	app.History.Add(state.List, notes.GenerateListFolderNote(args))
@@ -47,7 +47,7 @@ func ListFolder(args []string, app *app.Data) {
 }
 
 func ListSystem(app *app.Data) {
-	out, err := handlers.ListSystem(app)
+	out, err := listhandlers.ListSystem(app)
 	app.Logger.Info("")
 	if err == nil {
 		allSysVariables := strings.Split(out, "\n")
@@ -70,7 +70,7 @@ func ListSystem(app *app.Data) {
 }
 
 func ListSysPath(app *app.Data) {
-	out, err := handlers.ListSysPath(app)
+	out, err := listhandlers.ListSysPath(app)
 	app.Logger.Info("")
 	if err == nil {
 		out = formatVariable("PATH", out)

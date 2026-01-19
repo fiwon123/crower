@@ -5,7 +5,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
@@ -26,7 +26,7 @@ func Open(args []string, app *app.Data) {
 		}
 	}
 
-	handlers.Open(paths, app)
+	openhandlers.Open(paths, app)
 
 	app.History.Add(state.Open, notes.GenerateOpenNote(args))
 	history.Save(app)
@@ -38,7 +38,7 @@ func OpenFile(args []string, app *app.Data) {
 		args = append(args, currentPath)
 	}
 
-	handlers.Open(args, app)
+	openhandlers.Open(args, app)
 
 	app.History.Add(state.Open, notes.GenerateOpenFolderNote(args))
 	history.Save(app)
@@ -50,14 +50,14 @@ func OpenFolder(args []string, app *app.Data) {
 		args = append(args, filepath.Dir(currentPath))
 	}
 
-	handlers.Open(args, app)
+	openhandlers.Open(args, app)
 
 	app.History.Add(state.Open, notes.GenerateOpenFolderNote(args))
 	history.Save(app)
 }
 
 func OpenSystem(app *app.Data) {
-	err := handlers.OpenSystem(app)
+	err := openhandlers.OpenSystem(app)
 	if err != nil {
 		app.Logger.Error("failed to open system variable: ", "error", err)
 		return

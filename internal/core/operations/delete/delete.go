@@ -5,9 +5,9 @@ import (
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
+	deletehandlers "github.com/fiwon123/crower/internal/handlers/delete"
 
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -37,7 +37,7 @@ func Delete(args []string, app *app.Data) {
 
 func performDeleteCommand(key string, app *app.Data) *command.Data {
 
-	command, ok := handlers.DeleteCommand(key, app)
+	command, ok := deletehandlers.DeleteCommand(key, app)
 	if !ok {
 		app.Logger.Error("Error delete command: ", key)
 		return nil
@@ -75,7 +75,7 @@ func DeleteSystemVariable(args []string, app *app.Data) {
 		return
 	}
 
-	out, err := handlers.DeleteSystemVariable(newVar, app)
+	out, err := deletehandlers.DeleteSystemVariable(newVar, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
@@ -96,7 +96,7 @@ func DeleteSystemPathVariable(args []string, app *app.Data) {
 		return
 	}
 
-	out, err := handlers.DeleteSystemPathVariable(newPath, app)
+	out, err := deletehandlers.DeleteSystemPathVariable(newPath, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
@@ -117,7 +117,7 @@ func DeleteFile(args []string, app *app.Data) {
 		return
 	}
 
-	handlers.DeleteFile(filePath, app)
+	deletehandlers.DeleteFile(filePath, app)
 
 	app.History.Add(state.Execute, notes.GenerateDeleteFileNote(args))
 	history.Save(app)
@@ -132,7 +132,7 @@ func DeleteFolder(args []string, app *app.Data) {
 		return
 	}
 
-	handlers.DeleteFolder(folderPath, app)
+	deletehandlers.DeleteFolder(folderPath, app)
 
 	app.History.Add(state.Execute, notes.GenerateDeleteFolderNote(args))
 	history.Save(app)
@@ -145,7 +145,7 @@ func DeleteHistoryContent(args []string, app *app.Data) {
 		return
 	}
 
-	out, err := handlers.DeleteHistoryContent(content, app)
+	out, err := deletehandlers.DeleteHistoryContent(content, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return

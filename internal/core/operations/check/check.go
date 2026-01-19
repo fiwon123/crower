@@ -3,13 +3,14 @@ package checkoperations
 import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	checkhandlers "github.com/fiwon123/crower/internal/handlers/check"
+
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
 func CheckNewVersion(currentVersion string, app *app.Data) {
-	newVersion, err := handlers.CheckNewVersion(currentVersion, app)
+	newVersion, err := checkhandlers.CheckNewVersion(currentVersion, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return

@@ -1,10 +1,12 @@
 package utils
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -91,4 +93,56 @@ func IsValidFolderPath(path string) bool {
 	}
 
 	return true
+}
+
+func GetFileLineSlice(filePath string) []string {
+
+	lines, err := os.ReadFile(filePath)
+	if err != nil {
+		lines = []byte{}
+	}
+
+	lineSlice := strings.Split(string(lines), "\n")
+
+	return lineSlice
+}
+
+func WriteFile(lineSlice []string, filePath string) error {
+
+	err := os.WriteFile(filePath, []byte(strings.Join(lineSlice, "\n")), 0644)
+	if err != nil {
+		return fmt.Errorf("Error writing .profile: %v", err)
+	}
+
+	return nil
+}
+
+func LineExists(filePath, line string) bool {
+	f, err := os.Open(filePath)
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		if strings.TrimSpace(scanner.Text()) == line {
+			return true
+		}
+	}
+	return false
+}
+
+func SplitPath(path string) []string {
+	return filepath.SplitList(path)
+}
+
+func CheckNewVarValuePath(value string, from string) bool {
+	splitted := SplitPath(from)
+	ok := true
+	if slices.Contains(splitted, value) {
+		return false
+	}
+
+	return ok
 }

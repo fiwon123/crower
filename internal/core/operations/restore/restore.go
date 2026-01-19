@@ -4,7 +4,8 @@ import (
 	restoreinputs "github.com/fiwon123/crower/internal/core/inputs/restore"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	restorehandlers "github.com/fiwon123/crower/internal/handlers/restore"
+
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
@@ -21,7 +22,7 @@ func Restore(args []string, app *app.Data) {
 		return
 	}
 
-	out, err := handlers.RestoreHistory(key, content, app)
+	out, err := restorehandlers.RestoreHistory(key, content, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return

@@ -6,7 +6,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	updatehandlers "github.com/fiwon123/crower/internal/handlers/update"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -35,7 +35,7 @@ func UpdateCommand(args []string, name string, allAlias []string, exec string, a
 }
 
 func performUpdateCommand(key string, name string, allAlias []string, exec string, app *app.Data) (*command.Data, *command.Data) {
-	oldCommand, newCommand, err := handlers.UpdateCommand(key, name, allAlias, exec, app)
+	oldCommand, newCommand, err := updatehandlers.UpdateCommand(key, name, allAlias, exec, app)
 	if err != nil {
 		app.Logger.Error("Error update command: ", "error", err, "key", key, "name", name, "alias", allAlias, "exec", exec)
 		return nil, nil

@@ -3,7 +3,8 @@ package searchoperations
 import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	searchhandlers "github.com/fiwon123/crower/internal/handlers/search"
+
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
@@ -14,7 +15,7 @@ func SearchBrowser(args []string, app *app.Data) {
 		content = args[0]
 	}
 
-	handlers.SearchBrowser(content, app)
+	searchhandlers.SearchBrowser(content, app)
 
 	app.History.Add(state.Revert, notes.GenerateSearchBrowserNote(args))
 	history.Save(app)
@@ -23,7 +24,7 @@ func SearchBrowser(args []string, app *app.Data) {
 func SearchFile(args []string, app *app.Data) {
 	content, currentPath := assertArgs(args)
 
-	out, err := handlers.SearchFile(currentPath, content, app)
+	out, err := searchhandlers.SearchFile(currentPath, content, app)
 	assertSearchResult(out, err, app)
 
 	app.History.Add(state.Revert, notes.GenerateSearchFileNote(args))
@@ -33,7 +34,7 @@ func SearchFile(args []string, app *app.Data) {
 func SearchFolder(args []string, app *app.Data) {
 	content, currentPath := assertArgs(args)
 
-	out, err := handlers.SearchFolder(currentPath, content, app)
+	out, err := searchhandlers.SearchFolder(currentPath, content, app)
 	assertSearchResult(out, err, app)
 
 	app.History.Add(state.Revert, notes.GenerateSearchFolderNote(args))
@@ -43,7 +44,7 @@ func SearchFolder(args []string, app *app.Data) {
 func SearchFileAndFolder(args []string, app *app.Data) {
 	content, currentPath := assertArgs(args)
 
-	out, err := handlers.SearchFileAndFolder(currentPath, content, app)
+	out, err := searchhandlers.SearchFileAndFolder(currentPath, content, app)
 	assertSearchResult(out, err, app)
 
 	app.History.Add(state.Revert, notes.GenerateSearchFileAndFolderNote(args))

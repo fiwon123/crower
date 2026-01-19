@@ -4,7 +4,8 @@ import (
 	"github.com/fiwon123/crower/internal/crerrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	movehandlers "github.com/fiwon123/crower/internal/handlers/move"
+
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -24,10 +25,10 @@ func Move(args []string, app *app.Data) {
 	for _, path := range args {
 		var err error
 		if utils.FilePathExists(path) {
-			err = handlers.MoveFile(path, output, app)
+			err = movehandlers.MoveFile(path, output, app)
 			isMoveFile = true
 		} else {
-			err = handlers.MoveFolder(path, output, app)
+			err = movehandlers.MoveFolder(path, output, app)
 			isMoveFolder = true
 		}
 

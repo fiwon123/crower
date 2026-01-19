@@ -4,7 +4,7 @@ import (
 	resetinputs "github.com/fiwon123/crower/internal/core/inputs/reset"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/internal/handlers"
+	resethandlers "github.com/fiwon123/crower/internal/handlers/reset"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -19,7 +19,7 @@ func Reset(app *app.Data) {
 	}
 
 	app.Logger.Info("reset all commands: ", app.AllCommandsByName)
-	handlers.Reset(app)
+	resethandlers.Reset(app)
 	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
 	app.History.Add(state.Reset, notes.GenerateResetNote())
