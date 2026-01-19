@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -52,12 +52,12 @@ func DeleteSystemPathVariable(pathValue string, app *app.Data) (string, error) {
 		return "", err
 	}
 
-	ok := utils.CheckNewVarValuePath(pathValue, path)
+	ok := crowerutils.CheckNewVarValuePath(pathValue, path)
 	if ok {
 		return "", fmt.Errorf("path not found in PATH")
 	}
 
-	pathSlice := utils.SplitPath(path)
+	pathSlice := crowerutils.SplitPath(path)
 	pathSlice = removeFromSlice(pathSlice, pathValue)
 
 	newPath := strings.Join(pathSlice, string(os.PathListSeparator))

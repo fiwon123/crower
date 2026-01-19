@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Save history data on cfg file
@@ -12,12 +12,12 @@ func Save(app *app.Data) {
 	data := app.History.GetLast()
 
 	newDataPath := filepath.Join(app.HistoryFolderPath, data.File)
-	utils.CreateFileIfNotExists(newDataPath)
-	utils.WriteToml(app.AllCommandsByName, newDataPath)
+	crowerutils.CreateFileIfNotExists(newDataPath)
+	crowerutils.WriteToml(app.AllCommandsByName, newDataPath)
 
-	utils.WriteJson(app.History, app.HistoryFilePath)
+	crowerutils.WriteJson(app.History, app.HistoryFilePath)
 }
 
 func SaveOnlyHistory(app *app.Data) {
-	utils.WriteJson(app.History, app.HistoryFilePath)
+	crowerutils.WriteJson(app.History, app.HistoryFilePath)
 }

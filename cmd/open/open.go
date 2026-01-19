@@ -3,7 +3,7 @@ package open
 import (
 	"github.com/fiwon123/crower/internal/core"
 	openoperations "github.com/fiwon123/crower/internal/core/operations/open"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -37,7 +37,7 @@ Examples:
 		} else if len(args) > 0 {
 			openoperations.Open(args, app)
 		} else {
-			crerrors.PrintCmdHelp("open", app)
+			crowererrors.PrintCmdHelp("open", app)
 		}
 
 	},

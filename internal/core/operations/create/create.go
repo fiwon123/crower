@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	createinputs "github.com/fiwon123/crower/internal/core/inputs/create"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/state"
@@ -14,7 +14,7 @@ import (
 	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 func CreateCommand(allAlias []string, args []string, app *app.Data) {
@@ -44,7 +44,7 @@ func performCreateCommand(name string, allAlias []string, exec string, app *app.
 		return nil
 	}
 
-	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.Logger.Info("added new command: ", "allCommands", app.AllCommandsByName)
 
 	return command
@@ -57,7 +57,7 @@ func CreateProcess(name string, args []string, app *app.Data) {
 		return
 	}
 
-	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.Logger.Info("added new command by process: ", "allCommands", app.AllCommandsByName)
 
 	app.History.Add(state.Create, notes.GenerateCreateProcessNote(command, args))
@@ -71,7 +71,7 @@ func CreateSystemVariable(args []string, app *app.Data) {
 		newVar = args[0]
 		value = args[1]
 	} else {
-		crerrors.PrintNotArgs("var name and var value", app)
+		crowererrors.PrintNotArgs("var name and var value", app)
 		return
 	}
 
@@ -92,7 +92,7 @@ func CreateSystemPathVariable(args []string, app *app.Data) {
 	if len(args) > 0 {
 		newPath = args[0]
 	} else {
-		crerrors.PrintNotArgs("path", app)
+		crowererrors.PrintNotArgs("path", app)
 		return
 	}
 
@@ -137,14 +137,14 @@ func CreateLastCommand(op state.MainOperationEnum, args []string, app *app.Data)
 	if len(args) > 0 {
 		name = args[0]
 	} else {
-		crerrors.PrintNotArgs("name", app)
+		crowererrors.PrintNotArgs("name", app)
 		return
 	}
 
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError(app)
+		crowererrors.PrintCommandNotFoundError(app)
 		return
 	}
 
@@ -175,7 +175,7 @@ func CreateScriptCommand(args []string, app *app.Data) {
 	if len(args) > 0 {
 		name = args[0]
 	} else {
-		crerrors.PrintNotArgs("name", app)
+		crowererrors.PrintNotArgs("name", app)
 	}
 
 	scriptFilePath, err := createhandlers.CreateScriptCommand(name, app)

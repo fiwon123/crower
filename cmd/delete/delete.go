@@ -4,7 +4,7 @@ import (
 	"github.com/fiwon123/crower/internal/core"
 	deleteoperations "github.com/fiwon123/crower/internal/core/operations/delete"
 	"github.com/fiwon123/crower/internal/data/state"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -69,9 +69,9 @@ Example:
 		} else if historyFlag {
 			deleteoperations.DeleteHistoryContent(args, app)
 		} else if len(args) > 0 {
-			if utils.IsValidFilePath(args[0]) {
+			if crowerutils.IsValidFilePath(args[0]) {
 				deleteoperations.DeleteFile(args, app)
-			} else if utils.IsValidFolderPath(args[0]) {
+			} else if crowerutils.IsValidFolderPath(args[0]) {
 				deleteoperations.DeleteFolder(args, app)
 			} else {
 				deleteoperations.Delete(args, app)

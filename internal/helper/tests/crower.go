@@ -8,7 +8,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/core"
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 func InitCrowerTests() (*app.Data, []string, error) {
@@ -19,7 +19,7 @@ func InitCrowerTests() (*app.Data, []string, error) {
 
 	testPath := filepath.Join(homePath, "test", "crower")
 	os.RemoveAll(testPath)
-	err = utils.CreateFolderIfNotExists(testPath)
+	err = crowerutils.CreateFolderIfNotExists(testPath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -33,7 +33,7 @@ func InitCrowerTests() (*app.Data, []string, error) {
 
 		folderPath := filepath.Join(testPath, newTestFolderBuilder.String())
 		testPaths = append(testPaths, folderPath)
-		err = utils.CreateFolderIfNotExists(folderPath)
+		err = crowerutils.CreateFolderIfNotExists(folderPath)
 		if err != nil {
 			return nil, nil, err
 		}

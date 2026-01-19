@@ -8,7 +8,7 @@ import (
 	"os/exec"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -54,7 +54,7 @@ func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
 		return "", err
 	}
 
-	ok := utils.CheckNewVarValuePath(value, path)
+	ok := crowerutils.CheckNewVarValuePath(value, path)
 	if !ok {
 		return "", fmt.Errorf("value already in PATH")
 	}

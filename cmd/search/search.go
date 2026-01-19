@@ -3,7 +3,7 @@ package search
 import (
 	"github.com/fiwon123/crower/internal/core"
 	searchoperations "github.com/fiwon123/crower/internal/core/operations/search"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -44,7 +44,7 @@ search on browser:
 		} else if len(args) > 0 {
 			searchoperations.SearchFileAndFolder(args, app)
 		} else {
-			crerrors.PrintCmdHelp("search", app)
+			crowererrors.PrintCmdHelp("search", app)
 		}
 
 	},

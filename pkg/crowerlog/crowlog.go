@@ -1,6 +1,6 @@
 // Package wrapper using zap.
 // Provides a easy way to print like fmt package.
-package crowlog
+package crowerlog
 
 import (
 	"fmt"

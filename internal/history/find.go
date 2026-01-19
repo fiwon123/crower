@@ -8,14 +8,14 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 func FindCommand(key string, content history.Content, app *app.Data) (*command.Data, error) {
 	allCommands := command.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
 
-	err := utils.ReadToml(newDataPath, &allCommands)
+	err := crowerutils.ReadToml(newDataPath, &allCommands)
 	if err != nil {
 		return nil, err
 	}

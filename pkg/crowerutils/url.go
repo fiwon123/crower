@@ -1,4 +1,4 @@
-package utils
+package crowerutils
 
 import "net/url"
 

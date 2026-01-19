@@ -2,14 +2,14 @@ package updateoperations
 
 import (
 	updateinputs "github.com/fiwon123/crower/internal/core/inputs/update"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/state"
 	updatehandlers "github.com/fiwon123/crower/internal/handlers/update"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 func UpdateCommand(args []string, name string, allAlias []string, exec string, app *app.Data) {
@@ -42,7 +42,7 @@ func performUpdateCommand(key string, name string, allAlias []string, exec strin
 	}
 
 	app.Logger.Info("updated command: ", app.AllCommandsByName)
-	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
 	return oldCommand, newCommand
 }
@@ -51,7 +51,7 @@ func UpdateLast(op state.MainOperationEnum, name string, allAlias []string, exec
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError(app)
+		crowererrors.PrintCommandNotFoundError(app)
 		return
 	}
 

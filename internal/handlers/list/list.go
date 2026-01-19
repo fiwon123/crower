@@ -8,7 +8,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // List all commands in order
@@ -35,7 +35,7 @@ func ListProcess(args []string, app *app.Data) error {
 		partName = args[0]
 	}
 
-	out, err := utils.GetAllProcess(partName, true)
+	out, err := crowerutils.GetAllProcess(partName, true)
 	if err != nil {
 		app.Logger.Error("Error getting processes:", err)
 		return err

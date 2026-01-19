@@ -23,7 +23,7 @@ import (
 	checkoperations "github.com/fiwon123/crower/internal/core/operations/check"
 	executeoperations "github.com/fiwon123/crower/internal/core/operations/execute"
 	upgradeoperations "github.com/fiwon123/crower/internal/core/operations/upgrade"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -74,7 +74,7 @@ Execute Command:
 		if len(args) > 0 {
 			executeoperations.ExecuteCommand(args, app)
 		} else {
-			crerrors.PrintCmdHelp("", app)
+			crowererrors.PrintCmdHelp("", app)
 		}
 
 	},
@@ -106,7 +106,7 @@ func init() {
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal(crerrors.GetNotUserHomeFoundString(), err)
+		log.Fatal(crowererrors.GetNotUserHomeFoundString(), err)
 	}
 
 	defaultCfgFilePath := filepath.Join(homePath, "crower", "crower.yaml")

@@ -3,7 +3,7 @@ package extract
 import (
 	"github.com/fiwon123/crower/internal/core"
 	extractoperations "github.com/fiwon123/crower/internal/core/operations/extract"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +35,7 @@ Examples:
 		if len(args) > 0 {
 			extractoperations.Extract(args, outDirFlag, app)
 		} else {
-			crerrors.PrintCmdHelp("extract", app)
+			crowererrors.PrintCmdHelp("extract", app)
 		}
 	},
 }

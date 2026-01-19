@@ -9,7 +9,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Delete command using key
@@ -76,7 +76,7 @@ func DeleteHistoryContent(content history.Content, app *app.Data) (string, error
 	}
 
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
-	err := utils.DeleteFile(newDataPath)
+	err := crowerutils.DeleteFile(newDataPath)
 	if err != nil {
 		return "", fmt.Errorf("Content not deleted %v \n", err)
 	}

@@ -1,19 +1,19 @@
 package copyoperations
 
 import (
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	copyhandlers "github.com/fiwon123/crower/internal/handlers/copy"
 
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 func Copy(args []string, app *app.Data) {
 	if len(args) == 0 {
-		crerrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument", app)
+		crowererrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument", app)
 		return
 	}
 
@@ -24,7 +24,7 @@ func Copy(args []string, app *app.Data) {
 	args = args[:lastIndex]
 	for _, path := range args {
 		var err error
-		if utils.FilePathExists(path) {
+		if crowerutils.FilePathExists(path) {
 			err = copyhandlers.CopyFile(path, output, app)
 			isCopyFile = true
 		} else {

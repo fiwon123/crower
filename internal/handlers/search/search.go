@@ -6,7 +6,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/app"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // SearchBrowser based on user operational system(OS).
@@ -14,13 +14,13 @@ func SearchBrowser(content string, app *app.Data) (string, error) {
 
 	switch runtime.GOOS {
 	case "windows":
-		if utils.IsURL(content) {
+		if crowerutils.IsURL(content) {
 			return "", executehandlers.PerformExecuteStart(fmt.Sprintf(`start ' ' '%s' `, content), app)
 		} else {
 			return "", executehandlers.PerformExecuteStart(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s' `, content), app)
 		}
 	case "linux":
-		if utils.IsURL(content) {
+		if crowerutils.IsURL(content) {
 			return "", executehandlers.PerformExecuteStart(fmt.Sprintf(`xdg-open "%s" `, content), app)
 		} else {
 			return "", executehandlers.PerformExecuteStart(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" `, content), app)

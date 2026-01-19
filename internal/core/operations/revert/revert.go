@@ -4,7 +4,7 @@ import (
 	"strconv"
 
 	revertinputs "github.com/fiwon123/crower/internal/core/inputs/revert"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/history"
@@ -19,12 +19,12 @@ func Revert(args []string, app *app.Data) {
 		steps, err = strconv.Atoi(args[0])
 
 		if err != nil {
-			crerrors.PrintNotArgs("steps int number", app)
+			crowererrors.PrintNotArgs("steps int number", app)
 			return
 		}
 
 	} else {
-		crerrors.PrintNotArgs("steps int number", app)
+		crowererrors.PrintNotArgs("steps int number", app)
 		return
 	}
 

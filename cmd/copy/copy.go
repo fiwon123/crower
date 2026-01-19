@@ -3,7 +3,7 @@ package copy
 import (
 	"github.com/fiwon123/crower/internal/core"
 	copyoperations "github.com/fiwon123/crower/internal/core/operations/copy"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +29,7 @@ Examples:
 		if len(args) > 0 {
 			copyoperations.Copy(args, app)
 		} else {
-			crerrors.PrintCmdHelp("copy", app)
+			crowererrors.PrintCmdHelp("copy", app)
 		}
 
 	},

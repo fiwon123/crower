@@ -2,7 +2,7 @@ package deleteoperations
 
 import (
 	deleteinputs "github.com/fiwon123/crower/internal/core/inputs/delete"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	deletehandlers "github.com/fiwon123/crower/internal/handlers/delete"
@@ -10,7 +10,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/state"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 func Delete(args []string, app *app.Data) {
@@ -44,7 +44,7 @@ func performDeleteCommand(key string, app *app.Data) *command.Data {
 	}
 
 	app.Logger.Info("deleted command: ", app.AllCommandsByName)
-	utils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
 	return command
 }
@@ -53,7 +53,7 @@ func DeleteLast(op state.MainOperationEnum, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError(app)
+		crowererrors.PrintCommandNotFoundError(app)
 		return
 	}
 
@@ -71,7 +71,7 @@ func DeleteSystemVariable(args []string, app *app.Data) {
 	if len(args) >= 1 {
 		newVar = args[0]
 	} else {
-		crerrors.PrintNotArgs("var name", app)
+		crowererrors.PrintNotArgs("var name", app)
 		return
 	}
 
@@ -92,7 +92,7 @@ func DeleteSystemPathVariable(args []string, app *app.Data) {
 	if len(args) > 0 {
 		newPath = args[0]
 	} else {
-		crerrors.PrintNotArgs("path", app)
+		crowererrors.PrintNotArgs("path", app)
 		return
 	}
 
@@ -113,7 +113,7 @@ func DeleteFile(args []string, app *app.Data) {
 	if len(args) > 0 {
 		filePath = args[0]
 	} else {
-		crerrors.PrintNotFileAndOutputPath(app)
+		crowererrors.PrintNotFileAndOutputPath(app)
 		return
 	}
 
@@ -128,7 +128,7 @@ func DeleteFolder(args []string, app *app.Data) {
 	if len(args) > 0 {
 		folderPath = args[0]
 	} else {
-		crerrors.PrintNotFileAndOutputPath(app)
+		crowererrors.PrintNotFileAndOutputPath(app)
 		return
 	}
 

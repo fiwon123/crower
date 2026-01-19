@@ -2,7 +2,7 @@ package executeoperations
 
 import (
 	executeinputs "github.com/fiwon123/crower/internal/core/inputs/execute"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/state"
@@ -37,7 +37,7 @@ func ExecuteLast(op state.MainOperationEnum, args []string, app *app.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
-		crerrors.PrintCommandNotFoundError(app)
+		crowererrors.PrintCommandNotFoundError(app)
 		return
 	}
 

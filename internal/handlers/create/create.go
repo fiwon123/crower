@@ -11,7 +11,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Create command using name, alias and exec parameters
@@ -59,13 +59,13 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 	pid, err := strconv.Atoi(process)
 	if err != nil {
 		processName = process
-		pathStr, err = utils.GetProcessPathByName(processName)
+		pathStr, err = crowerutils.GetProcessPathByName(processName)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 
-		pathStr, err = utils.GetProcessPathByID(int32(pid))
+		pathStr, err = crowerutils.GetProcessPathByID(int32(pid))
 		if err != nil {
 			return nil, err
 		}
@@ -74,14 +74,14 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 
 	if strings.Contains(pathStr, "app/") {
 		if processName == "" {
-			processName, err = utils.GetProcessNameByID(int32(pid))
+			processName, err = crowerutils.GetProcessNameByID(int32(pid))
 			if err != nil {
 				return nil, err
 			}
 		}
 
 		var appID string
-		appID, err = utils.GetFlatpakAppIDByName(processName)
+		appID, err = crowerutils.GetFlatpakAppIDByName(processName)
 		if err != nil {
 			return nil, err
 		}
@@ -149,7 +149,7 @@ func CreateFolder(folderPath string, app *app.Data) error {
 func CreateScriptCommand(name string, app *app.Data) (string, error) {
 	cfgFolderPath := filepath.Dir(app.CfgFilePath)
 	scriptFolderPath := filepath.Join(cfgFolderPath, "scripts")
-	err := utils.CreateFolderIfNotExists(scriptFolderPath)
+	err := crowerutils.CreateFolderIfNotExists(scriptFolderPath)
 	if err != nil {
 		return "", err
 	}
@@ -158,13 +158,13 @@ func CreateScriptCommand(name string, app *app.Data) (string, error) {
 	case "windows":
 		scriptFilePath := filepath.Join(scriptFolderPath, name+".bat")
 
-		utils.CreateFileIfNotExists(scriptFilePath)
+		crowerutils.CreateFileIfNotExists(scriptFilePath)
 
 		return scriptFilePath, nil
 	case "linux":
 		scriptFilePath := filepath.Join(scriptFolderPath, name+".sh")
 
-		utils.CreateFileIfNotExists(scriptFilePath)
+		crowerutils.CreateFileIfNotExists(scriptFilePath)
 
 		return scriptFilePath, nil
 	}

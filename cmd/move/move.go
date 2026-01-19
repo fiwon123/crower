@@ -3,7 +3,7 @@ package move
 import (
 	"github.com/fiwon123/crower/internal/core"
 	moveoperations "github.com/fiwon123/crower/internal/core/operations/move"
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ Examples:
 		if len(args) > 0 {
 			moveoperations.Move(args, app)
 		} else {
-			crerrors.PrintCmdHelp("move", app)
+			crowererrors.PrintCmdHelp("move", app)
 		}
 	},
 }

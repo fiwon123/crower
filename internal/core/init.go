@@ -6,7 +6,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/command"
 
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Initialize app based on the cfg file path.
@@ -16,12 +16,12 @@ func InitApp(cfgFilePath string) *app.Data {
 	var allAliases command.MapData
 
 	if cfgFilePath != "" {
-		utils.CreateFolderIfNotExists(filepath.Dir(cfgFilePath))
-		utils.CreateFileIfNotExists(cfgFilePath)
+		crowerutils.CreateFolderIfNotExists(filepath.Dir(cfgFilePath))
+		crowerutils.CreateFileIfNotExists(cfgFilePath)
 
 		var err error
-		orderKeys, err = utils.ReadKeysTomlInOrder(cfgFilePath)
-		err = utils.ReadToml(cfgFilePath, &allCommands)
+		orderKeys, err = crowerutils.ReadKeysTomlInOrder(cfgFilePath)
+		err = crowerutils.ReadToml(cfgFilePath, &allCommands)
 		if err != nil {
 			panic(err)
 		}

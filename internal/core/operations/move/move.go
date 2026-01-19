@@ -1,19 +1,19 @@
 package moveoperations
 
 import (
-	"github.com/fiwon123/crower/internal/crerrors"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
 	movehandlers "github.com/fiwon123/crower/internal/handlers/move"
 
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 func Move(args []string, app *app.Data) {
 	if len(args) == 0 {
-		crerrors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument", app)
+		crowererrors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument", app)
 		return
 	}
 
@@ -24,7 +24,7 @@ func Move(args []string, app *app.Data) {
 	args = args[:lastIndex]
 	for _, path := range args {
 		var err error
-		if utils.FilePathExists(path) {
+		if crowerutils.FilePathExists(path) {
 			err = movehandlers.MoveFile(path, output, app)
 			isMoveFile = true
 		} else {
