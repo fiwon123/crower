@@ -8,12 +8,12 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 func DeleteSystemVariable(key string, app *app.Data) (string, error) {
 	bashrcPath := os.Getenv("HOME") + "/.bashrc"
-	fileSlice := utils.GetFileLineSlice(bashrcPath)
+	fileSlice := crowerutils.GetFileLineSlice(bashrcPath)
 
 	found := false
 	for i, s := range fileSlice {
@@ -28,7 +28,7 @@ func DeleteSystemVariable(key string, app *app.Data) (string, error) {
 		return "", fmt.Errorf("var name not found")
 	}
 
-	err := utils.WriteFile(fileSlice, bashrcPath)
+	err := crowerutils.WriteFile(fileSlice, bashrcPath)
 	if err != nil {
 		return "", fmt.Errorf("can't delete var name: %v", err)
 	}
@@ -39,7 +39,7 @@ func DeleteSystemVariable(key string, app *app.Data) (string, error) {
 func DeleteSystemPathVariable(path string, app *app.Data) (string, error) {
 	home := os.Getenv("HOME")
 	profileFilePath := home + "/.profile"
-	lineSlice := utils.GetFileLineSlice(profileFilePath)
+	lineSlice := crowerutils.GetFileLineSlice(profileFilePath)
 
 	pathLinePrefix := "export PATH="
 	pathLinePrefix2 := "export PATH"
@@ -61,7 +61,7 @@ func DeleteSystemPathVariable(path string, app *app.Data) (string, error) {
 		return "", fmt.Errorf("path not found")
 	}
 
-	err := utils.WriteFile(lineSlice, profileFilePath)
+	err := crowerutils.WriteFile(lineSlice, profileFilePath)
 	if err != nil {
 		return "", err
 	}
