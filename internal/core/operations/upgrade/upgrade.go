@@ -5,12 +5,14 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/internal/data/state"
+	checkhandlers "github.com/fiwon123/crower/internal/handlers/check"
+	upgradehandlers "github.com/fiwon123/crower/internal/handlers/upgrade"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
 func UpgradeApp(currentVersion string, app *app.Data) {
-	newVersion, err := handlers.CheckNewVersion(currentVersion, app)
+	newVersion, err := checkhandlers.CheckNewVersion(currentVersion, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
