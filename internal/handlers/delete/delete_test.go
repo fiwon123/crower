@@ -6,14 +6,14 @@ import (
 
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
 	deletehandlers "github.com/fiwon123/crower/internal/handlers/delete"
-	crowertests "github.com/fiwon123/crower/internal/helper/tests"
+	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
 func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using name", func(t *testing.T) {
 
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -53,7 +53,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using alias", func(t *testing.T) {
 
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -97,7 +97,7 @@ func TestDelete(t *testing.T) {
 
 func TestDeleteFile(t *testing.T) {
 	t.Run("Delete File single name", func(t *testing.T) {
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -116,7 +116,7 @@ func TestDeleteFile(t *testing.T) {
 	})
 
 	t.Run("Delete File using name with space", func(t *testing.T) {
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -138,7 +138,7 @@ func TestDeleteFile(t *testing.T) {
 func TestDeleteFolder(t *testing.T) {
 
 	t.Run("Delete Folder single name", func(t *testing.T) {
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -157,7 +157,7 @@ func TestDeleteFolder(t *testing.T) {
 	})
 
 	t.Run("Delete Folder using name with space", func(t *testing.T) {
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

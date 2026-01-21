@@ -6,12 +6,12 @@ import (
 
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
 	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
-	crowertests "github.com/fiwon123/crower/internal/helper/tests"
+	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
 func TestOpenFile(t *testing.T) {
 	t.Run("Open File single name", func(t *testing.T) {
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -30,7 +30,7 @@ func TestOpenFile(t *testing.T) {
 	})
 
 	t.Run("Open File name with space", func(t *testing.T) {
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -51,7 +51,7 @@ func TestOpenFile(t *testing.T) {
 
 func TestOpenFolder(t *testing.T) {
 	t.Run("Open c single name", func(t *testing.T) {
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -70,7 +70,7 @@ func TestOpenFolder(t *testing.T) {
 	})
 
 	t.Run("Open Folder name with space", func(t *testing.T) {
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -90,7 +90,7 @@ func TestOpenFolder(t *testing.T) {
 }
 
 func TestOpenSystem(t *testing.T) {
-	app, _, err := crowertests.InitCrowerTests()
+	app, _, err := testshelper.InitCrowerTests()
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

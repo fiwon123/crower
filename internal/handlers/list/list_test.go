@@ -5,11 +5,11 @@ import (
 	"testing"
 
 	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
-	crowertests "github.com/fiwon123/crower/internal/helper/tests"
+	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
 func TestList(t *testing.T) {
-	app, _, err := crowertests.InitCrowerTests()
+	app, _, err := testshelper.InitCrowerTests()
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

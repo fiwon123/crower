@@ -6,13 +6,13 @@ import (
 
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
 	movehandlers "github.com/fiwon123/crower/internal/handlers/move"
-	crowertests "github.com/fiwon123/crower/internal/helper/tests"
+	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
 func TestMoveFile(t *testing.T) {
 
 	t.Run("Move File single name", func(t *testing.T) {
-		app, testPaths, err := crowertests.InitCrowerTests()
+		app, testPaths, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -31,7 +31,7 @@ func TestMoveFile(t *testing.T) {
 	})
 
 	t.Run("Move File name with space", func(t *testing.T) {
-		app, testPaths, err := crowertests.InitCrowerTests()
+		app, testPaths, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -54,7 +54,7 @@ func TestMoveFile(t *testing.T) {
 func TestMoveFolder(t *testing.T) {
 
 	t.Run("Move Folder single name", func(t *testing.T) {
-		app, testPaths, err := crowertests.InitCrowerTests()
+		app, testPaths, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -73,7 +73,7 @@ func TestMoveFolder(t *testing.T) {
 	})
 
 	t.Run("Move Folder using name with space", func(t *testing.T) {
-		app, testPaths, err := crowertests.InitCrowerTests()
+		app, testPaths, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

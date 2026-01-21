@@ -1,4 +1,4 @@
-package crowertests
+package testshelper
 
 import (
 	"os"

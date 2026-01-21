@@ -6,14 +6,14 @@ import (
 
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
-	crowertests "github.com/fiwon123/crower/internal/helper/tests"
+	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
 func TestCreate(t *testing.T) {
 
 	t.Run("Create a single command using only name", func(t *testing.T) {
 
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -29,7 +29,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("Create multiple commands using only name", func(t *testing.T) {
 
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -60,7 +60,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("Create multiple commands using only name, alias", func(t *testing.T) {
 
-		app, _, err := crowertests.InitCrowerTests()
+		app, _, err := testshelper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -92,7 +92,7 @@ func TestCreate(t *testing.T) {
 
 func TestCreateFile(t *testing.T) {
 
-	app, _, err := crowertests.InitCrowerTests()
+	app, _, err := testshelper.InitCrowerTests()
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestCreateFile(t *testing.T) {
 
 func TestCreateFolder(t *testing.T) {
 
-	app, _, err := crowertests.InitCrowerTests()
+	app, _, err := testshelper.InitCrowerTests()
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
