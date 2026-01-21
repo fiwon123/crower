@@ -4,14 +4,14 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	extracthandlers "github.com/fiwon123/crower/internal/handlers/extract"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
-func Extract(args []string, outDir string, app *app.Data) {
+func Extract(args []string, outDir string, app *appdata.Data) {
 
 	paths := []string{}
 	for _, arg := range args {
@@ -34,6 +34,6 @@ func Extract(args []string, outDir string, app *app.Data) {
 
 	extracthandlers.Extract(paths, outDir, app)
 
-	app.History.Add(state.Execute, notes.GenerateExtractNote(outDir, args))
+	app.History.Add(operationsdata.Execute, notes.GenerateExtractNote(outDir, args))
 	history.Save(app)
 }

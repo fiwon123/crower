@@ -4,16 +4,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	historydata "github.com/fiwon123/crower/internal/data/history"
+
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Revert last operation
-func RevertTo(content *history.Content, app *app.Data) error {
+func RevertTo(content *historydata.Content, app *appdata.Data) error {
 
-	allCommands := command.NewMapData()
+	allCommands := commanddata.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
 
 	err := crowerutils.ReadToml(newDataPath, &allCommands)
@@ -31,7 +32,7 @@ func RevertTo(content *history.Content, app *app.Data) error {
 	return nil
 }
 
-func removeUntilHistory(content *history.Content, app *app.Data) {
+func removeUntilHistory(content *historydata.Content, app *appdata.Data) {
 
 	lastHistory := app.History.GetLast()
 	for lastHistory.Version != content.Version {

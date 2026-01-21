@@ -6,12 +6,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 )
 
 // Extract compressed files in output folder path
-func Extract(paths []string, output string, app *app.Data) {
+func Extract(paths []string, output string, app *appdata.Data) {
 
 	for _, f := range paths {
 
@@ -42,7 +42,7 @@ func Extract(paths []string, output string, app *app.Data) {
 
 }
 
-func performExtract(ext string, filePath string, outDir string, app *app.Data) (string, error) {
+func performExtract(ext string, filePath string, outDir string, app *appdata.Data) (string, error) {
 	switch ext {
 	case "tar":
 		return executehandlers.PerformExecute(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir), app)

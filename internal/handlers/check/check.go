@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 )
 
-func CheckNewVersion(currentVersion string, app *app.Data) (string, error) {
+func CheckNewVersion(currentVersion string, app *appdata.Data) (string, error) {
 	resp, err := http.Get("https://api.github.com/repos/fiwon123/crower/releases/latest")
 	if err != nil {
 		return "", fmt.Errorf("error: %v \n", err)

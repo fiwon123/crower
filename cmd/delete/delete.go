@@ -3,7 +3,7 @@ package delete
 import (
 	"github.com/fiwon123/crower/internal/core"
 	deleteoperations "github.com/fiwon123/crower/internal/core/operations/delete"
-	"github.com/fiwon123/crower/internal/data/state"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
@@ -53,11 +53,11 @@ Example:
 		app := core.InitApp(cfgFilePath)
 
 		if createFlag {
-			deleteoperations.DeleteLast(state.Create, app)
+			deleteoperations.DeleteLast(operationsdata.Create, app)
 		} else if updateFlag {
-			deleteoperations.DeleteLast(state.Update, app)
+			deleteoperations.DeleteLast(operationsdata.Update, app)
 		} else if executeFlag {
-			deleteoperations.DeleteLast(state.Execute, app)
+			deleteoperations.DeleteLast(operationsdata.Execute, app)
 		} else if fileFlag {
 			deleteoperations.DeleteFile(args, app)
 		} else if folderFlag {

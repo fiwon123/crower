@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data/command"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
 	crowertests "github.com/fiwon123/crower/internal/helper/tests"
 )
@@ -18,7 +18,7 @@ func TestCreate(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		command := command.New("c1", nil, "")
+		command := commanddata.New("c1", nil, "")
 
 		want := true
 
@@ -49,7 +49,7 @@ func TestCreate(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			command := command.New(test.name, nil, "")
+			command := commanddata.New(test.name, nil, "")
 
 			_, err := createhandlers.CreateCommand(command.Name, nil, "exec", app)
 			got := err == nil
@@ -81,7 +81,7 @@ func TestCreate(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			command := command.New(test.name, []string{test.alias}, "")
+			command := commanddata.New(test.name, []string{test.alias}, "")
 			_, err := createhandlers.CreateCommand(command.Name, command.AllAlias, "exec", app)
 			got := err == nil
 			assertCreateTest(command, test.want, got, err, t)
@@ -143,7 +143,7 @@ func TestCreateFolder(t *testing.T) {
 
 }
 
-func assertCreateTest(command *command.Data, want bool, got bool, err error, t *testing.T) {
+func assertCreateTest(command *commanddata.Data, want bool, got bool, err error, t *testing.T) {
 	if got != want {
 		t.Errorf("error %v, command %+v got %v, want %v", err, *command, got, want)
 	}

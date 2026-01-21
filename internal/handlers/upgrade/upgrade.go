@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"runtime"
 
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	"github.com/minio/selfupdate"
 )
 
-func UpgradeApp(newVersion string, app *app.Data) error {
+func UpgradeApp(newVersion string, app *appdata.Data) error {
 	var resp *http.Response
 	var err error
 	switch runtime.GOOS {

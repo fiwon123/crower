@@ -2,16 +2,16 @@ package restoreinputs
 
 import (
 	inputscore "github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/history"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	historydata "github.com/fiwon123/crower/internal/data/history"
 )
 
 // Verify parameters to process restore operation
-func CheckRestoreInput(app *app.Data) (history.Content, bool) {
+func CheckRestoreInput(app *appdata.Data) (historydata.Content, bool) {
 
-	var content history.Content
+	var content historydata.Content
 	app.Logger.Info(app.History.GetList())
-	content = inputscore.GetUserInput("Select Row", inputscore.IsValidContentKey, app).(history.Content)
+	content = inputscore.GetUserInput("Select Row", inputscore.IsValidContentKey, app).(historydata.Content)
 
 	app.Logger.Info("-----------------------------------------")
 	app.Logger.Info("Content")

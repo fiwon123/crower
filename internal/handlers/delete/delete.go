@@ -5,15 +5,16 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	historydata "github.com/fiwon123/crower/internal/data/history"
+
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Delete command using key
-func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
+func DeleteCommand(key string, app *appdata.Data) (*commanddata.Data, bool) {
 	command := app.AllCommandsByName.Get(key)
 	if command == nil {
 		command = app.AllCommandsByAlias.Get(key)
@@ -32,7 +33,7 @@ func DeleteCommand(key string, app *app.Data) (*command.Data, bool) {
 }
 
 // Delete file from filepath
-func DeleteFile(filePath string, app *app.Data) error {
+func DeleteFile(filePath string, app *appdata.Data) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
@@ -51,7 +52,7 @@ func DeleteFile(filePath string, app *app.Data) error {
 }
 
 // Delete folder from folderpath
-func DeleteFolder(folderPath string, app *app.Data) error {
+func DeleteFolder(folderPath string, app *appdata.Data) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
@@ -69,7 +70,7 @@ func DeleteFolder(folderPath string, app *app.Data) error {
 	return nil
 }
 
-func DeleteHistoryContent(content history.Content, app *app.Data) (string, error) {
+func DeleteHistoryContent(content historydata.Content, app *appdata.Data) (string, error) {
 	ok := app.History.RemoveContent(content)
 	if !ok {
 		return "", fmt.Errorf("Content not found \n")

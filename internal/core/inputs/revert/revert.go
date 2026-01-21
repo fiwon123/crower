@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	inputscore "github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 )
 
 // Verify parameters to process revert operation
-func CheckRevertInput(steps int, app *app.Data) (bool, error) {
+func CheckRevertInput(steps int, app *appdata.Data) (bool, error) {
 	if steps < 0 {
 		return false, fmt.Errorf("steps is negative number")
 	}

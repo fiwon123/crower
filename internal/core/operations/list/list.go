@@ -5,35 +5,35 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
-func ListCommands(app *app.Data) {
+func ListCommands(app *appdata.Data) {
 	listhandlers.ListCommands(app)
 
-	app.History.Add(state.List, notes.GenerateListCommandsNote())
+	app.History.Add(operationsdata.List, notes.GenerateListCommandsNote())
 	history.Save(app)
 }
 
-func ListProcess(args []string, app *app.Data) {
+func ListProcess(args []string, app *appdata.Data) {
 	listhandlers.ListProcess(args, app)
 
-	app.History.Add(state.List, notes.GenerateListProcessNote(args))
+	app.History.Add(operationsdata.List, notes.GenerateListProcessNote(args))
 	history.Save(app)
 }
 
-func ListHistory(app *app.Data) {
+func ListHistory(app *appdata.Data) {
 	listhandlers.ListHistory(app)
 
-	app.History.Add(state.List, notes.GenerateListHistoriesNote())
+	app.History.Add(operationsdata.List, notes.GenerateListHistoriesNote())
 	history.Save(app)
 }
 
-func ListFolder(args []string, app *app.Data) {
+func ListFolder(args []string, app *appdata.Data) {
 	currentPath := "./"
 	if len(args) > 0 {
 		currentPath = args[0]
@@ -42,11 +42,11 @@ func ListFolder(args []string, app *app.Data) {
 	out, err := listhandlers.ListFolder(currentPath, app)
 	assertListResult(out, err, app)
 
-	app.History.Add(state.List, notes.GenerateListFolderNote(args))
+	app.History.Add(operationsdata.List, notes.GenerateListFolderNote(args))
 	history.Save(app)
 }
 
-func ListSystem(app *app.Data) {
+func ListSystem(app *appdata.Data) {
 	out, err := listhandlers.ListSystem(app)
 	app.Logger.Info("")
 	if err == nil {
@@ -65,11 +65,11 @@ func ListSystem(app *app.Data) {
 	}
 	assertListResult(out, err, app)
 
-	app.History.Add(state.List, notes.GenerateListSystemNote())
+	app.History.Add(operationsdata.List, notes.GenerateListSystemNote())
 	history.Save(app)
 }
 
-func ListSysPath(app *app.Data) {
+func ListSysPath(app *appdata.Data) {
 	out, err := listhandlers.ListSysPath(app)
 	app.Logger.Info("")
 	if err == nil {
@@ -78,7 +78,7 @@ func ListSysPath(app *app.Data) {
 
 	assertListResult(out, err, app)
 
-	app.History.Add(state.List, notes.GenerateListSystemPathNote())
+	app.History.Add(operationsdata.List, notes.GenerateListSystemPathNote())
 	history.Save(app)
 }
 
@@ -97,7 +97,7 @@ func formatVariable(name string, paths string) string {
 	return outBuilder.String()
 }
 
-func assertListResult(out string, err error, app *app.Data) {
+func assertListResult(out string, err error, app *appdata.Data) {
 	if err != nil {
 		app.Logger.Error("failed to list: ", "error", err, "out", out)
 		return

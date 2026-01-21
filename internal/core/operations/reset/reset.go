@@ -2,15 +2,15 @@ package resetoperations
 
 import (
 	resetinputs "github.com/fiwon123/crower/internal/core/inputs/reset"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	resethandlers "github.com/fiwon123/crower/internal/handlers/reset"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func Reset(app *app.Data) {
+func Reset(app *appdata.Data) {
 	ok := resetinputs.CheckResetInput(app)
 
 	if !ok {
@@ -22,6 +22,6 @@ func Reset(app *app.Data) {
 	resethandlers.Reset(app)
 	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
-	app.History.Add(state.Reset, notes.GenerateResetNote())
+	app.History.Add(operationsdata.Reset, notes.GenerateResetNote())
 	history.Save(app)
 }

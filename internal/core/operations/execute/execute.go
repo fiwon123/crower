@@ -3,15 +3,15 @@ package executeoperations
 import (
 	executeinputs "github.com/fiwon123/crower/internal/core/inputs/execute"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
-func ExecuteCommand(args []string, app *app.Data) {
+func ExecuteCommand(args []string, app *appdata.Data) {
 	var params []string
 	key := ""
 	if len(args) > 0 {
@@ -29,11 +29,11 @@ func ExecuteCommand(args []string, app *app.Data) {
 	output, command, err := executehandlers.Execute(key, params, app)
 	assertExecute(output, command, err, app)
 
-	app.History.Add(state.Execute, notes.GenerateExecuteCommandNote(command))
+	app.History.Add(operationsdata.Execute, notes.GenerateExecuteCommandNote(command))
 	history.Save(app)
 }
 
-func ExecuteLast(op state.MainOperationEnum, args []string, app *app.Data) {
+func ExecuteLast(op operationsdata.MainOperationEnum, args []string, app *appdata.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
@@ -44,11 +44,11 @@ func ExecuteLast(op state.MainOperationEnum, args []string, app *app.Data) {
 	output, command, err := executehandlers.Execute(content.CommandName, args, app)
 	assertExecute(output, command, err, app)
 
-	app.History.Add(state.Execute, notes.GenerateExecuteLastNote(op, command))
+	app.History.Add(operationsdata.Execute, notes.GenerateExecuteLastNote(op, command))
 	history.Save(app)
 }
 
-func assertExecute(output string, command *command.Data, err error, app *app.Data) {
+func assertExecute(output string, command *commanddata.Data, err error, app *appdata.Data) {
 	if err != nil {
 		app.Logger.Error("Error trying to run command: ", "out", string(output), "err", err)
 		return

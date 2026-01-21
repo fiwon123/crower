@@ -5,12 +5,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 )
 
 // Open filepath based on user operational system(OS).
-func Open(paths []string, app *app.Data) error {
+func Open(paths []string, app *appdata.Data) error {
 
 	for _, f := range paths {
 		commandString := ""
@@ -44,7 +44,7 @@ func Open(paths []string, app *app.Data) error {
 }
 
 // Try to open system UI based on operational system (OS)
-func OpenSystem(app *app.Data) error {
+func OpenSystem(app *appdata.Data) error {
 	switch runtime.GOOS {
 	case "windows":
 		return executehandlers.PerformExecuteStart("sysdm.cpl", app)

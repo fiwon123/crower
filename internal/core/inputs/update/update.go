@@ -2,12 +2,12 @@ package updateinputs
 
 import (
 	inputscore "github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 )
 
 // Verify parameters to process update operation
-func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *app.Data) bool {
+func CheckUpdateInput(key *string, name *string, allAlias *[]string, exec *string, app *appdata.Data) bool {
 
 	if *key == "" {
 		listhandlers.ListCommands(app)

@@ -2,12 +2,12 @@ package resetinputs
 
 import (
 	inputscore "github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 )
 
 // Verify parameters to process reset operation
-func CheckResetInput(app *app.Data) bool {
+func CheckResetInput(app *appdata.Data) bool {
 	app.Logger.Info("-----------------------------------------")
 	listhandlers.ListCommands(app)
 

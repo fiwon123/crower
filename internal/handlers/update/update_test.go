@@ -3,7 +3,7 @@ package updatehandlers_test
 import (
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data/command"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
 	updatehandlers "github.com/fiwon123/crower/internal/handlers/update"
 	crowertests "github.com/fiwon123/crower/internal/helper/tests"
@@ -49,7 +49,7 @@ func TestUpdate(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			newCommand := command.New(test.newName, []string{}, "")
+			newCommand := commanddata.New(test.newName, []string{}, "")
 			key := test.oldName
 			_, _, err := updatehandlers.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec, app)
 			got := err == nil
@@ -60,7 +60,7 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
-func assertUpdateTest(want bool, got bool, key string, newCommand command.Data, err error, t *testing.T) {
+func assertUpdateTest(want bool, got bool, key string, newCommand commanddata.Data, err error, t *testing.T) {
 	if want != got {
 		t.Errorf("error %v, key %v, command %v, got %v, want %v", err, key, newCommand, got, want)
 	}

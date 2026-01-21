@@ -3,15 +3,15 @@ package upgradeoperations
 import (
 	"fmt"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	checkhandlers "github.com/fiwon123/crower/internal/handlers/check"
 	upgradehandlers "github.com/fiwon123/crower/internal/handlers/upgrade"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
-func UpgradeApp(currentVersion string, app *app.Data) {
+func UpgradeApp(currentVersion string, app *appdata.Data) {
 	newVersion, err := checkhandlers.CheckNewVersion(currentVersion, app)
 	if err != nil {
 		app.Logger.Error(err.Error())
@@ -32,6 +32,6 @@ func UpgradeApp(currentVersion string, app *app.Data) {
 
 	app.Logger.Info(fmt.Sprintf("crower upgraded from %s to %s \n", currentVersion, newVersion))
 
-	app.History.Add(state.Upgrade, notes.GenerateUpgradeNote())
+	app.History.Add(operationsdata.Upgrade, notes.GenerateUpgradeNote())
 	history.Save(app)
 }

@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func InitCrowerTests() (*app.Data, []string, error) {
+func InitCrowerTests() (*appdata.Data, []string, error) {
 	homePath, err := os.UserHomeDir()
 	if err != nil {
 		return nil, nil, err

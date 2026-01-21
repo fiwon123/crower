@@ -8,16 +8,16 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Create command using name, alias and exec parameters
-func CreateCommand(name string, alias []string, exec string, app *app.Data) (*command.Data, error) {
+func CreateCommand(name string, alias []string, exec string, app *appdata.Data) (*commanddata.Data, error) {
 
-	command := command.New(name, alias, exec)
+	command := commanddata.New(name, alias, exec)
 
 	if command.Name == "" {
 		return nil, fmt.Errorf("empty name")
@@ -47,7 +47,7 @@ func CreateCommand(name string, alias []string, exec string, app *app.Data) (*co
 }
 
 // Create command based on process name or id process
-func CreateProcess(name string, args []string, app *app.Data) (*command.Data, error) {
+func CreateProcess(name string, args []string, app *appdata.Data) (*commanddata.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]
@@ -109,7 +109,7 @@ func CreateProcess(name string, args []string, app *app.Data) (*command.Data, er
 }
 
 // Create a new file on filepath
-func CreateFile(filePath string, app *app.Data) error {
+func CreateFile(filePath string, app *appdata.Data) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
@@ -128,7 +128,7 @@ func CreateFile(filePath string, app *app.Data) error {
 }
 
 // Create a new folder on folderpath
-func CreateFolder(folderPath string, app *app.Data) error {
+func CreateFolder(folderPath string, app *appdata.Data) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
@@ -146,7 +146,7 @@ func CreateFolder(folderPath string, app *app.Data) error {
 	return nil
 }
 
-func CreateScriptCommand(name string, app *app.Data) (string, error) {
+func CreateScriptCommand(name string, app *appdata.Data) (string, error) {
 	cfgFolderPath := filepath.Dir(app.CfgFilePath)
 	scriptFolderPath := filepath.Join(cfgFolderPath, "scripts")
 	err := crowerutils.CreateFolderIfNotExists(scriptFolderPath)

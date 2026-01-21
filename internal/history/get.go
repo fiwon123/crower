@@ -1,12 +1,12 @@
 package history
 
 import (
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	historydata "github.com/fiwon123/crower/internal/data/history"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Get last operation
-func GetLast(state state.MainOperationEnum, app *app.Data) *history.Content {
+func GetLast(state operationsdata.MainOperationEnum, app *appdata.Data) *historydata.Content {
 	return app.History.GetLastOperation(state)
 }

@@ -2,8 +2,8 @@ package moveoperations
 
 import (
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	movehandlers "github.com/fiwon123/crower/internal/handlers/move"
 
 	"github.com/fiwon123/crower/internal/history"
@@ -11,7 +11,7 @@ import (
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func Move(args []string, app *app.Data) {
+func Move(args []string, app *appdata.Data) {
 	if len(args) == 0 {
 		crowererrors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument", app)
 		return
@@ -39,11 +39,11 @@ func Move(args []string, app *app.Data) {
 	}
 
 	if isMoveFile && isMoveFolder {
-		app.History.Add(state.Move, notes.GenerateMoveNote(state.FileAndFolder, args))
+		app.History.Add(operationsdata.Move, notes.GenerateMoveNote(operationsdata.FileAndFolder, args))
 	} else if isMoveFile {
-		app.History.Add(state.Move, notes.GenerateMoveNote(state.File, args))
+		app.History.Add(operationsdata.Move, notes.GenerateMoveNote(operationsdata.File, args))
 	} else if isMoveFolder {
-		app.History.Add(state.Move, notes.GenerateMoveNote(state.Folder, args))
+		app.History.Add(operationsdata.Move, notes.GenerateMoveNote(operationsdata.Folder, args))
 	}
 
 	history.Save(app)

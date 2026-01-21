@@ -2,15 +2,15 @@ package restoreoperations
 
 import (
 	restoreinputs "github.com/fiwon123/crower/internal/core/inputs/restore"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	restorehandlers "github.com/fiwon123/crower/internal/handlers/restore"
 
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
-func Restore(args []string, app *app.Data) {
+func Restore(args []string, app *appdata.Data) {
 	key := ""
 	if len(args) > 0 {
 		key = args[0]
@@ -30,6 +30,6 @@ func Restore(args []string, app *app.Data) {
 
 	app.Logger.Info("restored command: ", "out", out)
 
-	app.History.Add(state.Restore, notes.GenerateRestoreNote(out))
+	app.History.Add(operationsdata.Restore, notes.GenerateRestoreNote(out))
 	history.Save(app)
 }

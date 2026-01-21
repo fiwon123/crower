@@ -1,13 +1,13 @@
 package notes
 
-import "github.com/fiwon123/crower/internal/data/state"
+import operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
 // Create a new revert note
 func GenerateRevertNote(args []string) string {
 	noteBuilder := New()
 
 	return noteBuilder.
-		AddMainOperation(state.Revert).
+		AddMainOperation(operationsdata.Revert).
 		AddCrowerExec("revert", args).
 		Build()
 }

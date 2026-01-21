@@ -4,7 +4,7 @@ import (
 	"github.com/fiwon123/crower/internal/core"
 	updateoperations "github.com/fiwon123/crower/internal/core/operations/update"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/state"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -44,11 +44,11 @@ Examples:
 		app := core.InitApp(cfgFilePath)
 
 		if last {
-			updateoperations.UpdateLast(state.Update, name, allAlias, exec, app)
+			updateoperations.UpdateLast(operationsdata.Update, name, allAlias, exec, app)
 		} else if create {
-			updateoperations.UpdateLast(state.Create, name, allAlias, exec, app)
+			updateoperations.UpdateLast(operationsdata.Create, name, allAlias, exec, app)
 		} else if execute {
-			updateoperations.UpdateLast(state.Execute, name, allAlias, exec, app)
+			updateoperations.UpdateLast(operationsdata.Execute, name, allAlias, exec, app)
 		} else if len(args) > 0 {
 			updateoperations.UpdateCommand(args, name, allAlias, exec, app)
 		} else {

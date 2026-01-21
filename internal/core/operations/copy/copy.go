@@ -2,8 +2,8 @@ package copyoperations
 
 import (
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	copyhandlers "github.com/fiwon123/crower/internal/handlers/copy"
 
 	"github.com/fiwon123/crower/internal/history"
@@ -11,7 +11,7 @@ import (
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func Copy(args []string, app *app.Data) {
+func Copy(args []string, app *appdata.Data) {
 	if len(args) == 0 {
 		crowererrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument", app)
 		return
@@ -38,11 +38,11 @@ func Copy(args []string, app *app.Data) {
 	}
 
 	if isCopyFile && isCopyFolder {
-		app.History.Add(state.Copy, notes.GenerateCopyNote(state.FileAndFolder, args))
+		app.History.Add(operationsdata.Copy, notes.GenerateCopyNote(operationsdata.FileAndFolder, args))
 	} else if isCopyFile {
-		app.History.Add(state.Copy, notes.GenerateCopyNote(state.File, args))
+		app.History.Add(operationsdata.Copy, notes.GenerateCopyNote(operationsdata.File, args))
 	} else if isCopyFolder {
-		app.History.Add(state.Copy, notes.GenerateCopyNote(state.Folder, args))
+		app.History.Add(operationsdata.Copy, notes.GenerateCopyNote(operationsdata.Folder, args))
 	}
 
 	history.Save(app)

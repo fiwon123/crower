@@ -1,13 +1,13 @@
 package notes
 
-import "github.com/fiwon123/crower/internal/data/state"
+import operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
 // Create a new restore note
 func GenerateRestoreNote(msg string) string {
 	noteBuilder := New()
 
 	return noteBuilder.
-		AddMainOperation(state.Restore).
+		AddMainOperation(operationsdata.Restore).
 		AddCrowerExec("restore", nil).
 		Build()
 

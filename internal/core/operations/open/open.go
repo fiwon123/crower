@@ -3,14 +3,14 @@ package openoperations
 import (
 	"path/filepath"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 )
 
-func Open(args []string, app *app.Data) {
+func Open(args []string, app *appdata.Data) {
 
 	paths := []string{}
 	for _, arg := range args {
@@ -28,11 +28,11 @@ func Open(args []string, app *app.Data) {
 
 	openhandlers.Open(paths, app)
 
-	app.History.Add(state.Open, notes.GenerateOpenNote(args))
+	app.History.Add(operationsdata.Open, notes.GenerateOpenNote(args))
 	history.Save(app)
 }
 
-func OpenFile(args []string, app *app.Data) {
+func OpenFile(args []string, app *appdata.Data) {
 	currentPath := app.CfgFilePath
 	if len(args) == 0 {
 		args = append(args, currentPath)
@@ -40,11 +40,11 @@ func OpenFile(args []string, app *app.Data) {
 
 	openhandlers.Open(args, app)
 
-	app.History.Add(state.Open, notes.GenerateOpenFolderNote(args))
+	app.History.Add(operationsdata.Open, notes.GenerateOpenFolderNote(args))
 	history.Save(app)
 }
 
-func OpenFolder(args []string, app *app.Data) {
+func OpenFolder(args []string, app *appdata.Data) {
 	currentPath := app.CfgFilePath
 	if len(args) == 0 {
 		args = append(args, filepath.Dir(currentPath))
@@ -52,17 +52,17 @@ func OpenFolder(args []string, app *app.Data) {
 
 	openhandlers.Open(args, app)
 
-	app.History.Add(state.Open, notes.GenerateOpenFolderNote(args))
+	app.History.Add(operationsdata.Open, notes.GenerateOpenFolderNote(args))
 	history.Save(app)
 }
 
-func OpenSystem(app *app.Data) {
+func OpenSystem(app *appdata.Data) {
 	err := openhandlers.OpenSystem(app)
 	if err != nil {
 		app.Logger.Error("failed to open system variable: ", "error", err)
 		return
 	}
 
-	app.History.Add(state.Open, notes.GenerateOpenSystemNote())
+	app.History.Add(operationsdata.Open, notes.GenerateOpenSystemNote())
 	history.Save(app)
 }

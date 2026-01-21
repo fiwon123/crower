@@ -1,13 +1,13 @@
 package notes
 
-import "github.com/fiwon123/crower/internal/data/state"
+import operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
 // Create a new upgrade note
 func GenerateUpgradeNote() string {
 	noteBuilder := New()
 
 	return noteBuilder.
-		AddMainOperation(state.Upgrade).
+		AddMainOperation(operationsdata.Upgrade).
 		AddCrowerExec("--upgrade", nil).
 		Build()
 }

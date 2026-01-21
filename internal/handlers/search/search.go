@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // SearchBrowser based on user operational system(OS).
-func SearchBrowser(content string, app *app.Data) (string, error) {
+func SearchBrowser(content string, app *appdata.Data) (string, error) {
 
 	switch runtime.GOOS {
 	case "windows":
@@ -32,7 +32,7 @@ func SearchBrowser(content string, app *app.Data) (string, error) {
 }
 
 // Search files on folder path
-func SearchFile(currentPath string, content string, app *app.Data) (string, error) {
+func SearchFile(currentPath string, content string, app *appdata.Data) (string, error) {
 
 	switch runtime.GOOS {
 	case "windows":
@@ -45,7 +45,7 @@ func SearchFile(currentPath string, content string, app *app.Data) (string, erro
 }
 
 // Search folders on folder path
-func SearchFolder(currentPath string, content string, app *app.Data) (string, error) {
+func SearchFolder(currentPath string, content string, app *appdata.Data) (string, error) {
 
 	switch runtime.GOOS {
 	case "windows":
@@ -58,7 +58,7 @@ func SearchFolder(currentPath string, content string, app *app.Data) (string, er
 }
 
 // Search files and folder on folder path
-func SearchFileAndFolder(currentPath string, content string, app *app.Data) (string, error) {
+func SearchFileAndFolder(currentPath string, content string, app *appdata.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return executehandlers.PerformExecute(fmt.Sprintf(`dir "%s" /s /b | findstr "%s"`, currentPath, content), app)

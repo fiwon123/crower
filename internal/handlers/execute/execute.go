@@ -8,13 +8,13 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
 )
 
 // Execute command based on the user operational system (OS).
 // Verify if command exists by name or alias and perform operation
-func Execute(key string, params []string, app *app.Data) (string, *command.Data, error) {
+func Execute(key string, params []string, app *appdata.Data) (string, *commanddata.Data, error) {
 
 	command := app.AllCommandsByName.Get(key)
 	if command == nil {
@@ -36,7 +36,7 @@ func Execute(key string, params []string, app *app.Data) (string, *command.Data,
 	return out, command, err
 }
 
-func buildCMD(ex string, app *app.Data) (*exec.Cmd, string, []string) {
+func buildCMD(ex string, app *appdata.Data) (*exec.Cmd, string, []string) {
 	app.Logger.Info("")
 	var c *exec.Cmd
 
@@ -72,7 +72,7 @@ func buildCMD(ex string, app *app.Data) (*exec.Cmd, string, []string) {
 }
 
 // Perform execute operation
-func PerformExecute(ex string, app *app.Data) (string, error) {
+func PerformExecute(ex string, app *appdata.Data) (string, error) {
 
 	c, typeCommand, splitCommands := buildCMD(ex, app)
 	c = exec.Command(typeCommand, splitCommands...)
@@ -80,7 +80,7 @@ func PerformExecute(ex string, app *app.Data) (string, error) {
 	return string(out), err
 }
 
-func PerformExecuteStart(ex string, app *app.Data) error {
+func PerformExecuteStart(ex string, app *appdata.Data) error {
 	c, typeCommand, splitCommands := buildCMD(ex, app)
 	c = exec.Command(typeCommand, splitCommands...)
 	err := c.Start()

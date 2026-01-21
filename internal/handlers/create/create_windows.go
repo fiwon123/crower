@@ -7,12 +7,12 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 	"golang.org/x/sys/windows/registry"
 )
 
-func CreateSystemVariable(newVar string, value string, app *app.Data) (string, error) {
+func CreateSystemVariable(newVar string, value string, app *appdata.Data) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,
@@ -38,7 +38,7 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 
 }
 
-func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
+func CreateSystemPathVariable(value string, app *appdata.Data) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,

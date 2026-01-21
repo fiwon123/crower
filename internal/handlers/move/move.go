@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 )
 
 // Move file from origin path to output folder path
-func MoveFile(filePath string, destFolder string, app *app.Data) error {
+func MoveFile(filePath string, destFolder string, app *appdata.Data) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
@@ -28,7 +28,7 @@ func MoveFile(filePath string, destFolder string, app *app.Data) error {
 }
 
 // Move folder from origin path to output folder path
-func MoveFolder(folderPath string, destFolder string, app *app.Data) error {
+func MoveFolder(folderPath string, destFolder string, app *appdata.Data) error {
 	var out string
 	var err error
 	switch runtime.GOOS {

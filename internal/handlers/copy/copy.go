@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 )
 
 // Copy file from a origin filepath to output folder
-func CopyFile(filePath string, destFolder string, app *app.Data) error {
+func CopyFile(filePath string, destFolder string, app *appdata.Data) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
@@ -28,7 +28,7 @@ func CopyFile(filePath string, destFolder string, app *app.Data) error {
 }
 
 // Copy file from a origin folderpath to output folder
-func CopyFolder(filePath string, destFolder string, app *app.Data) error {
+func CopyFolder(filePath string, destFolder string, app *appdata.Data) error {
 	var out string
 	var err error
 	switch runtime.GOOS {

@@ -5,19 +5,19 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // List all commands in order
-func ListCommands(app *app.Data) {
+func ListCommands(app *appdata.Data) {
 	app.Logger.Info("------------------------------------------------")
 	print(app.OrderKeys, app.AllCommandsByName, app)
 }
 
-func print(orderKeys []string, allCommands command.MapData, app *app.Data) {
+func print(orderKeys []string, allCommands commanddata.MapData, app *appdata.Data) {
 	app.Logger.Info(fmt.Sprintf("%-3s %-12s %-16s %-8s \n", "Row", "Name", "Aliases", "Exec"))
 	app.Logger.Info("------------------------------------------------")
 
@@ -28,7 +28,7 @@ func print(orderKeys []string, allCommands command.MapData, app *app.Data) {
 }
 
 // List all ListProcess running on user operational system (OS).
-func ListProcess(args []string, app *app.Data) error {
+func ListProcess(args []string, app *appdata.Data) error {
 
 	partName := ""
 	if len(args) > 0 {
@@ -48,7 +48,7 @@ func ListProcess(args []string, app *app.Data) error {
 }
 
 // List all history
-func ListHistory(app *app.Data) error {
+func ListHistory(app *appdata.Data) error {
 
 	app.Logger.Info(app.History.GetList())
 
@@ -56,7 +56,7 @@ func ListHistory(app *app.Data) error {
 }
 
 // List all files and folder from a folderpath
-func ListFolder(folderPath string, app *app.Data) (string, error) {
+func ListFolder(folderPath string, app *appdata.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return executehandlers.PerformExecute(fmt.Sprintf("dir '%s'", folderPath), app)
@@ -68,7 +68,7 @@ func ListFolder(folderPath string, app *app.Data) (string, error) {
 }
 
 // List all system variable
-func ListSystem(app *app.Data) (string, error) {
+func ListSystem(app *appdata.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return executehandlers.PerformExecute("'set'", app)
@@ -80,7 +80,7 @@ func ListSystem(app *app.Data) (string, error) {
 }
 
 // List system path variable
-func ListSysPath(app *app.Data) (string, error) {
+func ListSysPath(app *appdata.Data) (string, error) {
 	switch runtime.GOOS {
 	case "windows":
 		return executehandlers.PerformExecute("'echo %PATH%'", app)

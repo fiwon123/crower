@@ -1,18 +1,18 @@
 package crowererrors
 
 import (
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 )
 
-func PrintFileAndFolderFlagsNotUsed(app *app.Data) {
+func PrintFileAndFolderFlagsNotUsed(app *appdata.Data) {
 	app.Logger.Error("file and folder flag not used")
 }
 
-func PrintNotFileAndOutputPath(app *app.Data) {
+func PrintNotFileAndOutputPath(app *appdata.Data) {
 	app.Logger.Error("needs to specify file path and out folder")
 }
 
-func PrintNotArgs(msg string, app *app.Data) {
+func PrintNotArgs(msg string, app *appdata.Data) {
 	if msg == "" {
 		app.Logger.Error("need to pass arguments")
 	} else {
@@ -20,6 +20,6 @@ func PrintNotArgs(msg string, app *app.Data) {
 	}
 }
 
-func PrintEmptyPaths(app *app.Data) {
+func PrintEmptyPaths(app *appdata.Data) {
 	app.Logger.Error("empty paths")
 }

@@ -5,14 +5,14 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	historydata "github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func FindCommand(key string, content history.Content, app *app.Data) (*command.Data, error) {
-	allCommands := command.NewMapData()
+func FindCommand(key string, content historydata.Content, app *appdata.Data) (*commanddata.Data, error) {
+	allCommands := commanddata.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
 
 	err := crowerutils.ReadToml(newDataPath, &allCommands)

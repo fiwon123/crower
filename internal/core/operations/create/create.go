@@ -7,9 +7,9 @@ import (
 
 	createinputs "github.com/fiwon123/crower/internal/core/inputs/create"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
 	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
 	"github.com/fiwon123/crower/internal/history"
@@ -17,7 +17,7 @@ import (
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func CreateCommand(allAlias []string, args []string, app *app.Data) {
+func CreateCommand(allAlias []string, args []string, app *appdata.Data) {
 	name := ""
 	exec := ""
 	if len(args) == 2 {
@@ -32,11 +32,11 @@ func CreateCommand(allAlias []string, args []string, app *app.Data) {
 		return
 	}
 
-	app.History.Add(state.Create, notes.GenerateCreateCommandNote(command, args))
+	app.History.Add(operationsdata.Create, notes.GenerateCreateCommandNote(command, args))
 	history.Save(app)
 }
 
-func performCreateCommand(name string, allAlias []string, exec string, app *app.Data) *command.Data {
+func performCreateCommand(name string, allAlias []string, exec string, app *appdata.Data) *commanddata.Data {
 	command, err := createhandlers.CreateCommand(name, allAlias, exec, app)
 
 	if err != nil {
@@ -50,7 +50,7 @@ func performCreateCommand(name string, allAlias []string, exec string, app *app.
 	return command
 }
 
-func CreateProcess(name string, args []string, app *app.Data) {
+func CreateProcess(name string, args []string, app *appdata.Data) {
 	command, err := createhandlers.CreateProcess(name, args, app)
 	if err != nil {
 		app.Logger.Error("Error add command by process: ", "error", err, "name", name, "args", args)
@@ -60,11 +60,11 @@ func CreateProcess(name string, args []string, app *app.Data) {
 	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.Logger.Info("added new command by process: ", "allCommands", app.AllCommandsByName)
 
-	app.History.Add(state.Create, notes.GenerateCreateProcessNote(command, args))
+	app.History.Add(operationsdata.Create, notes.GenerateCreateProcessNote(command, args))
 	history.Save(app)
 }
 
-func CreateSystemVariable(args []string, app *app.Data) {
+func CreateSystemVariable(args []string, app *appdata.Data) {
 	newVar := ""
 	value := ""
 	if len(args) >= 2 {
@@ -83,11 +83,11 @@ func CreateSystemVariable(args []string, app *app.Data) {
 
 	app.Logger.Info(out)
 
-	app.History.Add(state.Create, notes.GenerateCreateSystemVariableNote(args))
+	app.History.Add(operationsdata.Create, notes.GenerateCreateSystemVariableNote(args))
 	history.Save(app)
 }
 
-func CreateSystemPathVariable(args []string, app *app.Data) {
+func CreateSystemPathVariable(args []string, app *appdata.Data) {
 	newPath := ""
 	if len(args) > 0 {
 		newPath = args[0]
@@ -104,11 +104,11 @@ func CreateSystemPathVariable(args []string, app *app.Data) {
 
 	app.Logger.Info(out)
 
-	app.History.Add(state.Create, notes.GenerateCreateSystemPathVariableNote(args))
+	app.History.Add(operationsdata.Create, notes.GenerateCreateSystemPathVariableNote(args))
 	history.Save(app)
 }
 
-func CreateFile(args []string, app *app.Data) {
+func CreateFile(args []string, app *appdata.Data) {
 	for _, path := range args {
 		err := createhandlers.CreateFile(path, app)
 		if err != nil {
@@ -116,11 +116,11 @@ func CreateFile(args []string, app *app.Data) {
 		}
 	}
 
-	app.History.Add(state.Create, notes.GenerateCreateFile(args))
+	app.History.Add(operationsdata.Create, notes.GenerateCreateFile(args))
 	history.Save(app)
 }
 
-func CreateFolder(args []string, app *app.Data) {
+func CreateFolder(args []string, app *appdata.Data) {
 	for _, path := range args {
 		err := createhandlers.CreateFolder(path, app)
 		if err != nil {
@@ -128,11 +128,11 @@ func CreateFolder(args []string, app *app.Data) {
 		}
 	}
 
-	app.History.Add(state.Create, notes.GenerateCreateFolder(args))
+	app.History.Add(operationsdata.Create, notes.GenerateCreateFolder(args))
 	history.Save(app)
 }
 
-func CreateLastCommand(op state.MainOperationEnum, args []string, app *app.Data) {
+func CreateLastCommand(op operationsdata.MainOperationEnum, args []string, app *appdata.Data) {
 	name := ""
 	if len(args) > 0 {
 		name = args[0]
@@ -166,11 +166,11 @@ func CreateLastCommand(op state.MainOperationEnum, args []string, app *app.Data)
 		return
 	}
 
-	app.History.Add(state.Create, notes.GenerateCreateCommandLastExecuteNote(command))
+	app.History.Add(operationsdata.Create, notes.GenerateCreateCommandLastExecuteNote(command))
 	history.Save(app)
 }
 
-func CreateScriptCommand(args []string, app *app.Data) {
+func CreateScriptCommand(args []string, app *appdata.Data) {
 	name := ""
 	if len(args) > 0 {
 		name = args[0]
@@ -184,7 +184,7 @@ func CreateScriptCommand(args []string, app *app.Data) {
 		return
 	}
 
-	var command *command.Data
+	var command *commanddata.Data
 	switch runtime.GOOS {
 	case "windows":
 		command = performCreateCommand(name, []string{}, scriptFilePath, app)
@@ -198,6 +198,6 @@ func CreateScriptCommand(args []string, app *app.Data) {
 
 	openhandlers.Open([]string{filepath.Dir(scriptFilePath)}, app)
 
-	app.History.Add(state.Create, notes.GenerateCreateScriptCommandNote(command, args))
+	app.History.Add(operationsdata.Create, notes.GenerateCreateScriptCommandNote(command, args))
 	history.Save(app)
 }

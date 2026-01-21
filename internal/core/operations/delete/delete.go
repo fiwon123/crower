@@ -3,17 +3,17 @@ package deleteoperations
 import (
 	deleteinputs "github.com/fiwon123/crower/internal/core/inputs/delete"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
 	deletehandlers "github.com/fiwon123/crower/internal/handlers/delete"
 
-	"github.com/fiwon123/crower/internal/data/state"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func Delete(args []string, app *app.Data) {
+func Delete(args []string, app *appdata.Data) {
 
 	key := ""
 	if len(args) > 0 {
@@ -31,11 +31,11 @@ func Delete(args []string, app *app.Data) {
 		return
 	}
 
-	app.History.Add(state.Delete, notes.GenerateDeleteCommandNote(command, args))
+	app.History.Add(operationsdata.Delete, notes.GenerateDeleteCommandNote(command, args))
 	history.Save(app)
 }
 
-func performDeleteCommand(key string, app *app.Data) *command.Data {
+func performDeleteCommand(key string, app *appdata.Data) *commanddata.Data {
 
 	command, ok := deletehandlers.DeleteCommand(key, app)
 	if !ok {
@@ -49,7 +49,7 @@ func performDeleteCommand(key string, app *app.Data) *command.Data {
 	return command
 }
 
-func DeleteLast(op state.MainOperationEnum, app *app.Data) {
+func DeleteLast(op operationsdata.MainOperationEnum, app *appdata.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
@@ -62,11 +62,11 @@ func DeleteLast(op state.MainOperationEnum, app *app.Data) {
 		return
 	}
 
-	app.History.Add(state.Delete, notes.GenerateDeleteLastNote(op, command))
+	app.History.Add(operationsdata.Delete, notes.GenerateDeleteLastNote(op, command))
 	history.Save(app)
 }
 
-func DeleteSystemVariable(args []string, app *app.Data) {
+func DeleteSystemVariable(args []string, app *appdata.Data) {
 	newVar := ""
 	if len(args) >= 1 {
 		newVar = args[0]
@@ -83,11 +83,11 @@ func DeleteSystemVariable(args []string, app *app.Data) {
 
 	app.Logger.Info(out)
 
-	app.History.Add(state.Delete, notes.GenerateDeleteSystemVariable(args))
+	app.History.Add(operationsdata.Delete, notes.GenerateDeleteSystemVariable(args))
 	history.Save(app)
 }
 
-func DeleteSystemPathVariable(args []string, app *app.Data) {
+func DeleteSystemPathVariable(args []string, app *appdata.Data) {
 	newPath := ""
 	if len(args) > 0 {
 		newPath = args[0]
@@ -104,11 +104,11 @@ func DeleteSystemPathVariable(args []string, app *app.Data) {
 
 	app.Logger.Info(out)
 
-	app.History.Add(state.Delete, notes.GenerateDeleteSystemPathVariable(args))
+	app.History.Add(operationsdata.Delete, notes.GenerateDeleteSystemPathVariable(args))
 	history.Save(app)
 }
 
-func DeleteFile(args []string, app *app.Data) {
+func DeleteFile(args []string, app *appdata.Data) {
 	filePath := ""
 	if len(args) > 0 {
 		filePath = args[0]
@@ -119,11 +119,11 @@ func DeleteFile(args []string, app *app.Data) {
 
 	deletehandlers.DeleteFile(filePath, app)
 
-	app.History.Add(state.Execute, notes.GenerateDeleteFileNote(args))
+	app.History.Add(operationsdata.Execute, notes.GenerateDeleteFileNote(args))
 	history.Save(app)
 }
 
-func DeleteFolder(args []string, app *app.Data) {
+func DeleteFolder(args []string, app *appdata.Data) {
 	folderPath := ""
 	if len(args) > 0 {
 		folderPath = args[0]
@@ -134,11 +134,11 @@ func DeleteFolder(args []string, app *app.Data) {
 
 	deletehandlers.DeleteFolder(folderPath, app)
 
-	app.History.Add(state.Execute, notes.GenerateDeleteFolderNote(args))
+	app.History.Add(operationsdata.Execute, notes.GenerateDeleteFolderNote(args))
 	history.Save(app)
 }
 
-func DeleteHistoryContent(args []string, app *app.Data) {
+func DeleteHistoryContent(args []string, app *appdata.Data) {
 	content, ok := deleteinputs.CheckDeleteHistoryContentInput(app)
 	if !ok {
 		app.Logger.Info("Cancelling Delete History Content...")

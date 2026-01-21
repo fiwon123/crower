@@ -1,17 +1,17 @@
 package notes
 
 import (
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/state"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new execute note
-func GenerateExecuteCommandNote(command *command.Data) string {
+func GenerateExecuteCommandNote(command *commanddata.Data) string {
 	noteBuilder := New()
 
 	return noteBuilder.
-		AddMainOperation(state.Execute).
-		AddSubOperation(state.Command).
+		AddMainOperation(operationsdata.Execute).
+		AddSubOperation(operationsdata.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
@@ -19,22 +19,22 @@ func GenerateExecuteCommandNote(command *command.Data) string {
 		Build()
 }
 
-func GenerateExecuteLastNote(op state.MainOperationEnum, command *command.Data) string {
+func GenerateExecuteLastNote(op operationsdata.MainOperationEnum, command *commanddata.Data) string {
 	noteBuilder := New()
 
 	noteBuilder.
-		AddMainOperation(state.Execute).
-		AddSubOperation(state.Command).
+		AddMainOperation(operationsdata.Execute).
+		AddSubOperation(operationsdata.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec)
 
 	switch op {
-	case state.Execute:
+	case operationsdata.Execute:
 		noteBuilder.AddCrowerExec("execute --last", nil)
-	case state.Create:
+	case operationsdata.Create:
 		noteBuilder.AddCrowerExec("execute --create", nil)
-	case state.Update:
+	case operationsdata.Update:
 		noteBuilder.AddCrowerExec("execute --update", nil)
 	}
 

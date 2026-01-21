@@ -1,9 +1,9 @@
 package crowererrors
 
 import (
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 )
 
-func PrintCommandNotFoundError(app *app.Data) {
+func PrintCommandNotFoundError(app *appdata.Data) {
 	app.Logger.Error("command not found")
 }

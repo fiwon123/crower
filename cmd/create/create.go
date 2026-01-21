@@ -3,7 +3,7 @@ package create
 import (
 	"github.com/fiwon123/crower/internal/core"
 	createoperations "github.com/fiwon123/crower/internal/core/operations/create"
-	"github.com/fiwon123/crower/internal/data/state"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 	"github.com/spf13/cobra"
@@ -62,7 +62,7 @@ Example:
 		} else if systemFlag {
 			createoperations.CreateSystemVariable(args, app)
 		} else if executeFlag {
-			createoperations.CreateLastCommand(state.Execute, args, app)
+			createoperations.CreateLastCommand(operationsdata.Execute, args, app)
 		} else if scriptFlag {
 			createoperations.CreateScriptCommand(args, app)
 		} else if len(args) > 0 {

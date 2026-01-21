@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 )
 
 const (
@@ -45,7 +45,7 @@ func CheckYesAnswer(input string) bool {
 	return false
 }
 
-func GetUserInput(ask string, fnValid func(string, *app.Data) (any, error), app *app.Data) any {
+func GetUserInput(ask string, fnValid func(string, *appdata.Data) (any, error), app *appdata.Data) any {
 	ok := false
 	input := ""
 	var output any
@@ -68,7 +68,7 @@ func GetUserInput(ask string, fnValid func(string, *app.Data) (any, error), app 
 	return output
 }
 
-func GetUserConfirmation(ask string, app *app.Data) bool {
+func GetUserConfirmation(ask string, app *appdata.Data) bool {
 	ok := false
 	input := ""
 	var confirmation bool
@@ -104,7 +104,7 @@ func IsValidConfirmation(input string) (bool, error) {
 	return true, nil
 }
 
-func IsValidInput(input string, app *app.Data) (any, error) {
+func IsValidInput(input string, app *appdata.Data) (any, error) {
 	if input == "" {
 		return "", crowererrors.EmptyInput()
 	}
@@ -112,7 +112,7 @@ func IsValidInput(input string, app *app.Data) (any, error) {
 	return input, nil
 }
 
-func InputAlias(app *app.Data) []string {
+func InputAlias(app *appdata.Data) []string {
 	output := []string{}
 
 	alias := "none"
@@ -128,7 +128,7 @@ func InputAlias(app *app.Data) []string {
 	return output
 }
 
-func InputName(app *app.Data) string {
+func InputName(app *appdata.Data) string {
 	name := ""
 	for name == "" {
 		name = GetUserInput("Add new name: ", IsValidInput, app).(string)
@@ -137,7 +137,7 @@ func InputName(app *app.Data) string {
 	return name
 }
 
-func InputExec(app *app.Data) string {
+func InputExec(app *appdata.Data) string {
 	exec := ""
 	for exec == "" {
 		exec = GetUserInput("Add new exec: ", IsValidInput, app).(string)
@@ -146,7 +146,7 @@ func InputExec(app *app.Data) string {
 	return exec
 }
 
-func isValidAlias(input string, app *app.Data) (any, error) {
+func isValidAlias(input string, app *appdata.Data) (any, error) {
 	for _, r := range input {
 		if !unicode.IsNumber(r) && !unicode.IsLetter(r) {
 			return "", crowererrors.OnlyLettersAndNumbers()
@@ -156,7 +156,7 @@ func isValidAlias(input string, app *app.Data) (any, error) {
 	return input, nil
 }
 
-func IsValidInputKey(input string, app *app.Data) (any, error) {
+func IsValidInputKey(input string, app *appdata.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
 		return "", crowererrors.InvalidRows()
@@ -169,7 +169,7 @@ func IsValidInputKey(input string, app *app.Data) (any, error) {
 	return app.OrderKeys[index], nil
 }
 
-func IsValidContentKey(input string, app *app.Data) (any, error) {
+func IsValidContentKey(input string, app *appdata.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
 		return "", crowererrors.InvalidRows()

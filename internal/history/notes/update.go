@@ -3,18 +3,18 @@ package notes
 import (
 	"sort"
 
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/state"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new update note
-func GenerateUpdateCommmandNote(args []string, oldCommand *command.Data, newCommand *command.Data) string {
+func GenerateUpdateCommmandNote(args []string, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
 
 	noteBuilder := New()
 
 	noteBuilder.
-		AddMainOperation(state.Update).
-		AddSubOperation(state.Command)
+		AddMainOperation(operationsdata.Update).
+		AddSubOperation(operationsdata.Command)
 
 	if oldCommand.Name != newCommand.Name {
 		noteBuilder.
@@ -39,12 +39,12 @@ func GenerateUpdateCommmandNote(args []string, oldCommand *command.Data, newComm
 		Build()
 }
 
-func GenerateUpdateLastNote(op state.MainOperationEnum, oldCommand *command.Data, newCommand *command.Data) string {
+func GenerateUpdateLastNote(op operationsdata.MainOperationEnum, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
 	noteBuilder := New()
 
 	noteBuilder.
-		AddMainOperation(state.Update).
-		AddSubOperation(state.Command)
+		AddMainOperation(operationsdata.Update).
+		AddSubOperation(operationsdata.Command)
 
 	if oldCommand.Name != newCommand.Name {
 		noteBuilder.
@@ -65,11 +65,11 @@ func GenerateUpdateLastNote(op state.MainOperationEnum, oldCommand *command.Data
 	}
 
 	switch op {
-	case state.Update:
+	case operationsdata.Update:
 		noteBuilder.AddCrowerExec("update --last", nil)
-	case state.Create:
+	case operationsdata.Create:
 		noteBuilder.AddCrowerExec("update --create", nil)
-	case state.Execute:
+	case operationsdata.Execute:
 		noteBuilder.AddCrowerExec("update --execute", nil)
 	}
 

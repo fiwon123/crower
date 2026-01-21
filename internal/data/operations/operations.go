@@ -1,4 +1,4 @@
-package state
+package operationsdata
 
 // all operations
 type MainOperationEnum string

@@ -1,13 +1,13 @@
 package notes
 
-import "github.com/fiwon123/crower/internal/data/state"
+import operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
 // Create a new copy note
-func GenerateCopyNote(subOp state.SubOperationEnum, args []string) string {
+func GenerateCopyNote(subOp operationsdata.SubOperationEnum, args []string) string {
 	noteBuilder := New()
 
 	return noteBuilder.
-		AddMainOperation(state.Copy).
+		AddMainOperation(operationsdata.Copy).
 		AddSubOperation(subOp).
 		AddCrowerExec("crower copy", args).
 		Build()

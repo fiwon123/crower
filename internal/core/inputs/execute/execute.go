@@ -2,20 +2,21 @@ package executeinputs
 
 import (
 	inputscore "github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+
 	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 )
 
 // Verify parameters to process execute operation
-func CheckExecuteInput(key *string, params *[]string, app *app.Data) bool {
+func CheckExecuteInput(key *string, params *[]string, app *appdata.Data) bool {
 	if *key == "" {
 		listhandlers.ListCommands(app)
 		input := inputscore.GetUserInput("Select Row", inputscore.IsValidInputKey, app).(string)
 		*key = input
 	}
 
-	var command *command.Data
+	var command *commanddata.Data
 	if *key != "" {
 		command = app.AllCommandsByName.Get(*key)
 		if command == nil {

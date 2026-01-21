@@ -3,16 +3,16 @@ package updateoperations
 import (
 	updateinputs "github.com/fiwon123/crower/internal/core/inputs/update"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	"github.com/fiwon123/crower/internal/data/app"
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/state"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	updatehandlers "github.com/fiwon123/crower/internal/handlers/update"
 	"github.com/fiwon123/crower/internal/history"
 	"github.com/fiwon123/crower/internal/history/notes"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func UpdateCommand(args []string, name string, allAlias []string, exec string, app *app.Data) {
+func UpdateCommand(args []string, name string, allAlias []string, exec string, app *appdata.Data) {
 
 	key := ""
 	if len(args) != 0 {
@@ -30,11 +30,11 @@ func UpdateCommand(args []string, name string, allAlias []string, exec string, a
 		return
 	}
 
-	app.History.Add(state.Update, notes.GenerateUpdateCommmandNote(args, oldCommand, newCommand))
+	app.History.Add(operationsdata.Update, notes.GenerateUpdateCommmandNote(args, oldCommand, newCommand))
 	history.Save(app)
 }
 
-func performUpdateCommand(key string, name string, allAlias []string, exec string, app *app.Data) (*command.Data, *command.Data) {
+func performUpdateCommand(key string, name string, allAlias []string, exec string, app *appdata.Data) (*commanddata.Data, *commanddata.Data) {
 	oldCommand, newCommand, err := updatehandlers.UpdateCommand(key, name, allAlias, exec, app)
 	if err != nil {
 		app.Logger.Error("Error update command: ", "error", err, "key", key, "name", name, "alias", allAlias, "exec", exec)
@@ -47,7 +47,7 @@ func performUpdateCommand(key string, name string, allAlias []string, exec strin
 	return oldCommand, newCommand
 }
 
-func UpdateLast(op state.MainOperationEnum, name string, allAlias []string, exec string, app *app.Data) {
+func UpdateLast(op operationsdata.MainOperationEnum, name string, allAlias []string, exec string, app *appdata.Data) {
 	content := history.GetLast(op, app)
 
 	if content == nil {
@@ -62,6 +62,6 @@ func UpdateLast(op state.MainOperationEnum, name string, allAlias []string, exec
 		return
 	}
 
-	app.History.Add(state.Update, notes.GenerateUpdateLastNote(op, oldCommand, newCommand))
+	app.History.Add(operationsdata.Update, notes.GenerateUpdateLastNote(op, oldCommand, newCommand))
 	history.Save(app)
 }

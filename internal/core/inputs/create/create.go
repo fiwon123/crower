@@ -2,11 +2,11 @@ package createinputs
 
 import (
 	inputscore "github.com/fiwon123/crower/internal/core/inputs"
-	"github.com/fiwon123/crower/internal/data/app"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 )
 
 // Verify parameters to process create operation
-func CheckCreateInput(name *string, alias *[]string, exec *string, app *app.Data) {
+func CheckCreateInput(name *string, alias *[]string, exec *string, app *appdata.Data) {
 	if *name == "" {
 		*name = inputscore.GetUserInput("New Name ", inputscore.IsValidInput, app).(string)
 	}
