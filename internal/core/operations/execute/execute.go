@@ -5,10 +5,10 @@ import (
 	"github.com/fiwon123/crower/internal/crowererrors"
 	appdata "github.com/fiwon123/crower/internal/data/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
+	executenotesdata "github.com/fiwon123/crower/internal/data/notes/execute"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func ExecuteCommand(args []string, app *appdata.Data) {
@@ -29,12 +29,12 @@ func ExecuteCommand(args []string, app *appdata.Data) {
 	output, command, err := executehandlers.Execute(key, params, app)
 	assertExecute(output, command, err, app)
 
-	app.History.Add(operationsdata.Execute, notes.GenerateExecuteCommandNote(command))
-	history.Save(app)
+	app.History.Add(operationsdata.Execute, executenotesdata.NewExecuteCommandNote(command))
+	historyhelper.Save(app)
 }
 
 func ExecuteLast(op operationsdata.MainOperationEnum, args []string, app *appdata.Data) {
-	content := history.GetLast(op, app)
+	content := historyhelper.GetLast(op, app)
 
 	if content == nil {
 		crowererrors.PrintCommandNotFoundError(app)
@@ -44,8 +44,8 @@ func ExecuteLast(op operationsdata.MainOperationEnum, args []string, app *appdat
 	output, command, err := executehandlers.Execute(content.CommandName, args, app)
 	assertExecute(output, command, err, app)
 
-	app.History.Add(operationsdata.Execute, notes.GenerateExecuteLastNote(op, command))
-	history.Save(app)
+	app.History.Add(operationsdata.Execute, executenotesdata.NewExecuteLastNote(op, command))
+	historyhelper.Save(app)
 }
 
 func assertExecute(output string, command *commanddata.Data, err error, app *appdata.Data) {

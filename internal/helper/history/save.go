@@ -1,4 +1,4 @@
-package history
+package historyhelper
 
 import (
 	"path/filepath"

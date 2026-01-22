@@ -1,13 +1,14 @@
-package notes
+package deletenotesdata
 
 import (
 	commanddata "github.com/fiwon123/crower/internal/data/command"
+	notesdata "github.com/fiwon123/crower/internal/data/notes"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new delete command note
-func GenerateDeleteCommandNote(command *commanddata.Data, args []string) string {
-	noteBuilder := New()
+func NewDeleteCommandNote(command *commanddata.Data, args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Delete).
@@ -19,8 +20,8 @@ func GenerateDeleteCommandNote(command *commanddata.Data, args []string) string 
 		Build()
 }
 
-func GenerateDeleteLastNote(op operationsdata.MainOperationEnum, command *commanddata.Data) string {
-	noteBuilder := New()
+func NewDeleteLastNote(op operationsdata.MainOperationEnum, command *commanddata.Data) string {
+	noteBuilder := notesdata.New()
 
 	noteBuilder.
 		AddMainOperation(operationsdata.Delete).
@@ -41,8 +42,8 @@ func GenerateDeleteLastNote(op operationsdata.MainOperationEnum, command *comman
 	return noteBuilder.Build()
 }
 
-func GenerateDeleteFileNote(args []string) string {
-	noteBuilder := New()
+func NewDeleteFileNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Delete).
@@ -52,7 +53,7 @@ func GenerateDeleteFileNote(args []string) string {
 }
 
 func GenerateDeleteFolderNote(args []string) string {
-	noteBuilder := New()
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Delete).
@@ -61,8 +62,8 @@ func GenerateDeleteFolderNote(args []string) string {
 		Build()
 }
 
-func GenerateDeleteSystemVariable(args []string) string {
-	noteBuilder := New()
+func NewDeleteSystemVariable(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Delete).
@@ -71,8 +72,8 @@ func GenerateDeleteSystemVariable(args []string) string {
 		Build()
 }
 
-func GenerateDeleteSystemPathVariable(args []string) string {
-	noteBuilder := New()
+func NewDeleteSystemPathVariable(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Delete).

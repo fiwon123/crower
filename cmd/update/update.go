@@ -1,4 +1,4 @@
-package update
+package updatecmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

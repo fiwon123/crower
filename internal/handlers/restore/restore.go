@@ -7,11 +7,11 @@ import (
 	dataHistory "github.com/fiwon123/crower/internal/data/history"
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
 	updatehandlers "github.com/fiwon123/crower/internal/handlers/update"
-	"github.com/fiwon123/crower/internal/history"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func RestoreHistory(key string, content dataHistory.Content, app *appdata.Data) (string, error) {
-	command, err := history.FindCommand(key, content, app)
+	command, err := historyhelper.FindCommand(key, content, app)
 	if err != nil {
 		return "", err
 	}

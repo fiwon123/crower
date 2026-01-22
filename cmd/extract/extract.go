@@ -1,4 +1,4 @@
-package extract
+package extractcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

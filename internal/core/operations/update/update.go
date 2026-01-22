@@ -5,10 +5,10 @@ import (
 	"github.com/fiwon123/crower/internal/crowererrors"
 	appdata "github.com/fiwon123/crower/internal/data/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
+	updatenotesdata "github.com/fiwon123/crower/internal/data/notes/update"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	updatehandlers "github.com/fiwon123/crower/internal/handlers/update"
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -30,8 +30,8 @@ func UpdateCommand(args []string, name string, allAlias []string, exec string, a
 		return
 	}
 
-	app.History.Add(operationsdata.Update, notes.GenerateUpdateCommmandNote(args, oldCommand, newCommand))
-	history.Save(app)
+	app.History.Add(operationsdata.Update, updatenotesdata.NewUpdateCommmandNote(args, oldCommand, newCommand))
+	historyhelper.Save(app)
 }
 
 func performUpdateCommand(key string, name string, allAlias []string, exec string, app *appdata.Data) (*commanddata.Data, *commanddata.Data) {
@@ -48,7 +48,7 @@ func performUpdateCommand(key string, name string, allAlias []string, exec strin
 }
 
 func UpdateLast(op operationsdata.MainOperationEnum, name string, allAlias []string, exec string, app *appdata.Data) {
-	content := history.GetLast(op, app)
+	content := historyhelper.GetLast(op, app)
 
 	if content == nil {
 		crowererrors.PrintCommandNotFoundError(app)
@@ -62,6 +62,6 @@ func UpdateLast(op operationsdata.MainOperationEnum, name string, allAlias []str
 		return
 	}
 
-	app.History.Add(operationsdata.Update, notes.GenerateUpdateLastNote(op, oldCommand, newCommand))
-	history.Save(app)
+	app.History.Add(operationsdata.Update, updatenotesdata.NewUpdateLastNote(op, oldCommand, newCommand))
+	historyhelper.Save(app)
 }

@@ -25,7 +25,7 @@ func New(cfgFilePath string, orderKeys []string, allAliases commanddata.MapData,
 
 	folderPath := filepath.Dir(cfgFilePath)
 
-	historyFilePath := filepath.Join(folderPath, "history.json")
+	historyFilePath := filepath.Join(folderPath, "historyhelper.json")
 	crowerutils.CreateFileIfNotExists(historyFilePath)
 
 	historyFolderPath := filepath.Join(folderPath, "history")

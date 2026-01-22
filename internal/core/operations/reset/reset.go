@@ -3,10 +3,10 @@ package resetoperations
 import (
 	resetinputs "github.com/fiwon123/crower/internal/core/inputs/reset"
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	resetnotesdata "github.com/fiwon123/crower/internal/data/notes/reset"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	resethandlers "github.com/fiwon123/crower/internal/handlers/reset"
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -22,6 +22,6 @@ func Reset(app *appdata.Data) {
 	resethandlers.Reset(app)
 	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 
-	app.History.Add(operationsdata.Reset, notes.GenerateResetNote())
-	history.Save(app)
+	app.History.Add(operationsdata.Reset, resetnotesdata.NewResetNote())
+	historyhelper.Save(app)
 }

@@ -1,4 +1,4 @@
-package list
+package listcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

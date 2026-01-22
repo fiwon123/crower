@@ -1,4 +1,4 @@
-package revert
+package revertcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

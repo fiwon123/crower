@@ -1,4 +1,4 @@
-package execute
+package executecmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

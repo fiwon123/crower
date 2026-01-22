@@ -1,4 +1,4 @@
-package create
+package createcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

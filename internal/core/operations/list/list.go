@@ -6,31 +6,31 @@ import (
 	"strings"
 
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	listnotesdata "github.com/fiwon123/crower/internal/data/notes/list"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func ListCommands(app *appdata.Data) {
 	listhandlers.ListCommands(app)
 
-	app.History.Add(operationsdata.List, notes.GenerateListCommandsNote())
-	history.Save(app)
+	app.History.Add(operationsdata.List, listnotesdata.NewListCommandsNote())
+	historyhelper.Save(app)
 }
 
 func ListProcess(args []string, app *appdata.Data) {
 	listhandlers.ListProcess(args, app)
 
-	app.History.Add(operationsdata.List, notes.GenerateListProcessNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.List, listnotesdata.NewListProcessNote(args))
+	historyhelper.Save(app)
 }
 
 func ListHistory(app *appdata.Data) {
 	listhandlers.ListHistory(app)
 
-	app.History.Add(operationsdata.List, notes.GenerateListHistoriesNote())
-	history.Save(app)
+	app.History.Add(operationsdata.List, listnotesdata.NewListHistoriesNote())
+	historyhelper.Save(app)
 }
 
 func ListFolder(args []string, app *appdata.Data) {
@@ -42,8 +42,8 @@ func ListFolder(args []string, app *appdata.Data) {
 	out, err := listhandlers.ListFolder(currentPath, app)
 	assertListResult(out, err, app)
 
-	app.History.Add(operationsdata.List, notes.GenerateListFolderNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.List, listnotesdata.NewListFolderNote(args))
+	historyhelper.Save(app)
 }
 
 func ListSystem(app *appdata.Data) {
@@ -65,8 +65,8 @@ func ListSystem(app *appdata.Data) {
 	}
 	assertListResult(out, err, app)
 
-	app.History.Add(operationsdata.List, notes.GenerateListSystemNote())
-	history.Save(app)
+	app.History.Add(operationsdata.List, listnotesdata.NewListSystemNote())
+	historyhelper.Save(app)
 }
 
 func ListSysPath(app *appdata.Data) {
@@ -78,8 +78,8 @@ func ListSysPath(app *appdata.Data) {
 
 	assertListResult(out, err, app)
 
-	app.History.Add(operationsdata.List, notes.GenerateListSystemPathNote())
-	history.Save(app)
+	app.History.Add(operationsdata.List, listnotesdata.NewListSystemPathNote())
+	historyhelper.Save(app)
 }
 
 func formatVariable(name string, paths string) string {

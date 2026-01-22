@@ -2,11 +2,10 @@ package searchoperations
 
 import (
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	searchnotesdata "github.com/fiwon123/crower/internal/data/notes/search"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	searchhandlers "github.com/fiwon123/crower/internal/handlers/search"
-
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func SearchBrowser(args []string, app *appdata.Data) {
@@ -17,8 +16,8 @@ func SearchBrowser(args []string, app *appdata.Data) {
 
 	searchhandlers.SearchBrowser(content, app)
 
-	app.History.Add(operationsdata.Revert, notes.GenerateSearchBrowserNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Revert, searchnotesdata.NewSearchBrowserNote(args))
+	historyhelper.Save(app)
 }
 
 func SearchFile(args []string, app *appdata.Data) {
@@ -27,8 +26,8 @@ func SearchFile(args []string, app *appdata.Data) {
 	out, err := searchhandlers.SearchFile(currentPath, content, app)
 	assertSearchResult(out, err, app)
 
-	app.History.Add(operationsdata.Revert, notes.GenerateSearchFileNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Revert, searchnotesdata.NewSearchFileNote(args))
+	historyhelper.Save(app)
 }
 
 func SearchFolder(args []string, app *appdata.Data) {
@@ -37,8 +36,8 @@ func SearchFolder(args []string, app *appdata.Data) {
 	out, err := searchhandlers.SearchFolder(currentPath, content, app)
 	assertSearchResult(out, err, app)
 
-	app.History.Add(operationsdata.Revert, notes.GenerateSearchFolderNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Revert, searchnotesdata.NewSearchFolderNote(args))
+	historyhelper.Save(app)
 }
 
 func SearchFileAndFolder(args []string, app *appdata.Data) {
@@ -47,8 +46,8 @@ func SearchFileAndFolder(args []string, app *appdata.Data) {
 	out, err := searchhandlers.SearchFileAndFolder(currentPath, content, app)
 	assertSearchResult(out, err, app)
 
-	app.History.Add(operationsdata.Revert, notes.GenerateSearchFileAndFolderNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Revert, searchnotesdata.NewSearchFileAndFolderNote(args))
+	historyhelper.Save(app)
 }
 
 func assertArgs(args []string) (string, string) {

@@ -6,19 +6,19 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fiwon123/crower/cmd/copy"
-	"github.com/fiwon123/crower/cmd/create"
-	"github.com/fiwon123/crower/cmd/delete"
-	"github.com/fiwon123/crower/cmd/execute"
-	"github.com/fiwon123/crower/cmd/extract"
-	"github.com/fiwon123/crower/cmd/list"
-	"github.com/fiwon123/crower/cmd/move"
-	"github.com/fiwon123/crower/cmd/open"
-	"github.com/fiwon123/crower/cmd/reset"
-	"github.com/fiwon123/crower/cmd/restore"
-	"github.com/fiwon123/crower/cmd/revert"
-	"github.com/fiwon123/crower/cmd/search"
-	"github.com/fiwon123/crower/cmd/update"
+	copycmd "github.com/fiwon123/crower/cmd/copy"
+	createcmd "github.com/fiwon123/crower/cmd/create"
+	deletecmd "github.com/fiwon123/crower/cmd/delete"
+	executecmd "github.com/fiwon123/crower/cmd/execute"
+	extractcmd "github.com/fiwon123/crower/cmd/extract"
+	listcmd "github.com/fiwon123/crower/cmd/list"
+	movecmd "github.com/fiwon123/crower/cmd/move"
+	opencmd "github.com/fiwon123/crower/cmd/open"
+	resetcmd "github.com/fiwon123/crower/cmd/reset"
+	restorecmd "github.com/fiwon123/crower/cmd/restore"
+	revertcmd "github.com/fiwon123/crower/cmd/revert"
+	searchcmd "github.com/fiwon123/crower/cmd/search"
+	updatecmd "github.com/fiwon123/crower/cmd/update"
 	"github.com/fiwon123/crower/internal/core"
 	checkoperations "github.com/fiwon123/crower/internal/core/operations/check"
 	executeoperations "github.com/fiwon123/crower/internal/core/operations/execute"
@@ -90,19 +90,19 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(create.Cmd)
-	rootCmd.AddCommand(update.Cmd)
-	rootCmd.AddCommand(delete.Cmd)
-	rootCmd.AddCommand(list.Cmd)
-	rootCmd.AddCommand(open.Cmd)
-	rootCmd.AddCommand(reset.Cmd)
-	rootCmd.AddCommand(revert.Cmd)
-	rootCmd.AddCommand(search.Cmd)
-	rootCmd.AddCommand(extract.Cmd)
-	rootCmd.AddCommand(copy.Cmd)
-	rootCmd.AddCommand(move.Cmd)
-	rootCmd.AddCommand(execute.Cmd)
-	rootCmd.AddCommand(restore.Cmd)
+	rootCmd.AddCommand(createcmd.Cmd)
+	rootCmd.AddCommand(updatecmd.Cmd)
+	rootCmd.AddCommand(deletecmd.Cmd)
+	rootCmd.AddCommand(listcmd.Cmd)
+	rootCmd.AddCommand(opencmd.Cmd)
+	rootCmd.AddCommand(resetcmd.Cmd)
+	rootCmd.AddCommand(revertcmd.Cmd)
+	rootCmd.AddCommand(searchcmd.Cmd)
+	rootCmd.AddCommand(extractcmd.Cmd)
+	rootCmd.AddCommand(copycmd.Cmd)
+	rootCmd.AddCommand(movecmd.Cmd)
+	rootCmd.AddCommand(executecmd.Cmd)
+	rootCmd.AddCommand(restorecmd.Cmd)
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {

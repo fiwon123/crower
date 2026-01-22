@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	upgradenotesdata "github.com/fiwon123/crower/internal/data/notes/upgrade"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	checkhandlers "github.com/fiwon123/crower/internal/handlers/check"
 	upgradehandlers "github.com/fiwon123/crower/internal/handlers/upgrade"
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func UpgradeApp(currentVersion string, app *appdata.Data) {
@@ -32,6 +32,6 @@ func UpgradeApp(currentVersion string, app *appdata.Data) {
 
 	app.Logger.Info(fmt.Sprintf("crower upgraded from %s to %s \n", currentVersion, newVersion))
 
-	app.History.Add(operationsdata.Upgrade, notes.GenerateUpgradeNote())
-	history.Save(app)
+	app.History.Add(operationsdata.Upgrade, upgradenotesdata.NewUpgradeNote())
+	historyhelper.Save(app)
 }

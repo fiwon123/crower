@@ -1,12 +1,13 @@
-package notes
+package listnotesdata
 
 import (
+	notesdata "github.com/fiwon123/crower/internal/data/notes"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new list note
-func GenerateListCommandsNote() string {
-	noteBuilder := New()
+func NewListCommandsNote() string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.List).
@@ -15,8 +16,8 @@ func GenerateListCommandsNote() string {
 		Build()
 }
 
-func GenerateListProcessNote(args []string) string {
-	noteBuilder := New()
+func NewListProcessNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.List).
@@ -25,8 +26,8 @@ func GenerateListProcessNote(args []string) string {
 		Build()
 }
 
-func GenerateListHistoriesNote() string {
-	noteBuilder := New()
+func NewListHistoriesNote() string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.List).
@@ -35,8 +36,8 @@ func GenerateListHistoriesNote() string {
 		Build()
 }
 
-func GenerateListFolderNote(args []string) string {
-	noteBuilder := New()
+func NewListFolderNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.List).
@@ -45,8 +46,8 @@ func GenerateListFolderNote(args []string) string {
 		Build()
 }
 
-func GenerateListSystemNote() string {
-	noteBuilder := New()
+func NewListSystemNote() string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.List).
@@ -55,8 +56,8 @@ func GenerateListSystemNote() string {
 		Build()
 }
 
-func GenerateListSystemPathNote() string {
-	noteBuilder := New()
+func NewListSystemPathNote() string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.List).

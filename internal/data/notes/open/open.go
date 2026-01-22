@@ -1,10 +1,13 @@
-package notes
+package opennotesdata
 
-import operationsdata "github.com/fiwon123/crower/internal/data/operations"
+import (
+	notesdata "github.com/fiwon123/crower/internal/data/notes"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+)
 
 // Create a new open note
-func GenerateOpenNote(args []string) string {
-	noteBuilder := New()
+func NewOpenNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Open).
@@ -12,8 +15,8 @@ func GenerateOpenNote(args []string) string {
 		Build()
 }
 
-func GenerateOpenFolderNote(args []string) string {
-	noteBuilder := New()
+func NewOpenFolderNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Open).
@@ -22,8 +25,8 @@ func GenerateOpenFolderNote(args []string) string {
 		Build()
 }
 
-func GenerateOpenSystemNote() string {
-	noteBuilder := New()
+func NewOpenSystemNote() string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Open).

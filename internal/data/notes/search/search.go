@@ -1,10 +1,13 @@
-package notes
+package searchnotesdata
 
-import operationsdata "github.com/fiwon123/crower/internal/data/operations"
+import (
+	notesdata "github.com/fiwon123/crower/internal/data/notes"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+)
 
 // Create a new search browser note
-func GenerateSearchBrowserNote(args []string) string {
-	noteBuilder := New()
+func NewSearchBrowserNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Search).
@@ -13,8 +16,8 @@ func GenerateSearchBrowserNote(args []string) string {
 		Build()
 }
 
-func GenerateSearchFileNote(args []string) string {
-	noteBuilder := New()
+func NewSearchFileNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Search).
@@ -23,8 +26,8 @@ func GenerateSearchFileNote(args []string) string {
 		Build()
 }
 
-func GenerateSearchFolderNote(args []string) string {
-	noteBuilder := New()
+func NewSearchFolderNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Search).
@@ -33,8 +36,8 @@ func GenerateSearchFolderNote(args []string) string {
 		Build()
 }
 
-func GenerateSearchFileAndFolderNote(args []string) string {
-	noteBuilder := New()
+func NewSearchFileAndFolderNote(args []string) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Search).

@@ -1,4 +1,4 @@
-package move
+package movecmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

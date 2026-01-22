@@ -3,11 +3,11 @@ package copyoperations
 import (
 	"github.com/fiwon123/crower/internal/crowererrors"
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	copynotesdata "github.com/fiwon123/crower/internal/data/notes/copy"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	copyhandlers "github.com/fiwon123/crower/internal/handlers/copy"
 
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -38,12 +38,12 @@ func Copy(args []string, app *appdata.Data) {
 	}
 
 	if isCopyFile && isCopyFolder {
-		app.History.Add(operationsdata.Copy, notes.GenerateCopyNote(operationsdata.FileAndFolder, args))
+		app.History.Add(operationsdata.Copy, copynotesdata.NewCopyNote(operationsdata.FileAndFolder, args))
 	} else if isCopyFile {
-		app.History.Add(operationsdata.Copy, notes.GenerateCopyNote(operationsdata.File, args))
+		app.History.Add(operationsdata.Copy, copynotesdata.NewCopyNote(operationsdata.File, args))
 	} else if isCopyFolder {
-		app.History.Add(operationsdata.Copy, notes.GenerateCopyNote(operationsdata.Folder, args))
+		app.History.Add(operationsdata.Copy, copynotesdata.NewCopyNote(operationsdata.Folder, args))
 	}
 
-	history.Save(app)
+	historyhelper.Save(app)
 }

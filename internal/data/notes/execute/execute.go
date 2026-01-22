@@ -1,13 +1,14 @@
-package notes
+package executenotesdata
 
 import (
 	commanddata "github.com/fiwon123/crower/internal/data/command"
+	notesdata "github.com/fiwon123/crower/internal/data/notes"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new execute note
-func GenerateExecuteCommandNote(command *commanddata.Data) string {
-	noteBuilder := New()
+func NewExecuteCommandNote(command *commanddata.Data) string {
+	noteBuilder := notesdata.New()
 
 	return noteBuilder.
 		AddMainOperation(operationsdata.Execute).
@@ -19,8 +20,8 @@ func GenerateExecuteCommandNote(command *commanddata.Data) string {
 		Build()
 }
 
-func GenerateExecuteLastNote(op operationsdata.MainOperationEnum, command *commanddata.Data) string {
-	noteBuilder := New()
+func NewExecuteLastNote(op operationsdata.MainOperationEnum, command *commanddata.Data) string {
+	noteBuilder := notesdata.New()
 
 	noteBuilder.
 		AddMainOperation(operationsdata.Execute).

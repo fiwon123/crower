@@ -6,9 +6,9 @@ import (
 	revertinputs "github.com/fiwon123/crower/internal/core/inputs/revert"
 	"github.com/fiwon123/crower/internal/crowererrors"
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	revertnotesdata "github.com/fiwon123/crower/internal/data/notes/revert"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func Revert(args []string, app *appdata.Data) {
@@ -41,14 +41,14 @@ func Revert(args []string, app *appdata.Data) {
 		return
 	}
 
-	err = history.RevertTo(backHistory, app)
+	err = historyhelper.RevertTo(backHistory, app)
 	if err != nil {
 		app.Logger.Error("Error revert history %v", err)
 		return
 	}
 	app.Logger.Info("reverted to history version ", backHistory.Version)
-	history.Save(app)
+	historyhelper.Save(app)
 
-	app.History.Add(operationsdata.Revert, notes.GenerateRevertNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Revert, revertnotesdata.NewRevertNote(args))
+	historyhelper.Save(app)
 }

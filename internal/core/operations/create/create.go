@@ -9,11 +9,11 @@ import (
 	"github.com/fiwon123/crower/internal/crowererrors"
 	appdata "github.com/fiwon123/crower/internal/data/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
+	createnotesdata "github.com/fiwon123/crower/internal/data/notes/create"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
 	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -32,8 +32,8 @@ func CreateCommand(allAlias []string, args []string, app *appdata.Data) {
 		return
 	}
 
-	app.History.Add(operationsdata.Create, notes.GenerateCreateCommandNote(command, args))
-	history.Save(app)
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateCommandNote(command, args))
+	historyhelper.Save(app)
 }
 
 func performCreateCommand(name string, allAlias []string, exec string, app *appdata.Data) *commanddata.Data {
@@ -60,8 +60,8 @@ func CreateProcess(name string, args []string, app *appdata.Data) {
 	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
 	app.Logger.Info("added new command by process: ", "allCommands", app.AllCommandsByName)
 
-	app.History.Add(operationsdata.Create, notes.GenerateCreateProcessNote(command, args))
-	history.Save(app)
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateProcessNote(command, args))
+	historyhelper.Save(app)
 }
 
 func CreateSystemVariable(args []string, app *appdata.Data) {
@@ -83,8 +83,8 @@ func CreateSystemVariable(args []string, app *appdata.Data) {
 
 	app.Logger.Info(out)
 
-	app.History.Add(operationsdata.Create, notes.GenerateCreateSystemVariableNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateSystemVariableNote(args))
+	historyhelper.Save(app)
 }
 
 func CreateSystemPathVariable(args []string, app *appdata.Data) {
@@ -104,8 +104,8 @@ func CreateSystemPathVariable(args []string, app *appdata.Data) {
 
 	app.Logger.Info(out)
 
-	app.History.Add(operationsdata.Create, notes.GenerateCreateSystemPathVariableNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateSystemPathVariableNote(args))
+	historyhelper.Save(app)
 }
 
 func CreateFile(args []string, app *appdata.Data) {
@@ -116,8 +116,8 @@ func CreateFile(args []string, app *appdata.Data) {
 		}
 	}
 
-	app.History.Add(operationsdata.Create, notes.GenerateCreateFile(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Create, createnotesdata.GenerateCreateFile(args))
+	historyhelper.Save(app)
 }
 
 func CreateFolder(args []string, app *appdata.Data) {
@@ -128,8 +128,8 @@ func CreateFolder(args []string, app *appdata.Data) {
 		}
 	}
 
-	app.History.Add(operationsdata.Create, notes.GenerateCreateFolder(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateFolder(args))
+	historyhelper.Save(app)
 }
 
 func CreateLastCommand(op operationsdata.MainOperationEnum, args []string, app *appdata.Data) {
@@ -141,7 +141,7 @@ func CreateLastCommand(op operationsdata.MainOperationEnum, args []string, app *
 		return
 	}
 
-	content := history.GetLast(op, app)
+	content := historyhelper.GetLast(op, app)
 
 	if content == nil {
 		crowererrors.PrintCommandNotFoundError(app)
@@ -166,8 +166,8 @@ func CreateLastCommand(op operationsdata.MainOperationEnum, args []string, app *
 		return
 	}
 
-	app.History.Add(operationsdata.Create, notes.GenerateCreateCommandLastExecuteNote(command))
-	history.Save(app)
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateCommandLastExecuteNote(command))
+	historyhelper.Save(app)
 }
 
 func CreateScriptCommand(args []string, app *appdata.Data) {
@@ -198,6 +198,6 @@ func CreateScriptCommand(args []string, app *appdata.Data) {
 
 	openhandlers.Open([]string{filepath.Dir(scriptFilePath)}, app)
 
-	app.History.Add(operationsdata.Create, notes.GenerateCreateScriptCommandNote(command, args))
-	history.Save(app)
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateScriptCommandNote(command, args))
+	historyhelper.Save(app)
 }

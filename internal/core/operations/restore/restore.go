@@ -3,11 +3,11 @@ package restoreoperations
 import (
 	restoreinputs "github.com/fiwon123/crower/internal/core/inputs/restore"
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	restorenotesdata "github.com/fiwon123/crower/internal/data/notes/restore"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	restorehandlers "github.com/fiwon123/crower/internal/handlers/restore"
 
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func Restore(args []string, app *appdata.Data) {
@@ -30,6 +30,6 @@ func Restore(args []string, app *appdata.Data) {
 
 	app.Logger.Info("restored command: ", "out", out)
 
-	app.History.Add(operationsdata.Restore, notes.GenerateRestoreNote(out))
-	history.Save(app)
+	app.History.Add(operationsdata.Restore, restorenotesdata.NewRestoreNote(out))
+	historyhelper.Save(app)
 }

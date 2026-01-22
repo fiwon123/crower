@@ -3,11 +3,11 @@ package moveoperations
 import (
 	"github.com/fiwon123/crower/internal/crowererrors"
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	movenotesdata "github.com/fiwon123/crower/internal/data/notes/move"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	movehandlers "github.com/fiwon123/crower/internal/handlers/move"
 
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -39,12 +39,12 @@ func Move(args []string, app *appdata.Data) {
 	}
 
 	if isMoveFile && isMoveFolder {
-		app.History.Add(operationsdata.Move, notes.GenerateMoveNote(operationsdata.FileAndFolder, args))
+		app.History.Add(operationsdata.Move, movenotesdata.NewMoveNote(operationsdata.FileAndFolder, args))
 	} else if isMoveFile {
-		app.History.Add(operationsdata.Move, notes.GenerateMoveNote(operationsdata.File, args))
+		app.History.Add(operationsdata.Move, movenotesdata.NewMoveNote(operationsdata.File, args))
 	} else if isMoveFolder {
-		app.History.Add(operationsdata.Move, notes.GenerateMoveNote(operationsdata.Folder, args))
+		app.History.Add(operationsdata.Move, movenotesdata.NewMoveNote(operationsdata.Folder, args))
 	}
 
-	history.Save(app)
+	historyhelper.Save(app)
 }

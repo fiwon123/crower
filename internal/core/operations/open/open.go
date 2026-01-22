@@ -4,10 +4,10 @@ import (
 	"path/filepath"
 
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	opennotesdata "github.com/fiwon123/crower/internal/data/notes/open"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func Open(args []string, app *appdata.Data) {
@@ -28,8 +28,8 @@ func Open(args []string, app *appdata.Data) {
 
 	openhandlers.Open(paths, app)
 
-	app.History.Add(operationsdata.Open, notes.GenerateOpenNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Open, opennotesdata.NewOpenNote(args))
+	historyhelper.Save(app)
 }
 
 func OpenFile(args []string, app *appdata.Data) {
@@ -40,8 +40,8 @@ func OpenFile(args []string, app *appdata.Data) {
 
 	openhandlers.Open(args, app)
 
-	app.History.Add(operationsdata.Open, notes.GenerateOpenFolderNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Open, opennotesdata.NewOpenFolderNote(args))
+	historyhelper.Save(app)
 }
 
 func OpenFolder(args []string, app *appdata.Data) {
@@ -52,8 +52,8 @@ func OpenFolder(args []string, app *appdata.Data) {
 
 	openhandlers.Open(args, app)
 
-	app.History.Add(operationsdata.Open, notes.GenerateOpenFolderNote(args))
-	history.Save(app)
+	app.History.Add(operationsdata.Open, opennotesdata.NewOpenFolderNote(args))
+	historyhelper.Save(app)
 }
 
 func OpenSystem(app *appdata.Data) {
@@ -63,6 +63,6 @@ func OpenSystem(app *appdata.Data) {
 		return
 	}
 
-	app.History.Add(operationsdata.Open, notes.GenerateOpenSystemNote())
-	history.Save(app)
+	app.History.Add(operationsdata.Open, opennotesdata.NewOpenSystemNote())
+	historyhelper.Save(app)
 }

@@ -1,16 +1,17 @@
-package notes
+package updatenotesdata
 
 import (
 	"sort"
 
 	commanddata "github.com/fiwon123/crower/internal/data/command"
+	notesdata "github.com/fiwon123/crower/internal/data/notes"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new update note
-func GenerateUpdateCommmandNote(args []string, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
+func NewUpdateCommmandNote(args []string, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
 
-	noteBuilder := New()
+	noteBuilder := notesdata.New()
 
 	noteBuilder.
 		AddMainOperation(operationsdata.Update).
@@ -39,8 +40,8 @@ func GenerateUpdateCommmandNote(args []string, oldCommand *commanddata.Data, new
 		Build()
 }
 
-func GenerateUpdateLastNote(op operationsdata.MainOperationEnum, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
-	noteBuilder := New()
+func NewUpdateLastNote(op operationsdata.MainOperationEnum, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
+	noteBuilder := notesdata.New()
 
 	noteBuilder.
 		AddMainOperation(operationsdata.Update).

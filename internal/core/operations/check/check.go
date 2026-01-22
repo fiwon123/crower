@@ -2,11 +2,10 @@ package checkoperations
 
 import (
 	appdata "github.com/fiwon123/crower/internal/data/app"
+	checknotesdata "github.com/fiwon123/crower/internal/data/notes/check"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	checkhandlers "github.com/fiwon123/crower/internal/handlers/check"
-
-	"github.com/fiwon123/crower/internal/history"
-	"github.com/fiwon123/crower/internal/history/notes"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 func CheckNewVersion(currentVersion string, app *appdata.Data) {
@@ -26,6 +25,6 @@ func CheckNewVersion(currentVersion string, app *appdata.Data) {
 	app.Logger.Info("New Version Found: ", "newVersion", newVersion)
 	app.Logger.Info("Check: https://github.com/fiwon123/crower/releases/latest")
 
-	app.History.Add(operationsdata.Check, notes.GenerateCheckNote())
-	history.Save(app)
+	app.History.Add(operationsdata.Check, checknotesdata.NewCheckNote())
+	historyhelper.Save(app)
 }

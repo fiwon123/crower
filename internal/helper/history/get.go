@@ -1,4 +1,4 @@
-package history
+package historyhelper
 
 import (
 	appdata "github.com/fiwon123/crower/internal/data/app"

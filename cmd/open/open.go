@@ -1,4 +1,4 @@
-package open
+package opencmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

@@ -1,4 +1,4 @@
-package delete
+package deletecmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"

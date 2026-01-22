@@ -1,4 +1,4 @@
-package search
+package searchcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
