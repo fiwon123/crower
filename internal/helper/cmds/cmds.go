@@ -1,4 +1,4 @@
-package cmds
+package cmdshelper
 
 import "github.com/spf13/cobra"
 
@@ -20,6 +20,16 @@ func AddAllAliasFlag(cmd *cobra.Command, allAlias *[]string) {
 		"a",
 		[]string{},
 		"define alias (--alias 'a1,a2,a3')")
+}
+
+// Get key flag for cmds
+func AddKeyFlag(cmd *cobra.Command, name *string) {
+	cmd.Flags().StringVarP(
+		name,
+		"key",
+		"k",
+		"",
+		"command name or command alias")
 }
 
 // Get exec flag for cmds

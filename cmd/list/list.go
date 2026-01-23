@@ -1,8 +1,8 @@
-package list
+package listcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	listoperations "github.com/fiwon123/crower/internal/core/operations/list"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -35,17 +35,17 @@ Example:
 		app := core.InitApp(cfgFilePath)
 
 		if process {
-			operations.ListProcess(args, app)
+			listoperations.ListProcess(args, app)
 		} else if history {
-			operations.ListHistory(app)
+			listoperations.ListHistory(app)
 		} else if folderFlag {
-			operations.ListFolder(args, app)
+			listoperations.ListFolder(args, app)
 		} else if systemFlag {
-			operations.ListSystem(app)
+			listoperations.ListSystem(app)
 		} else if sysPathFlag {
-			operations.ListSysPath(app)
+			listoperations.ListSysPath(app)
 		} else {
-			operations.ListCommands(app)
+			listoperations.ListCommands(app)
 		}
 
 	},
@@ -56,6 +56,6 @@ func init() {
 	Cmd.Flags().BoolVarP(&process, "process", "p", false, "list all process")
 	Cmd.Flags().BoolVarP(&history, "history", "i", false, "list history")
 	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "list folder files")
-	Cmd.Flags().BoolVarP(&systemFlag, "system", "a", false, "list all system variables")
-	Cmd.Flags().BoolVarP(&sysPathFlag, "syspath", "s", false, "list path system variable")
+	Cmd.Flags().BoolVar(&systemFlag, "system", false, "list all system variables")
+	Cmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "list path system variable")
 }

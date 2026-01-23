@@ -1,10 +1,16 @@
-package command
+package commanddata
 
 type MapData map[string]Data
 
 // Create a new MapData
 func NewMapData() MapData {
 	return make(MapData)
+}
+
+// Verify if exists a key
+func (cm MapData) Exists(key string) bool {
+	_, ok := cm[key]
+	return ok
 }
 
 // Get content if key exists

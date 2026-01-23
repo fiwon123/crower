@@ -1,13 +1,15 @@
-package open
+package opencmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	openoperations "github.com/fiwon123/crower/internal/core/operations/open"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
 var folderFlag bool
+var fileFlag bool
 var systemFlag bool
 
 // Cmd represents the open command
@@ -27,11 +29,15 @@ Examples:
 		app := core.InitApp(cfgFilePath)
 
 		if folderFlag {
-			operations.OpenFolder(args, app)
+			openoperations.OpenFolder(args, app)
+		} else if fileFlag {
+			openoperations.OpenFile(args, app)
 		} else if systemFlag {
-			operations.OpenSystem(app)
+			openoperations.OpenSystem(app)
+		} else if len(args) > 0 {
+			openoperations.Open(args, app)
 		} else {
-			operations.Open(args, app)
+			crowererrors.PrintCmdHelp("open", app)
 		}
 
 	},
@@ -39,6 +45,7 @@ Examples:
 
 func init() {
 
-	Cmd.Flags().BoolVarP(&folderFlag, "folder", "f", false, "open cfg folder")
+	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "open cfg file or other file")
+	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "open cfg folder or other folder")
 	Cmd.Flags().BoolVarP(&systemFlag, "system", "s", false, "open system variable")
 }

@@ -1,4 +1,4 @@
-package command
+package commanddata
 
 type Data struct {
 	Name     string

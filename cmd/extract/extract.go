@@ -1,8 +1,9 @@
-package extract
+package extractcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	extractoperations "github.com/fiwon123/crower/internal/core/operations/extract"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +32,11 @@ Examples:
 
 		app := core.InitApp(cfgFilePath)
 
-		operations.Extract(args, outDirFlag, app)
+		if len(args) > 0 {
+			extractoperations.Extract(args, outDirFlag, app)
+		} else {
+			crowererrors.PrintCmdHelp("extract", app)
+		}
 	},
 }
 

@@ -1,15 +1,14 @@
-package inputs
+package inputscore
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strconv"
 	"strings"
 	"unicode"
 
-	"github.com/fiwon123/crower/internal/cterrors"
-	"github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/crowererrors"
+	appdata "github.com/fiwon123/crower/internal/data/app"
 )
 
 const (
@@ -19,7 +18,7 @@ const (
 	input_yes string = "yes"
 )
 
-func checkValidAnswer(input string) bool {
+func CheckValidAnswer(input string) bool {
 	if input == input_y ||
 		input == input_n ||
 		input == input_yes ||
@@ -30,7 +29,7 @@ func checkValidAnswer(input string) bool {
 	return false
 }
 
-func checkNoAnswer(input string) bool {
+func CheckNoAnswer(input string) bool {
 	if input == input_n || input == input_no {
 		return true
 	}
@@ -38,7 +37,7 @@ func checkNoAnswer(input string) bool {
 	return false
 }
 
-func checkYesAnswer(input string) bool {
+func CheckYesAnswer(input string) bool {
 	if input == input_y || input == input_yes {
 		return true
 	}
@@ -46,20 +45,20 @@ func checkYesAnswer(input string) bool {
 	return false
 }
 
-func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app *app.Data) any {
+func GetUserInput(ask string, fnValid func(string, *appdata.Data) (any, error), app *appdata.Data) any {
 	ok := false
 	input := ""
 	var output any
 	var err error
 	for !ok {
-		fmt.Print(ask + ": ")
+		app.Logger.Info(ask + ": ")
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSuffix(input, "\n")
 		input = strings.TrimSuffix(input, "\r")
 
 		if output, err = fnValid(input, app); err != nil {
-			fmt.Println(err)
+			app.Logger.Info(err.Error())
 			continue
 		}
 
@@ -69,21 +68,21 @@ func getUserInput(ask string, fnValid func(string, *app.Data) (any, error), app 
 	return output
 }
 
-func getUserConfirmation(ask string) bool {
+func GetUserConfirmation(ask string, app *appdata.Data) bool {
 	ok := false
 	input := ""
 	var confirmation bool
 	var err error
 	for !ok {
 
-		fmt.Print(ask + " ([Y]es/[N]o): ")
+		app.Logger.Info(ask + " ([Y]es/[N]o): ")
 		reader := bufio.NewReader(os.Stdin)
 		input, _ = reader.ReadString('\n')
 		input = strings.TrimSuffix(input, "\n")
 		input = strings.TrimSuffix(input, "\r")
 
-		if confirmation, err = isValidConfirmation(input); err != nil {
-			fmt.Println(err)
+		if confirmation, err = IsValidConfirmation(input); err != nil {
+			app.Logger.Info(err.Error())
 			continue
 		}
 
@@ -93,33 +92,33 @@ func getUserConfirmation(ask string) bool {
 	return confirmation
 }
 
-func isValidConfirmation(input string) (bool, error) {
-	if !checkValidAnswer(input) {
-		return false, cterrors.InvalidInput()
+func IsValidConfirmation(input string) (bool, error) {
+	if !CheckValidAnswer(input) {
+		return false, crowererrors.InvalidInput()
 	}
 
-	if checkNoAnswer(input) {
+	if CheckNoAnswer(input) {
 		return false, nil
 	}
 
 	return true, nil
 }
 
-func isValidInput(input string, app *app.Data) (any, error) {
+func IsValidInput(input string, app *appdata.Data) (any, error) {
 	if input == "" {
-		return "", cterrors.EmptyInput()
+		return "", crowererrors.EmptyInput()
 	}
 
 	return input, nil
 }
 
-func inputAlias(app *app.Data) []string {
+func InputAlias(app *appdata.Data) []string {
 	output := []string{}
 
 	alias := "none"
 	for alias != "" {
-		fmt.Println("current aliases: ", output)
-		alias = getUserInput("Add new alias (type enter to skip): ", isValidAlias, app).(string)
+		app.Logger.Info("current aliases: ", output)
+		alias = GetUserInput("Add new alias (type enter to skip): ", isValidAlias, app).(string)
 
 		if alias != "" {
 			output = append(output, alias)
@@ -129,43 +128,58 @@ func inputAlias(app *app.Data) []string {
 	return output
 }
 
-func inputName(app *app.Data) string {
+func InputName(app *appdata.Data) string {
 	name := ""
 	for name == "" {
-		name = getUserInput("Add new name: ", isValidInput, app).(string)
+		name = GetUserInput("Add new name: ", IsValidInput, app).(string)
 	}
 
 	return name
 }
 
-func inputExec(app *app.Data) string {
+func InputExec(app *appdata.Data) string {
 	exec := ""
 	for exec == "" {
-		exec = getUserInput("Add new exec: ", isValidInput, app).(string)
+		exec = GetUserInput("Add new exec: ", IsValidInput, app).(string)
 	}
 
 	return exec
 }
 
-func isValidAlias(input string, app *app.Data) (any, error) {
+func isValidAlias(input string, app *appdata.Data) (any, error) {
 	for _, r := range input {
 		if !unicode.IsNumber(r) && !unicode.IsLetter(r) {
-			return "", cterrors.OnlyLettersAndNumbers()
+			return "", crowererrors.OnlyLettersAndNumbers()
 		}
 	}
 
 	return input, nil
 }
 
-func isValidInputKey(input string, app *app.Data) (any, error) {
+func IsValidInputKey(input string, app *appdata.Data) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
-		return "", cterrors.InvalidRows()
+		return "", crowererrors.InvalidRows()
 	}
 
 	if index < 0 || index >= len(app.OrderKeys) {
-		return "", cterrors.InvalidRows()
+		return "", crowererrors.InvalidRows()
 	}
 
 	return app.OrderKeys[index], nil
+}
+
+func IsValidContentKey(input string, app *appdata.Data) (any, error) {
+	index, err := strconv.Atoi(input)
+	if err != nil {
+		return "", crowererrors.InvalidRows()
+	}
+
+	contents := app.History.AllData
+	correctIndex := len(contents) - 1 - index
+	if correctIndex < 0 || correctIndex >= len(contents) {
+		return "", crowererrors.InvalidRows()
+	}
+
+	return contents[correctIndex], nil
 }

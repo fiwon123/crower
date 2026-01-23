@@ -1,0 +1,203 @@
+package createoperations
+
+import (
+	"path/filepath"
+	"runtime"
+	"strings"
+
+	createinputs "github.com/fiwon123/crower/internal/core/inputs/create"
+	"github.com/fiwon123/crower/internal/crowererrors"
+	appdata "github.com/fiwon123/crower/internal/data/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	createnotesdata "github.com/fiwon123/crower/internal/data/notes/create"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
+	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/pkg/crowerutils"
+)
+
+func CreateCommand(allAlias []string, args []string, app *appdata.Data) {
+	name := ""
+	exec := ""
+	if len(args) == 2 {
+		name = args[0]
+		exec = args[1]
+	} else {
+		createinputs.CheckCreateInput(&name, &allAlias, &exec, app)
+	}
+
+	command := performCreateCommand(name, allAlias, exec, app)
+	if command == nil {
+		return
+	}
+
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateCommandNote(command, args))
+	historyhelper.Save(app)
+}
+
+func performCreateCommand(name string, allAlias []string, exec string, app *appdata.Data) *commanddata.Data {
+	command, err := createhandlers.CreateCommand(name, allAlias, exec, app)
+
+	if err != nil {
+		app.Logger.Error("Error add command: ", "error", err, "name", name, "alias", allAlias, "exec", exec)
+		return nil
+	}
+
+	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+	app.Logger.Info("added new command: ", "allCommands", app.AllCommandsByName)
+
+	return command
+}
+
+func CreateProcess(name string, args []string, app *appdata.Data) {
+	command, err := createhandlers.CreateProcess(name, args, app)
+	if err != nil {
+		app.Logger.Error("Error add command by process: ", "error", err, "name", name, "args", args)
+		return
+	}
+
+	crowerutils.WriteToml(app.AllCommandsByName, app.CfgFilePath)
+	app.Logger.Info("added new command by process: ", "allCommands", app.AllCommandsByName)
+
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateProcessNote(command, args))
+	historyhelper.Save(app)
+}
+
+func CreateSystemVariable(args []string, app *appdata.Data) {
+	newVar := ""
+	value := ""
+	if len(args) >= 2 {
+		newVar = args[0]
+		value = args[1]
+	} else {
+		crowererrors.PrintNotArgs("var name and var value", app)
+		return
+	}
+
+	out, err := createhandlers.CreateSystemVariable(newVar, value)
+	if err != nil {
+		app.Logger.Error(err.Error())
+		return
+	}
+
+	app.Logger.Info(out)
+
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateSystemVariableNote(args))
+	historyhelper.Save(app)
+}
+
+func CreateSystemPathVariable(args []string, app *appdata.Data) {
+	newPath := ""
+	if len(args) > 0 {
+		newPath = args[0]
+	} else {
+		crowererrors.PrintNotArgs("path", app)
+		return
+	}
+
+	out, err := createhandlers.CreateSystemPathVariable(newPath)
+	if err != nil {
+		app.Logger.Error(err.Error())
+		return
+	}
+
+	app.Logger.Info(out)
+
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateSystemPathVariableNote(args))
+	historyhelper.Save(app)
+}
+
+func CreateFile(args []string, app *appdata.Data) {
+	for _, path := range args {
+		err := createhandlers.CreateFile(path, app)
+		if err != nil {
+			app.Logger.Error(err.Error())
+		}
+	}
+
+	app.History.Add(operationsdata.Create, createnotesdata.GenerateCreateFile(args))
+	historyhelper.Save(app)
+}
+
+func CreateFolder(args []string, app *appdata.Data) {
+	for _, path := range args {
+		err := createhandlers.CreateFolder(path, app)
+		if err != nil {
+			app.Logger.Error(err.Error())
+		}
+	}
+
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateFolder(args))
+	historyhelper.Save(app)
+}
+
+func CreateLastCommand(op operationsdata.MainOperationEnum, args []string, app *appdata.Data) {
+	name := ""
+	if len(args) > 0 {
+		name = args[0]
+	} else {
+		crowererrors.PrintNotArgs("name", app)
+		return
+	}
+
+	content := historyhelper.GetLast(op, app)
+
+	if content == nil {
+		crowererrors.PrintCommandNotFoundError(app)
+		return
+	}
+
+	exec := ""
+	key := content.CommandName
+	if key == "" {
+		splitted := strings.SplitSeq(content.Note, ";")
+		for keyValRaw := range splitted {
+			keyVal := strings.Split(keyValRaw, "=")
+			if keyVal[0] == "exec" {
+				exec = keyVal[1]
+				break
+			}
+		}
+	}
+
+	command := performCreateCommand(name, []string{}, exec, app)
+	if command == nil {
+		return
+	}
+
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateCommandLastExecuteNote(command))
+	historyhelper.Save(app)
+}
+
+func CreateScriptCommand(args []string, app *appdata.Data) {
+	name := ""
+	if len(args) > 0 {
+		name = args[0]
+	} else {
+		crowererrors.PrintNotArgs("name", app)
+	}
+
+	scriptFilePath, err := createhandlers.CreateScriptCommand(name, app)
+	if err != nil {
+		app.Logger.Error(err.Error())
+		return
+	}
+
+	var command *commanddata.Data
+	switch runtime.GOOS {
+	case "windows":
+		command = performCreateCommand(name, []string{}, scriptFilePath, app)
+	case "linux":
+		command = performCreateCommand(name, []string{}, scriptFilePath, app)
+	}
+
+	if command == nil {
+		return
+	}
+
+	openhandlers.Open([]string{filepath.Dir(scriptFilePath)}, app)
+
+	app.History.Add(operationsdata.Create, createnotesdata.NewCreateScriptCommandNote(command, args))
+	historyhelper.Save(app)
+}

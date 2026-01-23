@@ -1,8 +1,8 @@
-package reset
+package resetcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	resetoperations "github.com/fiwon123/crower/internal/core/operations/reset"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +17,7 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
-		operations.Reset(app)
+		resetoperations.Reset(app)
 	},
 }
 

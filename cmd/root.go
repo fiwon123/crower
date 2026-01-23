@@ -6,21 +6,24 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/fiwon123/crower/cmd/copy"
-	"github.com/fiwon123/crower/cmd/create"
-	"github.com/fiwon123/crower/cmd/delete"
-	"github.com/fiwon123/crower/cmd/extract"
-	"github.com/fiwon123/crower/cmd/list"
-	"github.com/fiwon123/crower/cmd/move"
-	"github.com/fiwon123/crower/cmd/open"
-	"github.com/fiwon123/crower/cmd/reset"
-	"github.com/fiwon123/crower/cmd/revert"
-	"github.com/fiwon123/crower/cmd/search"
-	"github.com/fiwon123/crower/cmd/update"
+	copycmd "github.com/fiwon123/crower/cmd/copy"
+	createcmd "github.com/fiwon123/crower/cmd/create"
+	deletecmd "github.com/fiwon123/crower/cmd/delete"
+	executecmd "github.com/fiwon123/crower/cmd/execute"
+	extractcmd "github.com/fiwon123/crower/cmd/extract"
+	listcmd "github.com/fiwon123/crower/cmd/list"
+	movecmd "github.com/fiwon123/crower/cmd/move"
+	opencmd "github.com/fiwon123/crower/cmd/open"
+	resetcmd "github.com/fiwon123/crower/cmd/reset"
+	restorecmd "github.com/fiwon123/crower/cmd/restore"
+	revertcmd "github.com/fiwon123/crower/cmd/revert"
+	searchcmd "github.com/fiwon123/crower/cmd/search"
+	updatecmd "github.com/fiwon123/crower/cmd/update"
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/cterrors"
-	"github.com/fiwon123/crower/internal/data/state"
+	checkoperations "github.com/fiwon123/crower/internal/core/operations/check"
+	executeoperations "github.com/fiwon123/crower/internal/core/operations/execute"
+	upgradeoperations "github.com/fiwon123/crower/internal/core/operations/upgrade"
+	"github.com/fiwon123/crower/internal/crowererrors"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -28,10 +31,8 @@ import (
 
 var cfgFilePath string
 var checkVersion bool
-
-var last bool
-var createFlag bool
-var updateFlag bool
+var checkNewVersion bool
+var upgradeFlag bool
 
 // Version is popualated when building with Makefile
 var Version = "vx.x.x"
@@ -44,7 +45,9 @@ var rootCmd = &cobra.Command{
 
 It has useful operations like create, edit, remove, list and more.
 
-By default after created your first command just use it by typing "crower 'command'" or "cr 'command'"`,
+Execute Command:
+	- Use 'crower "command"' or 'cr "command"'
+	- Use 'crower execute "command"' or 'cr execute "command"'`,
 	Aliases: []string{"cr"},
 	Args:    cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -57,14 +60,21 @@ By default after created your first command just use it by typing "crower 'comma
 		}
 
 		app := core.InitApp(cfgFilePath)
-		if last {
-			operations.ExecuteLast(state.Execute, args, app)
-		} else if createFlag {
-			operations.ExecuteLast(state.Create, args, app)
-		} else if updateFlag {
-			operations.ExecuteLast(state.Update, args, app)
+
+		if checkNewVersion {
+			checkoperations.CheckNewVersion(Version, app)
+			return
+		}
+
+		if upgradeFlag {
+			upgradeoperations.UpgradeApp(Version, app)
+			return
+		}
+
+		if len(args) > 0 {
+			executeoperations.ExecuteCommand(args, app)
 		} else {
-			operations.Execute("", args, app)
+			crowererrors.PrintCmdHelp("", app)
 		}
 
 	},
@@ -80,21 +90,23 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(create.Cmd)
-	rootCmd.AddCommand(update.Cmd)
-	rootCmd.AddCommand(delete.Cmd)
-	rootCmd.AddCommand(list.Cmd)
-	rootCmd.AddCommand(open.Cmd)
-	rootCmd.AddCommand(reset.Cmd)
-	rootCmd.AddCommand(revert.Cmd)
-	rootCmd.AddCommand(search.Cmd)
-	rootCmd.AddCommand(extract.Cmd)
-	rootCmd.AddCommand(copy.Cmd)
-	rootCmd.AddCommand(move.Cmd)
+	rootCmd.AddCommand(createcmd.Cmd)
+	rootCmd.AddCommand(updatecmd.Cmd)
+	rootCmd.AddCommand(deletecmd.Cmd)
+	rootCmd.AddCommand(listcmd.Cmd)
+	rootCmd.AddCommand(opencmd.Cmd)
+	rootCmd.AddCommand(resetcmd.Cmd)
+	rootCmd.AddCommand(revertcmd.Cmd)
+	rootCmd.AddCommand(searchcmd.Cmd)
+	rootCmd.AddCommand(extractcmd.Cmd)
+	rootCmd.AddCommand(copycmd.Cmd)
+	rootCmd.AddCommand(movecmd.Cmd)
+	rootCmd.AddCommand(executecmd.Cmd)
+	rootCmd.AddCommand(restorecmd.Cmd)
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatal(cterrors.GetNotUserHomeFoundString(), err)
+		log.Fatal(crowererrors.GetNotUserHomeFoundString(), err)
 	}
 
 	defaultCfgFilePath := filepath.Join(homePath, "crower", "crower.yaml")
@@ -104,7 +116,6 @@ func init() {
 
 	// Flags
 	rootCmd.Flags().BoolVarP(&checkVersion, "version", "v", false, "check current version")
-	rootCmd.Flags().BoolVarP(&last, "last", "l", false, "execute recent executed command")
-	rootCmd.Flags().BoolVarP(&createFlag, "create", "c", false, "execute recent created command")
-	rootCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "execute recent updated command")
+	rootCmd.Flags().BoolVar(&upgradeFlag, "upgrade", false, "upgrade to new version")
+	rootCmd.Flags().BoolVar(&checkNewVersion, "check", false, "check new version")
 }
