@@ -1,8 +1,8 @@
-package list
+package listcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	listoperations "github.com/fiwon123/crower/internal/core/operations/list"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -35,17 +35,17 @@ Example:
 		app := core.InitApp(cfgFilePath)
 
 		if process {
-			operations.ListProcess(args, app)
+			listoperations.ListProcess(args, app)
 		} else if history {
-			operations.ListHistory(app)
+			listoperations.ListHistory(app)
 		} else if folderFlag {
-			operations.ListFolder(args, app)
+			listoperations.ListFolder(args, app)
 		} else if systemFlag {
-			operations.ListSystem(app)
+			listoperations.ListSystem(app)
 		} else if sysPathFlag {
-			operations.ListSysPath(app)
+			listoperations.ListSysPath(app)
 		} else {
-			operations.ListCommands(app)
+			listoperations.ListCommands(app)
 		}
 
 	},

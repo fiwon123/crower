@@ -1,8 +1,8 @@
-package restore
+package restorecmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
+	restoreoperations "github.com/fiwon123/crower/internal/core/operations/restore"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +17,7 @@ var Cmd = &cobra.Command{
 
 		app := core.InitApp(cfgFilePath)
 
-		operations.Restore(args, app)
+		restoreoperations.Restore(args, app)
 	},
 }
 

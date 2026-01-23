@@ -1,9 +1,9 @@
-package search
+package searchcmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/crerrors"
+	searchoperations "github.com/fiwon123/crower/internal/core/operations/search"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -36,15 +36,15 @@ search on browser:
 		app := core.InitApp(cfgFilePath)
 
 		if browserFlag {
-			operations.SearchBrowser(args, app)
+			searchoperations.SearchBrowser(args, app)
 		} else if fileFlag {
-			operations.SearchFile(args, app)
+			searchoperations.SearchFile(args, app)
 		} else if folderFlag {
-			operations.SearchFolder(args, app)
+			searchoperations.SearchFolder(args, app)
 		} else if len(args) > 0 {
-			operations.SearchFileAndFolder(args, app)
+			searchoperations.SearchFileAndFolder(args, app)
 		} else {
-			crerrors.PrintCmdHelp("search", app)
+			crowererrors.PrintCmdHelp("search", app)
 		}
 
 	},

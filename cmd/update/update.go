@@ -1,10 +1,10 @@
-package update
+package updatecmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/crerrors"
-	"github.com/fiwon123/crower/internal/data/state"
+	updateoperations "github.com/fiwon123/crower/internal/core/operations/update"
+	"github.com/fiwon123/crower/internal/crowererrors"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -44,15 +44,15 @@ Examples:
 		app := core.InitApp(cfgFilePath)
 
 		if last {
-			operations.UpdateLast(state.Update, name, allAlias, exec, app)
+			updateoperations.UpdateLast(operationsdata.Update, name, allAlias, exec, app)
 		} else if create {
-			operations.UpdateLast(state.Create, name, allAlias, exec, app)
+			updateoperations.UpdateLast(operationsdata.Create, name, allAlias, exec, app)
 		} else if execute {
-			operations.UpdateLast(state.Execute, name, allAlias, exec, app)
+			updateoperations.UpdateLast(operationsdata.Execute, name, allAlias, exec, app)
 		} else if len(args) > 0 {
-			operations.UpdateCommand(args, name, allAlias, exec, app)
+			updateoperations.UpdateCommand(args, name, allAlias, exec, app)
 		} else {
-			crerrors.PrintCmdHelp("update", app)
+			crowererrors.PrintCmdHelp("update", app)
 		}
 
 	},

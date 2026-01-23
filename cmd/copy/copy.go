@@ -1,9 +1,9 @@
-package copy
+package copycmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
-	"github.com/fiwon123/crower/internal/core/operations"
-	"github.com/fiwon123/crower/internal/crerrors"
+	copyoperations "github.com/fiwon123/crower/internal/core/operations/copy"
+	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -27,9 +27,9 @@ Examples:
 		app := core.InitApp(cfgFilePath)
 
 		if len(args) > 0 {
-			operations.Copy(args, app)
+			copyoperations.Copy(args, app)
 		} else {
-			crerrors.PrintCmdHelp("copy", app)
+			crowererrors.PrintCmdHelp("copy", app)
 		}
 
 	},

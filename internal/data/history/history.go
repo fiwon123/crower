@@ -1,11 +1,11 @@
-package history
+package historydata
 
 import (
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/fiwon123/crower/internal/data/state"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
 type Data struct {
@@ -16,7 +16,7 @@ type Content struct {
 	Version     int
 	File        string
 	Timestemp   string
-	Operation   state.MainOperationEnum
+	Operation   operationsdata.MainOperationEnum
 	CommandName string
 	Note        string
 }
@@ -52,7 +52,7 @@ func (h *Data) GetLast() *Content {
 }
 
 // Get last content based on the last operation using crower
-func (h *Data) GetLastOperation(op state.MainOperationEnum) *Content {
+func (h *Data) GetLastOperation(op operationsdata.MainOperationEnum) *Content {
 	lenAllData := len(h.AllData)
 
 	if lenAllData == 0 {
@@ -77,7 +77,7 @@ func (h *Data) GetLastOperation(op state.MainOperationEnum) *Content {
 }
 
 // Add new content history registering current operation, command name and a note
-func (h *Data) Add(op state.MainOperationEnum, note string) {
+func (h *Data) Add(op operationsdata.MainOperationEnum, note string) {
 
 	version := 1
 	if len(h.AllData) != 0 {
@@ -128,7 +128,7 @@ func (h *Data) GetIndexFromLastTo(steps int) int {
 	return len(h.AllData) - steps
 }
 
-func (h *Data) GetListOperation(op state.MainOperationEnum) string {
+func (h *Data) GetListOperation(op operationsdata.MainOperationEnum) string {
 	var builder strings.Builder
 	builder.WriteString(getHeader())
 	line := 0
@@ -144,7 +144,7 @@ func (h *Data) GetListOperation(op state.MainOperationEnum) string {
 	return builder.String()
 }
 
-func (h *Data) GetOperationContents(op state.MainOperationEnum) []Content {
+func (h *Data) GetOperationContents(op operationsdata.MainOperationEnum) []Content {
 	contents := []Content{}
 	for i := len(h.AllData) - 1; i >= 0; i-- {
 		data := h.AllData[i]
