@@ -7,11 +7,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func DeleteSystemVariable(key string, app *app.Data) (string, error) {
+func DeleteSystemVariable(key string) (string, error) {
 	bashrcPath := os.Getenv("HOME") + "/.bashrc"
 	fileSlice := crowerutils.GetFileLineSlice(bashrcPath)
 
@@ -36,7 +35,7 @@ func DeleteSystemVariable(key string, app *app.Data) (string, error) {
 	return "var name deleted", nil
 }
 
-func DeleteSystemPathVariable(path string, app *app.Data) (string, error) {
+func DeleteSystemPathVariable(path string) (string, error) {
 	home := os.Getenv("HOME")
 	profileFilePath := home + "/.profile"
 	lineSlice := crowerutils.GetFileLineSlice(profileFilePath)

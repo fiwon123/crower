@@ -7,12 +7,11 @@ import (
 	"os"
 	"strings"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 	"golang.org/x/sys/windows/registry"
 )
 
-func DeleteSystemVariable(varName string, app *appdata.Data) (string, error) {
+func DeleteSystemVariable(varName string) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,
@@ -36,7 +35,7 @@ func DeleteSystemVariable(varName string, app *appdata.Data) (string, error) {
 	return "var name deleted", nil
 }
 
-func DeleteSystemPathVariable(pathValue string, app *appdata.Data) (string, error) {
+func DeleteSystemPathVariable(pathValue string) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,

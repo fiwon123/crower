@@ -75,7 +75,7 @@ func DeleteSystemVariable(args []string, app *appdata.Data) {
 		return
 	}
 
-	out, err := deletehandlers.DeleteSystemVariable(newVar, app)
+	out, err := deletehandlers.DeleteSystemVariable(newVar)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
@@ -96,7 +96,7 @@ func DeleteSystemPathVariable(args []string, app *appdata.Data) {
 		return
 	}
 
-	out, err := deletehandlers.DeleteSystemPathVariable(newPath, app)
+	out, err := deletehandlers.DeleteSystemPathVariable(newPath)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return

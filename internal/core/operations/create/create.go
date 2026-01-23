@@ -75,7 +75,7 @@ func CreateSystemVariable(args []string, app *appdata.Data) {
 		return
 	}
 
-	out, err := createhandlers.CreateSystemVariable(newVar, value, app)
+	out, err := createhandlers.CreateSystemVariable(newVar, value)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
@@ -96,7 +96,7 @@ func CreateSystemPathVariable(args []string, app *appdata.Data) {
 		return
 	}
 
-	out, err := createhandlers.CreateSystemPathVariable(newPath, app)
+	out, err := createhandlers.CreateSystemPathVariable(newPath)
 	if err != nil {
 		app.Logger.Error(err.Error())
 		return
