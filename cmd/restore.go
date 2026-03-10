@@ -1,8 +1,8 @@
-package restorecmd
+package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/core"
-	restoreoperations "github.com/fiwon123/crower/internal/core/operations/restore"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/domain/restoredom"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -15,9 +15,11 @@ var Cmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
 
-		restoreoperations.Restore(args, app)
+		core := restoredom.NewCore(app)
+
+		core.Restore(args)
 	},
 }
 
