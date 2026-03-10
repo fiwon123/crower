@@ -5,9 +5,10 @@ import (
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/deletedom"
 	"github.com/fiwon123/crower/internal/domain/listdom"
+	"github.com/fiwon123/crower/internal/helper"
+
 	"github.com/fiwon123/crower/pkg/crowerutils"
 
-	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
@@ -41,7 +42,7 @@ Example:
 	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder"
 	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder_1" "C:\Users\Test\Desktop\Test\new_folder_2"`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
+		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
 
 		app := app.InitApp(cfgFilePath)
 

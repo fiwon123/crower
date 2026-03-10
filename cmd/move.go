@@ -4,7 +4,8 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/movedom"
 	"github.com/fiwon123/crower/internal/errors"
-	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
+	"github.com/fiwon123/crower/internal/helper"
+
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +22,7 @@ Examples:
 	crower move "C:\Users\Test\Desktop\Test\Folder_1" "C:\Users\Test\Desktop\Test\Folder_2" "C:\Users\Test\Desktop\Test\Out"
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
+		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
 
 		app := app.InitApp(cfgFilePath)
 

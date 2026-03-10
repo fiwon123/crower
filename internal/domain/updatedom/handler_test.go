@@ -6,14 +6,14 @@ import (
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
-	testshelper "github.com/fiwon123/crower/internal/helper/tests"
+	"github.com/fiwon123/crower/internal/helper"
 )
 
 func TestUpdate(t *testing.T) {
 
 	t.Run("Update command name", func(t *testing.T) {
 
-		app, _, err := testshelper.InitCrowerTests()
+		app, _, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

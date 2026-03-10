@@ -4,7 +4,8 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/internal/domain/resetdom"
-	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
+	"github.com/fiwon123/crower/internal/helper"
+
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +15,7 @@ var resetCmd = &cobra.Command{
 	Short: "reset all commands",
 	Long:  `reset all commands`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
+		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
 
 		app := app.InitApp(cfgFilePath)
 

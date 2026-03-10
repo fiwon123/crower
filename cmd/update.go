@@ -6,8 +6,8 @@ import (
 	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/helper"
 
-	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
@@ -38,7 +38,7 @@ Examples:
 	crower update com_name --name "test" --exec "echo t"
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
+		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
 
 		app := app.InitApp(cfgFilePath)
 
@@ -61,9 +61,9 @@ Examples:
 }
 
 func init() {
-	cmdsHelper.AddNameFlag(updateCmd, &name)
-	cmdsHelper.AddAllAliasFlag(updateCmd, &allAlias)
-	cmdsHelper.AddExecFlag(updateCmd, &exec)
+	helper.AddNameFlag(updateCmd, &name)
+	helper.AddAllAliasFlag(updateCmd, &allAlias)
+	helper.AddExecFlag(updateCmd, &exec)
 
 	updateCmd.Flags().BoolVarP(&last, "last", "l", false, "update recent updated command")
 	updateCmd.Flags().BoolVarP(&create, "create", "c", false, "update recent created command")

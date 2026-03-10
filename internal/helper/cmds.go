@@ -1,4 +1,4 @@
-package cmdshelper
+package helper
 
 import "github.com/spf13/cobra"
 

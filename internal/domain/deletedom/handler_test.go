@@ -6,14 +6,14 @@ import (
 
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/deletedom"
-	testshelper "github.com/fiwon123/crower/internal/helper/tests"
+	"github.com/fiwon123/crower/internal/helper"
 )
 
 func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using name", func(t *testing.T) {
 
-		app, _, err := testshelper.InitCrowerTests()
+		app, _, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -56,7 +56,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using alias", func(t *testing.T) {
 
-		app, _, err := testshelper.InitCrowerTests()
+		app, _, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -103,7 +103,7 @@ func TestDelete(t *testing.T) {
 
 func TestDeleteFile(t *testing.T) {
 	t.Run("Delete File single name", func(t *testing.T) {
-		app, _, err := testshelper.InitCrowerTests()
+		app, _, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -125,7 +125,7 @@ func TestDeleteFile(t *testing.T) {
 	})
 
 	t.Run("Delete File using name with space", func(t *testing.T) {
-		app, _, err := testshelper.InitCrowerTests()
+		app, _, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -150,7 +150,7 @@ func TestDeleteFile(t *testing.T) {
 func TestDeleteFolder(t *testing.T) {
 
 	t.Run("Delete Folder single name", func(t *testing.T) {
-		app, _, err := testshelper.InitCrowerTests()
+		app, _, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -171,7 +171,7 @@ func TestDeleteFolder(t *testing.T) {
 	})
 
 	t.Run("Delete Folder using name with space", func(t *testing.T) {
-		app, _, err := testshelper.InitCrowerTests()
+		app, _, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

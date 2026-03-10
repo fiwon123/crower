@@ -5,7 +5,8 @@ import (
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/domain/listdom"
-	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
+	"github.com/fiwon123/crower/internal/helper"
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,7 +19,7 @@ var executeCmd = &cobra.Command{
 	Long:  `execute command`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
+		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
 
 		app := app.InitApp(cfgFilePath)
 

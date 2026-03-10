@@ -6,13 +6,13 @@ import (
 
 	"github.com/fiwon123/crower/internal/domain/copydom"
 	"github.com/fiwon123/crower/internal/domain/createdom"
-	testshelper "github.com/fiwon123/crower/internal/helper/tests"
+	"github.com/fiwon123/crower/internal/helper"
 )
 
 func TestCopyFile(t *testing.T) {
 
 	t.Run("Copy File single name", func(t *testing.T) {
-		app, testPaths, err := testshelper.InitCrowerTests()
+		app, testPaths, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -34,7 +34,7 @@ func TestCopyFile(t *testing.T) {
 	})
 
 	t.Run("Copy File name with space", func(t *testing.T) {
-		app, testPaths, err := testshelper.InitCrowerTests()
+		app, testPaths, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -60,7 +60,7 @@ func TestCopyFile(t *testing.T) {
 func TestCopyFolder(t *testing.T) {
 
 	t.Run("Copy Folder single name", func(t *testing.T) {
-		app, testPaths, err := testshelper.InitCrowerTests()
+		app, testPaths, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -82,7 +82,7 @@ func TestCopyFolder(t *testing.T) {
 	})
 
 	t.Run("Copy Folder using name with space", func(t *testing.T) {
-		app, testPaths, err := testshelper.InitCrowerTests()
+		app, testPaths, err := helper.InitCrowerTests()
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

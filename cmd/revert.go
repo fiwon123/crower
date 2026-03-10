@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/revertdom"
+	"github.com/fiwon123/crower/internal/helper"
 
-	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +14,7 @@ var revertCmd = &cobra.Command{
 	Short: "revert history by one",
 	Long:  `revert history by one"`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
+		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
 
 		app := app.InitApp(cfgFilePath)
 

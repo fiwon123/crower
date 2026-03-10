@@ -3,11 +3,11 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
 
-	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 	"github.com/spf13/cobra"
 )
@@ -44,7 +44,7 @@ Example:
 	crower create "C:\Users\Test\Desktop\Test\new_folder"
 	crower create --folder "C:\Users\Test\Desktop\Test\new_folder_1" "C:\Users\Test\Desktop\Test\new_folder_2"`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
+		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
 
 		app := app.InitApp(cfgFilePath)
 
@@ -81,7 +81,7 @@ Example:
 }
 
 func init() {
-	cmdsHelper.AddAllAliasFlag(createCmd, &allAlias)
+	helper.AddAllAliasFlag(createCmd, &allAlias)
 
 	createCmd.Flags().StringVarP(&processName, "process", "p", "", "process name or pid")
 	createCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
