@@ -1,11 +1,11 @@
-package deletehandlers_test
+package deletedom_test
 
 import (
 	"path/filepath"
 	"testing"
 
-	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
-	deletehandlers "github.com/fiwon123/crower/internal/handlers/delete"
+	"github.com/fiwon123/crower/internal/domain/createdom"
+	"github.com/fiwon123/crower/internal/domain/deletedom"
 	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
@@ -18,6 +18,9 @@ func TestDelete(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		deleteHandler := deletedom.NewHandler(app)
+
 		var mock = []struct {
 			name string
 		}{
@@ -29,7 +32,7 @@ func TestDelete(t *testing.T) {
 		}
 
 		for _, command := range mock {
-			createhandlers.CreateCommand(command.name, nil, "exec", app)
+			createHandler.CreateCommand(command.name, nil, "exec")
 		}
 
 		var tests = []struct {
@@ -45,7 +48,7 @@ func TestDelete(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			_, got := deletehandlers.DeleteCommand(test.name, app)
+			_, got := deleteHandler.DeleteCommand(test.name)
 
 			assertDeleteTest(test.want, got, t)
 		}
@@ -57,6 +60,9 @@ func TestDelete(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
+
+		createHandler := createdom.NewHandler(app)
+		deleteHandler := deletedom.NewHandler(app)
 
 		var mock = []struct {
 			name  string
@@ -70,8 +76,8 @@ func TestDelete(t *testing.T) {
 		}
 
 		for _, command := range mock {
-			createhandlers.CreateCommand(
-				command.name, []string{command.alias}, "exec", app)
+			createHandler.CreateCommand(
+				command.name, []string{command.alias}, "exec")
 		}
 
 		var tests = []struct {
@@ -87,7 +93,7 @@ func TestDelete(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			_, got := deletehandlers.DeleteCommand(test.alias, app)
+			_, got := deleteHandler.DeleteCommand(test.alias)
 
 			assertDeleteTest(test.want, got, t)
 		}
@@ -102,14 +108,17 @@ func TestDeleteFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		deleteHandler := deletedom.NewHandler(app)
+
 		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
 
-		err = createhandlers.CreateFile(newFilePath, app)
+		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
 
-		err = deletehandlers.DeleteFile(newFilePath, app)
+		err = deleteHandler.DeleteFile(newFilePath)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -121,14 +130,17 @@ func TestDeleteFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		deleteHandler := deletedom.NewHandler(app)
+
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file")
 
-		err = createhandlers.CreateFile(newFolderPath, app)
+		err = createHandler.CreateFile(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
 
-		err = deletehandlers.DeleteFile(newFolderPath, app)
+		err = deleteHandler.DeleteFile(newFolderPath)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -142,15 +154,17 @@ func TestDeleteFolder(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
+		createHandler := createdom.NewHandler(app)
+		deleteHandler := deletedom.NewHandler(app)
 
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
 
-		err = createhandlers.CreateFolder(newFolderPath, app)
+		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
 
-		err = deletehandlers.DeleteFolder(newFolderPath, app)
+		err = deleteHandler.DeleteFolder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -162,14 +176,17 @@ func TestDeleteFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		deleteHandler := deletedom.NewHandler(app)
+
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
 
-		err = createhandlers.CreateFolder(newFolderPath, app)
+		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
 
-		err = deletehandlers.DeleteFolder(newFolderPath, app)
+		err = deleteHandler.DeleteFolder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}

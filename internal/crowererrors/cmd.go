@@ -3,13 +3,13 @@ package crowererrors
 import (
 	"fmt"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/app"
 )
 
-func PrintCmdHelp(cmdName string, app *appdata.Data) {
+func PrintCmdHelp(cmdName string, app *app.Config) {
 	app.Logger.Info(fmt.Sprintf("Type 'crower %s --help' for more information", cmdName))
 }
 
-func PrintEmptyArgs(app *appdata.Data) {
+func PrintEmptyArgs(app *app.Config) {
 	app.Logger.Info("args is empty")
 }

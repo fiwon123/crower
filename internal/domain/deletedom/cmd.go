@@ -1,8 +1,7 @@
-package deletecmd
+package deletedom
 
 import (
-	"github.com/fiwon123/crower/internal/core"
-	deleteoperations "github.com/fiwon123/crower/internal/core/operations/delete"
+	"github.com/fiwon123/crower/internal/app"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 
@@ -50,34 +49,36 @@ Example:
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
+
+		core := NewCore(app)
 
 		if createFlag {
-			deleteoperations.DeleteLast(operationsdata.Create, app)
+			core.DeleteLast(operationsdata.Create)
 		} else if updateFlag {
-			deleteoperations.DeleteLast(operationsdata.Update, app)
+			core.DeleteLast(operationsdata.Update)
 		} else if executeFlag {
-			deleteoperations.DeleteLast(operationsdata.Execute, app)
+			core.DeleteLast(operationsdata.Execute)
 		} else if fileFlag {
-			deleteoperations.DeleteFile(args, app)
+			core.DeleteFile(args)
 		} else if folderFlag {
-			deleteoperations.DeleteFolder(args, app)
+			core.DeleteFolder(args)
 		} else if systemFlag {
-			deleteoperations.DeleteSystemVariable(args, app)
+			core.DeleteSystemVariable(args)
 		} else if sysPathFlag {
-			deleteoperations.DeleteSystemPathVariable(args, app)
+			core.DeleteSystemPathVariable(args)
 		} else if historyFlag {
-			deleteoperations.DeleteHistoryContent(args, app)
+			core.DeleteHistoryContent(args)
 		} else if len(args) > 0 {
 			if crowerutils.IsValidFilePath(args[0]) {
-				deleteoperations.DeleteFile(args, app)
+				core.DeleteFile(args)
 			} else if crowerutils.IsValidFolderPath(args[0]) {
-				deleteoperations.DeleteFolder(args, app)
+				core.DeleteFolder(args)
 			} else {
-				deleteoperations.Delete(args, app)
+				core.Delete(args)
 			}
 		} else {
-			deleteoperations.Delete(args, app)
+			core.Delete(args)
 		}
 
 	},

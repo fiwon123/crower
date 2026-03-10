@@ -1,0 +1,75 @@
+package deletedom
+
+import (
+	"github.com/fiwon123/crower/internal/app"
+	commanddata "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/helper"
+
+	historydata "github.com/fiwon123/crower/internal/data/history"
+	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
+)
+
+type Input struct {
+	app *app.Config
+}
+
+func NewInput(app *app.Config) *Input {
+	return &Input{
+		app: app,
+	}
+}
+
+// Verify parameters to process delete operation
+func (i *Input) CheckDeleteInput(key *string) bool {
+
+	if *key == "" {
+		listhandlers.ListCommands(i.app)
+		input := helper.GetUserInput("Select Row", helper.IsValidInputKey, i.app).(string)
+		*key = input
+	}
+
+	var command *commanddata.Data
+	if *key != "" {
+		command = i.app.AllCommandsByName.Get(*key)
+		if command == nil {
+			command = i.app.AllCommandsByAlias.Get(*key)
+		}
+	}
+
+	if command == nil {
+		listhandlers.ListCommands(i.app)
+		i.app.Logger.Info("Command not found, try to select one.")
+		input := helper.GetUserInput("Select Row", helper.IsValidInputKey, i.app).(string)
+		*key = input
+
+		command = i.app.AllCommandsByName.Get(*key)
+	}
+
+	i.app.Logger.Info("-----------------------------------------")
+	i.app.Logger.Info("Name:    ", "name", command.Name)
+	i.app.Logger.Info("Aliases: ", "alias", command.AllAlias)
+	i.app.Logger.Info("Exec:    ", "exec", command.Exec)
+	i.app.Logger.Info("")
+
+	ok := helper.GetUserConfirmation("Continue to delete", i.app)
+	return ok
+
+}
+
+// Verify parameters to process delete history content operation
+func (i *Input) CheckDeleteHistoryContentInput() (historydata.Content, bool) {
+
+	var content historydata.Content
+	i.app.Logger.Info(i.app.History.GetList())
+	content = helper.GetUserInput("Select Row", helper.IsValidContentKey, i.app).(historydata.Content)
+
+	i.app.Logger.Info("-----------------------------------------")
+	i.app.Logger.Info("Content")
+	i.app.Logger.Info("Version:    ", "version", content.Version)
+	i.app.Logger.Info("File:    ", "file", content.File)
+	i.app.Logger.Info("Note:    ", "note", content.Note)
+	i.app.Logger.Info("")
+
+	ok := helper.GetUserConfirmation("Continue to restore", i.app)
+	return content, ok
+}
