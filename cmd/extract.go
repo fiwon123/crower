@@ -1,8 +1,9 @@
-package extractdom
+package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
+	"github.com/fiwon123/crower/internal/domain/extractdom"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -10,7 +11,7 @@ import (
 var outDirFlag string
 
 // Cmd represents the extract command
-var Cmd = &cobra.Command{
+var extractCmd = &cobra.Command{
 	Use:   "extract",
 	Short: "extract compressed files (.zip, .tar, .tar.gz, .7z, .rar...)",
 	Long: `extract compressed files (.zip, .tar, .tar.gz, .7z, .rar...)
@@ -31,7 +32,7 @@ Examples:
 
 		app := app.InitApp(cfgFilePath)
 
-		core := NewCore(app)
+		core := extractdom.NewCore(app)
 
 		if len(args) > 0 {
 			core.Extract(args, outDirFlag)
@@ -42,5 +43,5 @@ Examples:
 }
 
 func init() {
-	Cmd.Flags().StringVarP(&outDirFlag, "out", "o", "", "out folder where to be extracted")
+	extractCmd.Flags().StringVarP(&outDirFlag, "out", "o", "", "out folder where to be extracted")
 }

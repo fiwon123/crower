@@ -22,7 +22,6 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/domain/checkdom"
-	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/domain/upgradedom"
 
@@ -35,11 +34,15 @@ var checkVersion bool
 var checkNewVersion bool
 var upgradeFlag bool
 
+// Shared
+var executeFlag bool
+var fileFlag bool
 var folderFlag bool
 var sysPathFlag bool
 var systemFlag bool
 var createFlag bool
 var updateFlag bool
+var processFlag bool
 
 // Version is popualated when building with Makefile
 var Version = "vx.x.x"
@@ -101,7 +104,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(createdom.Cmd)
+	rootCmd.AddCommand(createCmd)
 	rootCmd.AddCommand(updatecmd.Cmd)
 	rootCmd.AddCommand(deletecmd.Cmd)
 	rootCmd.AddCommand(listcmd.Cmd)

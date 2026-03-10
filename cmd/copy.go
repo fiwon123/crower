@@ -1,14 +1,15 @@
-package copydom
+package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
+	"github.com/fiwon123/crower/internal/domain/copydom"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
 // Cmd represents the copy command
-var Cmd = &cobra.Command{
+var copyCmd = &cobra.Command{
 	Use:   "copy",
 	Short: "copy file or folder to other location",
 	Long: `copy file or folder to other location
@@ -25,7 +26,7 @@ Examples:
 
 		app := app.InitApp(cfgFilePath)
 
-		core := NewCore(app)
+		core := copydom.NewCore(app)
 
 		if len(args) > 0 {
 			core.Copy(args)

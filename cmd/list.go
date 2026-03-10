@@ -7,11 +7,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var process bool
 var history bool
 
 // Cmd represents the list command
-var ListCmd = &cobra.Command{
+var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "list all commands, history, process, folder, system, path system",
 	Long: `list all commands, history, process, folder, system, path system
@@ -33,7 +32,7 @@ Example:
 
 		core := listdom.NewCore(app)
 
-		if process {
+		if processFlag {
 			core.ListProcess(args)
 		} else if history {
 			core.ListHistory()
@@ -52,9 +51,9 @@ Example:
 
 func init() {
 
-	ListCmd.Flags().BoolVarP(&process, "process", "p", false, "list all process")
-	ListCmd.Flags().BoolVarP(&history, "history", "i", false, "list history")
-	ListCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "list folder files")
-	ListCmd.Flags().BoolVar(&systemFlag, "system", false, "list all system variables")
-	ListCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "list path system variable")
+	listCmd.Flags().BoolVarP(&processFlag, "process", "p", false, "list all process")
+	listCmd.Flags().BoolVarP(&history, "history", "i", false, "list history")
+	listCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "list folder files")
+	listCmd.Flags().BoolVar(&systemFlag, "system", false, "list all system variables")
+	listCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "list path system variable")
 }

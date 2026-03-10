@@ -11,12 +11,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var executeFlag bool
-var fileFlag bool
 var historyFlag bool
 
 // Cmd represents the delete command
-var DeleteCmd = &cobra.Command{
+var deleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete command, file or folder",
 	Long: `delete command, file or folder
@@ -82,12 +80,12 @@ Example:
 }
 
 func init() {
-	DeleteCmd.Flags().BoolVarP(&createFlag, "create", "c", false, "delete recent created command")
-	DeleteCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "delete recent updated command")
-	DeleteCmd.Flags().BoolVarP(&executeFlag, "execute", "x", false, "delete recent executed command")
-	DeleteCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
-	DeleteCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
-	DeleteCmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
-	DeleteCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
-	DeleteCmd.Flags().BoolVar(&historyFlag, "history", false, "delete a history content and linked backup cfg")
+	deleteCmd.Flags().BoolVarP(&createFlag, "create", "c", false, "delete recent created command")
+	deleteCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "delete recent updated command")
+	deleteCmd.Flags().BoolVarP(&executeFlag, "execute", "x", false, "delete recent executed command")
+	deleteCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
+	deleteCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
+	deleteCmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
+	deleteCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
+	deleteCmd.Flags().BoolVar(&historyFlag, "history", false, "delete a history content and linked backup cfg")
 }

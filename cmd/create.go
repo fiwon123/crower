@@ -1,26 +1,21 @@
-package createdom
+package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/createdom"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 	"github.com/spf13/cobra"
 )
 
 var allAlias []string
-var process string
 
-var folderFlag bool
-var fileFlag bool
-var sysPathFlag bool
-var systemFlag bool
 var scriptFlag bool
-
-var executeFlag bool
+var processName string
 
 // Cmd represents the create command
-var Cmd = &cobra.Command{
+var createCmd = &cobra.Command{
 	Use:   "create",
 	Short: "create a command, file or folder",
 	Long: `create a command, file or folder
@@ -50,10 +45,10 @@ Example:
 
 		app := app.InitApp(cfgFilePath)
 
-		core := NewCore(app)
+		core := createdom.NewCore(app)
 
-		if process != "" {
-			core.CreateProcess(process, args)
+		if processName != "" {
+			core.CreateProcess(processName, args)
 		} else if fileFlag {
 			core.CreateFile(args)
 		} else if folderFlag {
@@ -82,13 +77,13 @@ Example:
 }
 
 func init() {
-	cmdsHelper.AddAllAliasFlag(Cmd, &allAlias)
+	cmdsHelper.AddAllAliasFlag(createCmd, &allAlias)
 
-	Cmd.Flags().StringVarP(&process, "process", "p", "", "process name or pid")
-	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
-	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
-	Cmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
-	Cmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
-	Cmd.Flags().BoolVar(&executeFlag, "execute", false, "create based on last executed command")
-	Cmd.Flags().BoolVar(&scriptFlag, "script", false, "create a script file to help user create a complex command")
+	createCmd.Flags().StringVarP(&processName, "process", "p", "", "process name or pid")
+	createCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
+	createCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
+	createCmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
+	createCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
+	createCmd.Flags().BoolVar(&executeFlag, "execute", false, "create based on last executed command")
+	createCmd.Flags().BoolVar(&scriptFlag, "script", false, "create a script file to help user create a complex command")
 }
