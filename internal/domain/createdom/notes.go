@@ -21,7 +21,7 @@ func newCreateCommandNote(command *command.Data, args []string) string {
 		Build()
 }
 
-func NewCreateScriptCommandNote(command *command.Data, args []string) string {
+func newCreateScriptCommandNote(command *command.Data, args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -34,7 +34,7 @@ func NewCreateScriptCommandNote(command *command.Data, args []string) string {
 		Build()
 }
 
-func NewCreateCommandLastExecuteNote(command *command.Data) string {
+func newCreateCommandLastExecuteNote(command *command.Data) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -48,7 +48,7 @@ func NewCreateCommandLastExecuteNote(command *command.Data) string {
 }
 
 // Create a new add process note
-func NewCreateProcessNote(command *command.Data, args []string) string {
+func newCreateProcessNote(command *command.Data, args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -61,7 +61,7 @@ func NewCreateProcessNote(command *command.Data, args []string) string {
 		Build()
 }
 
-func NewCreateSystemVariableNote(args []string) string {
+func newCreateSystemVariableNote(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -71,7 +71,7 @@ func NewCreateSystemVariableNote(args []string) string {
 		Build()
 }
 
-func NewCreateSystemPathVariableNote(args []string) string {
+func newCreateSystemPathVariableNote(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -81,7 +81,7 @@ func NewCreateSystemPathVariableNote(args []string) string {
 		Build()
 }
 
-func GenerateCreateFile(args []string) string {
+func generateCreateFile(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -91,7 +91,7 @@ func GenerateCreateFile(args []string) string {
 		Build()
 }
 
-func NewCreateFolder(args []string) string {
+func newCreateFolder(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.

@@ -20,7 +20,7 @@ type Core struct {
 func NewCore(app *app.Config, listHandler interfaces.ListHandler) *Core {
 
 	handler := NewHandler(app)
-	input := NewInput(app, listHandler)
+	input := newInput(app, listHandler)
 
 	return &Core{
 		handler: handler,

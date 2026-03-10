@@ -19,7 +19,7 @@ type Core struct {
 func NewCore(app *app.Config, list listHandler) *Core {
 
 	handler := NewHandler(app)
-	input := NewInput(app, list)
+	input := newInput(app, list)
 
 	return &Core{
 		app:     app,
@@ -46,7 +46,7 @@ func (c *Core) Delete(args []string) {
 		return
 	}
 
-	c.app.History.Add(operations.Delete, NewDeleteCommandNote(command, args))
+	c.app.History.Add(operations.Delete, newDeleteCommandNote(command, args))
 	c.app.Save()
 }
 
@@ -77,7 +77,7 @@ func (c *Core) DeleteLast(op operations.MainOperationEnum) {
 		return
 	}
 
-	c.app.History.Add(operations.Delete, NewDeleteLastNote(op, command))
+	c.app.History.Add(operations.Delete, newDeleteLastNote(op, command))
 	c.app.Save()
 }
 
@@ -98,7 +98,7 @@ func (c *Core) DeleteSystemVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Delete, NewDeleteSystemVariable(args))
+	c.app.History.Add(operations.Delete, newDeleteSystemVariable(args))
 	c.app.Save()
 }
 
@@ -119,7 +119,7 @@ func (c *Core) DeleteSystemPathVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Delete, NewDeleteSystemPathVariable(args))
+	c.app.History.Add(operations.Delete, newDeleteSystemPathVariable(args))
 	c.app.Save()
 }
 

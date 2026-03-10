@@ -8,7 +8,7 @@ import (
 )
 
 // Create a new delete command note
-func NewDeleteCommandNote(command *command.Data, args []string) string {
+func newDeleteCommandNote(command *command.Data, args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -21,7 +21,7 @@ func NewDeleteCommandNote(command *command.Data, args []string) string {
 		Build()
 }
 
-func NewDeleteLastNote(op operations.MainOperationEnum, command *command.Data) string {
+func newDeleteLastNote(op operations.MainOperationEnum, command *command.Data) string {
 	noteBuilder := note.New()
 
 	noteBuilder.
@@ -63,7 +63,7 @@ func generateDeleteFolderNote(args []string) string {
 		Build()
 }
 
-func NewDeleteSystemVariable(args []string) string {
+func newDeleteSystemVariable(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -73,7 +73,7 @@ func NewDeleteSystemVariable(args []string) string {
 		Build()
 }
 
-func NewDeleteSystemPathVariable(args []string) string {
+func newDeleteSystemPathVariable(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.

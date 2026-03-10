@@ -18,7 +18,7 @@ type Input struct {
 	list listHandler
 }
 
-func NewInput(app *app.Config, list listHandler) *Input {
+func newInput(app *app.Config, list listHandler) *Input {
 	return &Input{
 		app:  app,
 		list: list,

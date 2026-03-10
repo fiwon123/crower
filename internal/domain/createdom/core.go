@@ -96,7 +96,7 @@ func (c *Core) CreateProcess(name string, args []string) {
 	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
 	c.app.Logger.Info("added new command by process: ", "allCommands", c.app.AllCommandsByName)
 
-	c.app.History.Add(operations.Create, NewCreateProcessNote(command, args))
+	c.app.History.Add(operations.Create, newCreateProcessNote(command, args))
 	c.app.Save()
 }
 
@@ -119,7 +119,7 @@ func (c *Core) CreateSystemVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Create, NewCreateSystemVariableNote(args))
+	c.app.History.Add(operations.Create, newCreateSystemVariableNote(args))
 	c.app.Save()
 }
 
@@ -140,7 +140,7 @@ func (c *Core) CreateSystemPathVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Create, NewCreateSystemPathVariableNote(args))
+	c.app.History.Add(operations.Create, newCreateSystemPathVariableNote(args))
 	c.app.Save()
 }
 
@@ -152,7 +152,7 @@ func (c *Core) CreateFile(args []string) {
 		}
 	}
 
-	c.app.History.Add(operations.Create, GenerateCreateFile(args))
+	c.app.History.Add(operations.Create, generateCreateFile(args))
 	c.app.Save()
 }
 
@@ -164,7 +164,7 @@ func (c *Core) CreateFolder(args []string) {
 		}
 	}
 
-	c.app.History.Add(operations.Create, NewCreateFolder(args))
+	c.app.History.Add(operations.Create, newCreateFolder(args))
 	c.app.Save()
 }
 
@@ -202,7 +202,7 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string)
 		return
 	}
 
-	c.app.History.Add(operations.Create, NewCreateCommandLastExecuteNote(command))
+	c.app.History.Add(operations.Create, newCreateCommandLastExecuteNote(command))
 	c.app.Save()
 }
 
@@ -234,6 +234,6 @@ func (c *Core) CreateScriptCommand(args []string) {
 
 	c.openHandler.Open([]string{filepath.Dir(scriptFilePath)})
 
-	c.app.History.Add(operations.Create, NewCreateScriptCommandNote(command, args))
+	c.app.History.Add(operations.Create, newCreateScriptCommandNote(command, args))
 	c.app.Save()
 }
