@@ -9,19 +9,24 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/domain/executedom"
 
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 type CreateHandler struct {
-	app *app.Config
+	app     *app.Config
+	execute executedom.Handler
 }
 
-func NewCreateHandler(app *app.Config) *CreateHandler {
+func NewHandler(app *app.Config) *CreateHandler {
+
+	execute := executedom.NewHandler(app)
+
 	return &CreateHandler{
-		app: app,
+		app:     app,
+		execute: *execute,
 	}
 }
 
@@ -125,9 +130,9 @@ func (h *CreateHandler) CreateFile(filePath string) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = executehandlers.PerformExecute(fmt.Sprintf("type nul > '%s'", filePath))
+		out, err = h.execute.PerformExecute(fmt.Sprintf("type nul > '%s'", filePath))
 	case "linux":
-		out, err = executehandlers.PerformExecute(fmt.Sprintf("\"touch '%s'\"", filePath))
+		out, err = h.execute.PerformExecute(fmt.Sprintf("\"touch '%s'\"", filePath))
 	}
 
 	if err != nil {
@@ -144,9 +149,9 @@ func (h *CreateHandler) CreateFolder(folderPath string) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = executehandlers.PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath))
+		out, err = h.execute.PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath))
 	case "linux":
-		out, err = executehandlers.PerformExecute(fmt.Sprintf("\"mkdir '%s'\"", folderPath))
+		out, err = h.execute.PerformExecute(fmt.Sprintf("\"mkdir '%s'\"", folderPath))
 	}
 
 	if err != nil {

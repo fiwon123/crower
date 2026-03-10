@@ -50,8 +50,7 @@ Example:
 
 		app := app.InitApp(cfgFilePath)
 
-		handler := NewCreateHandler(app)
-		core := NewCreateCore(app, handler)
+		core := NewCore(app)
 
 		if process != "" {
 			core.CreateProcess(process, args)

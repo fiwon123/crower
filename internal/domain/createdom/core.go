@@ -21,9 +21,12 @@ type CreateCore struct {
 	handler *CreateHandler
 }
 
-func NewCreateCore(app *app.Config, handler *CreateHandler) *CreateCore {
+func NewCore(app *app.Config) *CreateCore {
+
+	createHandler := NewHandler(app)
+
 	return &CreateCore{
-		handler: handler,
+		handler: createHandler,
 		app:     app,
 	}
 }

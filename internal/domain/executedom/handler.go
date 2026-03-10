@@ -1,4 +1,4 @@
-package executehandlers
+package executedom
 
 import (
 	"fmt"
@@ -8,17 +8,28 @@ import (
 	"runtime"
 	"strings"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/app"
+
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 )
 
+type Handler struct {
+	app *app.Config
+}
+
+func NewHandler(app *app.Config) *Handler {
+	return &Handler{
+		app: app,
+	}
+}
+
 // Execute command based on the user operational system (OS).
 // Verify if command exists by name or alias and perform operation
-func Execute(key string, params []string, app *appdata.Data) (string, *commanddata.Data, error) {
+func (h *Handler) Execute(key string, params []string) (string, *commanddata.Data, error) {
 
-	command := app.AllCommandsByName.Get(key)
+	command := h.app.AllCommandsByName.Get(key)
 	if command == nil {
-		command = app.AllCommandsByAlias.Get(key)
+		command = h.app.AllCommandsByAlias.Get(key)
 	}
 
 	if command == nil {
@@ -31,13 +42,13 @@ func Execute(key string, params []string, app *appdata.Data) (string, *commandda
 		}
 	}
 
-	app.Logger.Info(command.Exec)
-	out, err := PerformExecute(command.Exec, app)
+	h.app.Logger.Info(command.Exec)
+	out, err := h.PerformExecute(command.Exec)
 	return out, command, err
 }
 
-func buildCMD(ex string, app *appdata.Data) (*exec.Cmd, string, []string) {
-	app.Logger.Info("")
+func (h *Handler) buildCMD(ex string) (*exec.Cmd, string, []string) {
+	h.app.Logger.Info("")
 	var c *exec.Cmd
 
 	typeCommand := ""
@@ -66,22 +77,22 @@ func buildCMD(ex string, app *appdata.Data) (*exec.Cmd, string, []string) {
 	}
 	commandString.WriteString("]")
 
-	app.Logger.Info("Executing... : ", "exec", commandString.String())
+	h.app.Logger.Info("Executing... : ", "exec", commandString.String())
 
 	return c, typeCommand, splitCommands
 }
 
 // Perform execute operation
-func PerformExecute(ex string, app *appdata.Data) (string, error) {
+func (h *Handler) PerformExecute(ex string) (string, error) {
 
-	c, typeCommand, splitCommands := buildCMD(ex, app)
+	c, typeCommand, splitCommands := h.buildCMD(ex)
 	c = exec.Command(typeCommand, splitCommands...)
 	out, err := c.CombinedOutput()
 	return string(out), err
 }
 
-func PerformExecuteStart(ex string, app *appdata.Data) error {
-	c, typeCommand, splitCommands := buildCMD(ex, app)
+func (h *Handler) PerformExecuteStart(ex string) error {
+	c, typeCommand, splitCommands := h.buildCMD(ex)
 	c = exec.Command(typeCommand, splitCommands...)
 	err := c.Start()
 	return err

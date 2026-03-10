@@ -18,7 +18,7 @@ func TestCreate(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		handler := createdom.NewCreateHandler(app)
+		handler := createdom.NewHandler(app)
 
 		command := commanddata.New("c1", nil, "")
 
@@ -36,7 +36,7 @@ func TestCreate(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		handler := createdom.NewCreateHandler(app)
+		handler := createdom.NewHandler(app)
 
 		var tests = []struct {
 			name string
@@ -69,7 +69,7 @@ func TestCreate(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		handler := createdom.NewCreateHandler(app)
+		handler := createdom.NewHandler(app)
 
 		var tests = []struct {
 			name  string
@@ -102,7 +102,7 @@ func TestCreateFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
-	handler := createdom.NewCreateHandler(app)
+	handler := createdom.NewHandler(app)
 
 	t.Run("Create file using single name", func(t *testing.T) {
 		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new.txt")
@@ -129,7 +129,7 @@ func TestCreateFolder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
-	handler := createdom.NewCreateHandler(app)
+	handler := createdom.NewHandler(app)
 
 	t.Run("Create folder using single name", func(t *testing.T) {
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")

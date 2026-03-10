@@ -1,8 +1,7 @@
-package executecmd
+package executedom
 
 import (
-	"github.com/fiwon123/crower/internal/core"
-	executeoperations "github.com/fiwon123/crower/internal/core/operations/execute"
+	"github.com/fiwon123/crower/internal/app"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -21,16 +20,19 @@ var Cmd = &cobra.Command{
 
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
+
+		handler := NewHandler(app)
+		core := NewCore(app, handler)
 
 		if last {
-			executeoperations.ExecuteLast(operationsdata.Execute, args, app)
+			core.ExecuteLast(operationsdata.Execute, args)
 		} else if createFlag {
-			executeoperations.ExecuteLast(operationsdata.Create, args, app)
+			core.ExecuteLast(operationsdata.Create, args)
 		} else if updateFlag {
-			executeoperations.ExecuteLast(operationsdata.Update, args, app)
+			core.ExecuteLast(operationsdata.Update, args)
 		} else {
-			executeoperations.ExecuteCommand(args, app)
+			core.ExecuteCommand(args)
 		}
 	},
 }
