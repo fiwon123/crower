@@ -1,8 +1,7 @@
-package extractcmd
+package extractdom
 
 import (
-	"github.com/fiwon123/crower/internal/core"
-	extractoperations "github.com/fiwon123/crower/internal/core/operations/extract"
+	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -30,10 +29,12 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
+
+		core := NewCore(app)
 
 		if len(args) > 0 {
-			extractoperations.Extract(args, outDirFlag, app)
+			core.Extract(args, outDirFlag)
 		} else {
 			crowererrors.PrintCmdHelp("extract", app)
 		}

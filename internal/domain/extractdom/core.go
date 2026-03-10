@@ -1,17 +1,31 @@
-package extractoperations
+package extractdom
 
 import (
 	"path/filepath"
 
+	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	appdata "github.com/fiwon123/crower/internal/data/app"
 	extractnotesdata "github.com/fiwon123/crower/internal/data/notes/extract"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	extracthandlers "github.com/fiwon123/crower/internal/handlers/extract"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
-func Extract(args []string, outDir string, app *appdata.Data) {
+type Core struct {
+	app     *app.Config
+	handler *Handler
+}
+
+func NewCore(app *app.Config) *Core {
+
+	handler := NewHandler(app)
+
+	return &Core{
+		handler: handler,
+		app:     app,
+	}
+}
+
+func (c *Core) Extract(args []string, outDir string) {
 
 	paths := []string{}
 	for _, arg := range args {
@@ -28,12 +42,12 @@ func Extract(args []string, outDir string, app *appdata.Data) {
 	}
 
 	if len(paths) == 0 {
-		crowererrors.PrintEmptyPaths(app)
+		crowererrors.PrintEmptyPaths(c.app)
 		return
 	}
 
-	extracthandlers.Extract(paths, outDir, app)
+	c.handler.Extract(paths, outDir)
 
-	app.History.Add(operationsdata.Execute, extractnotesdata.NewExtractNote(outDir, args))
-	historyhelper.Save(app)
+	c.app.History.Add(operationsdata.Execute, extractnotesdata.NewExtractNote(outDir, args))
+	historyhelper.Save(c.app)
 }
