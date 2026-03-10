@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	revertdom "github.com/fiwon123/crower/internal/domain/revert"
+	"github.com/fiwon123/crower/internal/domain/revertdom"
+
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )

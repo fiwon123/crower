@@ -6,19 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	copycmd "github.com/fiwon123/crower/cmd/copy"
-	deletecmd "github.com/fiwon123/crower/cmd/delete"
-	executecmd "github.com/fiwon123/crower/cmd/execute"
-	extractcmd "github.com/fiwon123/crower/cmd/extract"
-	listcmd "github.com/fiwon123/crower/cmd/list"
-	movecmd "github.com/fiwon123/crower/cmd/move"
-	opencmd "github.com/fiwon123/crower/cmd/open"
-	resetcmd "github.com/fiwon123/crower/cmd/reset"
-	restorecmd "github.com/fiwon123/crower/cmd/restore"
-	revertcmd "github.com/fiwon123/crower/cmd/revert"
-	searchcmd "github.com/fiwon123/crower/cmd/search"
-	updatecmd "github.com/fiwon123/crower/cmd/update"
-
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/domain/checkdom"
@@ -107,18 +94,18 @@ func Execute() {
 
 func init() {
 	rootCmd.AddCommand(createCmd)
-	rootCmd.AddCommand(updatecmd.Cmd)
-	rootCmd.AddCommand(deletecmd.Cmd)
-	rootCmd.AddCommand(listcmd.Cmd)
-	rootCmd.AddCommand(opencmd.Cmd)
-	rootCmd.AddCommand(resetcmd.Cmd)
-	rootCmd.AddCommand(revertcmd.Cmd)
-	rootCmd.AddCommand(searchcmd.Cmd)
-	rootCmd.AddCommand(extractcmd.Cmd)
-	rootCmd.AddCommand(copycmd.Cmd)
-	rootCmd.AddCommand(movecmd.Cmd)
-	rootCmd.AddCommand(executecmd.Cmd)
-	rootCmd.AddCommand(restorecmd.Cmd)
+	rootCmd.AddCommand(updateCmd)
+	rootCmd.AddCommand(deleteCmd)
+	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(openCmd)
+	rootCmd.AddCommand(resetCmd)
+	rootCmd.AddCommand(revertCmd)
+	rootCmd.AddCommand(searchCmd)
+	rootCmd.AddCommand(extractCmd)
+	rootCmd.AddCommand(copyCmd)
+	rootCmd.AddCommand(moveCmd)
+	rootCmd.AddCommand(executeCmd)
+	rootCmd.AddCommand(restoreCmd)
 
 	homePath, err := os.UserHomeDir()
 	if err != nil {

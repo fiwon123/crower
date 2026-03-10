@@ -3,7 +3,7 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	opendom "github.com/fiwon123/crower/internal/domain/open"
+	"github.com/fiwon123/crower/internal/domain/opendom"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )

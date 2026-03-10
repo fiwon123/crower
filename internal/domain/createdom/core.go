@@ -7,7 +7,8 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	opendom "github.com/fiwon123/crower/internal/domain/open"
+	"github.com/fiwon123/crower/internal/domain/opendom"
+
 	"github.com/fiwon123/crower/internal/helper"
 
 	commanddata "github.com/fiwon123/crower/internal/data/command"

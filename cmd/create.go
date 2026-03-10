@@ -4,7 +4,8 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/createdom"
-	opendom "github.com/fiwon123/crower/internal/domain/open"
+	"github.com/fiwon123/crower/internal/domain/opendom"
+
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 	"github.com/spf13/cobra"
