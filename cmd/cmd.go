@@ -35,6 +35,12 @@ var checkVersion bool
 var checkNewVersion bool
 var upgradeFlag bool
 
+var folderFlag bool
+var sysPathFlag bool
+var systemFlag bool
+var createFlag bool
+var updateFlag bool
+
 // Version is popualated when building with Makefile
 var Version = "vx.x.x"
 

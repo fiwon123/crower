@@ -17,10 +17,10 @@ type Core struct {
 	input   *Input
 }
 
-func NewCore(app *app.Config) *Core {
+func NewCore(app *app.Config, list listHandler) *Core {
 
 	handler := NewHandler(app)
-	input := NewInput(app)
+	input := NewInput(app, list)
 
 	return &Core{
 		app:     app,

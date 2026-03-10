@@ -1,26 +1,22 @@
-package deletedom
+package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/deletedom"
+	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
-var createFlag bool
-var updateFlag bool
 var executeFlag bool
-
-var folderFlag bool
 var fileFlag bool
-var sysPathFlag bool
-var systemFlag bool
 var historyFlag bool
 
 // Cmd represents the delete command
-var Cmd = &cobra.Command{
+var DeleteCmd = &cobra.Command{
 	Use:   "delete",
 	Short: "delete command, file or folder",
 	Long: `delete command, file or folder
@@ -51,7 +47,8 @@ Example:
 
 		app := app.InitApp(cfgFilePath)
 
-		core := NewCore(app)
+		listHandler := listdom.NewHandler(app)
+		core := deletedom.NewCore(app, listHandler)
 
 		if createFlag {
 			core.DeleteLast(operationsdata.Create)
@@ -85,12 +82,12 @@ Example:
 }
 
 func init() {
-	Cmd.Flags().BoolVarP(&createFlag, "create", "c", false, "delete recent created command")
-	Cmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "delete recent updated command")
-	Cmd.Flags().BoolVarP(&executeFlag, "execute", "x", false, "delete recent executed command")
-	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
-	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
-	Cmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
-	Cmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
-	Cmd.Flags().BoolVar(&historyFlag, "history", false, "delete a history content and linked backup cfg")
+	DeleteCmd.Flags().BoolVarP(&createFlag, "create", "c", false, "delete recent created command")
+	DeleteCmd.Flags().BoolVarP(&updateFlag, "update", "u", false, "delete recent updated command")
+	DeleteCmd.Flags().BoolVarP(&executeFlag, "execute", "x", false, "delete recent executed command")
+	DeleteCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
+	DeleteCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
+	DeleteCmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
+	DeleteCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
+	DeleteCmd.Flags().BoolVar(&historyFlag, "history", false, "delete a history content and linked backup cfg")
 }

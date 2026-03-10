@@ -6,16 +6,21 @@ import (
 	"github.com/fiwon123/crower/internal/helper"
 
 	historydata "github.com/fiwon123/crower/internal/data/history"
-	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 )
 
-type Input struct {
-	app *app.Config
+type listHandler interface {
+	ListCommands()
 }
 
-func NewInput(app *app.Config) *Input {
+type Input struct {
+	app  *app.Config
+	list listHandler
+}
+
+func NewInput(app *app.Config, list listHandler) *Input {
 	return &Input{
-		app: app,
+		app:  app,
+		list: list,
 	}
 }
 
@@ -23,7 +28,7 @@ func NewInput(app *app.Config) *Input {
 func (i *Input) CheckDeleteInput(key *string) bool {
 
 	if *key == "" {
-		listhandlers.ListCommands(i.app)
+		i.list.ListCommands()
 		input := helper.GetUserInput("Select Row", helper.IsValidInputKey, i.app).(string)
 		*key = input
 	}
@@ -37,7 +42,7 @@ func (i *Input) CheckDeleteInput(key *string) bool {
 	}
 
 	if command == nil {
-		listhandlers.ListCommands(i.app)
+		i.list.ListCommands()
 		i.app.Logger.Info("Command not found, try to select one.")
 		input := helper.GetUserInput("Select Row", helper.IsValidInputKey, i.app).(string)
 		*key = input

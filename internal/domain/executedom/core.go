@@ -8,30 +8,35 @@ import (
 	executenotesdata "github.com/fiwon123/crower/internal/data/notes/execute"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
-	listhandlers "github.com/fiwon123/crower/internal/handlers/list"
 	"github.com/fiwon123/crower/internal/helper"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
+type listHandler interface {
+	ListCommands()
+}
+
 type Core struct {
 	app     *app.Config
 	handler *Handler
+	list    listHandler
 }
 
-func NewCore(app *app.Config) *Core {
+func NewCore(app *app.Config, list listHandler) *Core {
 
 	handler := NewHandler(app)
 
 	return &Core{
 		handler: handler,
 		app:     app,
+		list:    list,
 	}
 }
 
 // Verify parameters to process execute operation
 func (c *Core) CheckExecuteInput(key *string, params *[]string) bool {
 	if *key == "" {
-		listhandlers.ListCommands(c.app)
+		c.list.ListCommands()
 		input := helper.GetUserInput("Select Row", helper.IsValidInputKey, c.app).(string)
 		*key = input
 	}
@@ -45,7 +50,7 @@ func (c *Core) CheckExecuteInput(key *string, params *[]string) bool {
 	}
 
 	if command == nil {
-		listhandlers.ListCommands(c.app)
+		c.list.ListCommands()
 		c.app.Logger.Info("Command not found, try to select one.")
 		input := helper.GetUserInput("Select Row", helper.IsValidInputKey, c.app).(string)
 		*key = input
