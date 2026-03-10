@@ -19,8 +19,11 @@ import (
 	searchcmd "github.com/fiwon123/crower/cmd/search"
 	updatecmd "github.com/fiwon123/crower/cmd/update"
 
+	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
+	"github.com/fiwon123/crower/internal/domain/checkdom"
 	"github.com/fiwon123/crower/internal/domain/createdom"
+	"github.com/fiwon123/crower/internal/domain/executedom"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -56,20 +59,22 @@ Execute Command:
 			return
 		}
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
+		checkHandler := checkdom.NewHandler(app)
+		executeCore := executedom.NewCore(app)
 
 		if checkNewVersion {
-			checkoperations.CheckNewVersion(Version, app)
+			checkHandler.CheckNewVersion(Version)
 			return
 		}
 
 		if upgradeFlag {
-			upgradeoperations.UpgradeApp(Version, app)
+			upgradeoperations.UpgradeApp(Version)
 			return
 		}
 
 		if len(args) > 0 {
-			executeoperations.ExecuteCommand(args, app)
+			executeCore.ExecuteCommand(args)
 		} else {
 			crowererrors.PrintCmdHelp("", app)
 		}

@@ -22,8 +22,7 @@ var Cmd = &cobra.Command{
 
 		app := app.InitApp(cfgFilePath)
 
-		handler := NewHandler(app)
-		core := NewCore(app, handler)
+		core := NewCore(app)
 
 		if last {
 			core.ExecuteLast(operationsdata.Execute, args)

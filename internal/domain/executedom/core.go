@@ -18,7 +18,10 @@ type Core struct {
 	handler *Handler
 }
 
-func NewCore(app *app.Config, handler *Handler) *Core {
+func NewCore(app *app.Config) *Core {
+
+	handler := NewHandler(app)
+
 	return &Core{
 		handler: handler,
 		app:     app,
