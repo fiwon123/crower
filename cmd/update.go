@@ -1,4 +1,4 @@
-package updatecmd
+package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/core"
@@ -11,15 +11,13 @@ import (
 )
 
 var name string
-var allAlias []string
 var exec string
 
-var last bool
 var create bool
 var execute bool
 
 // Cmd represents the update command
-var Cmd = &cobra.Command{
+var updateCmd = &cobra.Command{
 	Use:   "update",
 	Short: "update commands",
 	Long: `update commands
@@ -59,11 +57,11 @@ Examples:
 }
 
 func init() {
-	cmdsHelper.AddNameFlag(Cmd, &name)
-	cmdsHelper.AddAllAliasFlag(Cmd, &allAlias)
-	cmdsHelper.AddExecFlag(Cmd, &exec)
+	cmdsHelper.AddNameFlag(updateCmd, &name)
+	cmdsHelper.AddAllAliasFlag(updateCmd, &allAlias)
+	cmdsHelper.AddExecFlag(updateCmd, &exec)
 
-	Cmd.Flags().BoolVarP(&last, "last", "l", false, "update recent updated command")
-	Cmd.Flags().BoolVarP(&create, "create", "c", false, "update recent created command")
-	Cmd.Flags().BoolVarP(&execute, "execute", "x", false, "update recent updated command")
+	updateCmd.Flags().BoolVarP(&last, "last", "l", false, "update recent updated command")
+	updateCmd.Flags().BoolVarP(&create, "create", "c", false, "update recent created command")
+	updateCmd.Flags().BoolVarP(&execute, "execute", "x", false, "update recent updated command")
 }

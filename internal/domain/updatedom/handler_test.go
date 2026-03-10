@@ -1,11 +1,11 @@
-package updatehandlers_test
+package updatedom_test
 
 import (
 	"testing"
 
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
-	updatehandlers "github.com/fiwon123/crower/internal/handlers/update"
+	"github.com/fiwon123/crower/internal/domain/createdom"
+	"github.com/fiwon123/crower/internal/domain/updatedom"
 	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
@@ -17,6 +17,9 @@ func TestUpdate(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
+
+		createHandler := createdom.NewHandler(app)
+		updateHandler := updatedom.NewHandler(app)
 
 		var mock = []struct {
 			name  string
@@ -31,8 +34,8 @@ func TestUpdate(t *testing.T) {
 		}
 
 		for _, command := range mock {
-			createhandlers.CreateCommand(
-				command.name, []string{command.alias}, "exec", app)
+			createHandler.CreateCommand(
+				command.name, []string{command.alias}, "exec")
 		}
 
 		var tests = []struct {
@@ -51,7 +54,7 @@ func TestUpdate(t *testing.T) {
 		for _, test := range tests {
 			newCommand := commanddata.New(test.newName, []string{}, "")
 			key := test.oldName
-			_, _, err := updatehandlers.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec, app)
+			_, _, err := updateHandler.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec)
 			got := err == nil
 			assertUpdateTest(test.want, got, key, *newCommand, err, t)
 

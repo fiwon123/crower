@@ -1,34 +1,45 @@
-package updatehandlers
+package updatedom
 
 import (
 	"fmt"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 )
 
+type Handler struct {
+	app *app.Config
+}
+
+func NewHandler(app *app.Config) *Handler {
+
+	return &Handler{
+		app: app,
+	}
+}
+
 // Update command based on the key value.
 // Old values will be used if not specified in the data.Command structure.
-func UpdateCommand(key string, newName string, newAlias []string, newExec string, app *appdata.Data) (*commanddata.Data, *commanddata.Data, error) {
+func (h *Handler) UpdateCommand(key string, newName string, newAlias []string, newExec string) (*commanddata.Data, *commanddata.Data, error) {
 
 	newCommand := commanddata.New(newName, newAlias, newExec)
 
-	oldCommand := app.AllCommandsByName.Get(key)
+	oldCommand := h.app.AllCommandsByName.Get(key)
 	if oldCommand != nil {
-		return oldCommand, newCommand, performUpdate(oldCommand, newCommand, app)
+		return oldCommand, newCommand, h.performUpdate(oldCommand, newCommand)
 	}
 
-	oldCommand = app.AllCommandsByAlias.Get(key)
+	oldCommand = h.app.AllCommandsByAlias.Get(key)
 	if oldCommand != nil {
-		return oldCommand, newCommand, performUpdate(oldCommand, newCommand, app)
+		return oldCommand, newCommand, h.performUpdate(oldCommand, newCommand)
 	}
 
 	return oldCommand, newCommand, fmt.Errorf("couldn't find command by name or alias")
 }
 
-func performUpdate(oldCommand *commanddata.Data, newCommand *commanddata.Data, app *appdata.Data) error {
+func (h *Handler) performUpdate(oldCommand *commanddata.Data, newCommand *commanddata.Data) error {
 
-	err := canUpdate(newCommand, app)
+	err := h.canUpdate(newCommand)
 	if err != nil {
 		return err
 	}
@@ -56,27 +67,27 @@ func performUpdate(oldCommand *commanddata.Data, newCommand *commanddata.Data, a
 		return fmt.Errorf("already up-to-date")
 	}
 
-	app.AllCommandsByName.Remove(oldCommand.Name)
-	app.AllCommandsByName.Add(newCommand.Name, newCommand)
+	h.app.AllCommandsByName.Remove(oldCommand.Name)
+	h.app.AllCommandsByName.Add(newCommand.Name, newCommand)
 
 	for _, alias := range oldCommand.AllAlias {
-		app.AllCommandsByAlias.Remove(alias)
+		h.app.AllCommandsByAlias.Remove(alias)
 	}
 
 	for _, alias := range newCommand.AllAlias {
-		app.AllCommandsByAlias.Add(alias, newCommand)
+		h.app.AllCommandsByAlias.Add(alias, newCommand)
 	}
 
 	return nil
 }
 
-func canUpdate(newCommand *commanddata.Data, app *appdata.Data) error {
-	if app.AllCommandsByName.Get(newCommand.Name) != nil {
+func (h *Handler) canUpdate(newCommand *commanddata.Data) error {
+	if h.app.AllCommandsByName.Get(newCommand.Name) != nil {
 		return fmt.Errorf("command name already in use: %v", newCommand.Name)
 	}
 
 	for _, alias := range newCommand.AllAlias {
-		if app.AllCommandsByAlias.Get(alias) != nil {
+		if h.app.AllCommandsByAlias.Get(alias) != nil {
 			return fmt.Errorf("alias already in use: %v", alias)
 		}
 	}

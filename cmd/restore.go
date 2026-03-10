@@ -8,7 +8,7 @@ import (
 )
 
 // restoreCmd represents the restore command
-var Cmd = &cobra.Command{
+var restoreCmd = &cobra.Command{
 	Use:   "restore",
 	Short: "restore specific command",
 	Long:  `restore specific command`,
