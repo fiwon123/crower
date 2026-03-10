@@ -1,0 +1,44 @@
+package resetdom
+
+import (
+	"github.com/fiwon123/crower/internal/app"
+	resetnotesdata "github.com/fiwon123/crower/internal/data/notes/reset"
+	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/interfaces"
+	"github.com/fiwon123/crower/pkg/crowerutils"
+)
+
+type Core struct {
+	app     *app.Config
+	handler *Handler
+	input   *Input
+}
+
+func NewCore(app *app.Config, list interfaces.ListHandler) *Core {
+
+	handler := NewHandler(app)
+	input := NewInput(app, list)
+
+	return &Core{
+		handler: handler,
+		app:     app,
+		input:   input,
+	}
+}
+
+func (c *Core) Reset() {
+	ok := c.input.CheckResetInput()
+
+	if !ok {
+		c.app.Logger.Info("Cancelling reset...")
+		return
+	}
+
+	c.app.Logger.Info("reset all commands: ", c.app.AllCommandsByName)
+	c.handler.Reset()
+	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
+
+	c.app.History.Add(operationsdata.Reset, resetnotesdata.NewResetNote())
+	historyhelper.Save(c.app)
+}

@@ -4,6 +4,7 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/createdom"
+	opendom "github.com/fiwon123/crower/internal/domain/open"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 	"github.com/spf13/cobra"
@@ -45,7 +46,8 @@ Example:
 
 		app := app.InitApp(cfgFilePath)
 
-		core := createdom.NewCore(app)
+		openHandler := opendom.NewHandler(app)
+		core := createdom.NewCore(app, *openHandler)
 
 		if processName != "" {
 			core.CreateProcess(processName, args)
