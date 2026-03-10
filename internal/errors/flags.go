@@ -1,4 +1,4 @@
-package crowererrors
+package errors
 
 import "github.com/fiwon123/crower/internal/app"
 

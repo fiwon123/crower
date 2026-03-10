@@ -2,15 +2,15 @@ package copydom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new copy note
-func newCopyNote(subOp operationsdata.SubOperationEnum, args []string) string {
+func newCopyNote(subOp operations.SubOperationEnum, args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
-		AddMainOperation(operationsdata.Copy).
+		AddMainOperation(operations.Copy).
 		AddSubOperation(subOp).
 		AddCrowerExec("crower copy", args).
 		Build()

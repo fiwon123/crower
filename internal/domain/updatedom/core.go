@@ -2,10 +2,9 @@ package updatedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/internal/interfaces"
 	"github.com/fiwon123/crower/pkg/crowerutils"
@@ -47,8 +46,8 @@ func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec
 		return
 	}
 
-	c.app.History.Add(operationsdata.Update, newUpdateCommmandNote(args, oldCommand, newCommand))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Update, newUpdateCommmandNote(args, oldCommand, newCommand))
+	c.app.Save()
 }
 
 func (c *Core) performUpdateCommand(key string, name string, allAlias []string, exec string) (*commanddata.Data, *commanddata.Data) {
@@ -64,11 +63,11 @@ func (c *Core) performUpdateCommand(key string, name string, allAlias []string, 
 	return oldCommand, newCommand
 }
 
-func (c *Core) UpdateLast(op operationsdata.MainOperationEnum, name string, allAlias []string, exec string) {
-	content := historyhelper.GetLast(op, c.app)
+func (c *Core) UpdateLast(op operations.MainOperationEnum, name string, allAlias []string, exec string) {
+	content := c.app.GetLast(op)
 
 	if content == nil {
-		crowererrors.PrintCommandNotFoundError(c.app)
+		errors.PrintCommandNotFoundError(c.app)
 		return
 	}
 
@@ -79,6 +78,6 @@ func (c *Core) UpdateLast(op operationsdata.MainOperationEnum, name string, allA
 		return
 	}
 
-	c.app.History.Add(operationsdata.Update, newUpdateLastNote(op, oldCommand, newCommand))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Update, newUpdateLastNote(op, oldCommand, newCommand))
+	c.app.Save()
 }

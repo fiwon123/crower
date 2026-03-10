@@ -4,8 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/app"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 type Core struct {
@@ -41,8 +40,8 @@ func (c *Core) Open(args []string) {
 
 	c.handler.Open(paths)
 
-	c.app.History.Add(operationsdata.Open, newOpenNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Open, newOpenNote(args))
+	c.app.Save()
 }
 
 func (c *Core) OpenFile(args []string) {
@@ -53,8 +52,8 @@ func (c *Core) OpenFile(args []string) {
 
 	c.handler.Open(args)
 
-	c.app.History.Add(operationsdata.Open, newOpenFolderNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Open, newOpenFolderNote(args))
+	c.app.Save()
 }
 
 func (c *Core) OpenFolder(args []string) {
@@ -65,8 +64,8 @@ func (c *Core) OpenFolder(args []string) {
 
 	c.handler.Open(args)
 
-	c.app.History.Add(operationsdata.Open, newOpenFolderNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Open, newOpenFolderNote(args))
+	c.app.Save()
 }
 
 func (c *Core) OpenSystem() {
@@ -76,6 +75,6 @@ func (c *Core) OpenSystem() {
 		return
 	}
 
-	c.app.History.Add(operationsdata.Open, newOpenSystemNote())
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Open, newOpenSystemNote())
+	c.app.Save()
 }

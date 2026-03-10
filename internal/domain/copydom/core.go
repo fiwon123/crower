@@ -2,10 +2,9 @@ package copydom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/errors"
 
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -26,7 +25,7 @@ func NewCore(app *app.Config) *Core {
 
 func (c *Core) Copy(args []string) {
 	if len(args) == 0 {
-		crowererrors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument", c.app)
+		errors.PrintNotArgs("1 or more filepath/folderpath to copy and output folder as last argument", c.app)
 		return
 	}
 
@@ -51,12 +50,12 @@ func (c *Core) Copy(args []string) {
 	}
 
 	if isCopyFile && isCopyFolder {
-		c.app.History.Add(operationsdata.Copy, newCopyNote(operationsdata.FileAndFolder, args))
+		c.app.History.Add(operations.Copy, newCopyNote(operations.FileAndFolder, args))
 	} else if isCopyFile {
-		c.app.History.Add(operationsdata.Copy, newCopyNote(operationsdata.File, args))
+		c.app.History.Add(operations.Copy, newCopyNote(operations.File, args))
 	} else if isCopyFolder {
-		c.app.History.Add(operationsdata.Copy, newCopyNote(operationsdata.Folder, args))
+		c.app.History.Add(operations.Copy, newCopyNote(operations.Folder, args))
 	}
 
-	historyhelper.Save(c.app)
+	c.app.Save()
 }

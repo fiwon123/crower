@@ -2,11 +2,10 @@ package deletedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/errors"
 
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -46,8 +45,8 @@ func (c *Core) Delete(args []string) {
 		return
 	}
 
-	c.app.History.Add(operationsdata.Delete, NewDeleteCommandNote(command, args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Delete, NewDeleteCommandNote(command, args))
+	c.app.Save()
 }
 
 func (c *Core) performDeleteCommand(key string) *commanddata.Data {
@@ -64,11 +63,11 @@ func (c *Core) performDeleteCommand(key string) *commanddata.Data {
 	return command
 }
 
-func (c *Core) DeleteLast(op operationsdata.MainOperationEnum) {
-	content := historyhelper.GetLast(op, c.app)
+func (c *Core) DeleteLast(op operations.MainOperationEnum) {
+	content := c.app.GetLast(op)
 
 	if content == nil {
-		crowererrors.PrintCommandNotFoundError(c.app)
+		errors.PrintCommandNotFoundError(c.app)
 		return
 	}
 
@@ -77,8 +76,8 @@ func (c *Core) DeleteLast(op operationsdata.MainOperationEnum) {
 		return
 	}
 
-	c.app.History.Add(operationsdata.Delete, NewDeleteLastNote(op, command))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Delete, NewDeleteLastNote(op, command))
+	c.app.Save()
 }
 
 func (c *Core) DeleteSystemVariable(args []string) {
@@ -86,7 +85,7 @@ func (c *Core) DeleteSystemVariable(args []string) {
 	if len(args) >= 1 {
 		newVar = args[0]
 	} else {
-		crowererrors.PrintNotArgs("var name", c.app)
+		errors.PrintNotArgs("var name", c.app)
 		return
 	}
 
@@ -98,8 +97,8 @@ func (c *Core) DeleteSystemVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operationsdata.Delete, NewDeleteSystemVariable(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Delete, NewDeleteSystemVariable(args))
+	c.app.Save()
 }
 
 func (c *Core) DeleteSystemPathVariable(args []string) {
@@ -107,7 +106,7 @@ func (c *Core) DeleteSystemPathVariable(args []string) {
 	if len(args) > 0 {
 		newPath = args[0]
 	} else {
-		crowererrors.PrintNotArgs("path", c.app)
+		errors.PrintNotArgs("path", c.app)
 		return
 	}
 
@@ -119,8 +118,8 @@ func (c *Core) DeleteSystemPathVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operationsdata.Delete, NewDeleteSystemPathVariable(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Delete, NewDeleteSystemPathVariable(args))
+	c.app.Save()
 }
 
 func (c *Core) DeleteFile(args []string) {
@@ -128,14 +127,14 @@ func (c *Core) DeleteFile(args []string) {
 	if len(args) > 0 {
 		filePath = args[0]
 	} else {
-		crowererrors.PrintNotFileAndOutputPath(c.app)
+		errors.PrintNotFileAndOutputPath(c.app)
 		return
 	}
 
 	c.handler.DeleteFile(filePath)
 
-	c.app.History.Add(operationsdata.Execute, newDeleteFileNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Execute, newDeleteFileNote(args))
+	c.app.Save()
 }
 
 func (c *Core) DeleteFolder(args []string) {
@@ -143,14 +142,14 @@ func (c *Core) DeleteFolder(args []string) {
 	if len(args) > 0 {
 		folderPath = args[0]
 	} else {
-		crowererrors.PrintNotFileAndOutputPath(c.app)
+		errors.PrintNotFileAndOutputPath(c.app)
 		return
 	}
 
 	c.handler.DeleteFolder(folderPath)
 
-	c.app.History.Add(operationsdata.Execute, generateDeleteFolderNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Execute, generateDeleteFolderNote(args))
+	c.app.Save()
 }
 
 func (c *Core) DeleteHistoryContent(args []string) {
@@ -168,5 +167,5 @@ func (c *Core) DeleteHistoryContent(args []string) {
 
 	c.app.Logger.Info(out)
 
-	historyhelper.SaveOnlyHistory(c.app)
+	c.app.SaveOnlyHistory()
 }

@@ -2,12 +2,11 @@ package executedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/internal/helper"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 type listHandler interface {
@@ -84,23 +83,23 @@ func (c *Core) ExecuteCommand(args []string) {
 	output, command, err := c.handler.Execute(key, params)
 	c.assertExecute(output, command, err)
 
-	c.app.History.Add(operationsdata.Execute, newExecuteCommandNote(command))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Execute, newExecuteCommandNote(command))
+	c.app.Save()
 }
 
-func (c *Core) ExecuteLast(op operationsdata.MainOperationEnum, args []string) {
-	content := historyhelper.GetLast(op, c.app)
+func (c *Core) ExecuteLast(op operations.MainOperationEnum, args []string) {
+	content := c.app.GetLast(op)
 
 	if content == nil {
-		crowererrors.PrintCommandNotFoundError(c.app)
+		errors.PrintCommandNotFoundError(c.app)
 		return
 	}
 
 	output, command, err := c.handler.Execute(content.CommandName, args)
 	c.assertExecute(output, command, err)
 
-	c.app.History.Add(operationsdata.Execute, NewExecuteLastNote(op, command))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Execute, NewExecuteLastNote(op, command))
+	c.app.Save()
 }
 
 func (c *Core) assertExecute(output string, command *commanddata.Data, err error) {

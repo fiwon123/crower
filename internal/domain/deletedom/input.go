@@ -5,7 +5,7 @@ import (
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/helper"
 
-	historydata "github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/history"
 )
 
 type listHandler interface {
@@ -62,11 +62,11 @@ func (i *Input) CheckDeleteInput(key *string) bool {
 }
 
 // Verify parameters to process delete history content operation
-func (i *Input) CheckDeleteHistoryContentInput() (historydata.Content, bool) {
+func (i *Input) CheckDeleteHistoryContentInput() (history.Content, bool) {
 
-	var content historydata.Content
+	var content history.Content
 	i.app.Logger.Info(i.app.History.GetList())
-	content = helper.GetUserInput("Select Row", helper.IsValidContentKey, i.app).(historydata.Content)
+	content = helper.GetUserInput("Select Row", helper.IsValidContentKey, i.app).(history.Content)
 
 	i.app.Logger.Info("-----------------------------------------")
 	i.app.Logger.Info("Content")

@@ -6,8 +6,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 type Core struct {
@@ -28,22 +27,22 @@ func NewCore(app *app.Config) *Core {
 func (c *Core) ListCommands() {
 	c.handler.ListCommands()
 
-	c.app.History.Add(operationsdata.List, newListCommandsNote())
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.List, newListCommandsNote())
+	c.app.Save()
 }
 
 func (c *Core) ListProcess(args []string) {
 	c.handler.ListProcess(args)
 
-	c.app.History.Add(operationsdata.List, newListProcessNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.List, newListProcessNote(args))
+	c.app.Save()
 }
 
 func (c *Core) ListHistory() {
 	c.handler.ListHistory()
 
-	c.app.History.Add(operationsdata.List, newListHistoriesNote())
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.List, newListHistoriesNote())
+	c.app.Save()
 }
 
 func (c *Core) ListFolder(args []string) {
@@ -55,8 +54,8 @@ func (c *Core) ListFolder(args []string) {
 	out, err := c.handler.ListFolder(currentPath)
 	c.assertListResult(out, err)
 
-	c.app.History.Add(operationsdata.List, newListFolderNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.List, newListFolderNote(args))
+	c.app.Save()
 }
 
 func (c *Core) ListSystem() {
@@ -78,8 +77,8 @@ func (c *Core) ListSystem() {
 	}
 	c.assertListResult(out, err)
 
-	c.app.History.Add(operationsdata.List, newListSystemNote())
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.List, newListSystemNote())
+	c.app.Save()
 }
 
 func (c *Core) ListSysPath() {
@@ -91,8 +90,8 @@ func (c *Core) ListSysPath() {
 
 	c.assertListResult(out, err)
 
-	c.app.History.Add(operationsdata.List, newListSystemPathNote())
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.List, newListSystemPathNote())
+	c.app.Save()
 }
 
 func formatVariable(name string, paths string) string {

@@ -6,14 +6,13 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/domain/opendom"
+	"github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/internal/helper"
 
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -69,8 +68,8 @@ func (c *Core) CreateCommand(allAlias []string, args []string) {
 		return
 	}
 
-	c.app.History.Add(operationsdata.Create, newCreateCommandNote(command, args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Create, newCreateCommandNote(command, args))
+	c.app.Save()
 }
 
 func (c *Core) performCreateCommand(name string, allAlias []string, exec string) *commanddata.Data {
@@ -97,8 +96,8 @@ func (c *Core) CreateProcess(name string, args []string) {
 	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
 	c.app.Logger.Info("added new command by process: ", "allCommands", c.app.AllCommandsByName)
 
-	c.app.History.Add(operationsdata.Create, NewCreateProcessNote(command, args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Create, NewCreateProcessNote(command, args))
+	c.app.Save()
 }
 
 func (c *Core) CreateSystemVariable(args []string) {
@@ -108,7 +107,7 @@ func (c *Core) CreateSystemVariable(args []string) {
 		newVar = args[0]
 		value = args[1]
 	} else {
-		crowererrors.PrintNotArgs("var name and var value", c.app)
+		errors.PrintNotArgs("var name and var value", c.app)
 		return
 	}
 
@@ -120,8 +119,8 @@ func (c *Core) CreateSystemVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operationsdata.Create, NewCreateSystemVariableNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Create, NewCreateSystemVariableNote(args))
+	c.app.Save()
 }
 
 func (c *Core) CreateSystemPathVariable(args []string) {
@@ -129,7 +128,7 @@ func (c *Core) CreateSystemPathVariable(args []string) {
 	if len(args) > 0 {
 		newPath = args[0]
 	} else {
-		crowererrors.PrintNotArgs("path", c.app)
+		errors.PrintNotArgs("path", c.app)
 		return
 	}
 
@@ -141,8 +140,8 @@ func (c *Core) CreateSystemPathVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operationsdata.Create, NewCreateSystemPathVariableNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Create, NewCreateSystemPathVariableNote(args))
+	c.app.Save()
 }
 
 func (c *Core) CreateFile(args []string) {
@@ -153,8 +152,8 @@ func (c *Core) CreateFile(args []string) {
 		}
 	}
 
-	c.app.History.Add(operationsdata.Create, GenerateCreateFile(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Create, GenerateCreateFile(args))
+	c.app.Save()
 }
 
 func (c *Core) CreateFolder(args []string) {
@@ -165,23 +164,23 @@ func (c *Core) CreateFolder(args []string) {
 		}
 	}
 
-	c.app.History.Add(operationsdata.Create, NewCreateFolder(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Create, NewCreateFolder(args))
+	c.app.Save()
 }
 
-func (c *Core) CreateLastCommand(op operationsdata.MainOperationEnum, args []string) {
+func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string) {
 	name := ""
 	if len(args) > 0 {
 		name = args[0]
 	} else {
-		crowererrors.PrintNotArgs("name", c.app)
+		errors.PrintNotArgs("name", c.app)
 		return
 	}
 
-	content := historyhelper.GetLast(op, c.app)
+	content := c.app.GetLast(op)
 
 	if content == nil {
-		crowererrors.PrintCommandNotFoundError(c.app)
+		errors.PrintCommandNotFoundError(c.app)
 		return
 	}
 
@@ -203,8 +202,8 @@ func (c *Core) CreateLastCommand(op operationsdata.MainOperationEnum, args []str
 		return
 	}
 
-	c.app.History.Add(operationsdata.Create, NewCreateCommandLastExecuteNote(command))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Create, NewCreateCommandLastExecuteNote(command))
+	c.app.Save()
 }
 
 func (c *Core) CreateScriptCommand(args []string) {
@@ -212,7 +211,7 @@ func (c *Core) CreateScriptCommand(args []string) {
 	if len(args) > 0 {
 		name = args[0]
 	} else {
-		crowererrors.PrintNotArgs("name", c.app)
+		errors.PrintNotArgs("name", c.app)
 	}
 
 	scriptFilePath, err := c.handler.CreateScriptCommand(name)
@@ -235,6 +234,6 @@ func (c *Core) CreateScriptCommand(args []string) {
 
 	c.openHandler.Open([]string{filepath.Dir(scriptFilePath)})
 
-	c.app.History.Add(operationsdata.Create, NewCreateScriptCommandNote(command, args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Create, NewCreateScriptCommandNote(command, args))
+	c.app.Save()
 }

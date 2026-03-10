@@ -7,7 +7,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	historydata "github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 
 	"github.com/fiwon123/crower/pkg/crowerutils"
@@ -85,7 +85,7 @@ func (h *Handler) DeleteFolder(folderPath string) error {
 	return nil
 }
 
-func (h *Handler) DeleteHistoryContent(content historydata.Content) (string, error) {
+func (h *Handler) DeleteHistoryContent(content history.Content) (string, error) {
 	ok := h.app.History.RemoveContent(content)
 	if !ok {
 		return "", fmt.Errorf("Content not found \n")

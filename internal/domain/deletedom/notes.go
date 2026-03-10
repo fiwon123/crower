@@ -3,7 +3,7 @@ package deletedom
 import (
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new delete command note
@@ -11,8 +11,8 @@ func NewDeleteCommandNote(command *commanddata.Data, args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
-		AddMainOperation(operationsdata.Delete).
-		AddSubOperation(operationsdata.Command).
+		AddMainOperation(operations.Delete).
+		AddSubOperation(operations.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
@@ -20,22 +20,22 @@ func NewDeleteCommandNote(command *commanddata.Data, args []string) string {
 		Build()
 }
 
-func NewDeleteLastNote(op operationsdata.MainOperationEnum, command *commanddata.Data) string {
+func NewDeleteLastNote(op operations.MainOperationEnum, command *commanddata.Data) string {
 	noteBuilder := notesdata.New()
 
 	noteBuilder.
-		AddMainOperation(operationsdata.Delete).
-		AddSubOperation(operationsdata.Command).
+		AddMainOperation(operations.Delete).
+		AddSubOperation(operations.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec)
 
 	switch op {
-	case operationsdata.Create:
+	case operations.Create:
 		noteBuilder.AddCrowerExec("delete --create", nil)
-	case operationsdata.Update:
+	case operations.Update:
 		noteBuilder.AddCrowerExec("delete --update", nil)
-	case operationsdata.Execute:
+	case operations.Execute:
 		noteBuilder.AddCrowerExec("delete --execute", nil)
 	}
 
@@ -46,8 +46,8 @@ func newDeleteFileNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
-		AddMainOperation(operationsdata.Delete).
-		AddSubOperation(operationsdata.File).
+		AddMainOperation(operations.Delete).
+		AddSubOperation(operations.File).
 		AddCrowerExec("delete", args).
 		Build()
 }
@@ -56,8 +56,8 @@ func generateDeleteFolderNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
-		AddMainOperation(operationsdata.Delete).
-		AddSubOperation(operationsdata.Folder).
+		AddMainOperation(operations.Delete).
+		AddSubOperation(operations.Folder).
 		AddCrowerExec("delete", args).
 		Build()
 }
@@ -66,8 +66,8 @@ func NewDeleteSystemVariable(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
-		AddMainOperation(operationsdata.Delete).
-		AddSubOperation(operationsdata.System).
+		AddMainOperation(operations.Delete).
+		AddSubOperation(operations.System).
 		AddCrowerExec("delete --system", args).
 		Build()
 }
@@ -76,8 +76,8 @@ func NewDeleteSystemPathVariable(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
-		AddMainOperation(operationsdata.Delete).
-		AddSubOperation(operationsdata.SysPath).
+		AddMainOperation(operations.Delete).
+		AddSubOperation(operations.SysPath).
 		AddCrowerExec("delete --syspath", args).
 		Build()
 }

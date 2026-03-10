@@ -1,14 +1,13 @@
-package historyhelper
+package app
 
 import (
 	"path/filepath"
 
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Save history data on cfg file
-func Save(app *app.Config) {
+func (app *Config) Save() {
 	data := app.History.GetLast()
 
 	newDataPath := filepath.Join(app.HistoryFolderPath, data.File)
@@ -18,6 +17,6 @@ func Save(app *app.Config) {
 	crowerutils.WriteJson(app.History, app.HistoryFilePath)
 }
 
-func SaveOnlyHistory(app *app.Config) {
+func (app *Config) SaveOnlyHistory() {
 	crowerutils.WriteJson(app.History, app.HistoryFilePath)
 }

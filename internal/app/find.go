@@ -1,17 +1,17 @@
-package historyhelper
+package app
 
 import (
 	"fmt"
 	"path/filepath"
 	"slices"
 
-	"github.com/fiwon123/crower/internal/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	historydata "github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/history"
+
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func FindCommand(key string, content historydata.Content, app *app.Config) (*commanddata.Data, error) {
+func (app *Config) FindCommand(key string, content history.Content) (*commanddata.Data, error) {
 	allCommands := commanddata.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
 

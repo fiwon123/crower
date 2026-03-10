@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/domain/movedom"
+	"github.com/fiwon123/crower/internal/errors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +30,7 @@ Examples:
 		if len(args) > 0 {
 			core.Move(args)
 		} else {
-			crowererrors.PrintCmdHelp("move", app)
+			errors.PrintCmdHelp("move", app)
 		}
 	},
 }

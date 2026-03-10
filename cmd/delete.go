@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/deletedom"
 	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/pkg/crowerutils"
@@ -49,11 +49,11 @@ Example:
 		core := deletedom.NewCore(app, listHandler)
 
 		if createFlag {
-			core.DeleteLast(operationsdata.Create)
+			core.DeleteLast(operations.Create)
 		} else if updateFlag {
-			core.DeleteLast(operationsdata.Update)
+			core.DeleteLast(operations.Update)
 		} else if executeFlag {
-			core.DeleteLast(operationsdata.Execute)
+			core.DeleteLast(operations.Execute)
 		} else if fileFlag {
 			core.DeleteFile(args)
 		} else if folderFlag {

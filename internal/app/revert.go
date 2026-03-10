@@ -1,18 +1,16 @@
-package historyhelper
+package app
 
 import (
 	"os"
 	"path/filepath"
 
-	"github.com/fiwon123/crower/internal/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	historydata "github.com/fiwon123/crower/internal/data/history"
-
+	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Revert last operation
-func RevertTo(content *historydata.Content, app *app.Config) error {
+func (app *Config) RevertTo(content *history.Content) error {
 
 	allCommands := commanddata.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
@@ -27,12 +25,12 @@ func RevertTo(content *historydata.Content, app *app.Config) error {
 		return err
 	}
 
-	removeUntilHistory(content, app)
+	app.removeUntilHistory(content)
 
 	return nil
 }
 
-func removeUntilHistory(content *historydata.Content, app *app.Config) {
+func (app *Config) removeUntilHistory(content *history.Content) {
 
 	lastHistory := app.History.GetLast()
 	for lastHistory.Version != content.Version {

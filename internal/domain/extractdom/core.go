@@ -4,9 +4,8 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/errors"
 )
 
 type Core struct {
@@ -41,12 +40,12 @@ func (c *Core) Extract(args []string, outDir string) {
 	}
 
 	if len(paths) == 0 {
-		crowererrors.PrintEmptyPaths(c.app)
+		errors.PrintEmptyPaths(c.app)
 		return
 	}
 
 	c.handler.Extract(paths, outDir)
 
-	c.app.History.Add(operationsdata.Execute, newExtractNote(outDir, args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Execute, newExtractNote(outDir, args))
+	c.app.Save()
 }

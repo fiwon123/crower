@@ -2,10 +2,10 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
+	"github.com/fiwon123/crower/internal/errors"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -46,15 +46,15 @@ Examples:
 		core := updatedom.NewCore(app, listHandler)
 
 		if last {
-			core.UpdateLast(operationsdata.Update, name, allAlias, exec)
+			core.UpdateLast(operations.Update, name, allAlias, exec)
 		} else if create {
-			core.UpdateLast(operationsdata.Create, name, allAlias, exec)
+			core.UpdateLast(operations.Create, name, allAlias, exec)
 		} else if execute {
-			core.UpdateLast(operationsdata.Execute, name, allAlias, exec)
+			core.UpdateLast(operations.Execute, name, allAlias, exec)
 		} else if len(args) > 0 {
 			core.UpdateCommand(args, name, allAlias, exec)
 		} else {
-			crowererrors.PrintCmdHelp("update", app)
+			errors.PrintCmdHelp("update", app)
 		}
 
 	},

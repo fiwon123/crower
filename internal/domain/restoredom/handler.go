@@ -4,10 +4,9 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/app"
-	dataHistory "github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 type Handler struct {
@@ -28,8 +27,8 @@ func NewHandler(app *app.Config) *Handler {
 	}
 }
 
-func (h *Handler) RestoreHistory(key string, content dataHistory.Content) (string, error) {
-	command, err := historyhelper.FindCommand(key, content, h.app)
+func (h *Handler) RestoreHistory(key string, content history.Content) (string, error) {
+	command, err := h.app.FindCommand(key, content)
 	if err != nil {
 		return "", err
 	}

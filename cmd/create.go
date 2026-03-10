@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
+
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
 
@@ -61,7 +62,7 @@ Example:
 		} else if systemFlag {
 			core.CreateSystemVariable(args)
 		} else if executeFlag {
-			core.CreateLastCommand(operationsdata.Execute, args)
+			core.CreateLastCommand(operations.Execute, args)
 		} else if scriptFlag {
 			core.CreateScriptCommand(args)
 		} else if len(args) > 0 {

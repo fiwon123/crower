@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/domain/searchdom"
+	"github.com/fiwon123/crower/internal/errors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -44,7 +44,7 @@ search on browser:
 		} else if len(args) > 0 {
 			core.SearchFileAndFolder(args)
 		} else {
-			crowererrors.PrintCmdHelp("search", app)
+			errors.PrintCmdHelp("search", app)
 		}
 
 	},

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/domain/listdom"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
@@ -26,11 +26,11 @@ var executeCmd = &cobra.Command{
 		core := executedom.NewCore(app, listHandler)
 
 		if last {
-			core.ExecuteLast(operationsdata.Execute, args)
+			core.ExecuteLast(operations.Execute, args)
 		} else if createFlag {
-			core.ExecuteLast(operationsdata.Create, args)
+			core.ExecuteLast(operations.Create, args)
 		} else if updateFlag {
-			core.ExecuteLast(operationsdata.Update, args)
+			core.ExecuteLast(operations.Update, args)
 		} else {
 			core.ExecuteCommand(args)
 		}

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/domain/opendom"
+	"github.com/fiwon123/crower/internal/errors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -35,7 +35,7 @@ Examples:
 		} else if len(args) > 0 {
 			core.Open(args)
 		} else {
-			crowererrors.PrintCmdHelp("open", app)
+			errors.PrintCmdHelp("open", app)
 		}
 
 	},

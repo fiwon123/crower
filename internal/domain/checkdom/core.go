@@ -2,8 +2,7 @@ package checkdom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 type Core struct {
@@ -38,6 +37,6 @@ func (c *Core) CheckNewVersion(currentVersion string) {
 	c.app.Logger.Info("New Version Found: ", "newVersion", newVersion)
 	c.app.Logger.Info("Check: https://github.com/fiwon123/crower/releases/latest")
 
-	c.app.History.Add(operationsdata.Check, newCheckNote())
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Check, newCheckNote())
+	c.app.Save()
 }

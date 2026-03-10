@@ -4,9 +4,8 @@ import (
 	"strconv"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/errors"
 )
 
 type Core struct {
@@ -32,12 +31,12 @@ func (c *Core) Revert(args []string) {
 		steps, err = strconv.Atoi(args[0])
 
 		if err != nil {
-			crowererrors.PrintNotArgs("steps int number", c.app)
+			errors.PrintNotArgs("steps int number", c.app)
 			return
 		}
 
 	} else {
-		crowererrors.PrintNotArgs("steps int number", c.app)
+		errors.PrintNotArgs("steps int number", c.app)
 		return
 	}
 
@@ -54,14 +53,14 @@ func (c *Core) Revert(args []string) {
 		return
 	}
 
-	err = historyhelper.RevertTo(backHistory, c.app)
+	err = c.app.RevertTo(backHistory)
 	if err != nil {
 		c.app.Logger.Error("Error revert history %v", err)
 		return
 	}
 	c.app.Logger.Info("reverted to history version ", backHistory.Version)
-	historyhelper.Save(c.app)
+	c.app.Save()
 
-	c.app.History.Add(operationsdata.Revert, newRevertNote(args))
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Revert, newRevertNote(args))
+	c.app.Save()
 }

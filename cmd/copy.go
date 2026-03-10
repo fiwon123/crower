@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/domain/copydom"
+	"github.com/fiwon123/crower/internal/errors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +31,7 @@ Examples:
 		if len(args) > 0 {
 			core.Copy(args)
 		} else {
-			crowererrors.PrintCmdHelp("copy", app)
+			errors.PrintCmdHelp("copy", app)
 		}
 
 	},

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 type Note struct {
@@ -59,12 +59,12 @@ func (note *Note) AddCrowerExec(command string, args []string) *Note {
 	return note
 }
 
-func (note *Note) AddMainOperation(op operationsdata.MainOperationEnum) *Note {
+func (note *Note) AddMainOperation(op operations.MainOperationEnum) *Note {
 	fmt.Fprintf(&note.builder, ";main_operation=%s", op)
 	return note
 }
 
-func (note *Note) AddSubOperation(op operationsdata.SubOperationEnum) *Note {
+func (note *Note) AddSubOperation(op operations.SubOperationEnum) *Note {
 	fmt.Fprintf(&note.builder, ";sub_operation=%s", op)
 	return note
 }

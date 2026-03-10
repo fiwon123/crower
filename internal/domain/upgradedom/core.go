@@ -4,10 +4,8 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/app"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/checkdom"
-
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
 type Core struct {
@@ -49,6 +47,6 @@ func (c *Core) UpgradeApp(currentVersion string) {
 
 	c.app.Logger.Info(fmt.Sprintf("crower upgraded from %s to %s \n", currentVersion, newVersion))
 
-	c.app.History.Add(operationsdata.Upgrade, newUpgradeNote())
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Upgrade, newUpgradeNote())
+	c.app.Save()
 }

@@ -8,7 +8,7 @@ import (
 	"unicode"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
+	"github.com/fiwon123/crower/internal/errors"
 )
 
 const (
@@ -94,7 +94,7 @@ func GetUserConfirmation(ask string, app *app.Config) bool {
 
 func IsValidConfirmation(input string) (bool, error) {
 	if !CheckValidAnswer(input) {
-		return false, crowererrors.InvalidInput()
+		return false, errors.InvalidInput()
 	}
 
 	if CheckNoAnswer(input) {
@@ -106,7 +106,7 @@ func IsValidConfirmation(input string) (bool, error) {
 
 func IsValidInput(input string, app *app.Config) (any, error) {
 	if input == "" {
-		return "", crowererrors.EmptyInput()
+		return "", errors.EmptyInput()
 	}
 
 	return input, nil
@@ -149,7 +149,7 @@ func InputExec(app *app.Config) string {
 func isValidAlias(input string, app *app.Config) (any, error) {
 	for _, r := range input {
 		if !unicode.IsNumber(r) && !unicode.IsLetter(r) {
-			return "", crowererrors.OnlyLettersAndNumbers()
+			return "", errors.OnlyLettersAndNumbers()
 		}
 	}
 
@@ -159,11 +159,11 @@ func isValidAlias(input string, app *app.Config) (any, error) {
 func IsValidInputKey(input string, app *app.Config) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
-		return "", crowererrors.InvalidRows()
+		return "", errors.InvalidRows()
 	}
 
 	if index < 0 || index >= len(app.OrderKeys) {
-		return "", crowererrors.InvalidRows()
+		return "", errors.InvalidRows()
 	}
 
 	return app.OrderKeys[index], nil
@@ -172,13 +172,13 @@ func IsValidInputKey(input string, app *app.Config) (any, error) {
 func IsValidContentKey(input string, app *app.Config) (any, error) {
 	index, err := strconv.Atoi(input)
 	if err != nil {
-		return "", crowererrors.InvalidRows()
+		return "", errors.InvalidRows()
 	}
 
 	contents := app.History.AllData
 	correctIndex := len(contents) - 1 - index
 	if correctIndex < 0 || correctIndex >= len(contents) {
-		return "", crowererrors.InvalidRows()
+		return "", errors.InvalidRows()
 	}
 
 	return contents[correctIndex], nil

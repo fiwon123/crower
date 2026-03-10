@@ -2,7 +2,7 @@ package restoredom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	historydata "github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/helper"
 )
 
@@ -17,11 +17,11 @@ func NewInput(app *app.Config) *Input {
 }
 
 // Verify parameters to process restore operation
-func (i *Input) CheckRestoreInput() (historydata.Content, bool) {
+func (i *Input) CheckRestoreInput() (history.Content, bool) {
 
-	var content historydata.Content
+	var content history.Content
 	i.app.Logger.Info(i.app.History.GetList())
-	content = helper.GetUserInput("Select Row", helper.IsValidContentKey, i.app).(historydata.Content)
+	content = helper.GetUserInput("Select Row", helper.IsValidContentKey, i.app).(history.Content)
 
 	i.app.Logger.Info("-----------------------------------------")
 	i.app.Logger.Info("Content")

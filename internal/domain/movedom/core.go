@@ -2,9 +2,8 @@ package movedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/crowererrors"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
@@ -26,7 +25,7 @@ func NewCore(app *app.Config) *Core {
 
 func (c *Core) Move(args []string) {
 	if len(args) == 0 {
-		crowererrors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument", c.app)
+		errors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument", c.app)
 		return
 	}
 
@@ -52,12 +51,12 @@ func (c *Core) Move(args []string) {
 	}
 
 	if isMoveFile && isMoveFolder {
-		c.app.History.Add(operationsdata.Move, newMoveNote(operationsdata.FileAndFolder, args))
+		c.app.History.Add(operations.Move, newMoveNote(operations.FileAndFolder, args))
 	} else if isMoveFile {
-		c.app.History.Add(operationsdata.Move, newMoveNote(operationsdata.File, args))
+		c.app.History.Add(operations.Move, newMoveNote(operations.File, args))
 	} else if isMoveFolder {
-		c.app.History.Add(operationsdata.Move, newMoveNote(operationsdata.Folder, args))
+		c.app.History.Add(operations.Move, newMoveNote(operations.Folder, args))
 	}
 
-	historyhelper.Save(c.app)
+	c.app.Save()
 }

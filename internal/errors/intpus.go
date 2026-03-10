@@ -1,4 +1,4 @@
-package crowererrors
+package errors
 
 import "fmt"
 

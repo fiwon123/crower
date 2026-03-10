@@ -2,8 +2,7 @@ package resetdom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+	"github.com/fiwon123/crower/internal/data/operations"
 
 	"github.com/fiwon123/crower/internal/interfaces"
 	"github.com/fiwon123/crower/pkg/crowerutils"
@@ -39,6 +38,6 @@ func (c *Core) Reset() {
 	c.handler.Reset()
 	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
 
-	c.app.History.Add(operationsdata.Reset, newResetNote())
-	historyhelper.Save(c.app)
+	c.app.History.Add(operations.Reset, newResetNote())
+	c.app.Save()
 }
