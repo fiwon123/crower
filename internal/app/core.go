@@ -1,16 +1,15 @@
-package core
+package app
 
 import (
 	"path/filepath"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Initialize app based on the cfg file path.
-func InitApp(cfgFilePath string) *appdata.Data {
+func InitApp(cfgFilePath string) *Config {
 	var orderKeys []string
 	allCommands := commanddata.NewMapData()
 	var allAliases commanddata.MapData
@@ -31,5 +30,5 @@ func InitApp(cfgFilePath string) *appdata.Data {
 		allAliases = commanddata.NewMapData()
 	}
 
-	return appdata.New(cfgFilePath, orderKeys, allAliases, allCommands)
+	return NewApp(cfgFilePath, orderKeys, allAliases, allCommands)
 }

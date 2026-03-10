@@ -1,4 +1,4 @@
-package inputscore
+package helper
 
 import (
 	"bufio"

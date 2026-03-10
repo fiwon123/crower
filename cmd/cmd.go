@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 
 	copycmd "github.com/fiwon123/crower/cmd/copy"
-	createcmd "github.com/fiwon123/crower/cmd/create"
 	deletecmd "github.com/fiwon123/crower/cmd/delete"
 	executecmd "github.com/fiwon123/crower/cmd/execute"
 	extractcmd "github.com/fiwon123/crower/cmd/extract"
@@ -19,11 +18,9 @@ import (
 	revertcmd "github.com/fiwon123/crower/cmd/revert"
 	searchcmd "github.com/fiwon123/crower/cmd/search"
 	updatecmd "github.com/fiwon123/crower/cmd/update"
-	"github.com/fiwon123/crower/internal/core"
-	checkoperations "github.com/fiwon123/crower/internal/core/operations/check"
-	executeoperations "github.com/fiwon123/crower/internal/core/operations/execute"
-	upgradeoperations "github.com/fiwon123/crower/internal/core/operations/upgrade"
+
 	"github.com/fiwon123/crower/internal/crowererrors"
+	"github.com/fiwon123/crower/internal/domain/createdom"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -90,7 +87,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.AddCommand(createcmd.Cmd)
+	rootCmd.AddCommand(createdom.Cmd)
 	rootCmd.AddCommand(updatecmd.Cmd)
 	rootCmd.AddCommand(deletecmd.Cmd)
 	rootCmd.AddCommand(listcmd.Cmd)

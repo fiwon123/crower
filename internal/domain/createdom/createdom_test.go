@@ -1,11 +1,11 @@
-package createhandlers_test
+package createdom_test
 
 import (
 	"path/filepath"
 	"testing"
 
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
+	"github.com/fiwon123/crower/internal/domain/createdom"
 	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
@@ -18,11 +18,13 @@ func TestCreate(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		handler := createdom.NewCreateHandler(app)
+
 		command := commanddata.New("c1", nil, "")
 
 		want := true
 
-		_, error := createhandlers.CreateCommand(command.Name, nil, "exec", app)
+		_, error := handler.CreateCommand(command.Name, nil, "exec")
 		got := error == nil
 		assertCreateTest(command, want, got, error, t)
 	})
@@ -33,6 +35,8 @@ func TestCreate(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
+
+		handler := createdom.NewCreateHandler(app)
 
 		var tests = []struct {
 			name string
@@ -51,7 +55,7 @@ func TestCreate(t *testing.T) {
 		for _, test := range tests {
 			command := commanddata.New(test.name, nil, "")
 
-			_, err := createhandlers.CreateCommand(command.Name, nil, "exec", app)
+			_, err := handler.CreateCommand(command.Name, nil, "exec")
 			got := err == nil
 			assertCreateTest(command, test.want, got, err, t)
 		}
@@ -64,6 +68,8 @@ func TestCreate(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
+
+		handler := createdom.NewCreateHandler(app)
 
 		var tests = []struct {
 			name  string
@@ -82,7 +88,7 @@ func TestCreate(t *testing.T) {
 
 		for _, test := range tests {
 			command := commanddata.New(test.name, []string{test.alias}, "")
-			_, err := createhandlers.CreateCommand(command.Name, command.AllAlias, "exec", app)
+			_, err := handler.CreateCommand(command.Name, command.AllAlias, "exec")
 			got := err == nil
 			assertCreateTest(command, test.want, got, err, t)
 		}
@@ -96,10 +102,11 @@ func TestCreateFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
+	handler := createdom.NewCreateHandler(app)
 
 	t.Run("Create file using single name", func(t *testing.T) {
 		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new.txt")
-		err := createhandlers.CreateFile(newFilePath, app)
+		err := handler.CreateFile(newFilePath)
 
 		if err != nil {
 			t.Errorf("error create file on %s: %v", newFilePath, err)
@@ -108,7 +115,7 @@ func TestCreateFile(t *testing.T) {
 
 	t.Run("Create file using name with space", func(t *testing.T) {
 		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file.txt")
-		err := createhandlers.CreateFile(newFilePath, app)
+		err := handler.CreateFile(newFilePath)
 
 		if err != nil {
 			t.Errorf("error create file on %s: %v", newFilePath, err)
@@ -122,10 +129,11 @@ func TestCreateFolder(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
+	handler := createdom.NewCreateHandler(app)
 
 	t.Run("Create folder using single name", func(t *testing.T) {
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
-		err := createhandlers.CreateFile(newFolderPath, app)
+		err := handler.CreateFile(newFolderPath)
 
 		if err != nil {
 			t.Errorf("error create folder on %s: %v", newFolderPath, err)
@@ -134,7 +142,7 @@ func TestCreateFolder(t *testing.T) {
 
 	t.Run("Create folder using name with space", func(t *testing.T) {
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
-		err := createhandlers.CreateFile(newFolderPath, app)
+		err := handler.CreateFile(newFolderPath)
 
 		if err != nil {
 			t.Errorf("error create folder on %s: %v", newFolderPath, err)

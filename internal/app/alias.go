@@ -1,4 +1,4 @@
-package core
+package app
 
 import commanddata "github.com/fiwon123/crower/internal/data/command"
 

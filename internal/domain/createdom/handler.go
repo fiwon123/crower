@@ -1,4 +1,4 @@
-package createhandlers
+package createdom
 
 import (
 	"fmt"
@@ -8,14 +8,25 @@ import (
 	"strconv"
 	"strings"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/app"
+
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
+type CreateHandler struct {
+	app *app.Config
+}
+
+func NewCreateHandler(app *app.Config) *CreateHandler {
+	return &CreateHandler{
+		app: app,
+	}
+}
+
 // Create command using name, alias and exec parameters
-func CreateCommand(name string, alias []string, exec string, app *appdata.Data) (*commanddata.Data, error) {
+func (h *CreateHandler) CreateCommand(name string, alias []string, exec string) (*commanddata.Data, error) {
 
 	command := commanddata.New(name, alias, exec)
 
@@ -27,27 +38,27 @@ func CreateCommand(name string, alias []string, exec string, app *appdata.Data) 
 		return nil, fmt.Errorf("empty exec")
 	}
 
-	if app.AllCommandsByName.Get(command.Name) != nil {
+	if h.app.AllCommandsByName.Get(command.Name) != nil {
 		return nil, fmt.Errorf("found name, command already added")
 	}
 
 	for _, alias := range command.AllAlias {
-		if app.AllCommandsByAlias.Get(alias) != nil || app.AllCommandsByName.Get(alias) != nil {
+		if h.app.AllCommandsByAlias.Get(alias) != nil || h.app.AllCommandsByName.Get(alias) != nil {
 			return nil, fmt.Errorf("found alias, command already added")
 		}
 	}
 
-	app.AllCommandsByName.Add(command.Name, command)
+	h.app.AllCommandsByName.Add(command.Name, command)
 
 	for _, alias := range command.AllAlias {
-		app.AllCommandsByAlias.Add(alias, command)
+		h.app.AllCommandsByAlias.Add(alias, command)
 	}
 
 	return command, nil
 }
 
 // Create command based on process name or id process
-func CreateProcess(name string, args []string, app *appdata.Data) (*commanddata.Data, error) {
+func (h *CreateHandler) CreateProcess(name string, args []string) (*commanddata.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]
@@ -87,7 +98,7 @@ func CreateProcess(name string, args []string, app *appdata.Data) (*commanddata.
 		}
 
 		execCommand := fmt.Sprintf("flatpak run %s", appID)
-		command, err := CreateCommand(name, nil, execCommand, app)
+		command, err := h.CreateCommand(name, nil, execCommand)
 
 		if err != nil {
 			return nil, err
@@ -96,7 +107,7 @@ func CreateProcess(name string, args []string, app *appdata.Data) (*commanddata.
 		return command, nil
 	} else if pathStr != "" {
 		pathStr = fmt.Sprintf("'%s'", pathStr)
-		command, err := CreateCommand(name, nil, pathStr, app)
+		command, err := h.CreateCommand(name, nil, pathStr)
 
 		if err != nil {
 			return nil, err
@@ -109,45 +120,45 @@ func CreateProcess(name string, args []string, app *appdata.Data) (*commanddata.
 }
 
 // Create a new file on filepath
-func CreateFile(filePath string, app *appdata.Data) error {
+func (h *CreateHandler) CreateFile(filePath string) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = executehandlers.PerformExecute(fmt.Sprintf("type nul > '%s'", filePath), app)
+		out, err = executehandlers.PerformExecute(fmt.Sprintf("type nul > '%s'", filePath))
 	case "linux":
-		out, err = executehandlers.PerformExecute(fmt.Sprintf("\"touch '%s'\"", filePath), app)
+		out, err = executehandlers.PerformExecute(fmt.Sprintf("\"touch '%s'\"", filePath))
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	app.Logger.Info("output: ", "out", out)
+	h.app.Logger.Info("output: ", "out", out)
 	return nil
 }
 
 // Create a new folder on folderpath
-func CreateFolder(folderPath string, app *appdata.Data) error {
+func (h *CreateHandler) CreateFolder(folderPath string) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = executehandlers.PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath), app)
+		out, err = executehandlers.PerformExecute(fmt.Sprintf("mkdir '%s'", folderPath))
 	case "linux":
-		out, err = executehandlers.PerformExecute(fmt.Sprintf("\"mkdir '%s'\"", folderPath), app)
+		out, err = executehandlers.PerformExecute(fmt.Sprintf("\"mkdir '%s'\"", folderPath))
 	}
 
 	if err != nil {
 		return fmt.Errorf("out %s, error %v\n", out, err)
 	}
 
-	app.Logger.Info("output: ", "out", out)
+	h.app.Logger.Info("output: ", "out", out)
 	return nil
 }
 
-func CreateScriptCommand(name string, app *appdata.Data) (string, error) {
-	cfgFolderPath := filepath.Dir(app.CfgFilePath)
+func (h *CreateHandler) CreateScriptCommand(name string) (string, error) {
+	cfgFolderPath := filepath.Dir(h.app.CfgFilePath)
 	scriptFolderPath := filepath.Join(cfgFolderPath, "scripts")
 	err := crowerutils.CreateFolderIfNotExists(scriptFolderPath)
 	if err != nil {

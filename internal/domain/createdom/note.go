@@ -1,4 +1,4 @@
-package createnotesdata
+package createdom
 
 import (
 	commanddata "github.com/fiwon123/crower/internal/data/command"

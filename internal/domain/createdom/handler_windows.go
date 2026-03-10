@@ -1,18 +1,17 @@
 //go:build windows
 
-package createhandlers
+package createdom
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 	"golang.org/x/sys/windows/registry"
 )
 
-func CreateSystemVariable(newVar string, value string, app *appdata.Data) (string, error) {
+func (h *CreateHandler) CreateSystemVariable(newVar string, value string) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,
@@ -38,7 +37,7 @@ func CreateSystemVariable(newVar string, value string, app *appdata.Data) (strin
 
 }
 
-func CreateSystemPathVariable(value string, app *appdata.Data) (string, error) {
+func (h *CreateHandler) CreateSystemPathVariable(value string) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,

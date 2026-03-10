@@ -1,6 +1,6 @@
 //go:build linux
 
-package createhandlers
+package createdom
 
 import (
 	"fmt"
@@ -8,11 +8,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/app"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func CreateSystemVariable(newVar string, value string, app *app.Data) (string, error) {
+func (h *CreateHandler) CreateSystemVariable(newVar string, value string) (string, error) {
 
 	bashrcPath := os.Getenv("HOME") + "/.bashrc"
 	fileSlice := crowerutils.GetFileLineSlice(bashrcPath)
@@ -37,7 +36,7 @@ func CreateSystemVariable(newVar string, value string, app *app.Data) (string, e
 	return "Added to .bashrc. Restart terminal to take effect.", nil
 }
 
-func CreateSystemPathVariable(value string, app *app.Data) (string, error) {
+func (h *CreateHandler) CreateSystemPathVariable(value string) (string, error) {
 
 	home := os.Getenv("HOME")
 	profileFilePath := home + "/.profile"

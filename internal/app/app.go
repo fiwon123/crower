@@ -1,4 +1,4 @@
-package appdata
+package app
 
 import (
 	"path/filepath"
@@ -9,7 +9,7 @@ import (
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-type Data struct {
+type Config struct {
 	CfgFilePath        string
 	HistoryFilePath    string
 	HistoryFolderPath  string
@@ -21,7 +21,7 @@ type Data struct {
 }
 
 // Create a new App containing core structures to perform all crower operations.
-func New(cfgFilePath string, orderKeys []string, allAliases commanddata.MapData, allCommands commanddata.MapData) *Data {
+func NewApp(cfgFilePath string, orderKeys []string, allAliases commanddata.MapData, allCommands commanddata.MapData) *Config {
 
 	folderPath := filepath.Dir(cfgFilePath)
 
@@ -39,7 +39,7 @@ func New(cfgFilePath string, orderKeys []string, allAliases commanddata.MapData,
 		panic(err)
 	}
 
-	return &Data{
+	return &Config{
 		CfgFilePath:        cfgFilePath,
 		History:            history,
 		HistoryFilePath:    historyFilePath,

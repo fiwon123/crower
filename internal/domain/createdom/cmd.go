@@ -1,8 +1,7 @@
-package createcmd
+package createdom
 
 import (
-	"github.com/fiwon123/crower/internal/core"
-	createoperations "github.com/fiwon123/crower/internal/core/operations/create"
+	"github.com/fiwon123/crower/internal/app"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/fiwon123/crower/pkg/crowerutils"
@@ -49,32 +48,35 @@ Example:
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
+
+		handler := NewCreateHandler(app)
+		core := NewCreateCore(app, handler)
 
 		if process != "" {
-			createoperations.CreateProcess(process, args, app)
+			core.CreateProcess(process, args)
 		} else if fileFlag {
-			createoperations.CreateFile(args, app)
+			core.CreateFile(args)
 		} else if folderFlag {
-			createoperations.CreateFolder(args, app)
+			core.CreateFolder(args)
 		} else if sysPathFlag {
-			createoperations.CreateSystemPathVariable(args, app)
+			core.CreateSystemPathVariable(args)
 		} else if systemFlag {
-			createoperations.CreateSystemVariable(args, app)
+			core.CreateSystemVariable(args)
 		} else if executeFlag {
-			createoperations.CreateLastCommand(operationsdata.Execute, args, app)
+			core.CreateLastCommand(operationsdata.Execute, args)
 		} else if scriptFlag {
-			createoperations.CreateScriptCommand(args, app)
+			core.CreateScriptCommand(args)
 		} else if len(args) > 0 {
 			if crowerutils.IsValidFilePath(args[0]) {
-				createoperations.CreateFile(args, app)
+				core.CreateFile(args)
 			} else if crowerutils.IsValidFolderPath(args[0]) {
-				createoperations.CreateFolder(args, app)
+				core.CreateFolder(args)
 			} else {
-				createoperations.CreateCommand(allAlias, args, app)
+				core.CreateCommand(allAlias, args)
 			}
 		} else {
-			createoperations.CreateCommand(allAlias, args, app)
+			core.CreateCommand(allAlias, args)
 		}
 
 	},
