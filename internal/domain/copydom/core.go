@@ -3,7 +3,6 @@ package copydom
 import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	copynotesdata "github.com/fiwon123/crower/internal/data/notes/copy"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
@@ -52,11 +51,11 @@ func (c *Core) Copy(args []string) {
 	}
 
 	if isCopyFile && isCopyFolder {
-		c.app.History.Add(operationsdata.Copy, copynotesdata.NewCopyNote(operationsdata.FileAndFolder, args))
+		c.app.History.Add(operationsdata.Copy, newCopyNote(operationsdata.FileAndFolder, args))
 	} else if isCopyFile {
-		c.app.History.Add(operationsdata.Copy, copynotesdata.NewCopyNote(operationsdata.File, args))
+		c.app.History.Add(operationsdata.Copy, newCopyNote(operationsdata.File, args))
 	} else if isCopyFolder {
-		c.app.History.Add(operationsdata.Copy, copynotesdata.NewCopyNote(operationsdata.Folder, args))
+		c.app.History.Add(operationsdata.Copy, newCopyNote(operationsdata.Folder, args))
 	}
 
 	historyhelper.Save(c.app)

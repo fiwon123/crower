@@ -2,9 +2,7 @@ package restoredom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	restorenotesdata "github.com/fiwon123/crower/internal/data/notes/restore"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
 
@@ -46,6 +44,6 @@ func (c *Core) Restore(args []string) {
 
 	c.app.Logger.Info("restored command: ", "out", out)
 
-	c.app.History.Add(operationsdata.Restore, restorenotesdata.NewRestoreNote(out))
+	c.app.History.Add(operationsdata.Restore, newRestoreNote(out))
 	historyhelper.Save(c.app)
 }

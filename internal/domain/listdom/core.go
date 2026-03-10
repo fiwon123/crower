@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	listnotesdata "github.com/fiwon123/crower/internal/data/notes/list"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
@@ -29,21 +28,21 @@ func NewCore(app *app.Config) *Core {
 func (c *Core) ListCommands() {
 	c.handler.ListCommands()
 
-	c.app.History.Add(operationsdata.List, listnotesdata.NewListCommandsNote())
+	c.app.History.Add(operationsdata.List, newListCommandsNote())
 	historyhelper.Save(c.app)
 }
 
 func (c *Core) ListProcess(args []string) {
 	c.handler.ListProcess(args)
 
-	c.app.History.Add(operationsdata.List, listnotesdata.NewListProcessNote(args))
+	c.app.History.Add(operationsdata.List, newListProcessNote(args))
 	historyhelper.Save(c.app)
 }
 
 func (c *Core) ListHistory() {
 	c.handler.ListHistory()
 
-	c.app.History.Add(operationsdata.List, listnotesdata.NewListHistoriesNote())
+	c.app.History.Add(operationsdata.List, newListHistoriesNote())
 	historyhelper.Save(c.app)
 }
 
@@ -56,7 +55,7 @@ func (c *Core) ListFolder(args []string) {
 	out, err := c.handler.ListFolder(currentPath)
 	c.assertListResult(out, err)
 
-	c.app.History.Add(operationsdata.List, listnotesdata.NewListFolderNote(args))
+	c.app.History.Add(operationsdata.List, newListFolderNote(args))
 	historyhelper.Save(c.app)
 }
 
@@ -79,7 +78,7 @@ func (c *Core) ListSystem() {
 	}
 	c.assertListResult(out, err)
 
-	c.app.History.Add(operationsdata.List, listnotesdata.NewListSystemNote())
+	c.app.History.Add(operationsdata.List, newListSystemNote())
 	historyhelper.Save(c.app)
 }
 
@@ -92,7 +91,7 @@ func (c *Core) ListSysPath() {
 
 	c.assertListResult(out, err)
 
-	c.app.History.Add(operationsdata.List, listnotesdata.NewListSystemPathNote())
+	c.app.History.Add(operationsdata.List, newListSystemPathNote())
 	historyhelper.Save(c.app)
 }
 

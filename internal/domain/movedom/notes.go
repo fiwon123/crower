@@ -1,4 +1,4 @@
-package movenotesdata
+package movedom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
@@ -6,7 +6,7 @@ import (
 )
 
 // Create a new move note
-func NewMoveNote(subOp operationsdata.SubOperationEnum, args []string) string {
+func newMoveNote(subOp operationsdata.SubOperationEnum, args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

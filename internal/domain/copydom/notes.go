@@ -1,4 +1,4 @@
-package copynotesdata
+package copydom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
@@ -6,7 +6,7 @@ import (
 )
 
 // Create a new copy note
-func NewCopyNote(subOp operationsdata.SubOperationEnum, args []string) string {
+func newCopyNote(subOp operationsdata.SubOperationEnum, args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

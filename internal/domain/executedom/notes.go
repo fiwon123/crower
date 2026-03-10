@@ -1,4 +1,4 @@
-package executenotesdata
+package executedom
 
 import (
 	commanddata "github.com/fiwon123/crower/internal/data/command"
@@ -7,7 +7,7 @@ import (
 )
 
 // Create a new execute note
-func NewExecuteCommandNote(command *commanddata.Data) string {
+func newExecuteCommandNote(command *commanddata.Data) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

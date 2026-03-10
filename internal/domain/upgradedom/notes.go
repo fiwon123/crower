@@ -1,4 +1,4 @@
-package upgradenotesdata
+package upgradedom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
@@ -6,7 +6,7 @@ import (
 )
 
 // Create a new upgrade note
-func NewUpgradeNote() string {
+func newUpgradeNote() string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

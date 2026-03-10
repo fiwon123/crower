@@ -4,7 +4,6 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	deletenotesdata "github.com/fiwon123/crower/internal/data/notes/delete"
 
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
@@ -47,7 +46,7 @@ func (c *Core) Delete(args []string) {
 		return
 	}
 
-	c.app.History.Add(operationsdata.Delete, deletenotesdata.NewDeleteCommandNote(command, args))
+	c.app.History.Add(operationsdata.Delete, NewDeleteCommandNote(command, args))
 	historyhelper.Save(c.app)
 }
 
@@ -78,7 +77,7 @@ func (c *Core) DeleteLast(op operationsdata.MainOperationEnum) {
 		return
 	}
 
-	c.app.History.Add(operationsdata.Delete, deletenotesdata.NewDeleteLastNote(op, command))
+	c.app.History.Add(operationsdata.Delete, NewDeleteLastNote(op, command))
 	historyhelper.Save(c.app)
 }
 
@@ -99,7 +98,7 @@ func (c *Core) DeleteSystemVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operationsdata.Delete, deletenotesdata.NewDeleteSystemVariable(args))
+	c.app.History.Add(operationsdata.Delete, NewDeleteSystemVariable(args))
 	historyhelper.Save(c.app)
 }
 
@@ -120,7 +119,7 @@ func (c *Core) DeleteSystemPathVariable(args []string) {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operationsdata.Delete, deletenotesdata.NewDeleteSystemPathVariable(args))
+	c.app.History.Add(operationsdata.Delete, NewDeleteSystemPathVariable(args))
 	historyhelper.Save(c.app)
 }
 
@@ -135,7 +134,7 @@ func (c *Core) DeleteFile(args []string) {
 
 	c.handler.DeleteFile(filePath)
 
-	c.app.History.Add(operationsdata.Execute, deletenotesdata.NewDeleteFileNote(args))
+	c.app.History.Add(operationsdata.Execute, newDeleteFileNote(args))
 	historyhelper.Save(c.app)
 }
 
@@ -150,7 +149,7 @@ func (c *Core) DeleteFolder(args []string) {
 
 	c.handler.DeleteFolder(folderPath)
 
-	c.app.History.Add(operationsdata.Execute, deletenotesdata.GenerateDeleteFolderNote(args))
+	c.app.History.Add(operationsdata.Execute, generateDeleteFolderNote(args))
 	historyhelper.Save(c.app)
 }
 

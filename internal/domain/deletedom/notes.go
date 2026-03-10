@@ -1,4 +1,4 @@
-package deletenotesdata
+package deletedom
 
 import (
 	commanddata "github.com/fiwon123/crower/internal/data/command"
@@ -42,7 +42,7 @@ func NewDeleteLastNote(op operationsdata.MainOperationEnum, command *commanddata
 	return noteBuilder.Build()
 }
 
-func NewDeleteFileNote(args []string) string {
+func newDeleteFileNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
@@ -52,7 +52,7 @@ func NewDeleteFileNote(args []string) string {
 		Build()
 }
 
-func GenerateDeleteFolderNote(args []string) string {
+func generateDeleteFolderNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

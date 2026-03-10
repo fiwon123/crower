@@ -1,4 +1,4 @@
-package extractnotesdata
+package extractdom
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 )
 
 // Create a new extract note
-func NewExtractNote(out string, args []string) string {
+func newExtractNote(out string, args []string) string {
 	noteBuilder := notesdata.New()
 
 	noteBuilder.AddMainOperation(operationsdata.Extract)

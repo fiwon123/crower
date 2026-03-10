@@ -2,7 +2,6 @@ package searchdom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	searchnotesdata "github.com/fiwon123/crower/internal/data/notes/search"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
@@ -30,7 +29,7 @@ func (c *Core) SearchBrowser(args []string) {
 
 	c.handler.SearchBrowser(content)
 
-	c.app.History.Add(operationsdata.Revert, searchnotesdata.NewSearchBrowserNote(args))
+	c.app.History.Add(operationsdata.Revert, newSearchBrowserNote(args))
 	historyhelper.Save(c.app)
 }
 
@@ -40,7 +39,7 @@ func (c *Core) SearchFile(args []string) {
 	out, err := c.handler.SearchFile(currentPath, content)
 	c.assertSearchResult(out, err)
 
-	c.app.History.Add(operationsdata.Revert, searchnotesdata.NewSearchFileNote(args))
+	c.app.History.Add(operationsdata.Revert, newSearchFileNote(args))
 	historyhelper.Save(c.app)
 }
 
@@ -50,7 +49,7 @@ func (c *Core) SearchFolder(args []string) {
 	out, err := c.handler.SearchFolder(currentPath, content)
 	c.assertSearchResult(out, err)
 
-	c.app.History.Add(operationsdata.Revert, searchnotesdata.NewSearchFolderNote(args))
+	c.app.History.Add(operationsdata.Revert, newSearchFolderNote(args))
 	historyhelper.Save(c.app)
 }
 
@@ -60,7 +59,7 @@ func (c *Core) SearchFileAndFolder(args []string) {
 	out, err := c.handler.SearchFileAndFolder(currentPath, content)
 	c.assertSearchResult(out, err)
 
-	c.app.History.Add(operationsdata.Revert, searchnotesdata.NewSearchFileAndFolderNote(args))
+	c.app.History.Add(operationsdata.Revert, newSearchFileAndFolderNote(args))
 	historyhelper.Save(c.app)
 }
 

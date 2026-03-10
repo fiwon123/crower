@@ -1,4 +1,4 @@
-package opennotesdata
+package opendom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
@@ -6,7 +6,7 @@ import (
 )
 
 // Create a new open note
-func NewOpenNote(args []string) string {
+func newOpenNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
@@ -15,7 +15,7 @@ func NewOpenNote(args []string) string {
 		Build()
 }
 
-func NewOpenFolderNote(args []string) string {
+func newOpenFolderNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
@@ -25,7 +25,7 @@ func NewOpenFolderNote(args []string) string {
 		Build()
 }
 
-func NewOpenSystemNote() string {
+func newOpenSystemNote() string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

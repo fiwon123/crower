@@ -1,4 +1,4 @@
-package updatenotesdata
+package updatedom
 
 import (
 	"sort"
@@ -9,7 +9,7 @@ import (
 )
 
 // Create a new update note
-func NewUpdateCommmandNote(args []string, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
+func newUpdateCommmandNote(args []string, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
 
 	noteBuilder := notesdata.New()
 
@@ -40,7 +40,7 @@ func NewUpdateCommmandNote(args []string, oldCommand *commanddata.Data, newComma
 		Build()
 }
 
-func NewUpdateLastNote(op operationsdata.MainOperationEnum, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
+func newUpdateLastNote(op operationsdata.MainOperationEnum, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
 	noteBuilder := notesdata.New()
 
 	noteBuilder.

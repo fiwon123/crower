@@ -2,7 +2,6 @@ package checkdom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	checknotesdata "github.com/fiwon123/crower/internal/data/notes/check"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
@@ -39,6 +38,6 @@ func (c *Core) CheckNewVersion(currentVersion string) {
 	c.app.Logger.Info("New Version Found: ", "newVersion", newVersion)
 	c.app.Logger.Info("Check: https://github.com/fiwon123/crower/releases/latest")
 
-	c.app.History.Add(operationsdata.Check, checknotesdata.NewCheckNote())
+	c.app.History.Add(operationsdata.Check, newCheckNote())
 	historyhelper.Save(c.app)
 }

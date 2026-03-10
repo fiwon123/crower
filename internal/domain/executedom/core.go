@@ -3,9 +3,7 @@ package executedom
 import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
-
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	executenotesdata "github.com/fiwon123/crower/internal/data/notes/execute"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 
 	"github.com/fiwon123/crower/internal/helper"
@@ -86,7 +84,7 @@ func (c *Core) ExecuteCommand(args []string) {
 	output, command, err := c.handler.Execute(key, params)
 	c.assertExecute(output, command, err)
 
-	c.app.History.Add(operationsdata.Execute, executenotesdata.NewExecuteCommandNote(command))
+	c.app.History.Add(operationsdata.Execute, newExecuteCommandNote(command))
 	historyhelper.Save(c.app)
 }
 
@@ -101,7 +99,7 @@ func (c *Core) ExecuteLast(op operationsdata.MainOperationEnum, args []string) {
 	output, command, err := c.handler.Execute(content.CommandName, args)
 	c.assertExecute(output, command, err)
 
-	c.app.History.Add(operationsdata.Execute, executenotesdata.NewExecuteLastNote(op, command))
+	c.app.History.Add(operationsdata.Execute, NewExecuteLastNote(op, command))
 	historyhelper.Save(c.app)
 }
 

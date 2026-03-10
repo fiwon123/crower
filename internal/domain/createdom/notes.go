@@ -7,7 +7,7 @@ import (
 )
 
 // Create a new add note
-func NewCreateCommandNote(command *commanddata.Data, args []string) string {
+func newCreateCommandNote(command *commanddata.Data, args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

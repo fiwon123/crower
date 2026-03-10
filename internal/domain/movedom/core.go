@@ -3,10 +3,9 @@ package movedom
 import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	movenotesdata "github.com/fiwon123/crower/internal/data/notes/move"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -53,11 +52,11 @@ func (c *Core) Move(args []string) {
 	}
 
 	if isMoveFile && isMoveFolder {
-		c.app.History.Add(operationsdata.Move, movenotesdata.NewMoveNote(operationsdata.FileAndFolder, args))
+		c.app.History.Add(operationsdata.Move, newMoveNote(operationsdata.FileAndFolder, args))
 	} else if isMoveFile {
-		c.app.History.Add(operationsdata.Move, movenotesdata.NewMoveNote(operationsdata.File, args))
+		c.app.History.Add(operationsdata.Move, newMoveNote(operationsdata.File, args))
 	} else if isMoveFolder {
-		c.app.History.Add(operationsdata.Move, movenotesdata.NewMoveNote(operationsdata.Folder, args))
+		c.app.History.Add(operationsdata.Move, newMoveNote(operationsdata.Folder, args))
 	}
 
 	historyhelper.Save(c.app)

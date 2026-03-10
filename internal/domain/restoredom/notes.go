@@ -1,4 +1,4 @@
-package restorenotesdata
+package restoredom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
@@ -6,7 +6,7 @@ import (
 )
 
 // Create a new restore note
-func NewRestoreNote(msg string) string {
+func newRestoreNote(msg string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

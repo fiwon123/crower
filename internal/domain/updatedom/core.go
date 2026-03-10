@@ -4,9 +4,9 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
-	updatenotesdata "github.com/fiwon123/crower/internal/data/notes/update"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
+
 	"github.com/fiwon123/crower/internal/interfaces"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
@@ -47,7 +47,7 @@ func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec
 		return
 	}
 
-	c.app.History.Add(operationsdata.Update, updatenotesdata.NewUpdateCommmandNote(args, oldCommand, newCommand))
+	c.app.History.Add(operationsdata.Update, newUpdateCommmandNote(args, oldCommand, newCommand))
 	historyhelper.Save(c.app)
 }
 
@@ -79,6 +79,6 @@ func (c *Core) UpdateLast(op operationsdata.MainOperationEnum, name string, allA
 		return
 	}
 
-	c.app.History.Add(operationsdata.Update, updatenotesdata.NewUpdateLastNote(op, oldCommand, newCommand))
+	c.app.History.Add(operationsdata.Update, newUpdateLastNote(op, oldCommand, newCommand))
 	historyhelper.Save(c.app)
 }

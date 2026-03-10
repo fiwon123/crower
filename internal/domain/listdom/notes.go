@@ -1,4 +1,4 @@
-package listnotesdata
+package listdom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
@@ -6,7 +6,7 @@ import (
 )
 
 // Create a new list note
-func NewListCommandsNote() string {
+func newListCommandsNote() string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
@@ -16,7 +16,7 @@ func NewListCommandsNote() string {
 		Build()
 }
 
-func NewListProcessNote(args []string) string {
+func newListProcessNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
@@ -26,7 +26,7 @@ func NewListProcessNote(args []string) string {
 		Build()
 }
 
-func NewListHistoriesNote() string {
+func newListHistoriesNote() string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
@@ -36,7 +36,7 @@ func NewListHistoriesNote() string {
 		Build()
 }
 
-func NewListFolderNote(args []string) string {
+func newListFolderNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
@@ -46,7 +46,7 @@ func NewListFolderNote(args []string) string {
 		Build()
 }
 
-func NewListSystemNote() string {
+func newListSystemNote() string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
@@ -56,7 +56,7 @@ func NewListSystemNote() string {
 		Build()
 }
 
-func NewListSystemPathNote() string {
+func newListSystemPathNote() string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

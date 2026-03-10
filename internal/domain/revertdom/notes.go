@@ -1,16 +1,16 @@
-package resetnotesdata
+package revertdom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 )
 
-// Create a new reset note
-func NewResetNote() string {
+// Create a new revert note
+func newRevertNote(args []string) string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.
-		AddMainOperation(operationsdata.Reset).
-		AddCrowerExec("reset", nil).
+		AddMainOperation(operationsdata.Revert).
+		AddCrowerExec("revert", args).
 		Build()
 }

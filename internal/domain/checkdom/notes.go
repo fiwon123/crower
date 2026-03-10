@@ -1,4 +1,4 @@
-package checknotesdata
+package checkdom
 
 import (
 	notesdata "github.com/fiwon123/crower/internal/data/notes"
@@ -6,7 +6,7 @@ import (
 )
 
 // Create a new check note
-func NewCheckNote() string {
+func newCheckNote() string {
 	noteBuilder := notesdata.New()
 
 	return noteBuilder.

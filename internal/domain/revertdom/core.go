@@ -5,7 +5,6 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	revertnotesdata "github.com/fiwon123/crower/internal/data/notes/revert"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
@@ -63,6 +62,6 @@ func (c *Core) Revert(args []string) {
 	c.app.Logger.Info("reverted to history version ", backHistory.Version)
 	historyhelper.Save(c.app)
 
-	c.app.History.Add(operationsdata.Revert, revertnotesdata.NewRevertNote(args))
+	c.app.History.Add(operationsdata.Revert, newRevertNote(args))
 	historyhelper.Save(c.app)
 }

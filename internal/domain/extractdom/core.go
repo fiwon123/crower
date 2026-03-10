@@ -5,7 +5,6 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
-	extractnotesdata "github.com/fiwon123/crower/internal/data/notes/extract"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 )
@@ -48,6 +47,6 @@ func (c *Core) Extract(args []string, outDir string) {
 
 	c.handler.Extract(paths, outDir)
 
-	c.app.History.Add(operationsdata.Execute, extractnotesdata.NewExtractNote(outDir, args))
+	c.app.History.Add(operationsdata.Execute, newExtractNote(outDir, args))
 	historyhelper.Save(c.app)
 }

@@ -69,7 +69,7 @@ func (c *Core) CreateCommand(allAlias []string, args []string) {
 		return
 	}
 
-	c.app.History.Add(operationsdata.Create, NewCreateCommandNote(command, args))
+	c.app.History.Add(operationsdata.Create, newCreateCommandNote(command, args))
 	historyhelper.Save(c.app)
 }
 
