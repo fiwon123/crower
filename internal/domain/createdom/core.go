@@ -13,7 +13,7 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -80,7 +80,7 @@ func (c *Core) performCreateCommand(name string, allAlias []string, exec string)
 		return nil
 	}
 
-	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
+	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
 	c.app.Logger.Info("added new command: ", "allCommands", c.app.AllCommandsByName)
 
 	return command
@@ -93,7 +93,7 @@ func (c *Core) CreateProcess(name string, args []string) {
 		return
 	}
 
-	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
+	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
 	c.app.Logger.Info("added new command by process: ", "allCommands", c.app.AllCommandsByName)
 
 	c.app.History.Add(operations.Create, newCreateProcessNote(command, args))

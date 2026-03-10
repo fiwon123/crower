@@ -8,7 +8,7 @@ import (
 	"github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/internal/interfaces"
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -59,7 +59,7 @@ func (c *Core) performUpdateCommand(key string, name string, allAlias []string, 
 	}
 
 	c.app.Logger.Info("updated command: ", c.app.AllCommandsByName)
-	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
+	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
 
 	return oldCommand, newCommand
 }

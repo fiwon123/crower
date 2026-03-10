@@ -5,7 +5,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/errors"
 
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -36,7 +36,7 @@ func (c *Core) Copy(args []string) {
 	args = args[:lastIndex]
 	for _, path := range args {
 		var err error
-		if crowerutils.FilePathExists(path) {
+		if utils.FilePathExists(path) {
 			err = c.handler.CopyFile(path, output)
 			isCopyFile = true
 		} else {

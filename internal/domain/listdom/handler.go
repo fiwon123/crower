@@ -9,7 +9,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/command"
 
 	"github.com/fiwon123/crower/internal/domain/executedom"
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Handler struct {
@@ -51,7 +51,7 @@ func (h *Handler) ListProcess(args []string) error {
 		partName = args[0]
 	}
 
-	out, err := crowerutils.GetAllProcess(partName, true)
+	out, err := utils.GetAllProcess(partName, true)
 	if err != nil {
 		h.app.Logger.Error("Error getting processes:", err)
 		return err

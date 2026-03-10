@@ -6,8 +6,8 @@ import (
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 
-	"github.com/fiwon123/crower/pkg/crowerlog"
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/logger"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Config struct {
@@ -15,7 +15,7 @@ type Config struct {
 	HistoryFilePath    string
 	HistoryFolderPath  string
 	History            history.Data
-	Logger             crowerlog.Logger
+	Logger             logger.Logger
 	OrderKeys          []string
 	AllCommandsByAlias command.MapData
 	AllCommandsByName  command.MapData
@@ -27,15 +27,15 @@ func NewApp(cfgFilePath string, orderKeys []string, allAliases command.MapData, 
 	folderPath := filepath.Dir(cfgFilePath)
 
 	historyFilePath := filepath.Join(folderPath, "historyhelper.json")
-	crowerutils.CreateFileIfNotExists(historyFilePath)
+	utils.CreateFileIfNotExists(historyFilePath)
 
 	historyFolderPath := filepath.Join(folderPath, "history")
-	crowerutils.CreateFolderIfNotExists(historyFolderPath)
+	utils.CreateFolderIfNotExists(historyFolderPath)
 
 	logPath := filepath.Join(folderPath, "crower.log")
 
 	var history history.Data
-	err := crowerutils.ReadJson(historyFilePath, &history)
+	err := utils.ReadJson(historyFilePath, &history)
 	if err != nil {
 		panic(err)
 	}
@@ -45,7 +45,7 @@ func NewApp(cfgFilePath string, orderKeys []string, allAliases command.MapData, 
 		History:            history,
 		HistoryFilePath:    historyFilePath,
 		HistoryFolderPath:  historyFolderPath,
-		Logger:             *crowerlog.New(logPath),
+		Logger:             *logger.New(logPath),
 		OrderKeys:          orderKeys,
 		AllCommandsByAlias: allAliases,
 		AllCommandsByName:  allCommands,

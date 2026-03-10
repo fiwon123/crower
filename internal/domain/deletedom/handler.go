@@ -11,7 +11,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Handler struct {
@@ -93,7 +93,7 @@ func (h *Handler) DeleteHistoryContent(content history.Content) (string, error) 
 	}
 
 	newDataPath := filepath.Join(h.app.HistoryFolderPath, content.File)
-	err := crowerutils.DeleteFile(newDataPath)
+	err := utils.DeleteFile(newDataPath)
 	if err != nil {
 		return "", fmt.Errorf("Content not deleted %v \n", err)
 	}

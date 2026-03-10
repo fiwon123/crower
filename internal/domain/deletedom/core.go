@@ -7,7 +7,7 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -59,7 +59,7 @@ func (c *Core) performDeleteCommand(key string) *command.Data {
 	}
 
 	c.app.Logger.Info("deleted command: ", c.app.AllCommandsByName)
-	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
+	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
 
 	return command
 }

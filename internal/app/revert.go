@@ -6,7 +6,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 // Revert last operation
@@ -15,12 +15,12 @@ func (app *Config) RevertTo(content *history.Content) error {
 	allCommands := command.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
 
-	err := crowerutils.ReadToml(newDataPath, &allCommands)
+	err := utils.ReadToml(newDataPath, &allCommands)
 	if err != nil {
 		return err
 	}
 
-	err = crowerutils.WriteToml(allCommands, app.CfgFilePath)
+	err = utils.WriteToml(allCommands, app.CfgFilePath)
 	if err != nil {
 		return err
 	}

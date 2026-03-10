@@ -5,7 +5,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/operations"
 
 	"github.com/fiwon123/crower/internal/interfaces"
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -36,7 +36,7 @@ func (c *Core) Reset() {
 
 	c.app.Logger.Info("reset all commands: ", c.app.AllCommandsByName)
 	c.handler.Reset()
-	crowerutils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
+	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
 
 	c.app.History.Add(operations.Reset, newResetNote())
 	c.app.Save()
