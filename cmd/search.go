@@ -1,19 +1,17 @@
-package searchcmd
+package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/core"
-	searchoperations "github.com/fiwon123/crower/internal/core/operations/search"
+	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
+	"github.com/fiwon123/crower/internal/domain/searchdom"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
-var folderFlag bool
-var fileFlag bool
 var browserFlag bool
 
 // Cmd represents the search command
-var Cmd = &cobra.Command{
+var searchCmd = &cobra.Command{
 	Use:   "search",
 	Short: "search files, folder and on browser",
 	Long: `search files, folder and on browser
@@ -33,16 +31,18 @@ search on browser:
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
+
+		core := searchdom.NewCore(app)
 
 		if browserFlag {
-			searchoperations.SearchBrowser(args, app)
+			core.SearchBrowser(args)
 		} else if fileFlag {
-			searchoperations.SearchFile(args, app)
+			core.SearchFile(args)
 		} else if folderFlag {
-			searchoperations.SearchFolder(args, app)
+			core.SearchFolder(args)
 		} else if len(args) > 0 {
-			searchoperations.SearchFileAndFolder(args, app)
+			core.SearchFileAndFolder(args)
 		} else {
 			crowererrors.PrintCmdHelp("search", app)
 		}
@@ -51,7 +51,7 @@ search on browser:
 }
 
 func init() {
-	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "search for file name")
-	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "search for folder name")
-	Cmd.Flags().BoolVarP(&browserFlag, "browser", "b", false, "search on default browser")
+	searchCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "search for file name")
+	searchCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "search for folder name")
+	searchCmd.Flags().BoolVarP(&browserFlag, "browser", "b", false, "search on default browser")
 }

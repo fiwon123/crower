@@ -1,10 +1,10 @@
-package searchhandlers_test
+package searchdom_test
 
 import (
 	"path/filepath"
 	"testing"
 
-	searchhandlers "github.com/fiwon123/crower/internal/handlers/search"
+	"github.com/fiwon123/crower/internal/domain/searchdom"
 	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
@@ -15,7 +15,9 @@ func TestSearchBrowser(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		output, err := searchhandlers.SearchBrowser("test", app)
+		handler := searchdom.NewHandler(app)
+
+		output, err := handler.SearchBrowser("test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -27,7 +29,9 @@ func TestSearchBrowser(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		output, err := searchhandlers.SearchBrowser("test test", app)
+		handler := searchdom.NewHandler(app)
+
+		output, err := handler.SearchBrowser("test test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -41,7 +45,9 @@ func TestSearchFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		output, err := searchhandlers.SearchFile(filepath.Dir(app.CfgFilePath), "test", app)
+		handler := searchdom.NewHandler(app)
+
+		output, err := handler.SearchFile(filepath.Dir(app.CfgFilePath), "test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -53,7 +59,9 @@ func TestSearchFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		output, err := searchhandlers.SearchFile(filepath.Dir(app.CfgFilePath), "test test", app)
+		handler := searchdom.NewHandler(app)
+
+		output, err := handler.SearchFile(filepath.Dir(app.CfgFilePath), "test test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -67,7 +75,9 @@ func TestSearchFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		output, err := searchhandlers.SearchFolder(filepath.Dir(app.CfgFilePath), "test", app)
+		handler := searchdom.NewHandler(app)
+
+		output, err := handler.SearchFolder(filepath.Dir(app.CfgFilePath), "test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -79,7 +89,9 @@ func TestSearchFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		output, err := searchhandlers.SearchFolder(filepath.Dir(app.CfgFilePath), "test test", app)
+		handler := searchdom.NewHandler(app)
+
+		output, err := handler.SearchFolder(filepath.Dir(app.CfgFilePath), "test test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -93,7 +105,9 @@ func TestSearchFileAndFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		output, err := searchhandlers.SearchFileAndFolder(filepath.Dir(app.CfgFilePath), "test", app)
+		handler := searchdom.NewHandler(app)
+
+		output, err := handler.SearchFileAndFolder(filepath.Dir(app.CfgFilePath), "test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -105,7 +119,9 @@ func TestSearchFileAndFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		output, err := searchhandlers.SearchFileAndFolder(filepath.Dir(app.CfgFilePath), "test test", app)
+		handler := searchdom.NewHandler(app)
+
+		output, err := handler.SearchFileAndFolder(filepath.Dir(app.CfgFilePath), "test test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}

@@ -5,7 +5,8 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/domain/createdom"
-	opendom "github.com/fiwon123/crower/internal/domain/open"
+	"github.com/fiwon123/crower/internal/domain/opendom"
+
 	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
