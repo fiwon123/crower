@@ -1,4 +1,4 @@
-package commanddata
+package command
 
 type MapData map[string]Data
 
