@@ -99,7 +99,7 @@ func (h *Handler) PerformExecuteStart(ex string) error {
 }
 
 // Perform operation that needs another terminal
-func PerformInteractiveTerminal(commandName string, ex string) {
+func (h *Handler) PerformInteractiveTerminal(commandName string, ex string) {
 	var c *exec.Cmd
 
 	switch runtime.GOOS {

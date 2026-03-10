@@ -1,11 +1,11 @@
-package openhandlers_test
+package opendom_test
 
 import (
 	"path/filepath"
 	"testing"
 
-	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
-	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
+	"github.com/fiwon123/crower/internal/domain/createdom"
+	opendom "github.com/fiwon123/crower/internal/domain/open"
 	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
@@ -16,14 +16,17 @@ func TestOpenFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		openHandler := opendom.NewHandler(app)
+
 		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new.txt")
 
-		err = createhandlers.CreateFile(newFilePath, app)
+		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
 
-		err = openhandlers.Open([]string{newFilePath}, app)
+		err = openHandler.Open([]string{newFilePath})
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -35,14 +38,17 @@ func TestOpenFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		openHandler := opendom.NewHandler(app)
+
 		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file.txt")
 
-		err = createhandlers.CreateFile(newFilePath, app)
+		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
 
-		err = openhandlers.Open([]string{newFilePath}, app)
+		err = openHandler.Open([]string{newFilePath})
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -56,14 +62,17 @@ func TestOpenFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		openHandler := opendom.NewHandler(app)
+
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
 
-		err = createhandlers.CreateFolder(newFolderPath, app)
+		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
 
-		err = openhandlers.Open([]string{newFolderPath}, app)
+		err = openHandler.Open([]string{newFolderPath})
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -75,14 +84,17 @@ func TestOpenFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		openHandler := opendom.NewHandler(app)
+
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
 
-		err = createhandlers.CreateFolder(newFolderPath, app)
+		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
 
-		err = openhandlers.Open([]string{newFolderPath}, app)
+		err = openHandler.Open([]string{newFolderPath})
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -95,7 +107,9 @@ func TestOpenSystem(t *testing.T) {
 		t.Fatalf("error before test: %v", err)
 	}
 
-	err = openhandlers.OpenSystem(app)
+	openHandler := opendom.NewHandler(app)
+
+	err = openHandler.OpenSystem()
 	if err != nil {
 		t.Fatalf("error: %v", err)
 	}

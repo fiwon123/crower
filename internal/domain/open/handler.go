@@ -1,16 +1,31 @@
-package openhandlers
+package opendom
 
 import (
 	"fmt"
 	"runtime"
 	"strings"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
-	executehandlers "github.com/fiwon123/crower/internal/handlers/execute"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/domain/executedom"
 )
 
+type Handler struct {
+	app     *app.Config
+	execute *executedom.Handler
+}
+
+func NewHandler(app *app.Config) *Handler {
+
+	execute := executedom.NewHandler(app)
+
+	return &Handler{
+		app:     app,
+		execute: execute,
+	}
+}
+
 // Open filepath based on user operational system(OS).
-func Open(paths []string, app *appdata.Data) error {
+func (h *Handler) Open(paths []string) error {
 
 	for _, f := range paths {
 		commandString := ""
@@ -29,14 +44,14 @@ func Open(paths []string, app *appdata.Data) error {
 			continue
 		}
 
-		app.Logger.Info("performing execute...: ", "exec", commandString)
+		h.app.Logger.Info("performing execute...: ", "exec", commandString)
 
-		out, err := executehandlers.PerformExecute(commandString, app)
+		out, err := h.execute.PerformExecute(commandString)
 		if err != nil {
 			return fmt.Errorf("error %v out %v", err, string(out))
 		}
 
-		app.Logger.Info(string(out))
+		h.app.Logger.Info(string(out))
 		return nil
 	}
 
@@ -44,12 +59,12 @@ func Open(paths []string, app *appdata.Data) error {
 }
 
 // Try to open system UI based on operational system (OS)
-func OpenSystem(app *appdata.Data) error {
+func (h *Handler) OpenSystem() error {
 	switch runtime.GOOS {
 	case "windows":
-		return executehandlers.PerformExecuteStart("sysdm.cpl", app)
+		return h.execute.PerformExecuteStart("sysdm.cpl")
 	case "linux":
-		executehandlers.PerformInteractiveTerminal("nano", "~/.bashrc")
+		h.execute.PerformInteractiveTerminal("nano", "~/.bashrc")
 	}
 
 	return nil

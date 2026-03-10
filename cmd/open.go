@@ -1,19 +1,15 @@
-package opencmd
+package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/core"
-	openoperations "github.com/fiwon123/crower/internal/core/operations/open"
+	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
+	opendom "github.com/fiwon123/crower/internal/domain/open"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
 )
 
-var folderFlag bool
-var fileFlag bool
-var systemFlag bool
-
 // Cmd represents the open command
-var Cmd = &cobra.Command{
+var openCmd = &cobra.Command{
 	Use:   "open",
 	Short: "open current configuration file path, folder and system",
 	Long: `open current configuration file path, folder and system
@@ -26,16 +22,18 @@ Examples:
 	Run: func(cmd *cobra.Command, args []string) {
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
+
+		core := opendom.NewCore(app)
 
 		if folderFlag {
-			openoperations.OpenFolder(args, app)
+			core.OpenFolder(args)
 		} else if fileFlag {
-			openoperations.OpenFile(args, app)
+			core.OpenFile(args)
 		} else if systemFlag {
-			openoperations.OpenSystem(app)
+			core.OpenSystem()
 		} else if len(args) > 0 {
-			openoperations.Open(args, app)
+			core.Open(args)
 		} else {
 			crowererrors.PrintCmdHelp("open", app)
 		}
@@ -45,7 +43,7 @@ Examples:
 
 func init() {
 
-	Cmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "open cfg file or other file")
-	Cmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "open cfg folder or other folder")
-	Cmd.Flags().BoolVarP(&systemFlag, "system", "s", false, "open system variable")
+	openCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "open cfg file or other file")
+	openCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "open cfg folder or other folder")
+	openCmd.Flags().BoolVarP(&systemFlag, "system", "s", false, "open system variable")
 }

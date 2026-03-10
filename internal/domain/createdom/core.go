@@ -7,27 +7,29 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
+	opendom "github.com/fiwon123/crower/internal/domain/open"
 	"github.com/fiwon123/crower/internal/helper"
 
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 	operationsdata "github.com/fiwon123/crower/internal/data/operations"
-	openhandlers "github.com/fiwon123/crower/internal/handlers/open"
 	historyhelper "github.com/fiwon123/crower/internal/helper/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 type Core struct {
-	app     *app.Config
-	handler *Handler
+	app         *app.Config
+	handler     *Handler
+	openHandler opendom.Handler
 }
 
-func NewCore(app *app.Config) *Core {
+func NewCore(app *app.Config, openHandler opendom.Handler) *Core {
 
 	handler := NewHandler(app)
 
 	return &Core{
-		handler: handler,
-		app:     app,
+		handler:     handler,
+		app:         app,
+		openHandler: openHandler,
 	}
 }
 
@@ -230,7 +232,7 @@ func (c *Core) CreateScriptCommand(args []string) {
 		return
 	}
 
-	openhandlers.Open([]string{filepath.Dir(scriptFilePath)}, c.app)
+	c.openHandler.Open([]string{filepath.Dir(scriptFilePath)})
 
 	c.app.History.Add(operationsdata.Create, NewCreateScriptCommandNote(command, args))
 	historyhelper.Save(c.app)
