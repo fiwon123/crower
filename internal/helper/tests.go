@@ -16,7 +16,7 @@ func InitCrowerTests() (*app.Config, []string, error) {
 		return nil, nil, err
 	}
 
-	testPath := filepath.Join(homePath, "test", "crower")
+	testPath := filepath.Join(homePath, "crower", "test")
 	os.RemoveAll(testPath)
 	err = utils.CreateFolderIfNotExists(testPath)
 	if err != nil {
