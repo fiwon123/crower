@@ -7,12 +7,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 func (h *Handler) DeleteSystemVariable(key string) (string, error) {
 	bashrcPath := os.Getenv("HOME") + "/.bashrc"
-	fileSlice := crowerutils.GetFileLineSlice(bashrcPath)
+	fileSlice := utils.GetFileLineSlice(bashrcPath)
 
 	found := false
 	for i, s := range fileSlice {
@@ -27,7 +27,7 @@ func (h *Handler) DeleteSystemVariable(key string) (string, error) {
 		return "", fmt.Errorf("var name not found")
 	}
 
-	err := crowerutils.WriteFile(fileSlice, bashrcPath)
+	err := utils.WriteFile(fileSlice, bashrcPath)
 	if err != nil {
 		return "", fmt.Errorf("can't delete var name: %v", err)
 	}
@@ -38,7 +38,7 @@ func (h *Handler) DeleteSystemVariable(key string) (string, error) {
 func (h *Handler) DeleteSystemPathVariable(path string) (string, error) {
 	home := os.Getenv("HOME")
 	profileFilePath := home + "/.profile"
-	lineSlice := crowerutils.GetFileLineSlice(profileFilePath)
+	lineSlice := utils.GetFileLineSlice(profileFilePath)
 
 	pathLinePrefix := "export PATH="
 	pathLinePrefix2 := "export PATH"
@@ -60,7 +60,7 @@ func (h *Handler) DeleteSystemPathVariable(path string) (string, error) {
 		return "", fmt.Errorf("path not found")
 	}
 
-	err := crowerutils.WriteFile(lineSlice, profileFilePath)
+	err := utils.WriteFile(lineSlice, profileFilePath)
 	if err != nil {
 		return "", err
 	}

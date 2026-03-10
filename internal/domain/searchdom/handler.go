@@ -7,7 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Handler struct {
@@ -33,13 +33,13 @@ func (h *Handler) SearchBrowser(content string) (string, error) {
 
 	switch runtime.GOOS {
 	case "windows":
-		if crowerutils.IsURL(content) {
+		if utils.IsURL(content) {
 			return "", h.executeHandler.PerformExecuteStart(fmt.Sprintf(`start ' ' '%s' `, content))
 		} else {
 			return "", h.executeHandler.PerformExecuteStart(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s' `, content))
 		}
 	case "linux":
-		if crowerutils.IsURL(content) {
+		if utils.IsURL(content) {
 			return "", h.executeHandler.PerformExecuteStart(fmt.Sprintf(`xdg-open "%s" `, content))
 		} else {
 			return "", h.executeHandler.PerformExecuteStart(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" `, content))

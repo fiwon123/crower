@@ -30,7 +30,7 @@ func NewHandler(app *app.Config) *Handler {
 // List all commands in order
 func (h *Handler) ListCommands() {
 	h.app.Logger.Info("------------------------------------------------")
-	print(h.app.OrderKeys, h.app.AllCommandsByName, h.app)
+	h.print(h.app.OrderKeys, h.app.AllCommandsByName)
 }
 
 func (h *Handler) print(orderKeys []string, allCommands command.MapData) {

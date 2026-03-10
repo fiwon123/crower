@@ -8,7 +8,7 @@ import (
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
 
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -66,9 +66,9 @@ Example:
 		} else if scriptFlag {
 			core.CreateScriptCommand(args)
 		} else if len(args) > 0 {
-			if crowerutils.IsValidFilePath(args[0]) {
+			if utils.IsValidFilePath(args[0]) {
 				core.CreateFile(args)
-			} else if crowerutils.IsValidFolderPath(args[0]) {
+			} else if utils.IsValidFolderPath(args[0]) {
 				core.CreateFolder(args)
 			} else {
 				core.CreateCommand(allAlias, args)

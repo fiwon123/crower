@@ -7,7 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/internal/helper"
 
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 
 	"github.com/spf13/cobra"
 )
@@ -66,9 +66,9 @@ Example:
 		} else if historyFlag {
 			core.DeleteHistoryContent(args)
 		} else if len(args) > 0 {
-			if crowerutils.IsValidFilePath(args[0]) {
+			if utils.IsValidFilePath(args[0]) {
 				core.DeleteFile(args)
-			} else if crowerutils.IsValidFolderPath(args[0]) {
+			} else if utils.IsValidFolderPath(args[0]) {
 				core.DeleteFolder(args)
 			} else {
 				core.Delete(args)
