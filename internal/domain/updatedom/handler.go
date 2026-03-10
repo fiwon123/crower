@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/app"
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+	command "github.com/fiwon123/crower/internal/data/command"
 )
 
 type Handler struct {
@@ -20,9 +20,9 @@ func NewHandler(app *app.Config) *Handler {
 
 // Update command based on the key value.
 // Old values will be used if not specified in the data.Command structure.
-func (h *Handler) UpdateCommand(key string, newName string, newAlias []string, newExec string) (*commanddata.Data, *commanddata.Data, error) {
+func (h *Handler) UpdateCommand(key string, newName string, newAlias []string, newExec string) (*command.Data, *command.Data, error) {
 
-	newCommand := commanddata.New(newName, newAlias, newExec)
+	newCommand := command.New(newName, newAlias, newExec)
 
 	oldCommand := h.app.AllCommandsByName.Get(key)
 	if oldCommand != nil {
@@ -37,7 +37,7 @@ func (h *Handler) UpdateCommand(key string, newName string, newAlias []string, n
 	return oldCommand, newCommand, fmt.Errorf("couldn't find command by name or alias")
 }
 
-func (h *Handler) performUpdate(oldCommand *commanddata.Data, newCommand *commanddata.Data) error {
+func (h *Handler) performUpdate(oldCommand *command.Data, newCommand *command.Data) error {
 
 	err := h.canUpdate(newCommand)
 	if err != nil {
@@ -81,7 +81,7 @@ func (h *Handler) performUpdate(oldCommand *commanddata.Data, newCommand *comman
 	return nil
 }
 
-func (h *Handler) canUpdate(newCommand *commanddata.Data) error {
+func (h *Handler) canUpdate(newCommand *command.Data) error {
 	if h.app.AllCommandsByName.Get(newCommand.Name) != nil {
 		return fmt.Errorf("command name already in use: %v", newCommand.Name)
 	}

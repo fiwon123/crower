@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/command"
+
 	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
@@ -32,7 +33,7 @@ func (h *Handler) ListCommands() {
 	print(h.app.OrderKeys, h.app.AllCommandsByName, h.app)
 }
 
-func (h *Handler) print(orderKeys []string, allCommands commanddata.MapData) {
+func (h *Handler) print(orderKeys []string, allCommands command.MapData) {
 	h.app.Logger.Info(fmt.Sprintf("%-3s %-12s %-16s %-8s \n", "Row", "Name", "Aliases", "Exec"))
 	h.app.Logger.Info("------------------------------------------------")
 

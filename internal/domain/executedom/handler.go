@@ -9,8 +9,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+	command "github.com/fiwon123/crower/internal/data/command"
 )
 
 type Handler struct {
@@ -25,7 +24,7 @@ func NewHandler(app *app.Config) *Handler {
 
 // Execute command based on the user operational system (OS).
 // Verify if command exists by name or alias and perform operation
-func (h *Handler) Execute(key string, params []string) (string, *commanddata.Data, error) {
+func (h *Handler) Execute(key string, params []string) (string, *command.Data, error) {
 
 	command := h.app.AllCommandsByName.Get(key)
 	if command == nil {

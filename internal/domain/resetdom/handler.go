@@ -2,7 +2,7 @@ package resetdom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/command"
 )
 
 type Handler struct {
@@ -18,5 +18,5 @@ func NewHandler(app *app.Config) *Handler {
 
 // Reset all user cfg file.
 func (h *Handler) Reset() {
-	h.app.AllCommandsByName = commanddata.NewMapData()
+	h.app.AllCommandsByName = command.NewMapData()
 }

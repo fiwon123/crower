@@ -1,13 +1,13 @@
 package searchdom
 
 import (
-	notesdata "github.com/fiwon123/crower/internal/data/notes"
+	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new search browser note
 func newSearchBrowserNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Search).
@@ -17,7 +17,7 @@ func newSearchBrowserNote(args []string) string {
 }
 
 func newSearchFileNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Search).
@@ -27,7 +27,7 @@ func newSearchFileNote(args []string) string {
 }
 
 func newSearchFolderNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Search).
@@ -37,7 +37,7 @@ func newSearchFolderNote(args []string) string {
 }
 
 func newSearchFileAndFolderNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Search).

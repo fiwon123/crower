@@ -1,13 +1,13 @@
 package listdom
 
 import (
-	notesdata "github.com/fiwon123/crower/internal/data/notes"
+	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new list note
 func newListCommandsNote() string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.List).
@@ -17,7 +17,7 @@ func newListCommandsNote() string {
 }
 
 func newListProcessNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.List).
@@ -27,7 +27,7 @@ func newListProcessNote(args []string) string {
 }
 
 func newListHistoriesNote() string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.List).
@@ -37,7 +37,7 @@ func newListHistoriesNote() string {
 }
 
 func newListFolderNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.List).
@@ -47,7 +47,7 @@ func newListFolderNote(args []string) string {
 }
 
 func newListSystemNote() string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.List).
@@ -57,7 +57,7 @@ func newListSystemNote() string {
 }
 
 func newListSystemPathNote() string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.List).

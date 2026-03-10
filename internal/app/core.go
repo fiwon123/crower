@@ -3,16 +3,15 @@ package app
 import (
 	"path/filepath"
 
-	commanddata "github.com/fiwon123/crower/internal/data/command"
-
+	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
 // Initialize app based on the cfg file path.
 func InitApp(cfgFilePath string) *Config {
 	var orderKeys []string
-	allCommands := commanddata.NewMapData()
-	var allAliases commanddata.MapData
+	allCommands := command.NewMapData()
+	var allAliases command.MapData
 
 	if cfgFilePath != "" {
 		crowerutils.CreateFolderIfNotExists(filepath.Dir(cfgFilePath))
@@ -26,8 +25,8 @@ func InitApp(cfgFilePath string) *Config {
 		}
 		allAliases = getAliasMap(allCommands)
 	} else {
-		allCommands = commanddata.NewMapData()
-		allAliases = commanddata.NewMapData()
+		allCommands = command.NewMapData()
+		allAliases = command.NewMapData()
 	}
 
 	return NewApp(cfgFilePath, orderKeys, allAliases, allCommands)

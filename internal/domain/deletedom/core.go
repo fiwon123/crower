@@ -2,9 +2,10 @@ package deletedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+
 	"github.com/fiwon123/crower/internal/errors"
 
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
@@ -49,7 +50,7 @@ func (c *Core) Delete(args []string) {
 	c.app.Save()
 }
 
-func (c *Core) performDeleteCommand(key string) *commanddata.Data {
+func (c *Core) performDeleteCommand(key string) *command.Data {
 
 	command, ok := c.handler.DeleteCommand(key)
 	if !ok {

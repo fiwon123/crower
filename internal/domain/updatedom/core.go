@@ -2,7 +2,8 @@ package updatedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/errors"
 
@@ -50,7 +51,7 @@ func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec
 	c.app.Save()
 }
 
-func (c *Core) performUpdateCommand(key string, name string, allAlias []string, exec string) (*commanddata.Data, *commanddata.Data) {
+func (c *Core) performUpdateCommand(key string, name string, allAlias []string, exec string) (*command.Data, *command.Data) {
 	oldCommand, newCommand, err := c.handler.UpdateCommand(key, name, allAlias, exec)
 	if err != nil {
 		c.app.Logger.Error("Error update command: ", "error", err, "key", key, "name", name, "alias", allAlias, "exec", exec)

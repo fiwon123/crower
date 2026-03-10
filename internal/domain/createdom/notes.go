@@ -1,14 +1,15 @@
 package createdom
 
 import (
-	commanddata "github.com/fiwon123/crower/internal/data/command"
-	notesdata "github.com/fiwon123/crower/internal/data/notes"
+	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/note"
+
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new add note
-func newCreateCommandNote(command *commanddata.Data, args []string) string {
-	noteBuilder := notesdata.New()
+func newCreateCommandNote(command *command.Data, args []string) string {
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Create).
@@ -20,8 +21,8 @@ func newCreateCommandNote(command *commanddata.Data, args []string) string {
 		Build()
 }
 
-func NewCreateScriptCommandNote(command *commanddata.Data, args []string) string {
-	noteBuilder := notesdata.New()
+func NewCreateScriptCommandNote(command *command.Data, args []string) string {
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Create).
@@ -33,8 +34,8 @@ func NewCreateScriptCommandNote(command *commanddata.Data, args []string) string
 		Build()
 }
 
-func NewCreateCommandLastExecuteNote(command *commanddata.Data) string {
-	noteBuilder := notesdata.New()
+func NewCreateCommandLastExecuteNote(command *command.Data) string {
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Create).
@@ -47,8 +48,8 @@ func NewCreateCommandLastExecuteNote(command *commanddata.Data) string {
 }
 
 // Create a new add process note
-func NewCreateProcessNote(command *commanddata.Data, args []string) string {
-	noteBuilder := notesdata.New()
+func NewCreateProcessNote(command *command.Data, args []string) string {
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Create).
@@ -61,7 +62,7 @@ func NewCreateProcessNote(command *commanddata.Data, args []string) string {
 }
 
 func NewCreateSystemVariableNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Create).
@@ -71,7 +72,7 @@ func NewCreateSystemVariableNote(args []string) string {
 }
 
 func NewCreateSystemPathVariableNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Create).
@@ -81,7 +82,7 @@ func NewCreateSystemPathVariableNote(args []string) string {
 }
 
 func GenerateCreateFile(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Create).
@@ -91,7 +92,7 @@ func GenerateCreateFile(args []string) string {
 }
 
 func NewCreateFolder(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Create).

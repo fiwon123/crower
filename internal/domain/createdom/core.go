@@ -11,7 +11,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/helper"
 
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
@@ -72,7 +72,7 @@ func (c *Core) CreateCommand(allAlias []string, args []string) {
 	c.app.Save()
 }
 
-func (c *Core) performCreateCommand(name string, allAlias []string, exec string) *commanddata.Data {
+func (c *Core) performCreateCommand(name string, allAlias []string, exec string) *command.Data {
 	command, err := c.handler.CreateCommand(name, allAlias, exec)
 
 	if err != nil {
@@ -220,7 +220,7 @@ func (c *Core) CreateScriptCommand(args []string) {
 		return
 	}
 
-	var command *commanddata.Data
+	var command *command.Data
 	switch runtime.GOOS {
 	case "windows":
 		command = c.performCreateCommand(name, []string{}, scriptFilePath)

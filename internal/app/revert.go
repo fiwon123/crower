@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
@@ -12,7 +12,7 @@ import (
 // Revert last operation
 func (app *Config) RevertTo(content *history.Content) error {
 
-	allCommands := commanddata.NewMapData()
+	allCommands := command.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
 
 	err := crowerutils.ReadToml(newDataPath, &allCommands)

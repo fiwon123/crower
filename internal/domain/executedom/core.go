@@ -2,7 +2,8 @@ package executedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/errors"
 
@@ -38,7 +39,7 @@ func (c *Core) CheckExecuteInput(key *string, params *[]string) bool {
 		*key = input
 	}
 
-	var command *commanddata.Data
+	var command *command.Data
 	if *key != "" {
 		command = c.app.AllCommandsByName.Get(*key)
 		if command == nil {
@@ -102,7 +103,7 @@ func (c *Core) ExecuteLast(op operations.MainOperationEnum, args []string) {
 	c.app.Save()
 }
 
-func (c *Core) assertExecute(output string, command *commanddata.Data, err error) {
+func (c *Core) assertExecute(output string, command *command.Data, err error) {
 	if err != nil {
 		c.app.Logger.Error("Error trying to run command: ", "out", string(output), "err", err)
 		return

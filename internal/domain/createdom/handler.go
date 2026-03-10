@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 
-	commanddata "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
@@ -31,9 +31,9 @@ func NewHandler(app *app.Config) *Handler {
 }
 
 // Create command using name, alias and exec parameters
-func (h *Handler) CreateCommand(name string, alias []string, exec string) (*commanddata.Data, error) {
+func (h *Handler) CreateCommand(name string, alias []string, exec string) (*command.Data, error) {
 
-	command := commanddata.New(name, alias, exec)
+	command := command.New(name, alias, exec)
 
 	if command.Name == "" {
 		return nil, fmt.Errorf("empty name")
@@ -63,7 +63,7 @@ func (h *Handler) CreateCommand(name string, alias []string, exec string) (*comm
 }
 
 // Create command based on process name or id process
-func (h *Handler) CreateProcess(name string, args []string) (*commanddata.Data, error) {
+func (h *Handler) CreateProcess(name string, args []string) (*command.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]

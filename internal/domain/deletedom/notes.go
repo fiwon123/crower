@@ -1,14 +1,15 @@
 package deletedom
 
 import (
-	commanddata "github.com/fiwon123/crower/internal/data/command"
-	notesdata "github.com/fiwon123/crower/internal/data/notes"
+	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/note"
+
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new delete command note
-func NewDeleteCommandNote(command *commanddata.Data, args []string) string {
-	noteBuilder := notesdata.New()
+func NewDeleteCommandNote(command *command.Data, args []string) string {
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Delete).
@@ -20,8 +21,8 @@ func NewDeleteCommandNote(command *commanddata.Data, args []string) string {
 		Build()
 }
 
-func NewDeleteLastNote(op operations.MainOperationEnum, command *commanddata.Data) string {
-	noteBuilder := notesdata.New()
+func NewDeleteLastNote(op operations.MainOperationEnum, command *command.Data) string {
+	noteBuilder := note.New()
 
 	noteBuilder.
 		AddMainOperation(operations.Delete).
@@ -43,7 +44,7 @@ func NewDeleteLastNote(op operations.MainOperationEnum, command *commanddata.Dat
 }
 
 func newDeleteFileNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Delete).
@@ -53,7 +54,7 @@ func newDeleteFileNote(args []string) string {
 }
 
 func generateDeleteFolderNote(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Delete).
@@ -63,7 +64,7 @@ func generateDeleteFolderNote(args []string) string {
 }
 
 func NewDeleteSystemVariable(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Delete).
@@ -73,7 +74,7 @@ func NewDeleteSystemVariable(args []string) string {
 }
 
 func NewDeleteSystemPathVariable(args []string) string {
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Delete).

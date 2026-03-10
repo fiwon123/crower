@@ -3,15 +3,16 @@ package updatedom
 import (
 	"sort"
 
-	commanddata "github.com/fiwon123/crower/internal/data/command"
-	notesdata "github.com/fiwon123/crower/internal/data/notes"
+	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/note"
+
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new update note
-func newUpdateCommmandNote(args []string, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
+func newUpdateCommmandNote(args []string, oldCommand *command.Data, newCommand *command.Data) string {
 
-	noteBuilder := notesdata.New()
+	noteBuilder := note.New()
 
 	noteBuilder.
 		AddMainOperation(operations.Update).
@@ -40,8 +41,8 @@ func newUpdateCommmandNote(args []string, oldCommand *commanddata.Data, newComma
 		Build()
 }
 
-func newUpdateLastNote(op operations.MainOperationEnum, oldCommand *commanddata.Data, newCommand *commanddata.Data) string {
-	noteBuilder := notesdata.New()
+func newUpdateLastNote(op operations.MainOperationEnum, oldCommand *command.Data, newCommand *command.Data) string {
+	noteBuilder := note.New()
 
 	noteBuilder.
 		AddMainOperation(operations.Update).

@@ -3,7 +3,7 @@ package updatedom_test
 import (
 	"testing"
 
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
 	"github.com/fiwon123/crower/internal/helper"
@@ -52,7 +52,7 @@ func TestUpdate(t *testing.T) {
 		}
 
 		for _, test := range tests {
-			newCommand := commanddata.New(test.newName, []string{}, "")
+			newCommand := command.New(test.newName, []string{}, "")
 			key := test.oldName
 			_, _, err := updateHandler.UpdateCommand(key, newCommand.Name, newCommand.AllAlias, newCommand.Exec)
 			got := err == nil
@@ -63,7 +63,7 @@ func TestUpdate(t *testing.T) {
 	})
 }
 
-func assertUpdateTest(want bool, got bool, key string, newCommand commanddata.Data, err error, t *testing.T) {
+func assertUpdateTest(want bool, got bool, key string, newCommand command.Data, err error, t *testing.T) {
 	if want != got {
 		t.Errorf("error %v, key %v, command %v, got %v, want %v", err, key, newCommand, got, want)
 	}

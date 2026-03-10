@@ -6,7 +6,8 @@ import (
 	"runtime"
 
 	"github.com/fiwon123/crower/internal/app"
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 
@@ -29,7 +30,7 @@ func NewHandler(app *app.Config) *Handler {
 }
 
 // Delete command using key
-func (h *Handler) DeleteCommand(key string) (*commanddata.Data, bool) {
+func (h *Handler) DeleteCommand(key string) (*command.Data, bool) {
 	command := h.app.AllCommandsByName.Get(key)
 	if command == nil {
 		command = h.app.AllCommandsByAlias.Get(key)

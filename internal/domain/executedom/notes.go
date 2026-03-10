@@ -1,14 +1,15 @@
 package executedom
 
 import (
-	commanddata "github.com/fiwon123/crower/internal/data/command"
-	notesdata "github.com/fiwon123/crower/internal/data/notes"
+	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/note"
+
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 // Create a new execute note
-func newExecuteCommandNote(command *commanddata.Data) string {
-	noteBuilder := notesdata.New()
+func newExecuteCommandNote(command *command.Data) string {
+	noteBuilder := note.New()
 
 	return noteBuilder.
 		AddMainOperation(operations.Execute).
@@ -20,8 +21,8 @@ func newExecuteCommandNote(command *commanddata.Data) string {
 		Build()
 }
 
-func NewExecuteLastNote(op operations.MainOperationEnum, command *commanddata.Data) string {
-	noteBuilder := notesdata.New()
+func NewExecuteLastNote(op operations.MainOperationEnum, command *command.Data) string {
+	noteBuilder := note.New()
 
 	noteBuilder.
 		AddMainOperation(operations.Execute).

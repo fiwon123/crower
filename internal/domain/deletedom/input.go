@@ -2,9 +2,10 @@ package deletedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	commanddata "github.com/fiwon123/crower/internal/data/command"
+
 	"github.com/fiwon123/crower/internal/helper"
 
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 )
 
@@ -33,7 +34,7 @@ func (i *Input) CheckDeleteInput(key *string) bool {
 		*key = input
 	}
 
-	var command *commanddata.Data
+	var command *command.Data
 	if *key != "" {
 		command = i.app.AllCommandsByName.Get(*key)
 		if command == nil {
