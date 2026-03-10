@@ -23,6 +23,7 @@ import (
 	"github.com/fiwon123/crower/internal/crowererrors"
 	"github.com/fiwon123/crower/internal/domain/checkdom"
 	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/internal/domain/upgradedom"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
@@ -70,13 +71,14 @@ Execute Command:
 		}
 
 		app := app.InitApp(cfgFilePath)
-		checkHandler := checkdom.NewHandler(app)
+		checkCore := checkdom.NewCore(app)
 		upgradeHandler := upgradedom.NewHandler(app)
+		listHandler := listdom.NewHandler(app)
 
-		executeCore := executedom.NewCore(app)
+		executeCore := executedom.NewCore(app, listHandler)
 
 		if checkNewVersion {
-			checkHandler.CheckNewVersion(Version)
+			checkCore.CheckNewVersion(Version)
 			return
 		}
 
