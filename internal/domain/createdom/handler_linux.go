@@ -8,13 +8,13 @@ import (
 	"os"
 	"strings"
 
-	"github.com/fiwon123/crower/pkg/crowerutils"
+	"github.com/fiwon123/crower/pkg/utils"
 )
 
 func (h *Handler) CreateSystemVariable(newVar string, value string) (string, error) {
 
 	bashrcPath := os.Getenv("HOME") + "/.bashrc"
-	fileSlice := crowerutils.GetFileLineSlice(bashrcPath)
+	fileSlice := utils.GetFileLineSlice(bashrcPath)
 
 	for _, s := range fileSlice {
 		if strings.Contains(s, fmt.Sprintf("export %s=", newVar)) {
@@ -40,7 +40,7 @@ func (h *Handler) CreateSystemPathVariable(value string) (string, error) {
 
 	home := os.Getenv("HOME")
 	profileFilePath := home + "/.profile"
-	lineSlice := crowerutils.GetFileLineSlice(profileFilePath)
+	lineSlice := utils.GetFileLineSlice(profileFilePath)
 
 	pathLinePrefix := "export PATH="
 	pathLinePrefix2 := "export PATH"
@@ -74,7 +74,7 @@ func (h *Handler) CreateSystemPathVariable(value string) (string, error) {
 		lineSlice = append(lineSlice, fmt.Sprintf("export PATH=\"$PATH:%s\"", value))
 	}
 
-	err := crowerutils.WriteFile(lineSlice, profileFilePath)
+	err := utils.WriteFile(lineSlice, profileFilePath)
 	if err != nil {
 		return "", err
 	}
