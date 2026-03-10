@@ -1,8 +1,7 @@
-package copycmd
+package copydom
 
 import (
-	"github.com/fiwon123/crower/internal/core"
-	copyoperations "github.com/fiwon123/crower/internal/core/operations/copy"
+	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/crowererrors"
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -24,10 +23,12 @@ Examples:
 
 		cfgFilePath, _ := cmdsHelper.GetPersistentConfigFlag(cmd)
 
-		app := core.InitApp(cfgFilePath)
+		app := app.InitApp(cfgFilePath)
+
+		core := NewCore(app)
 
 		if len(args) > 0 {
-			copyoperations.Copy(args, app)
+			core.Copy(args)
 		} else {
 			crowererrors.PrintCmdHelp("copy", app)
 		}

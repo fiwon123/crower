@@ -15,23 +15,23 @@ import (
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-type CreateHandler struct {
+type Handler struct {
 	app     *app.Config
 	execute executedom.Handler
 }
 
-func NewHandler(app *app.Config) *CreateHandler {
+func NewHandler(app *app.Config) *Handler {
 
 	execute := executedom.NewHandler(app)
 
-	return &CreateHandler{
+	return &Handler{
 		app:     app,
 		execute: *execute,
 	}
 }
 
 // Create command using name, alias and exec parameters
-func (h *CreateHandler) CreateCommand(name string, alias []string, exec string) (*commanddata.Data, error) {
+func (h *Handler) CreateCommand(name string, alias []string, exec string) (*commanddata.Data, error) {
 
 	command := commanddata.New(name, alias, exec)
 
@@ -63,7 +63,7 @@ func (h *CreateHandler) CreateCommand(name string, alias []string, exec string) 
 }
 
 // Create command based on process name or id process
-func (h *CreateHandler) CreateProcess(name string, args []string) (*commanddata.Data, error) {
+func (h *Handler) CreateProcess(name string, args []string) (*commanddata.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]
@@ -125,7 +125,7 @@ func (h *CreateHandler) CreateProcess(name string, args []string) (*commanddata.
 }
 
 // Create a new file on filepath
-func (h *CreateHandler) CreateFile(filePath string) error {
+func (h *Handler) CreateFile(filePath string) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
@@ -144,7 +144,7 @@ func (h *CreateHandler) CreateFile(filePath string) error {
 }
 
 // Create a new folder on folderpath
-func (h *CreateHandler) CreateFolder(folderPath string) error {
+func (h *Handler) CreateFolder(folderPath string) error {
 	var out string
 	var err error
 	switch runtime.GOOS {
@@ -162,7 +162,7 @@ func (h *CreateHandler) CreateFolder(folderPath string) error {
 	return nil
 }
 
-func (h *CreateHandler) CreateScriptCommand(name string) (string, error) {
+func (h *Handler) CreateScriptCommand(name string) (string, error) {
 	cfgFolderPath := filepath.Dir(h.app.CfgFilePath)
 	scriptFolderPath := filepath.Join(cfgFolderPath, "scripts")
 	err := crowerutils.CreateFolderIfNotExists(scriptFolderPath)

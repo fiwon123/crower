@@ -11,7 +11,7 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func (h *CreateHandler) CreateSystemVariable(newVar string, value string) (string, error) {
+func (h *Handler) CreateSystemVariable(newVar string, value string) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,
@@ -37,7 +37,7 @@ func (h *CreateHandler) CreateSystemVariable(newVar string, value string) (strin
 
 }
 
-func (h *CreateHandler) CreateSystemPathVariable(value string) (string, error) {
+func (h *Handler) CreateSystemPathVariable(value string) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,

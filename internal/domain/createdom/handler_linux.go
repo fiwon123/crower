@@ -11,7 +11,7 @@ import (
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func (h *CreateHandler) CreateSystemVariable(newVar string, value string) (string, error) {
+func (h *Handler) CreateSystemVariable(newVar string, value string) (string, error) {
 
 	bashrcPath := os.Getenv("HOME") + "/.bashrc"
 	fileSlice := crowerutils.GetFileLineSlice(bashrcPath)
@@ -36,7 +36,7 @@ func (h *CreateHandler) CreateSystemVariable(newVar string, value string) (strin
 	return "Added to .bashrc. Restart terminal to take effect.", nil
 }
 
-func (h *CreateHandler) CreateSystemPathVariable(value string) (string, error) {
+func (h *Handler) CreateSystemPathVariable(value string) (string, error) {
 
 	home := os.Getenv("HOME")
 	profileFilePath := home + "/.profile"

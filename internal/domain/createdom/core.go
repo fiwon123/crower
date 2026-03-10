@@ -16,23 +16,23 @@ import (
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-type CreateCore struct {
+type Core struct {
 	app     *app.Config
-	handler *CreateHandler
+	handler *Handler
 }
 
-func NewCore(app *app.Config) *CreateCore {
+func NewCore(app *app.Config) *Core {
 
-	createHandler := NewHandler(app)
+	handler := NewHandler(app)
 
-	return &CreateCore{
-		handler: createHandler,
+	return &Core{
+		handler: handler,
 		app:     app,
 	}
 }
 
 // Verify parameters to process create operation
-func (c *CreateCore) CheckCreateInput(name *string, alias *[]string, exec *string) {
+func (c *Core) CheckCreateInput(name *string, alias *[]string, exec *string) {
 	if *name == "" {
 		*name = helper.GetUserInput("New Name ", helper.IsValidInput, c.app).(string)
 	}
@@ -51,7 +51,7 @@ func (c *CreateCore) CheckCreateInput(name *string, alias *[]string, exec *strin
 
 }
 
-func (c *CreateCore) CreateCommand(allAlias []string, args []string) {
+func (c *Core) CreateCommand(allAlias []string, args []string) {
 	name := ""
 	exec := ""
 	if len(args) == 2 {
@@ -70,7 +70,7 @@ func (c *CreateCore) CreateCommand(allAlias []string, args []string) {
 	historyhelper.Save(c.app)
 }
 
-func (c *CreateCore) performCreateCommand(name string, allAlias []string, exec string) *commanddata.Data {
+func (c *Core) performCreateCommand(name string, allAlias []string, exec string) *commanddata.Data {
 	command, err := c.handler.CreateCommand(name, allAlias, exec)
 
 	if err != nil {
@@ -84,7 +84,7 @@ func (c *CreateCore) performCreateCommand(name string, allAlias []string, exec s
 	return command
 }
 
-func (c *CreateCore) CreateProcess(name string, args []string) {
+func (c *Core) CreateProcess(name string, args []string) {
 	command, err := c.handler.CreateProcess(name, args)
 	if err != nil {
 		c.app.Logger.Error("Error add command by process: ", "error", err, "name", name, "args", args)
@@ -98,7 +98,7 @@ func (c *CreateCore) CreateProcess(name string, args []string) {
 	historyhelper.Save(c.app)
 }
 
-func (c *CreateCore) CreateSystemVariable(args []string) {
+func (c *Core) CreateSystemVariable(args []string) {
 	newVar := ""
 	value := ""
 	if len(args) >= 2 {
@@ -121,7 +121,7 @@ func (c *CreateCore) CreateSystemVariable(args []string) {
 	historyhelper.Save(c.app)
 }
 
-func (c *CreateCore) CreateSystemPathVariable(args []string) {
+func (c *Core) CreateSystemPathVariable(args []string) {
 	newPath := ""
 	if len(args) > 0 {
 		newPath = args[0]
@@ -142,7 +142,7 @@ func (c *CreateCore) CreateSystemPathVariable(args []string) {
 	historyhelper.Save(c.app)
 }
 
-func (c *CreateCore) CreateFile(args []string) {
+func (c *Core) CreateFile(args []string) {
 	for _, path := range args {
 		err := c.handler.CreateFile(path)
 		if err != nil {
@@ -154,7 +154,7 @@ func (c *CreateCore) CreateFile(args []string) {
 	historyhelper.Save(c.app)
 }
 
-func (c *CreateCore) CreateFolder(args []string) {
+func (c *Core) CreateFolder(args []string) {
 	for _, path := range args {
 		err := c.handler.CreateFolder(path)
 		if err != nil {
@@ -166,7 +166,7 @@ func (c *CreateCore) CreateFolder(args []string) {
 	historyhelper.Save(c.app)
 }
 
-func (c *CreateCore) CreateLastCommand(op operationsdata.MainOperationEnum, args []string) {
+func (c *Core) CreateLastCommand(op operationsdata.MainOperationEnum, args []string) {
 	name := ""
 	if len(args) > 0 {
 		name = args[0]
@@ -204,7 +204,7 @@ func (c *CreateCore) CreateLastCommand(op operationsdata.MainOperationEnum, args
 	historyhelper.Save(c.app)
 }
 
-func (c *CreateCore) CreateScriptCommand(args []string) {
+func (c *Core) CreateScriptCommand(args []string) {
 	name := ""
 	if len(args) > 0 {
 		name = args[0]

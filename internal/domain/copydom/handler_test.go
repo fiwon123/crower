@@ -1,11 +1,11 @@
-package copyhandlers_test
+package copydom_test
 
 import (
 	"path/filepath"
 	"testing"
 
-	copyhandlers "github.com/fiwon123/crower/internal/handlers/copy"
-	createhandlers "github.com/fiwon123/crower/internal/handlers/create"
+	"github.com/fiwon123/crower/internal/domain/copydom"
+	"github.com/fiwon123/crower/internal/domain/createdom"
 	testshelper "github.com/fiwon123/crower/internal/helper/tests"
 )
 
@@ -17,14 +17,17 @@ func TestCopyFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		copyHandler := copydom.NewHandler(app)
+
 		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new.txt")
 
-		err = createhandlers.CreateFile(newFilePath, app)
+		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
 
-		err = copyhandlers.CopyFile(newFilePath, testPaths[0], app)
+		err = copyHandler.CopyFile(newFilePath, testPaths[0])
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -36,14 +39,17 @@ func TestCopyFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		copyHandler := copydom.NewHandler(app)
+
 		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file.txt")
 
-		err = createhandlers.CreateFile(newFilePath, app)
+		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
 
-		err = copyhandlers.CopyFile(newFilePath, testPaths[0], app)
+		err = copyHandler.CopyFile(newFilePath, testPaths[0])
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -59,14 +65,17 @@ func TestCopyFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
+		createHandler := createdom.NewHandler(app)
+		copyHandler := copydom.NewHandler(app)
+
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
 
-		err = createhandlers.CreateFolder(newFolderPath, app)
+		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
 
-		err = copyhandlers.CopyFolder(newFolderPath, testPaths[0], app)
+		err = copyHandler.CopyFolder(newFolderPath, testPaths[0])
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
@@ -77,15 +86,16 @@ func TestCopyFolder(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
-
+		createHandler := createdom.NewHandler(app)
+		copyHandler := copydom.NewHandler(app)
 		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
 
-		err = createhandlers.CreateFolder(newFolderPath, app)
+		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
 
-		err = copyhandlers.CopyFolder(newFolderPath, testPaths[0], app)
+		err = copyHandler.CopyFolder(newFolderPath, testPaths[0])
 		if err != nil {
 			t.Fatalf("error: %v", err)
 		}
