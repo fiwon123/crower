@@ -6,11 +6,11 @@ import (
 	"strconv"
 	"strings"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/pkg/crowerutils"
 )
 
-func InitCrowerTests() (*appdata.Data, []string, error) {
+func InitCrowerTests() (*app.Config, []string, error) {
 	homePath, err := os.UserHomeDir()
 	if err != nil {
 		return nil, nil, err
@@ -38,6 +38,6 @@ func InitCrowerTests() (*appdata.Data, []string, error) {
 		}
 	}
 
-	return core.InitApp(filepath.Join(testPath, "crower.yaml")), testPaths, nil
+	return app.InitApp(filepath.Join(testPath, "crower.yaml")), testPaths, nil
 
 }

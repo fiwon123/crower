@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/app"
 	commanddata "github.com/fiwon123/crower/internal/data/command"
 	historydata "github.com/fiwon123/crower/internal/data/history"
 
@@ -12,7 +12,7 @@ import (
 )
 
 // Revert last operation
-func RevertTo(content *historydata.Content, app *appdata.Data) error {
+func RevertTo(content *historydata.Content, app *app.Config) error {
 
 	allCommands := commanddata.NewMapData()
 	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
@@ -32,7 +32,7 @@ func RevertTo(content *historydata.Content, app *appdata.Data) error {
 	return nil
 }
 
-func removeUntilHistory(content *historydata.Content, app *appdata.Data) {
+func removeUntilHistory(content *historydata.Content, app *app.Config) {
 
 	lastHistory := app.History.GetLast()
 	for lastHistory.Version != content.Version {
