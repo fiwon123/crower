@@ -24,6 +24,7 @@ import (
 	"github.com/fiwon123/crower/internal/domain/checkdom"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/domain/upgradedom"
 
 	cmdsHelper "github.com/fiwon123/crower/internal/helper/cmds"
 	"github.com/spf13/cobra"
@@ -61,6 +62,8 @@ Execute Command:
 
 		app := app.InitApp(cfgFilePath)
 		checkHandler := checkdom.NewHandler(app)
+		upgradeHandler := upgradedom.NewHandler(app)
+
 		executeCore := executedom.NewCore(app)
 
 		if checkNewVersion {
@@ -69,7 +72,7 @@ Execute Command:
 		}
 
 		if upgradeFlag {
-			upgradeoperations.UpgradeApp(Version)
+			upgradeHandler.UpgradeApp(Version)
 			return
 		}
 

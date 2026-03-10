@@ -1,14 +1,24 @@
-package upgradehandlers
+package upgradedom
 
 import (
 	"net/http"
 	"runtime"
 
-	appdata "github.com/fiwon123/crower/internal/data/app"
+	"github.com/fiwon123/crower/internal/app"
 	"github.com/minio/selfupdate"
 )
 
-func UpgradeApp(newVersion string, app *appdata.Data) error {
+type Handler struct {
+	app *app.Config
+}
+
+func NewHandler(app *app.Config) *Handler {
+	return &Handler{
+		app: app,
+	}
+}
+
+func (h *Handler) UpgradeApp(newVersion string) error {
 	var resp *http.Response
 	var err error
 	switch runtime.GOOS {
