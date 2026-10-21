@@ -55,13 +55,17 @@ func (h *Handler) CreateSystemPathVariable(value string) (string, error) {
 
 	ok := utils.CheckNewVarValuePath(value, path)
 	if !ok {
-		return "", fmt.Errorf("value already in PATH")
+		return "Already in PATH. Nothing to change.", nil
 	}
 
 	newPath := path + string(os.PathListSeparator) + value
 
 	err = key.SetStringValue("Path", newPath)
 
-	return "Added to PATH", err
+	if err != nil {
+		return "", err
+	}
+
+	return "Added to PATH. Open a new terminal (or sign out and in) for it to take effect.", nil
 
 }

@@ -116,6 +116,23 @@ works the moment the folder is on your PATH.
 `crower create` without arguments is interactive. Run `crower <command> --help`
 for the flags of any command.
 
+### Adding a directory to your PATH
+
+```bash
+crower create --syspath /opt/mytools
+```
+
+On Linux the export is added to `~/.profile` **and** `~/.bashrc`, so it is
+picked up by a login shell and by an interactive one — the two files are not
+read by the same shells, and `~/.profile` alone is missing on systems whose
+login file is `~/.bash_profile`. On Windows the user `Path` in the registry is
+what changes.
+
+The directory reaches your shell in a **new** terminal: the export is read
+when a shell starts, so the one you are typing in keeps the PATH it had.
+`crower` says which files it wrote, and whether the directory was added or was
+already there.
+
 ## Architecture
 
 Each operation is its own package, so a new operation is a new package rather
@@ -226,6 +243,18 @@ appends to `~/.bashrc`; start a new shell, or source the file by hand:
 ```bash
 source ~/.bashrc
 ```
+
+### A directory added with `crower create --syspath` is not on my PATH
+
+The export is read when a shell starts, so the terminal you ran the command in
+keeps the PATH it had. Open a new terminal, or source the file by hand:
+
+```bash
+source ~/.bashrc
+```
+
+If `crower` says the directory is already in PATH, it is — check the export
+yourself with `grep PATH ~/.profile ~/.bashrc`.
 
 ### A command does not appear in `crower list`
 
