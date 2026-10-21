@@ -12,16 +12,42 @@ import (
 type Handler struct {
 	app     *app.Config
 	execute *executedom.Handler
+	run     CommandRunner
 }
+
+// CommandRunner executes a command string and returns its combined output.
+//
+// It is a field so a test can replace the execution. The real runner shells
+// out to xdg-open, which needs a desktop environment: on a headless machine
+// it exits 3 ("no method available for opening ..."), so a test that used it
+// would be reporting on the machine rather than on the code.
+type CommandRunner func(command string) (string, error)
 
 func NewHandler(app *app.Config) *Handler {
 
 	execute := executedom.NewHandler(app)
 
-	return &Handler{
+	h := &Handler{
 		app:     app,
 		execute: execute,
 	}
+
+	h.run = execute.PerformExecute
+
+	return h
+}
+
+// NewHandlerWithRunner returns a Handler that executes commands with the
+// given runner instead of running them.
+//
+// A test uses it to avoid the desktop dependency. The command is still built
+// by the production code, so the test can assert on what would have run.
+func NewHandlerWithRunner(app *app.Config, run CommandRunner) *Handler {
+
+	h := NewHandler(app)
+	h.run = run
+
+	return h
 }
 
 // Open filepath based on user operational system(OS).
@@ -46,7 +72,7 @@ func (h *Handler) Open(paths []string) error {
 
 		h.app.Logger.Info("performing execute...: ", "exec", commandString)
 
-		out, err := h.execute.PerformExecute(commandString)
+		out, err := h.run(commandString)
 		if err != nil {
 			return fmt.Errorf("error %v out %v", err, string(out))
 		}
