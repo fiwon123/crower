@@ -39,8 +39,8 @@ name you type many times a day should be short.
 **Supported platforms**: Windows (commands run through `cmd`) and Linux
 (commands run through `sh`).
 
-> **Status**: actively used, pre-1.0. The test suite is small and one package
-> is red on machines without a desktop file opener — see
+> **Status**: actively used, pre-1.0. The test suite is small, and three
+> packages fail when it runs in parallel — see
 > [How to develop](#how-to-develop).
 
 ## How to use
@@ -164,9 +164,11 @@ go run ./ --help
 ### A note on what `make check` proves
 
 `make check` runs gofmt, vet, test, and build. It is red on arrival:
-`internal/domain/opendom` fails on any machine without a desktop file opener,
-including CI runners. That is a known, tracked failure (issue #45), not a
-regression in your change.
+`internal/domain/opendom`, `internal/domain/deletedom`, and
+`internal/domain/movedom` fail when the suite runs the packages in parallel,
+and pass when a failing package is run alone. The shared test fixture directory
+is wiped by every package that uses it. That is a known, tracked failure
+(issue #46), not a regression in your change.
 
 Several packages also have no test file at all — `go test` reports those as
 `[no test files]` and still exits 0. A green run proves the code is formatted,
@@ -194,8 +196,7 @@ path. A different `--config` path means a different store.
 ### `crower open` does nothing on a headless machine
 
 `crower open` hands the path to the desktop's file opener. On a server or in a
-container there is none, so nothing opens. This is also why the `opendom` test
-fails there.
+container there is none, so nothing opens.
 
 ## Tech stack
 

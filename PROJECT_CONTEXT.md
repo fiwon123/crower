@@ -96,11 +96,11 @@ scripts/             add_to_path installers
 ## Status
 
 - **Done**: command-alias management (add, update, delete, reset, list, search, extract); file operations (create, copy, move, open, restore, revert); notes and history; self-update; release archives for Windows and Linux.
-- **In progress**: the `opendom` test is red on machines without a desktop file opener (issue #45).
+- **In progress**: the test suite fails in three packages when it runs in parallel — the shared test fixture directory is wiped by every package that uses it (issue #46).
 
 ## Backlog
 
-1. Fix the `opendom` test so it does not require a desktop environment (issue #45).
+1. Fix the shared test fixture directory so the suite passes when the packages run in parallel (issue #46).
 2. Add tests for the domains that have none — `executedom`, `extractdom`, `resetdom`, `restoredom`, `revertdom`, `upgradedom`, `checkdom`.
 3. Extend the release matrix to macOS and Linux arm64.
 
@@ -110,7 +110,8 @@ scripts/             add_to_path installers
   the release archive.
 - `internal/helper/tests.go` creates and removes `$HOME/crower/test` when the
   test suite runs. It is outside the repository, and it is why running the
-  suite touches the user's home directory.
+  suite touches the user's home directory — and why the packages race each
+  other when they run in parallel (issue #46).
 - Windows uses `cmd` to execute commands, Linux uses `sh`.
 - The config file is TOML and lives under the user's home directory. It is
   never committed.

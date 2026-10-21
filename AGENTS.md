@@ -77,24 +77,30 @@ nothing must not look like reporting success.
 
 ### The known-failing baseline — read this before claiming a change is verified
 
-`internal/domain/opendom` **fails on any machine without a desktop file
-opener**, which includes GitHub Actions runners. The test opens real files with
-the system opener and expects a GUI to answer.
+`go test ./...` **fails in three packages when the whole suite runs** —
+`internal/domain/opendom`, `internal/domain/deletedom`, and
+`internal/domain/movedom` — and passes when a failing package is run alone.
 
-This is a pre-existing failure, tracked in issue #45, and it is not caused by
+The cause is `internal/helper/tests.go`: it builds one fixed path,
+`~/crower/test`, calls `os.RemoveAll` on it, and recreates it. Every test
+package calls that helper, and `go test ./...` runs the packages in parallel,
+so one package wipes the fixtures another package is using. It is a race, not
+an environment problem.
+
+It is a pre-existing failure, tracked in issue #46, and it is not caused by
 whatever change you are making. It also means:
 
-- `make check` is **red on arrival**. A red run that shows only `opendom` is the
-  known baseline, not your regression. Say which it is.
-- `internal/helper/tests.go` creates and removes `$HOME/crower/test` when the
-  suite runs — it writes **outside the repository**, into the user's home
-  directory.
+- `make check` is **red on arrival**. A red run showing only those three
+  packages is the known baseline, not your regression. Say which it is.
+- the same helper writes **outside the repository**, into `~/crower/test` —
+  one directory away from the real crower data — and deletes whatever is
+  there.
 - The remaining suite is small: several packages have no test file at all, and
   `go test` reports those as `[no test files]` while still exiting 0. A green
   run proves gofmt, vet, and build — not the behaviour.
 
-Never silence this by excluding the package from `go test` or from CI. Fix it
-in issue #45, where the cause can be investigated properly.
+Never silence this by excluding a package from `go test` or from CI. Fix it
+in issue #46, where the cause can be investigated properly.
 
 ## Runtime Environment
 
@@ -197,7 +203,7 @@ on your way past:
 main          ← release merges (CI runs here — dev→main PRs only)
   └── dev     ← integration branch (all feature branches merge here)
         ├── feat/42-note-export
-        ├── fix/45-opendom-test-environment
+        ├── fix/46-parallel-test-fixture-race
         └── chore/44-opencode-agent-layer
 ```
 
