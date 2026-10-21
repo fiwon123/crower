@@ -117,9 +117,15 @@ whatever change you are making. It also means:
 - the same helper writes **outside the repository**, into `~/crower/test` —
   one directory away from the real crower data — and deletes whatever is
   there.
-- The remaining suite is small: several packages have no test file at all, and
+- The remaining suite is small: 16 packages have no test file at all, and
   `go test` reports those as `[no test files]` while still exiting 0. A green
-  run proves gofmt, vet, and build — not the behaviour.
+  run proves gofmt, vet, and build — not the behaviour. The packages **with**
+  tests are the eight domain packages (`copydom`, `createdom`, `deletedom`,
+  `listdom`, `movedom`, `opendom`, `searchdom`, `updatedom`) and `pkg/logger`;
+  the packages without one are `cmd`, `internal/app`, `internal/data/*`,
+  `internal/domain/checkdom`, `executedom`, `extractdom`, `resetdom`,
+  `restoredom`, `revertdom`, `upgradedom`, `internal/errors`, `internal/helper`,
+  `internal/interfaces` and `pkg/utils`.
 
 Never silence this by excluding a package from `go test` or from CI. Fix it
 in issue #46, where the cause can be investigated properly.
