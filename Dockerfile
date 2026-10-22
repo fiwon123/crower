@@ -67,6 +67,35 @@ RUN if ! getent group ${HOST_GID} >/dev/null; then groupadd --gid ${HOST_GID} de
     && chown -R ${HOST_UID}:${HOST_GID} /home/devuser \
     && git config --system --add safe.directory /workspace
 
+# --- the mount points, created in the image ---
+#
+# Docker creates the DESTINATION of a bind mount or a volume when the image
+# does not already contain it, and it creates that path as **root**. The
+# directories below are the parents of the mount points in docker-compose.yml
+# (the `gocache` volume at ~/.cache/go-build, and the agent overlay's
+# ~/.config/gh and ~/.config/opencode), so without this the container starts
+# with /home/devuser/.cache and /home/devuser/.config owned by root.
+#
+# The runtime user is ${HOST_UID}, not root, so it then cannot create
+# ~/.cache/opencode and the agent dies on its first run with:
+#
+#     Error: EACCES: permission denied, mkdir '/home/devuser/.cache/opencode'
+#
+# Creating them here means Docker finds the path already there and leaves the
+# ownership alone. The contents are still the host's or the volume's.
+#
+# /go/pkg/mod is the third one: the Go module cache is a named volume there,
+# and the base image ships that directory owned by root, so the volume is
+# initialised root-owned and `go build` fails with
+# "mkdir /go/pkg/mod/cache: permission denied". The gate cannot run, so
+# nothing is verified.
+RUN mkdir -p /home/devuser/.cache /home/devuser/.cache/go-build \
+             /home/devuser/.config /home/devuser/.config/gh \
+             /home/devuser/.config/opencode \
+             /go/pkg/mod \
+    && chown -R ${HOST_UID}:${HOST_GID} /home/devuser/.cache /home/devuser/.config \
+    && chown -R ${HOST_UID}:${HOST_GID} /go/pkg/mod
+
 # --- dev-sandbox rc (badge + terminal title, loaded for BOTH users) ---
 # `make dev-shell` opens an interactive *non-login* bash, which reads only
 # ~/.bashrc (HOME comes from the compose environment), never /etc/profile.d.
