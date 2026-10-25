@@ -56,8 +56,70 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 	}
 
 	h.app.Logger.Info(command.Exec)
-	out, err := h.PerformExecute(command.Exec)
-	return out, command, err
+	
+	// Get steps
+	steps := command.Steps
+	if len(steps) == 0 {
+		steps = []string{command.Exec}
+	}
+	
+	// Execute steps sequentially
+	var allOut strings.Builder
+	for i, step := range steps {
+		step = strings.TrimSpace(step)
+		if step == "" {
+			continue
+		}
+		
+		// Check for nested crower invocation
+		if strings.HasPrefix(step, "crower ") || strings.HasPrefix(step, "cr ") {
+			out, err := h.executeNested(step)
+			allOut.WriteString(out)
+			if err != nil {
+				return allOut.String(), command, err
+			}
+			continue
+		}
+		
+		h.app.Logger.Info(fmt.Sprintf("[%d/%d] %s", i+1, len(steps), step))
+		out, err := h.PerformExecute(step)
+		allOut.WriteString(out)
+		if err != nil {
+			return allOut.String(), command, err
+		}
+	}
+	return allOut.String(), command, nil
+}
+
+func (h *Handler) executeNested(step string) (string, error) {
+	execDepth++
+	defer func() { execDepth-- }()
+	
+	if execDepth > maxExecDepth {
+		return "", fmt.Errorf("maximum recursion depth (%d) exceeded", maxExecDepth)
+	}
+	
+	// Parse args
+	fields := strings.Fields(step)
+	if len(fields) == 0 {
+		return "", fmt.Errorf("empty command")
+	}
+	
+	cmdName := fields[1]
+	if len(fields) > 1 {
+		// Check for cycles
+		for _, s := range execStack {
+			if s == cmdName {
+				return "", fmt.Errorf("circular dependency detected: %s", cmdName)
+			}
+		}
+		execStack = append(execStack, cmdName)
+		defer func() { execStack = execStack[:len(execStack)-1] }()
+	}
+	
+	// For now, execute via shell - full in-process dispatch would require refactoring
+	// to avoid import cycles; this is a simplified nested execution
+	return h.PerformExecute(step)
 }
 
 func (h *Handler) buildCMD(ex string) (*exec.Cmd, string, []string) {
@@ -142,3 +204,9 @@ func getSplitCommand(ex string) []string {
 
 	return args
 }
+
+var (
+	execDepth     int
+	execStack     []string
+	maxExecDepth  = 8
+)
