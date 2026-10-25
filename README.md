@@ -1,326 +1,222 @@
-<h1 align="center">
-  crower
-</h1>
+<p align="center">
+  <img src="assets/logo.svg" alt="crower logo" width="128" height="128">
+</p>
 
-<p align="center">A cross-platform terminal file manager and command-alias manager that keeps an undoable history and per-item notes.</p>
+<h1 align="center">crower</h1>
 
 <p align="center">
-  <a href="https://github.com/fiwon123/crower/actions/workflows/ci.go.yml"><img src="https://github.com/fiwon123/crower/actions/workflows/ci.go.yml/badge.svg?branch=main" alt="CI"></a>
-  <img src="https://img.shields.io/badge/go-1.25.4-informational" alt="Go 1.25.4">
-  <a href="https://github.com/fiwon123/crower/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License"></a>
+  <strong>A cross-platform terminal file manager and command-alias manager</strong><br>
+  <em>Shortcut any command, automate workflows, and share them with your team</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/fiwon123/crower/actions/workflows/ci.go.yml"><img src="https://github.com/fiwon123/crower/actions/workflows/ci.go.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/fiwon123/crower/releases"><img src="https://img.shields.io/github/v/release/fiwon123/crower" alt="Release"></a>
+  <a href="https://github.com/fiwon123/crower/blob/main/LICENSE"><img src="https://img.shields.io/github/license/fiwon123/crower" alt="License"></a>
 </p>
 
 ---
 
-## Table of contents
+## Table of Contents
 
-- [About](#about)
-- [How to use](#how-to-use)
-- [Install](#install)
+- [Why crower?](#why-crower)
+- [Quick Start](#quick-start)
+- [Installation](#installation)
+- [Usage Recipes](#usage-recipes)
 - [Commands](#commands)
-- [Architecture](#architecture)
-- [Repository](#repository)
-- [How to develop](#how-to-develop)
-- [Troubleshooting](#troubleshooting)
-- [Tech stack](#tech-stack)
+- [Sharing Crower Files](#sharing-crower-files)
+- [Configuration](#configuration)
+- [Development](#development)
 - [License](#license)
 
-## About
+## Why crower?
 
-crower is a dev tool for the terminal. It stores the commands you run often
-under short names, and it manages files and folders the same way — with an
-operation history you can step back through, and a note attached to any item.
+Tired of retyping long, complex commands? Need to remember obscure CLI incantations? **crower** lets you:
 
-Everything it stores lives in a TOML configuration file under your home
-directory, so it follows you between machines and never touches your project
-repositories. The `cr` short alias ships next to the `crower` binary, because a
-name you type many times a day should be short.
+- **🔖 Shortcut anything** - Turn any shell command into a memorable alias
+- **⚡ Run multi-step workflows** - Chain multiple commands together with automatic error handling
+- **🔗 Nest commands** - Call crower commands from within other crower commands
+- **📝 Add context** - Attach notes to your commands and track history
+- **↩️ Undo anything** - Full history with revert capability
+- **📁 Manage files** - Create, copy, move, open files and folders with simple commands
+- **🔍 Search** - Find files/folders or search the web instantly
+- **📦 Share workflows** - Export and import crower files, or download from a registry
 
-**Supported platforms**: Windows (commands run through `cmd`) and Linux
-(commands run through `sh`).
-
-> **Status**: actively used, pre-1.0. The test suite is small, and three
-> packages fail when it runs in parallel — see
-> [How to develop](#how-to-develop).
-
-## How to use
-
-1. Install the binary (see [Install](#install)), or run it from source with
-   `go run ./ --help`.
-2. Store a command you run often:
-
-   ```bash
-   crower create "say-hi" "'echo hello there'"
-   ```
-
-   The command is now a first-class name. Run it by the name, by any alias you
-   gave it, or by its short form.
-
-3. Create a file or a folder the same way — crower works out which one you meant
-   from the path:
-
-   ```bash
-   crower create "./notes/todo.md"
-   crower create "./notes/archive"
-   ```
-
-4. Find what you stored:
-
-   ```bash
-   crower list
-   crower search "todo"
-   ```
-
-5. Undo what you did, one step at a time, or put a specific item back:
-
-   ```bash
-   crower revert
-   crower restore
-   ```
-
-Every operation is recorded. `crower list` shows the history, and `crower
-revert` steps back through it.
-
-## Install
-
-Download the archive for your platform from the
-[releases page](https://github.com/fiwon123/crower/releases), then run the
-installer it ships with:
-
-| Platform | Archive | Install |
-|---|---|---|
-| Linux | `*.tar.gz` | `tar -xzf <archive> && cd <folder> && ./add_to_path.sh` |
-| Windows | `*.zip` | `Expand-Archive <archive>` then `.\add_to_path.bat` |
-
-Each archive carries both `crower` and the short alias `cr`, so `cr create ...`
-works the moment the folder is on your PATH.
-
-## Commands
-
-| Command | What it does |
-|---|---|
-| `crower create` | create a command, file, or folder |
-| `crower list` | list commands, history, processes, folders, system, and PATH |
-| `crower update` | update an existing command |
-| `crower delete` | delete a command, file, or folder |
-| `crower reset` | reset all commands |
-| `crower search` | search files, folders, and the browser |
-| `crower open` | open the configuration file, a path, a folder, or the system |
-| `crower execute` | execute a stored command |
-| `crower copy` | copy a file or folder to another location |
-| `crower move` | move a file or folder to another location |
-| `crower extract` | extract compressed files (`.zip`, `.tar`, `.tar.gz`, `.7z`, `.rar`) |
-| `crower revert` | revert the history by one step |
-| `crower restore` | restore a specific command |
-
-`crower create` without arguments is interactive. Run `crower <command> --help`
-for the flags of any command.
-
-### Adding a directory to your PATH
+## Quick Start
 
 ```bash
-crower create --syspath /opt/mytools
+# Create a shortcut for a complex command
+crower create deploy "ssh user@server 'cd /app && git pull && systemctl restart app'"
+
+# Run it by name or alias
+crower deploy
+# or
+cr deploy
+
+# Create with aliases
+crower create backup -a bkp "tar -czf backup.tar.gz ~/important-data"
+cr bkp
+
+# Run with parameters
+crower create greet "echo Hello {1}, welcome to {2}!"
+cr greet John Developer
 ```
 
-On Linux the export is added to `~/.profile` **and** `~/.bashrc`, so it is
-picked up by a login shell and by an interactive one — the two files are not
-read by the same shells, and `~/.profile` alone is missing on systems whose
-login file is `~/.bash_profile`. On Windows the user `Path` in the registry is
-what changes.
+## Installation
 
-The directory reaches your shell in a **new** terminal: the export is read
-when a shell starts, so the one you are typing in keeps the PATH it had.
-`crower` says which files it wrote, and whether the directory was added or was
-already there.
+### Download Release (Recommended)
 
-## Architecture
+Download the latest release for your platform from the [releases page](https://github.com/fiwon123/crower/releases).
 
-Each operation is its own package, so a new operation is a new package rather
-than a new branch in a shared handler.
-
-```mermaid
-flowchart LR
-  CLI["cmd/ (cobra)"] --> Domain["internal/domain/&lt;op&gt;dom/<br/>core · handler · notes"]
-  Domain --> Data["internal/data/<br/>history · notes · operations"]
-  Data --> App["internal/app/<br/>configuration"]
+**Linux:**
+```bash
+tar -xzf crower_*.tar.gz
+chmod +x crower cr
+sudo mv crower cr /usr/local/bin/
 ```
 
-## Repository
+**Windows:**
+Extract the ZIP and add the directory containing `crower.exe` and `cr.exe` to your PATH.
 
-- **Source**: https://github.com/fiwon123/crower
-- **Releases**: https://github.com/fiwon123/crower/releases
-- **Issues & discussions**: https://github.com/fiwon123/crower/issues
-- **Wiki**: https://github.com/fiwon123/crower/wiki
-
-## How to develop
-
-### Prerequisites
-
-Either of these works:
-
-- **Host toolchain** — Go 1.25.4 or newer (the version is pinned in `go.mod`)
-  and `make`. Fastest for a quick edit.
-- **Dev sandbox** — Docker, and nothing else. The container pins Go 1.25.4, so
-  your build is the build CI runs.
-
-OpenCode is optional — see `AGENTS.md` for how the agent layer is configured.
-
-### Quick start
+### Build from Source
 
 ```bash
 git clone https://github.com/fiwon123/crower.git
 cd crower
+make build
+sudo make install  # or add build/ to PATH
+```
+
+**Requirements:** Go 1.25.4 or later
+
+## Usage Recipes
+
+### Development Workflow
+```bash
+# Create shortcuts for common dev tasks
+crower create test "go test ./..."
+crower create build "go build ./..."
+crower create lint "golangci-lint run"
+crower create deploy "git push && ssh prod 'cd app && git pull && systemctl restart app'"
+
+# Run your workflow
+cr test && cr build
+```
+
+### Multi-step Automation
+```bash
+# Create a command with multiple steps (separated by newlines in exec)
+crower create release "echo 'Building...'\ngo build -o app .\necho 'Testing...'\ngo test ./...\necho 'Done!'"
+cr release
+```
+
+### File Management Made Easy
+```bash
+# Create files and folders
+crower create project -f  # creates file
+crower create src -o     # creates folder
+
+# Copy and move
+crower copy file.txt ./backup/
+crower move old.txt ./archive/
+
+# Open files/folders
+crower open -f README.md
+crower open -o ./src
+```
+
+### History & Undo
+```bash
+# View history
+cr list -i
+
+# Revert last N operations
+cr revert 2
+
+# Restore a deleted command
+cr restore <key>
+```
+
+## Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `create` | Create a command, file, folder, or script | `crower create name "command"` |
+| `update` | Update existing commands or last operation | `crower update -n oldname -n newname` |
+| `delete` | Delete commands, files, folders, or history | `crower delete name` |
+| `list` | List commands, history, processes, or files | `crower list` or `cr list -i` |
+| `execute`/`run` | Execute stored commands | `crower execute name` or just `cr name` |
+| `open` | Open files, folders, or system settings | `crower open -f file.txt` |
+| `copy`/`move` | Copy or move files and folders | `crower copy src dst` |
+| `search` | Search files or web | `crower search -f pattern` |
+| `extract` | Extract archives | `crower extract archive.tar.gz` |
+| `revert` | Revert history | `crower revert 1` |
+| `restore` | Restore from history | `crower restore <key>` |
+| `reset` | Reset all commands | `crower reset` |
+| `export` | Export commands to share | `crower export` or `crower export name` |
+| `import` | Import commands from file | `crower import pack.toml` |
+| `share` | Browse and pull from registry | `crower share list` or `cr share pull pack` |
+
+Use `crower <command> --help` for detailed options.
+
+## Sharing Crower Files
+
+**Build once, share everywhere.** Perfect for onboarding, CI setups, or sharing workflows with your team.
+
+### Export Your Workflows
+```bash
+# Export all commands
+crower export -o my-workflows.toml
+
+# Export a specific command
+crower export deploy -o deploy.toml
+```
+
+### Import Workflows
+```bash
+# Import from a file
+crower import my-workflows.toml
+
+# Import and overwrite conflicts
+crower import my-workflows.toml --overwrite
+```
+
+### Pull from a Registry
+```bash
+# Browse available packs
+crower share list
+
+# Pull and install a pack
+crower share pull docker-setup
+```
+
+**Registry Protocol:** Any HTTP server can host crower packs using the simple manifest protocol (`index.json` + `packs/<name>.toml`). Check the [crower-resources](https://github.com/fiwon123/crower-resources) repo for examples.
+
+## Configuration
+
+Crower stores data in `~/crower/` by default:
+- `crower.yaml` - Your stored commands (TOML format)
+- `historyhelper.json` - Operation history
+- `history/` - Command snapshots for revert/restore
+- `crower.log` - Execution logs
+
+Override with `--config /path/to/config.yaml`
+
+## Development
+
+```bash
+# Run tests
+make check
+
+# Build for all platforms
+make release
+
+# Run from source
 go run ./ --help
 ```
 
-### Commands
-
-| Command | What it does |
-|---|---|
-| `make check` | gofmt, vet, test, build — the local gate |
-| `make release` | build the Windows and Linux release archives into `build/` |
-| `make clean` | remove `build/` |
-| `go test ./...` | tests only |
-| `gofmt -l .` | list files that are not formatted |
-| `make help` | every target, with a one-line description |
-
-### Dev sandbox
-
-A container with the pinned toolchain, so the build is the same on a Linux
-box, a Mac, a WSL2 shell and a Windows machine. Docker is the only
-prerequisite — no Make, no Python, no host setup:
-
-```bash
-docker compose up
-```
-
-With `make` (Linux, macOS, WSL2):
-
-| Command | What it does |
-|---|---|
-| `make dev-up` | start the sandbox in the foreground |
-| `make dev-shell` | open a shell inside it |
-| `make dev-opencode` | run the AI agent inside it (Linux/WSL2 only) |
-| `make dev-down` | stop it |
-| `make dev-build` | rebuild the image after a `Dockerfile` change |
-| `make reset` | stop everything and wipe the volumes |
-
-On native Windows, where `make` does not exist:
-
-```powershell
-python scripts\dev-up.py dev-up
-```
-
-The agent overlay (`docker-compose.agent.yml`) is merged automatically when the
-host has a **Linux** opencode binary — the container is Linux, so a macOS or
-Windows binary cannot execute inside it. The overlay mounts the gh config, the
-opencode binary and `~/.gitconfig` read-only. No Docker socket is mounted: the
-agent inside the sandbox cannot manage containers.
-
-### A note on what `make check` proves
-
-`make check` runs gofmt, vet, test, and build. It is red on arrival:
-`internal/domain/opendom`, `internal/domain/deletedom`, and
-`internal/domain/movedom` fail when the suite runs the packages in parallel,
-and pass when a failing package is run alone. The shared test fixture directory
-is wiped by every package that uses it. That is a known, tracked failure
-(issue #46), not a regression in your change.
-
-Several packages also have no test file at all — `go test` reports those as
-`[no test files]` and still exits 0. A green run proves the code is formatted,
-vetted, and buildable; it does not prove the behaviour is covered.
-
-Note that running the suite creates and removes `$HOME/crower/test`, outside the
-repository.
-
-## Troubleshooting
-
-### `crower: command not found`
-
-The installer's job is to add the extracted folder to your PATH. On Linux it
-appends to `~/.bashrc`; start a new shell, or source the file by hand:
-
-```bash
-source ~/.bashrc
-```
-
-### A directory added with `crower create --syspath` is not on my PATH
-
-The export is read when a shell starts, so the terminal you ran the command in
-keeps the PATH it had. Open a new terminal, or source the file by hand:
-
-```bash
-source ~/.bashrc
-```
-
-If `crower` says the directory is already in PATH, it is — check the export
-yourself with `grep PATH ~/.profile ~/.bashrc`.
-
-### A command does not appear in `crower list`
-
-Check the configuration file the binary is using — `crower open` prints its
-path. A different `--config` path means a different store.
-
-### `crower open` does nothing on a headless machine
-
-`crower open` hands the path to the desktop's file opener. On a server or in a
-container there is none, so nothing opens.
-
-### The sandbox dies with `set: pipefail: invalid option name`
-
-The bind mount serves your working tree as-is, and a checkout that predates the
-`.gitattributes` rule keeps CRLF line endings — which `git status` does not
-show, because git compares normalized content. Re-check the tree out with LF
-endings:
-
-```bash
-git rm --cached -r . >/dev/null && git reset --hard
-```
-
-### The sandbox refuses to start as UID 0
-
-`make` refuses to run the container as root, because a root-owned bind mount
-makes every file in the repository unwritable by your own user. Repair the
-ownership of the checkout, or point the sandbox at your own identity:
-
-```bash
-HOST_UID="$(id -u)" HOST_GID="$(id -g)" make dev-up
-```
-
-### `make dev-opencode` says the agent needs a Linux binary
-
-The container is Linux, so a macOS or Windows opencode install cannot execute
-inside it. Use WSL2 — where the host binary is Linux — or run opencode on the
-host against the running stack.
-
-### The sandbox fails with `EACCES: permission denied, mkdir '/home/devuser/.cache/opencode'`, or `mkdir /go/pkg/mod/cache: permission denied`
-
-The sandbox's caches are Docker volumes, and Docker creates a mount destination
-the image does not contain **as root** — while the container runs as your UID.
-The image now creates those directories itself, so a sandbox built from the
-current `Dockerfile` is fine.
-
-A sandbox created **before** that fix keeps its old, root-owned volumes:
-Docker does not re-initialise a volume that already exists. Recreate them
-once:
-
-```bash
-make reset        # docker compose down -v
-make dev-up
-```
-
-## Tech stack
-
-| Layer | Technology |
-|---|---|
-| Language | Go 1.25.4 |
-| CLI | spf13/cobra |
-| Configuration | TOML (pelletier/go-toml) |
-| Self-update | minio/selfupdate |
-| Platform utilities | shirou/gopsutil |
+See [AGENTS.md](AGENTS.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for architecture details.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). The Apache-2.0 dependencies are attributed in
-[NOTICE](NOTICE), and their licence text ships in
-[LICENSE-APACHE](LICENSE-APACHE).
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
