@@ -10,6 +10,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/helper"
 )
 
 type Handler struct {
@@ -36,8 +37,21 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 	}
 
 	if len(params) > 0 {
-		for _, param := range params {
-			command.Exec += param
+		// If command has placeholders {1}, {2} etc, substitute them
+		if strings.Contains(command.Exec, "{") {
+			for i, param := range params {
+				placeholder := fmt.Sprintf("{%d}", i+1)
+				command.Exec = strings.ReplaceAll(command.Exec, placeholder, helper.QuoteFor(runtime.GOOS, param))
+			}
+			// Also replace {} with first param if used
+			if len(params) > 0 {
+				command.Exec = strings.ReplaceAll(command.Exec, "{}", helper.QuoteFor(runtime.GOOS, params[0]))
+			}
+		} else {
+			// Append params as quoted arguments
+			for _, param := range params {
+				command.Exec += " " + helper.QuoteFor(runtime.GOOS, param)
+			}
 		}
 	}
 
