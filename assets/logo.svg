@@ -1,41 +1,32 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#1a1b26;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#16161e;stop-opacity:1" />
-    </linearGradient>
-    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#7aa2f7;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#9ece6a;stop-opacity:1" />
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
     </linearGradient>
   </defs>
   
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="240" fill="url(#bg)" stroke="url(#accent)" stroke-width="8"/>
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="url(#grad)"/>
   
-  <!-- Crow body -->
-  <ellipse cx="256" cy="290" rx="85" ry="95" fill="#c0caf5" opacity="0.9"/>
+  <!-- Crow silhouette - simple geometric form -->
+  <!-- Body -->
+  <ellipse cx="256" cy="310" rx="70" ry="85" fill="#ffffff"/>
   
-  <!-- Crow head -->
-  <circle cx="256" cy="210" r="65" fill="#c0caf5" opacity="0.9"/>
+  <!-- Head -->
+  <circle cx="256" cy="235" r="55" fill="#ffffff"/>
   
   <!-- Beak -->
-  <path d="M 310 210 L 350 210 L 310 225 Z" fill="#ff9e64"/>
+  <path d="M 305 235 L 340 235 L 305 248 Z" fill="#ffffff"/>
   
-  <!-- Eye -->
-  <circle cx="280" cy="200" r="12" fill="#1a1b26"/>
-  <circle cx="283" cy="197" r="4" fill="#c0caf5"/>
+  <!-- Wing - angular, minimal -->
+  <path d="M 200 300 Q 160 340 175 395 L 210 370 Q 200 335 220 310 Z" fill="#e0e0e0"/>
   
-  <!-- Wing -->
-  <path d="M 200 280 Q 150 320 170 380 Q 210 340 250 300" fill="#a9b1d6" opacity="0.8"/>
+  <!-- Tail -->
+  <path d="M 275 390 L 290 430 L 280 390 Z" fill="#e0e0e0"/>
+  <path d="M 265 392 L 275 435 L 270 392 Z" fill="#e0e0e0"/>
   
-  <!-- Command prompt chevron -->
-  <path d="M 180 150 L 210 175 L 180 200" stroke="url(#accent)" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  
-  <!-- Underscore/cursor -->
-  <line x1="220" y1="200" x2="250" y2="200" stroke="url(#accent)" stroke-width="12" stroke-linecap="round"/>
-  
-  <!-- Tail feathers -->
-  <path d="M 280 370 Q 290 400 300 420 Q 285 395 275 370" fill="#a9b1d6"/>
-  <path d="M 270 375 Q 275 405 280 425 Q 270 400 265 375" fill="#a9b1d6"/>
+  <!-- Command prompt - minimal chevron -->
+  <path d="M 190 180 L 215 200 L 190 220" stroke="#ffffff" stroke-width="10" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <line x1="225" y1="220" x2="245" y2="220" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
 </svg>
