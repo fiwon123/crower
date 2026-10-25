@@ -35,12 +35,13 @@ Tired of retyping long, complex commands? Need to remember obscure CLI incantati
 
 - **🔖 Shortcut anything** - Turn any shell command into a memorable alias
 - **⚡ Run multi-step workflows** - Chain multiple commands together with automatic error handling
-- **🔗 Nest commands** - Call crower commands from within other crower commands
+- **🔗 Nest commands** - Call crower commands from within other crower commands with recursion protection
 - **📝 Add context** - Attach notes to your commands and track history
 - **↩️ Undo anything** - Full history with revert capability
 - **📁 Manage files** - Create, copy, move, open files and folders with simple commands
 - **🔍 Search** - Find files/folders or search the web instantly
 - **📦 Share workflows** - Export and import crower files, or download from a registry
+- **🧠 Smart execution** - Proper parameter quoting, placeholders (`{1}`, `{2}`, `{}`), multi-step chains, and safe execution
 
 ## Quick Start
 
