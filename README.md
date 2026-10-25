@@ -142,6 +142,8 @@ cr restore <key>
 
 | Command | Description | Example |
 |---------|-------------|---------|
+| `gui` | Launch interactive TUI GUI | `crower gui` |
+| `desktop` | Launch native desktop window UI (cgo-free) | `crower desktop` |
 | `create` | Create a command, file, folder, or script | `crower create name "command"` |
 | `update` | Update existing commands or last operation | `crower update -n oldname -n newname` |
 | `delete` | Delete commands, files, folders, or history | `crower delete name` |
