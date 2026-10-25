@@ -10,43 +10,56 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+type CommandRunner interface {
+	PerformExecuteStart(ex string) error
+	PerformExecute(ex string) (string, error)
+}
+
 type Handler struct {
 	app            *app.Config
 	handler        *updatedom.Handler
 	executeHandler *executedom.Handler
+	runner         CommandRunner
 }
 
 func NewHandler(app *app.Config) *Handler {
-
 	executeHandler := executedom.NewHandler(app)
 	handler := updatedom.NewHandler(app)
-
 	return &Handler{
 		app:            app,
 		handler:        handler,
 		executeHandler: executeHandler,
+		runner:         executeHandler,
+	}
+}
+
+func NewHandlerWithRunner(app *app.Config, runner CommandRunner) *Handler {
+	executeHandler := executedom.NewHandler(app)
+	handler := updatedom.NewHandler(app)
+	return &Handler{
+		app:            app,
+		handler:        handler,
+		executeHandler: executeHandler,
+		runner:         runner,
 	}
 }
 
 // SearchBrowser based on user operational system(OS).
 func (h *Handler) SearchBrowser(content string) (string, error) {
-
 	switch runtime.GOOS {
 	case "windows":
 		if utils.IsURL(content) {
-			return "", h.executeHandler.PerformExecuteStart(fmt.Sprintf(`start ' ' '%s' `, content))
+			return "", h.runner.PerformExecuteStart(fmt.Sprintf(`start ' ' '%s' `, content))
 		} else {
-			return "", h.executeHandler.PerformExecuteStart(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s' `, content))
+			return "", h.runner.PerformExecuteStart(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s' `, content))
 		}
 	case "linux":
 		if utils.IsURL(content) {
-			return "", h.executeHandler.PerformExecuteStart(fmt.Sprintf(`xdg-open "%s" `, content))
+			return "", h.runner.PerformExecuteStart(fmt.Sprintf(`xdg-open "%s" `, content))
 		} else {
-			return "", h.executeHandler.PerformExecuteStart(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" `, content))
+			return "", h.runner.PerformExecuteStart(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" `, content))
 		}
-
 	}
-
 	return "", nil
 }
 
