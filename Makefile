@@ -32,12 +32,12 @@ $(BUILD_DIR):
 
 # Build Windows binary
 windows: $(BUILD_DIR)
-	GOOS=windows GOARCH=amd64 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(WINDOWS_BIN)
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(WINDOWS_BIN)
 	cp $(WINDOWS_BIN) $(SHORT_WINDOWS_BIN)
 
 # Build Linux binary
 linux: $(BUILD_DIR)
-	GOOS=linux GOARCH=amd64 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(LINUX_BIN)
+	GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(LINUX_BIN)
 	cp $(LINUX_BIN) $(SHORT_LINUX_BIN)
 
 # Compress Windows binary
