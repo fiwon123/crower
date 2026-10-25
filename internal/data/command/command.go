@@ -4,6 +4,7 @@ type Data struct {
 	Name     string
 	AllAlias []string
 	Exec     string
+	Steps    []string `toml:"Steps,omitempty" json:"Steps,omitempty"`
 }
 
 // Create new command.
