@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -174,5 +177,202 @@ func TestReleaseTargetsCatchRetiredRunner(t *testing.T) {
 
 	if targets[0].goarch != "amd64" || targets[1].goarch != "amd64" {
 		t.Errorf("releaseTargets() = %+v, want each row to keep its goarch", targets)
+	}
+}
+
+// --- guards for every workflow file ----------------------------------------
+//
+// Two faults in the release notes step cost the v0.5.0 dispatch its draft
+// (#124):
+//
+//   - the step ran `gh`, which authenticates from the environment, without
+//     `GITHUB_TOKEN` in its `env:` — so the call failed and `2>/dev/null` hid
+//     the reason;
+//   - its fallback wrote a trailing underscore after the expansion, which bash
+//     reads as part of the variable name, so `set -u` aborted the job.
+//
+// Both are mechanical, so both are checked mechanically.
+
+// workflowStep is one `- name:` entry of a job, with the lines that follow it.
+type workflowStep struct {
+	name string
+	body string
+}
+
+// workflowSteps returns the steps of every job in a workflow. A step ends at
+// the next `- name:` or at a key indented to the job level or above, so a
+// `runner:` or `steps:` belonging to another job is never read as part of it.
+func workflowSteps(workflow string) []workflowStep {
+	var (
+		steps   []workflowStep
+		current *workflowStep
+	)
+
+	flush := func() {
+		if current != nil {
+			steps = append(steps, *current)
+			current = nil
+		}
+	}
+
+	for _, line := range strings.Split(workflow, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+
+		indent := len(line) - len(strings.TrimLeft(line, " "))
+
+		switch {
+		case strings.HasPrefix(trimmed, "- name:"):
+			flush()
+			current = &workflowStep{name: strings.TrimSpace(strings.TrimPrefix(trimmed, "- name:"))}
+		case current == nil:
+			// Not inside a step.
+		case indent <= 4:
+			// `jobs:`, `  publish:` and `    runs-on:` are job-level keys: the
+			// step above them is over.
+			flush()
+		default:
+			current.body += line + "\n"
+		}
+	}
+	flush()
+
+	return steps
+}
+
+var ghCommand = regexp.MustCompile(`\bgh [a-z]+`)
+
+// stepsCallingGh returns the steps that invoke the GitHub CLI. A token set at
+// workflow level would satisfy `gh` too, but no workflow here does that, so a
+// per-step `GITHUB_TOKEN` is the rule this guard enforces.
+func stepsCallingGh(workflow string) []workflowStep {
+	var calling []workflowStep
+
+	for _, step := range workflowSteps(workflow) {
+		if ghCommand.MatchString(step.body) {
+			calling = append(calling, step)
+		}
+	}
+
+	return calling
+}
+
+// trailingUnderscoreExpansion matches an expansion whose variable name ends in
+// an underscore because the author meant braces around the name. `$NAME_X` is a
+// different variable and does not match, which is what keeps `$GITHUB_OUTPUT`
+// out of the results.
+var trailingUnderscoreExpansion = regexp.MustCompile(`\$[A-Za-z_][A-Za-z0-9_]*_([^A-Za-z0-9_]|$)`)
+
+// ambiguousExpansions returns the trailing-underscore expansions in a script.
+// Shell comments are skipped: they do not execute, so they cannot be unbound.
+func ambiguousExpansions(script string) []string {
+	var found []string
+
+	for i, line := range strings.Split(script, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "#") {
+			continue
+		}
+		if match := trailingUnderscoreExpansion.FindString(line); match != "" {
+			found = append(found, fmt.Sprintf("line %d: %s", i+1, strings.TrimSpace(match)))
+		}
+	}
+
+	return found
+}
+
+func workflowFilesToGuard(t *testing.T) []string {
+	t.Helper()
+
+	files, err := filepath.Glob(".github/workflows/*.yml")
+	if err != nil {
+		t.Fatalf("globbing the workflows: %v", err)
+	}
+	if len(files) == 0 {
+		t.Fatal("no workflow files found — the guard is not looking at anything")
+	}
+
+	return files
+}
+
+func TestWorkflowStepsCallingGhSetToken(t *testing.T) {
+	sawGh := false
+
+	for _, file := range workflowFilesToGuard(t) {
+		for _, step := range stepsCallingGh(readRepositoryFile(t, file)) {
+			sawGh = true
+			if !strings.Contains(step.body, "GITHUB_TOKEN") {
+				t.Errorf("%s → step %q runs gh without GITHUB_TOKEN in its env: gh authenticates from the "+
+					"environment, so the call fails there and whatever fallback the step carries stands in for "+
+					"the real result (#124)", file, step.name)
+			}
+		}
+	}
+
+	if !sawGh {
+		t.Fatal("no step invokes gh — the guard is not looking at anything")
+	}
+}
+
+func TestWorkflowExpansionsAreNotAmbiguous(t *testing.T) {
+	for _, file := range workflowFilesToGuard(t) {
+		if found := ambiguousExpansions(readRepositoryFile(t, file)); len(found) > 0 {
+			t.Errorf("%s ends an expansion with an underscore where braces were meant: bash reads that "+
+				"underscore as part of the variable name, and the unset variable aborts the step under "+
+				"`set -u` (#124):\n  %s", file, strings.Join(found, "\n  "))
+		}
+	}
+}
+
+// TestWorkflowGuardsCatchTheReleaseNotesBug proves both guards can fail: given
+// the step as it shipped in the v0.5.0 dispatch, they must report it.
+func TestWorkflowGuardsCatchTheReleaseNotesBug(t *testing.T) {
+	shipped := strings.Join([]string{
+		"jobs:",
+		"  publish:",
+		"    runs-on: ubuntu-latest",
+		"    steps:",
+		"      - name: Create professional release notes",
+		"        id: notes",
+		"        run: |",
+		"          set -euo pipefail",
+		`          PREV="v0.4.0"`,
+		`          gh api repos/x/y/releases/generate-notes --jq .body >> notes.md 2>/dev/null || echo "_No changes since $PREV_" >> notes.md`,
+		"      - name: Create or refresh draft release",
+		"        env:",
+		"          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}",
+		"        run: |",
+		`          gh release create v0.5.0 --draft dist/*`,
+		"",
+	}, "\n")
+
+	steps := stepsCallingGh(shipped)
+	if len(steps) != 2 {
+		t.Fatalf("stepsCallingGh() found %d steps, want 2 — the guard is not parsing the step shape", len(steps))
+	}
+
+	if strings.Contains(steps[0].body, "GITHUB_TOKEN") {
+		t.Errorf("the notes step reports a token, but it shipped without one")
+	}
+
+	found := ambiguousExpansions(steps[0].body)
+	if len(found) != 1 || !strings.Contains(found[0], "$PREV_") {
+		t.Errorf("ambiguousExpansions() = %v, want exactly the shipped expansion", found)
+	}
+
+	if !strings.Contains(steps[1].body, "GITHUB_TOKEN") {
+		t.Errorf("the draft step reports no token, but it ships with one — the guard would flag it wrongly")
+	}
+
+	// The corrected shape must pass the expansion guard, or it would be unusable.
+	corrected := strings.Replace(shipped, `$PREV_"`, `${PREV}_"`, 1)
+	if found := ambiguousExpansions(corrected); len(found) > 0 {
+		t.Errorf("ambiguousExpansions() = %v, want none once braces close the name", found)
+	}
+
+	// `$GITHUB_OUTPUT`-style names contain an underscore but are unambiguous.
+	if found := ambiguousExpansions(`echo "commit=$MAIN_COMMIT" >> "$GITHUB_OUTPUT"`); len(found) > 0 {
+		t.Errorf("ambiguousExpansions() = %v, want none: an internal underscore is not a trailing one", found)
 	}
 }
