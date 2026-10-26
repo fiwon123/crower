@@ -245,6 +245,11 @@ jobs:
 
       - name: Create professional release notes
         id: notes
+        # `gh` reads the token from the environment. Every other step that talks
+        # to the API sets it explicitly; this one did not, so the changelog call
+        # failed with nothing in the log to say why (#124).
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           TAG="${{ needs.prepare.outputs.tag }}"
@@ -275,12 +280,25 @@ jobs:
             echo ""
             echo "### Changelog"
           } > notes.md
+
+          # The changelog is the least important part of the notes: an API
+          # hiccup must not cost the whole dispatch, but it must not be silent
+          # either. Writing to a separate file keeps a truncated body out of
+          # notes.md, and the failure branch appends a usable line: v0.5.0 died
+          # here because the fallback followed $PREV with an underscore instead
+          # of braces, so bash read the underscore as part of the variable name
+          # and died on an unset variable under `set -u` (#124).
           if [ -n "$PREV" ]; then
-            gh api repos/${{ github.repository }}/releases/generate-notes \
+            if gh api repos/${{ github.repository }}/releases/generate-notes \
               -f tag_name="$TAG" \
               -f target_commitish="$TAG" \
               -f previous_tag_name="$PREV" \
-              --jq .body >> notes.md 2>/dev/null || echo "_No changes since $PREV_" >> notes.md
+              --jq .body > changelog.md; then
+              cat changelog.md >> notes.md
+            else
+              echo "::warning::could not generate release notes from $PREV; linking the comparison instead" >&2
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV}...${TAG}" >> notes.md
+            fi
           else
             echo "_Initial release or first tagged version._" >> notes.md
           fi
