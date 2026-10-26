@@ -122,12 +122,18 @@ jobs:
           - goos: windows
             goarch: arm64
             runner: ubuntu-latest
+          # Every target is a pure-Go cross-compile (CGO_ENABLED=0) with no
+          # macOS tooling, signing or notarisation involved, so one Linux runner
+          # builds all six. The darwin rows used to sit on macos-13, a label
+          # retired in December 2025: such a job is not rejected, it queues with
+          # zero steps forever, and since `publish` needs every build no draft
+          # was ever created (#121). Keep this matrix on labels that exist.
           - goos: darwin
             goarch: amd64
-            runner: macos-13
+            runner: ubuntu-latest
           - goos: darwin
             goarch: arm64
-            runner: macos-latest
+            runner: ubuntu-latest
     steps:
       - name: Checkout tag
         uses: actions/checkout@v4
