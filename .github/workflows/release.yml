@@ -62,24 +62,36 @@ jobs:
             exit 1
           fi
 
-          COMMIT="$(git rev-parse origin/main)"
-          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+          MAIN_COMMIT="$(git rev-parse origin/main)"
+          echo "commit=$MAIN_COMMIT" >> "$GITHUB_OUTPUT"
 
           if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
             EXISTING="$(git rev-list -n 1 "$VERSION")"
-            if [ "$EXISTING" != "$COMMIT" ]; then
-              echo "Tag $VERSION already exists at $EXISTING, not at main ($COMMIT)." >&2
+            if [ "$EXISTING" = "$MAIN_COMMIT" ]; then
+              echo "$VERSION already tags main — the publish job will refresh that release."
+              COMMIT="$EXISTING"
+            elif git merge-base --is-ancestor "$EXISTING" "$MAIN_COMMIT"; then
+              # The tag sits on main's history but main has moved (e.g. a fix
+              # landed after the tag was cut). Build from the tagged tree so the
+              # release matches what the tag points at; provenance still checks
+              # against that commit. Warn that main contains later commits.
+              OMITTED="$(git rev-list --count "${EXISTING}..${MAIN_COMMIT}")"
+              echo "::warning::$VERSION tags $EXISTING, which is an ancestor of main ($MAIN_COMMIT). main is ahead by $OMITTED commit(s); building from the tagged tree."
+              COMMIT="$EXISTING"
+            else
+              echo "Tag $VERSION already exists at $EXISTING, which is not on main ($MAIN_COMMIT)." >&2
               echo "Bump the version: a published tag is never moved." >&2
               exit 1
             fi
-            echo "$VERSION already tags main — the publish job will refresh that release."
           else
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag -a "$VERSION" -m "Release $VERSION" "$COMMIT"
+            git tag -a "$VERSION" -m "Release $VERSION" "$MAIN_COMMIT"
             git push origin "$VERSION"
+            COMMIT="$MAIN_COMMIT"
           fi
 
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
           echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Get previous tag
