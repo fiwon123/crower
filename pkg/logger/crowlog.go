@@ -63,24 +63,24 @@ func New(logpath string) *Logger {
 // data can be string, int, slices, etc.
 func (logger Logger) Info(msg string, data ...any) {
 	if logger.fullTerminal {
-		logger.terminalLogger.Info(msg, data...)
+		logger.terminalLogger.Info(msg, "data", dataToString(data))
 	} else {
 		printTerminal(msg, data)
 	}
 
-	logger.fileLogger.Info(msg, data...)
+	logger.fileLogger.Info(msg, "data", dataToString(data))
 }
 
 // Print error message and data of any type.
 // data can be string, int, slices, etc.
 func (logger Logger) Error(msg string, data ...any) {
 	if logger.fullTerminal {
-		logger.terminalLogger.Error(msg, data...)
+		logger.terminalLogger.Error(msg, "data", dataToString(data))
 	} else {
 		printTerminal(msg, data)
 	}
 
-	logger.fileLogger.Error(msg, data...)
+	logger.fileLogger.Error(msg, "data", dataToString(data))
 	stack(logger.logFile)
 }
 
@@ -88,34 +88,39 @@ func (logger Logger) Error(msg string, data ...any) {
 // data can be string, int, slices, etc.
 func (logger Logger) Warning(msg string, data ...any) {
 	if logger.fullTerminal {
-		logger.terminalLogger.Warn(msg, data...)
+		logger.terminalLogger.Warn(msg, "data", dataToString(data))
 	} else {
 		printTerminal(msg, data)
 	}
 
-	logger.fileLogger.Warn(msg, data...)
+	logger.fileLogger.Warn(msg, "data", dataToString(data))
 }
 
 // Print debug message and data of any type.
 // data can be string, int, slices, etc.
 func (logger Logger) Debug(msg string, data ...any) {
 	if logger.fullTerminal {
-		logger.terminalLogger.Debug(msg, data...)
+		logger.terminalLogger.Debug(msg, "data", dataToString(data))
 	} else {
 		printTerminal(msg, data)
 	}
 
-	logger.fileLogger.Debug(msg, data...)
+	logger.fileLogger.Debug(msg, "data", dataToString(data))
 }
 
 func printTerminal(msg string, data []any) {
+	fmt.Println(msg, dataToString(data))
+}
+
+// dataToString writes every value it is given. The values are not
+// key/value pairs, so the logger cannot hand them to slog as they are.
+func dataToString(data []any) string {
 	dataBuilder := strings.Builder{}
-	for i := 1; i < len(data); i += 2 {
-		d := data[i]
+	for _, d := range data {
 		fmt.Fprintf(&dataBuilder, "%v ", d)
 	}
 
-	fmt.Println(msg, dataBuilder.String())
+	return dataBuilder.String()
 }
 
 func stack(logFile *os.File) {

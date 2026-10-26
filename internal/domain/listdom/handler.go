@@ -77,10 +77,10 @@ func (h *Handler) ListFolder(folderPath string) (string, error) {
 	case "windows":
 		return h.execute.PerformExecute(fmt.Sprintf("dir '%s'", folderPath))
 	case "linux":
-		return h.execute.PerformExecute(fmt.Sprintf("ls '%s'", folderPath))
+		return h.execute.PerformExecute(fmt.Sprintf("\"ls '%s'\"", folderPath))
+	default:
+		return "", fmt.Errorf("unsupported operating system")
 	}
-
-	return "", nil
 }
 
 // List all system variable

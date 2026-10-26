@@ -29,7 +29,7 @@ the last operation.
 - **CLI framework**: spf13/cobra
 - **Configuration**: TOML, under the user's home directory
 - **Self-update**: minio/selfupdate
-- **Development**: a local Go toolchain and `make` — no containers, no external services
+- **Development**: a local Go toolchain and `make`, or the dev sandbox — a pinned Go 1.25.4 container that runs the same on Linux, macOS, WSL2 and Windows. No external services.
 
 ### Core Architecture
 
@@ -58,7 +58,7 @@ internal/errors/     error types shared across layers
 internal/helper/     shared helpers
 pkg/logger/          logging
 pkg/utils/           filesystem and process helpers
-scripts/             add_to_path installers
+scripts/             add_to_path installers + the dev sandbox runtime
 ```
 
 ## Development Commands
@@ -74,6 +74,35 @@ go test ./...        # tests only
 `make check` is the gate every agent runs before committing. It fails when the
 toolchain is missing — a gate that cannot run reports nothing, and reporting
 nothing must not look like reporting success.
+
+### Dev sandbox — the same toolchain on every machine
+
+```bash
+make dev-up          # start the sandbox (foreground; Ctrl+C stops it)
+make dev-shell       # a shell inside the sandbox
+make dev-opencode    # run the agent inside the sandbox (Linux/WSL2 only)
+make dev-down        # stop the sandbox
+make help            # every target, with a one-line description
+```
+
+Without `make`, on any OS with Docker:
+
+```bash
+docker compose up    # the same sandbox, no Make, no Python, no host setup
+```
+
+On native Windows, where `make` does not exist: `python scripts/dev-up.py dev-up`.
+
+The container pins Go 1.25.4 — the version in `go.mod` — so a build inside the
+sandbox is the build CI runs. The sandbox is **optional**: a host toolchain
+still works, and `make check` does not require Docker.
+
+The image creates the directories the compose file mounts into, owned by the
+runtime user: Docker creates a mount destination the image does not contain as
+**root**, and the container runs as `${HOST_UID}`, so a sandbox whose image
+omits them cannot write its own caches. A sandbox created before that fix
+keeps its old root-owned volumes — Docker does not re-initialise a volume that
+already exists — so it needs `make reset` once.
 
 ### The known-failing baseline — read this before claiming a change is verified
 
@@ -95,17 +124,44 @@ whatever change you are making. It also means:
 - the same helper writes **outside the repository**, into `~/crower/test` —
   one directory away from the real crower data — and deletes whatever is
   there.
-- The remaining suite is small: several packages have no test file at all, and
+- The remaining suite is small: 16 packages have no test file at all, and
   `go test` reports those as `[no test files]` while still exiting 0. A green
-  run proves gofmt, vet, and build — not the behaviour.
+  run proves gofmt, vet, and build — not the behaviour. The packages **with**
+  tests are the eight domain packages (`copydom`, `createdom`, `deletedom`,
+  `listdom`, `movedom`, `opendom`, `searchdom`, `updatedom`) and `pkg/logger`;
+  the packages without one are `cmd`, `internal/app`, `internal/data/*`,
+  `internal/domain/checkdom`, `executedom`, `extractdom`, `resetdom`,
+  `restoredom`, `revertdom`, `upgradedom`, `internal/errors`, `internal/helper`,
+  `internal/interfaces` and `pkg/utils`.
 
 Never silence this by excluding a package from `go test` or from CI. Fix it
 in issue #46, where the cause can be investigated properly.
 
 ## Runtime Environment
 
-The AI agent (opencode) runs at the repository root, directly on the host. There
-is no container and no sandbox: the tools are the ones installed on the machine.
+The AI agent (opencode) runs at the repository root. There are two modes, and
+they are not equivalent — say which one a claim was made in.
+
+### Host mode (the default)
+
+The agent runs directly on the host, against the tools installed on the
+machine. This is what `make check` and `git` operate on.
+
+### Sandbox mode (optional)
+
+`make dev-opencode` runs the agent inside the dev container, where the
+toolchain is pinned to Go 1.25.4 — the version in `go.mod`, the same one CI
+uses. The workspace is bind-mounted at `/workspace`; edits made inside are the
+same files on the host.
+
+The container has **no Docker socket**: the agent inside it cannot manage
+containers, and that is deliberate. `docker` commands fail there, and a claim
+about the sandbox made from inside it cannot be about the host's Docker.
+
+The in-container agent needs a **Linux** opencode binary (the container is
+Linux). On macOS and native Windows, `make dev-opencode` refuses with a clear
+message and the agent stays on the host; use WSL2, where the host binary *is*
+Linux.
 
 ### What the agent CAN do
 
@@ -113,11 +169,13 @@ is no container and no sandbox: the tools are the ones installed on the machine.
 - Run `make` targets
 - Run git and GitHub CLI commands
 - Read and edit any file in the repository except the secret files listed below
+- Start and use the dev sandbox (`make dev-up`, `make dev-shell`) from the host
 
 ### What the agent CANNOT do
 
 - Access `.env`, `.env.*`, `.envrc`, or any other secret file without explicit permission
 - Run commands that dump environment values (`printenv`, `env`)
+- Run `docker` from **inside** the sandbox (no socket is mounted)
 - Push directly to `dev` or `main`
 - Merge a pull request without explicit instruction
 
