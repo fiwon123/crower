@@ -6,17 +6,31 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-// Save history data on cfg file
-func (app *Config) Save() {
+// Save writes the current command map as a history snapshot and the history
+// index next to the config file.
+//
+// The error is returned rather than logged: a run whose save failed did not
+// persist anything, and the caller has to be able to say so with a non-zero
+// exit status.
+func (app *Config) Save() error {
 	data := app.History.GetLast()
+	if data == nil {
+		return app.SaveOnlyHistory()
+	}
 
 	newDataPath := filepath.Join(app.HistoryFolderPath, data.File)
-	utils.CreateFileIfNotExists(newDataPath)
-	utils.WriteToml(app.AllCommandsByName, newDataPath)
+	if err := utils.CreateFileIfNotExists(newDataPath); err != nil {
+		return err
+	}
 
-	utils.WriteJson(app.History, app.HistoryFilePath)
+	if err := utils.WriteToml(app.AllCommandsByName, newDataPath); err != nil {
+		return err
+	}
+
+	return utils.WriteJson(app.History, app.HistoryFilePath)
 }
 
-func (app *Config) SaveOnlyHistory() {
-	utils.WriteJson(app.History, app.HistoryFilePath)
+// SaveOnlyHistory writes the history index without taking a snapshot.
+func (app *Config) SaveOnlyHistory() error {
+	return utils.WriteJson(app.History, app.HistoryFilePath)
 }

@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/sharedom"
+
 	"github.com/spf13/cobra"
 )
 
@@ -10,22 +10,23 @@ var exportCmd = &cobra.Command{
 	Use:   "export [name]",
 	Short: "Export commands to a file",
 	Long:  "Export a command or all commands to a TOML file for sharing",
-	Run: func(cmd *cobra.Command, args []string) {
-		app := app.InitApp(cfgFilePath)
-		core := sharedom.NewCore(app)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
+		}
+
 		name := ""
 		if len(args) > 0 {
 			name = args[0]
 		}
-		out := ""
-		if f := cmd.Flag("out"); f != nil {
-			out = f.Value.String()
+
+		out, err := cmd.Flags().GetString("out")
+		if err != nil {
+			return err
 		}
-		if err := core.Export(name, out); err != nil {
-			app.Logger.Error(err.Error())
-			return
-		}
-		app.Logger.Info("Exported successfully")
+
+		return sharedom.NewCore(cfg).Export(name, out)
 	},
 }
 
@@ -33,20 +34,22 @@ var importCmd = &cobra.Command{
 	Use:   "import <file>",
 	Short: "Import commands from a file",
 	Long:  "Import commands from a TOML file",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			app := app.InitApp(cfgFilePath)
-			app.Logger.Error("file required")
-			return
+			return missingArgs(cmd, "a file to import")
 		}
-		app := app.InitApp(cfgFilePath)
-		core := sharedom.NewCore(app)
-		overwrite, _ := cmd.Flags().GetBool("overwrite")
-		if err := core.Import(args[0], overwrite); err != nil {
-			app.Logger.Error(err.Error())
-			return
+
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
-		app.Logger.Info("Imported successfully")
+
+		overwrite, err := cmd.Flags().GetBool("overwrite")
+		if err != nil {
+			return err
+		}
+
+		return sharedom.NewCore(cfg).Import(args[0], overwrite)
 	},
 }
 
@@ -59,37 +62,37 @@ var shareCmd = &cobra.Command{
 var shareListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List available packs in registry",
-	Run: func(cmd *cobra.Command, args []string) {
-		app := app.InitApp(cfgFilePath)
-		core := sharedom.NewCore(app)
-		if err := core.List(); err != nil {
-			app.Logger.Error(err.Error())
-			return
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
+
+		return sharedom.NewCore(cfg).List()
 	},
 }
 
 var sharePullCmd = &cobra.Command{
 	Use:   "pull <name>",
 	Short: "Pull a pack from registry",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
-			app := app.InitApp(cfgFilePath)
-			app.Logger.Error("pack name required")
-			return
+			return missingArgs(cmd, "a pack name")
 		}
-		app := app.InitApp(cfgFilePath)
-		core := sharedom.NewCore(app)
-		if err := core.Pull(args[0]); err != nil {
-			app.Logger.Error(err.Error())
-			return
+
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
+
+		return sharedom.NewCore(cfg).Pull(args[0])
 	},
 }
 
 func init() {
 	exportCmd.Flags().StringP("out", "o", "", "Output file path")
 	importCmd.Flags().Bool("overwrite", false, "Overwrite existing commands")
+
 	rootCmd.AddCommand(exportCmd)
 	rootCmd.AddCommand(importCmd)
 	rootCmd.AddCommand(shareCmd)

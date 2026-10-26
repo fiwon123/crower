@@ -3,26 +3,32 @@ package utils
 import (
 	"bufio"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 )
 
-func CreateFileIfNotExists(filePath string) {
+// CreateFileIfNotExists creates filePath when it is missing and leaves an
+// existing file untouched.
+//
+// It returns an error rather than calling log.Fatal: the caller knows whether a
+// missing file is fatal, and a util that exits the process takes that decision
+// away from it.
+func CreateFileIfNotExists(filePath string) error {
 	file, err := os.OpenFile(filePath,
 		os.O_CREATE|os.O_RDWR,
 		0644)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("create file %s: %w", filePath, err)
 	}
-	defer file.Close()
+
+	return file.Close()
 }
 
 func CreateFolderIfNotExists(path string) error {
 	if err := os.MkdirAll(path, 0o755); err != nil {
-		return fmt.Errorf("Failed to create directory: %v", err)
+		return fmt.Errorf("create directory %s: %w", path, err)
 	}
 
 	return nil

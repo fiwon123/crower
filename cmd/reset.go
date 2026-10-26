@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/internal/domain/resetdom"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/spf13/cobra"
 )
@@ -14,18 +12,14 @@ var resetCmd = &cobra.Command{
 	Use:   "reset",
 	Short: "reset all commands",
 	Long:  `reset all commands`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
+		}
 
-		app := app.InitApp(cfgFilePath)
+		listHandler := listdom.NewHandler(cfg)
 
-		listHandler := listdom.NewHandler(app)
-		core := resetdom.NewCore(app, listHandler)
-
-		core.Reset()
+		return resetdom.NewCore(cfg, listHandler).Reset()
 	},
-}
-
-func init() {
-
 }

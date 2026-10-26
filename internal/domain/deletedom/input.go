@@ -1,8 +1,10 @@
 package deletedom
 
 import (
-	"github.com/fiwon123/crower/internal/app"
+	"fmt"
 
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/helper"
 
 	command "github.com/fiwon123/crower/internal/data/command"
@@ -10,7 +12,7 @@ import (
 )
 
 type listHandler interface {
-	ListCommands()
+	CommandsTable() string
 }
 
 type Input struct {
@@ -25,57 +27,98 @@ func newInput(app *app.Config, list listHandler) *Input {
 	}
 }
 
-// Verify parameters to process delete operation
-func (i *Input) CheckDeleteInput(key *string) bool {
+// CheckDeleteInput resolves the command to delete and asks for confirmation.
+//
+// It returns false with a nil error when the user declines. An error means no
+// command could be chosen -- an unknown key with no way to ask, or no input
+// available -- which the command layer reports as a failure.
+func (i *Input) CheckDeleteInput(key *string) (bool, error) {
 
 	if *key == "" {
-		i.list.ListCommands()
-		input := helper.GetUserInput("Select Row", helper.IsValidInputKey, i.app).(string)
-		*key = input
-	}
-
-	var command *command.Data
-	if *key != "" {
-		command = i.app.AllCommandsByName.Get(*key)
-		if command == nil {
-			command = i.app.AllCommandsByAlias.Get(*key)
+		if err := i.selectRow(key); err != nil {
+			return false, err
 		}
 	}
 
-	if command == nil {
-		i.list.ListCommands()
-		i.app.Logger.Info("Command not found, try to select one.")
-		input := helper.GetUserInput("Select Row", helper.IsValidInputKey, i.app).(string)
-		*key = input
+	selected := i.find(*key)
 
-		command = i.app.AllCommandsByName.Get(*key)
+	if selected == nil {
+		i.app.Logger.Info("Command not found, try to select one.")
+
+		if err := i.selectRow(key); err != nil {
+			return false, err
+		}
+
+		selected = i.find(*key)
+		if selected == nil {
+			return false, errors.CommandNotFound(*key)
+		}
 	}
 
 	i.app.Logger.Info("-----------------------------------------")
-	i.app.Logger.Info("Name:    ", "name", command.Name)
-	i.app.Logger.Info("Aliases: ", "alias", command.AllAlias)
-	i.app.Logger.Info("Exec:    ", "exec", command.Exec)
+	i.app.Logger.Info("Name:    ", selected.Name)
+	i.app.Logger.Info("Aliases: ", selected.AllAlias)
+	i.app.Logger.Info("Exec:    ", selected.Exec)
 	i.app.Logger.Info("")
 
-	ok := helper.GetUserConfirmation("Continue to delete", i.app)
-	return ok
-
+	return helper.GetUserConfirmation("Continue to delete", i.app)
 }
 
-// Verify parameters to process delete history content operation
-func (i *Input) CheckDeleteHistoryContentInput() (history.Content, bool) {
+// selectRow asks for a row of the printed command table.
+func (i *Input) selectRow(key *string) error {
+	i.app.Logger.Info(i.list.CommandsTable())
 
+	value, err := helper.GetUserInput("Select Row", helper.IsValidInputKey, i.app)
+	if err != nil {
+		return err
+	}
+
+	selected, ok := value.(string)
+	if !ok || selected == "" {
+		return fmt.Errorf("selected row holds no command")
+	}
+
+	*key = selected
+	return nil
+}
+
+// find looks a command up by name and then by alias.
+func (i *Input) find(key string) *command.Data {
+	if key == "" {
+		return nil
+	}
+
+	if found := i.app.AllCommandsByName.Get(key); found != nil {
+		return found
+	}
+
+	return i.app.AllCommandsByAlias.Get(key)
+}
+
+// CheckDeleteHistoryContentInput asks which history entry to drop.
+func (i *Input) CheckDeleteHistoryContentInput() (history.Content, bool, error) {
 	var content history.Content
+
 	i.app.Logger.Info(i.app.History.GetList())
-	content = helper.GetUserInput("Select Row", helper.IsValidContentKey, i.app).(history.Content)
+
+	value, err := helper.GetUserInput("Select Row", helper.IsValidContentKey, i.app)
+	if err != nil {
+		return content, false, err
+	}
+
+	selected, ok := value.(history.Content)
+	if !ok {
+		return content, false, fmt.Errorf("selected row is not a history entry")
+	}
+	content = selected
 
 	i.app.Logger.Info("-----------------------------------------")
 	i.app.Logger.Info("Content")
-	i.app.Logger.Info("Version:    ", "version", content.Version)
-	i.app.Logger.Info("File:    ", "file", content.File)
-	i.app.Logger.Info("Note:    ", "note", content.Note)
+	i.app.Logger.Info("Version:    ", content.Version)
+	i.app.Logger.Info("File:    ", content.File)
+	i.app.Logger.Info("Note:    ", content.Note)
 	i.app.Logger.Info("")
 
-	ok := helper.GetUserConfirmation("Continue to restore", i.app)
-	return content, ok
+	confirmed, err := helper.GetUserConfirmation("Continue to delete history content", i.app)
+	return content, confirmed, err
 }

@@ -52,6 +52,10 @@ func InitCrowerTests() (*app.Config, []string, error) {
 		}
 	}
 
-	return app.InitApp(filepath.Join(testPath, "crower.yaml")), testPaths, nil
+	cfg, err := app.InitApp(filepath.Join(testPath, "crower.yaml"), app.Options{})
+	if err != nil {
+		return nil, nil, err
+	}
 
+	return cfg, testPaths, nil
 }

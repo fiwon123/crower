@@ -49,12 +49,13 @@ func (note *Note) AddOldCommandExec(exec string) *Note {
 
 func (note *Note) AddCrowerExec(command string, args []string) *Note {
 	var execBuilder strings.Builder
+	// command is the operation and its flags without the program name, so the
+	// recorded line reads "crower copy a b". A caller that included the name
+	// produced "crower crower copy a b".
 	fmt.Fprintf(&execBuilder, "crower %s", command)
 	for _, arg := range args {
 		fmt.Fprintf(&execBuilder, " %s", arg)
 	}
-	execBuilder.WriteString(" ")
-
 	fmt.Fprintf(&note.builder, ";crower_exec=%s", execBuilder.String())
 	return note
 }

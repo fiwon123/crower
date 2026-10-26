@@ -19,79 +19,78 @@ func NewCore(app *app.Config) *Core {
 	handler := NewHandler(app)
 
 	return &Core{
-		handler: handler,
 		app:     app,
+		handler: handler,
 	}
 }
 
-func (c *Core) ListCommands() {
+// ListCommands prints the command table and records the operation.
+func (c *Core) ListCommands() error {
 	c.handler.ListCommands()
 
 	c.app.History.Add(operations.List, newListCommandsNote())
-	c.app.Save()
+	return c.app.Save()
 }
 
-func (c *Core) ListProcess(args []string) {
-	c.handler.ListProcess(args)
+// ListProcess prints the running processes and records the operation.
+func (c *Core) ListProcess(args []string) error {
+	out, err := c.handler.ListProcess(args)
 
-	c.app.History.Add(operations.List, newListProcessNote(args))
-	c.app.Save()
+	return c.finishList(out, err, newListProcessNote(args))
 }
 
-func (c *Core) ListHistory() {
-	c.handler.ListHistory()
-
-	c.app.History.Add(operations.List, newListHistoriesNote())
-	c.app.Save()
+// ListHistory prints the history table and records the operation.
+func (c *Core) ListHistory() error {
+	return c.finishList(c.handler.ListHistory(), nil, newListHistoriesNote())
 }
 
-func (c *Core) ListFolder(args []string) {
+// ListFolder prints the files and folders under the requested path.
+func (c *Core) ListFolder(args []string) error {
 	currentPath := "./"
 	if len(args) > 0 {
 		currentPath = args[0]
 	}
 
 	out, err := c.handler.ListFolder(currentPath)
-	c.assertListResult(out, err)
 
-	c.app.History.Add(operations.List, newListFolderNote(args))
-	c.app.Save()
+	return c.finishList(out, err, newListFolderNote(args))
 }
 
-func (c *Core) ListSystem() {
+// ListSystem prints every system variable, one per line.
+func (c *Core) ListSystem() error {
 	out, err := c.handler.ListSystem()
-	c.app.Logger.Info("")
 	if err == nil {
-		allSysVariables := strings.Split(out, "\n")
-		out = ""
-		for _, sysVar := range allSysVariables {
-			before, after, ok := strings.Cut(sysVar, "=")
-			if !ok {
-				continue
-			}
-			name := before
-			paths := after
-			out += formatVariable(name, paths)
-			out += "\n"
-		}
+		out = formatVariables(out)
 	}
-	c.assertListResult(out, err)
 
-	c.app.History.Add(operations.List, newListSystemNote())
-	c.app.Save()
+	return c.finishList(out, err, newListSystemNote())
 }
 
-func (c *Core) ListSysPath() {
+// ListSysPath prints the system path variable, one entry per line.
+func (c *Core) ListSysPath() error {
 	out, err := c.handler.ListSysPath()
-	c.app.Logger.Info("")
 	if err == nil {
 		out = formatVariable("PATH", out)
 	}
 
-	c.assertListResult(out, err)
+	return c.finishList(out, err, newListSystemPathNote())
+}
 
-	c.app.History.Add(operations.List, newListSystemPathNote())
-	c.app.Save()
+// formatVariables renders every KEY=VALUE line as a named block.
+func formatVariables(out string) string {
+	var builder strings.Builder
+
+	for _, sysVar := range strings.Split(out, "\n") {
+		before, after, ok := strings.Cut(sysVar, "=")
+		if !ok {
+			continue
+		}
+
+		builder.WriteString(formatVariable(before, after))
+		builder.WriteString("\n")
+	}
+
+	return builder.String()
 }
 
 func formatVariable(name string, paths string) string {
@@ -99,6 +98,7 @@ func formatVariable(name string, paths string) string {
 	splitted := strings.Split(paths, string(os.PathListSeparator))
 	outBuilder.WriteString(name)
 	outBuilder.WriteString("\n")
+
 	for i, path := range splitted {
 		outBuilder.WriteString(strconv.Itoa(i))
 		outBuilder.WriteString("- ")
@@ -109,11 +109,16 @@ func formatVariable(name string, paths string) string {
 	return outBuilder.String()
 }
 
-func (c *Core) assertListResult(out string, err error) {
+// finishList reports a listing: the result goes to the result stream on
+// success, and a failure is returned instead of printed so the command exits
+// non-zero.
+func (c *Core) finishList(out string, err error, note string) error {
 	if err != nil {
-		c.app.Logger.Error("failed to list: ", "error", err, "out", out)
-		return
+		return err
 	}
 
-	c.app.Logger.Info(out)
+	c.app.Logger.Out(out)
+
+	c.app.History.Add(operations.List, note)
+	return c.app.Save()
 }

@@ -172,7 +172,7 @@ cr restore <key>
 | `update` | Update existing commands or last operation | `crower update -n oldname -n newname` |
 | `delete` | Delete commands, files, folders, or history | `crower delete name` |
 | `list` | List commands, history, processes, or files | `crower list` or `cr list -i` |
-| `execute`/`run` | Execute stored commands | `crower execute name` or just `cr name` |
+| `execute` | Execute stored commands | `crower execute name` or just `cr name` |
 | `open` | Open files, folders, or system settings | `crower open -f file.txt` |
 | `copy`/`move` | Copy or move files and folders | `crower copy src dst` |
 | `search` | Search files or web | `crower search -f pattern` |
@@ -185,6 +185,30 @@ cr restore <key>
 | `share` | Browse and pull from registry | `crower share list` or `cr share pull pack` |
 
 Use `crower <command> --help` for detailed options.
+
+## Scripting
+
+crower is meant to be called from a script as well as typed by hand.
+
+- **Results go to stdout, diagnostics to stderr.** `crower list` writes the
+  table and nothing else to stdout; prompts, status lines, warnings and errors
+  go to stderr, so piping the results never picks them up.
+- **The exit status says whether the work happened.** `0` means it did — or that
+  you answered *no* to a confirmation, because declining is a choice. `1` means
+  it did not, and the reason is one line on stderr: `error: ...`.
+- **A prompt never waits forever.** With `--no-input`, or with stdin closed, a
+  command that needs an answer fails with a message instead of asking again.
+
+```bash
+# Take the result and leave the status lines behind
+greeting="$(crower execute greet)"
+
+# Fail the script when the delete did not happen, without a prompt to block it
+crower --no-input delete old-command || exit 1
+```
+
+`--config <path>` points a run at another configuration file, which is how a
+script uses its own set of commands without touching your personal one.
 
 ## Sharing Crower Files
 

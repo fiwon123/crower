@@ -1,6 +1,7 @@
 package revertdom
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/fiwon123/crower/internal/app"
@@ -23,44 +24,39 @@ func NewCore(app *app.Config) *Core {
 	}
 }
 
-func (c *Core) Revert(args []string) {
+// Revert moves the configuration back by steps history entries.
+func (c *Core) Revert(args []string) error {
+	if len(args) == 0 {
+		return errors.NotEnoughArgs("steps")
+	}
 
-	steps := 1
-	var err error
-	if len(args) > 0 {
-		steps, err = strconv.Atoi(args[0])
-
-		if err != nil {
-			errors.PrintNotArgs("steps int number", c.app)
-			return
-		}
-
-	} else {
-		errors.PrintNotArgs("steps int number", c.app)
-		return
+	steps, err := strconv.Atoi(args[0])
+	if err != nil {
+		return fmt.Errorf("steps must be a number: %q", args[0])
 	}
 
 	ok, err := c.input.CheckRevertInput(steps)
+	if err != nil {
+		return err
+	}
+
 	if !ok {
-		c.app.Logger.Error(err.Error())
-		return
+		c.app.Logger.Info("Cancelling revert...")
+		return nil
 	}
 
 	backHistory, err := c.app.History.GetBeforeLast(steps)
-
 	if err != nil {
-		c.app.Logger.Error(err.Error())
-		return
+		return err
 	}
 
-	err = c.app.RevertTo(backHistory)
-	if err != nil {
-		c.app.Logger.Error("Error revert history %v", err)
-		return
+	if err := c.app.RevertTo(backHistory); err != nil {
+		return fmt.Errorf("revert history: %w", err)
 	}
+
 	c.app.Logger.Info("reverted to history version ", backHistory.Version)
-	c.app.Save()
 
 	c.app.History.Add(operations.Revert, newRevertNote(args))
-	c.app.Save()
+
+	return c.app.Save()
 }

@@ -23,7 +23,9 @@ func NewCore(app *app.Config) *Core {
 	}
 }
 
-func (c *Core) Extract(args []string, outDir string) {
+// Extract expands every archive in args into outDir, or beside each archive
+// when outDir is empty.
+func (c *Core) Extract(args []string, outDir string) error {
 
 	paths := []string{}
 	for _, arg := range args {
@@ -40,12 +42,14 @@ func (c *Core) Extract(args []string, outDir string) {
 	}
 
 	if len(paths) == 0 {
-		errors.PrintEmptyPaths(c.app)
-		return
+		return errors.EmptyPaths()
 	}
 
-	c.handler.Extract(paths, outDir)
+	if err := c.handler.Extract(paths, outDir); err != nil {
+		return err
+	}
 
 	c.app.History.Add(operations.Execute, newExtractNote(outDir, args))
-	c.app.Save()
+
+	return c.app.Save()
 }

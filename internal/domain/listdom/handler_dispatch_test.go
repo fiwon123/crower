@@ -4,6 +4,8 @@ import (
 	"errors"
 	"runtime"
 	"testing"
+
+	crowererrors "github.com/fiwon123/crower/internal/errors"
 )
 
 // The platform dispatch is tested through the pure command builders rather than
@@ -17,9 +19,9 @@ func TestListFolderCommand(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"windows", "windows", "/tmp/example", "dir '/tmp/example'", false},
-		{"linux", "linux", "/tmp/example", "\"ls '/tmp/example'\"", false},
-		{"darwin", "darwin", "/tmp/example", "\"ls '/tmp/example'\"", false},
+		{"windows", "windows", "/tmp/example", `dir "/tmp/example"`, false},
+		{"linux", "linux", "/tmp/example", `ls -la "/tmp/example"`, false},
+		{"darwin", "darwin", "/tmp/example", `ls -la "/tmp/example"`, false},
 		{"unsupported freebsd", "freebsd", "/tmp/example", "", true},
 		{"unsupported empty", "", "/tmp/example", "", true},
 	}
@@ -30,8 +32,8 @@ func TestListFolderCommand(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("listFolderCommand(%q) error = %v, wantErr %v", tt.goos, err, tt.wantErr)
 			}
-			if tt.wantErr && !errors.Is(err, ErrUnsupportedOS) {
-				t.Errorf("listFolderCommand(%q) error = %v, want ErrUnsupportedOS", tt.goos, err)
+			if tt.wantErr && !errors.Is(err, crowererrors.ErrUnsupportedOS) {
+				t.Errorf("listFolderCommand(%q) error = %v, want errors.ErrUnsupportedOS", tt.goos, err)
 			}
 			if got != tt.want {
 				t.Errorf("listFolderCommand(%q) = %q, want %q", tt.goos, got, tt.want)
@@ -47,9 +49,9 @@ func TestListSystemCommand(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"windows", "windows", "'set'", false},
-		{"linux", "linux", "'printenv'", false},
-		{"darwin", "darwin", "'printenv'", false},
+		{"windows", "windows", "set", false},
+		{"linux", "linux", "printenv", false},
+		{"darwin", "darwin", "printenv", false},
 		{"unsupported freebsd", "freebsd", "", true},
 		{"unsupported empty", "", "", true},
 	}
@@ -60,8 +62,8 @@ func TestListSystemCommand(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("listSystemCommand(%q) error = %v, wantErr %v", tt.goos, err, tt.wantErr)
 			}
-			if tt.wantErr && !errors.Is(err, ErrUnsupportedOS) {
-				t.Errorf("listSystemCommand(%q) error = %v, want ErrUnsupportedOS", tt.goos, err)
+			if tt.wantErr && !errors.Is(err, crowererrors.ErrUnsupportedOS) {
+				t.Errorf("listSystemCommand(%q) error = %v, want errors.ErrUnsupportedOS", tt.goos, err)
 			}
 			if got != tt.want {
 				t.Errorf("listSystemCommand(%q) = %q, want %q", tt.goos, got, tt.want)
@@ -77,9 +79,9 @@ func TestListSysPathCommand(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"windows", "windows", "'echo %PATH%'", false},
-		{"linux", "linux", "'echo $PATH'", false},
-		{"darwin", "darwin", "'echo $PATH'", false},
+		{"windows", "windows", "echo %PATH%", false},
+		{"linux", "linux", `echo "$PATH"`, false},
+		{"darwin", "darwin", `echo "$PATH"`, false},
 		{"unsupported freebsd", "freebsd", "", true},
 		{"unsupported empty", "", "", true},
 	}
@@ -90,8 +92,8 @@ func TestListSysPathCommand(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Fatalf("listSysPathCommand(%q) error = %v, wantErr %v", tt.goos, err, tt.wantErr)
 			}
-			if tt.wantErr && !errors.Is(err, ErrUnsupportedOS) {
-				t.Errorf("listSysPathCommand(%q) error = %v, want ErrUnsupportedOS", tt.goos, err)
+			if tt.wantErr && !errors.Is(err, crowererrors.ErrUnsupportedOS) {
+				t.Errorf("listSysPathCommand(%q) error = %v, want errors.ErrUnsupportedOS", tt.goos, err)
 			}
 			if got != tt.want {
 				t.Errorf("listSysPathCommand(%q) = %q, want %q", tt.goos, got, tt.want)
@@ -119,8 +121,8 @@ func TestUnsupportedOSReturnsError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			out, err := tt.list()
-			if !errors.Is(err, ErrUnsupportedOS) {
-				t.Fatalf("%s error = %v, want ErrUnsupportedOS", tt.name, err)
+			if !errors.Is(err, crowererrors.ErrUnsupportedOS) {
+				t.Fatalf("%s error = %v, want errors.ErrUnsupportedOS", tt.name, err)
 			}
 			if out != "" {
 				t.Errorf("%s out = %q, want empty", tt.name, out)

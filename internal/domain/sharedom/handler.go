@@ -83,13 +83,20 @@ func (h *Handler) Import(inPath string, overwrite bool) error {
 		existing := h.app.AllCommandsByName.Get(k)
 		if existing != nil && !overwrite {
 			// Ask to rename or skip
-			if !helper.GetUserConfirmation(fmt.Sprintf("Command '%s' exists. Rename?", k), h.app) {
+			rename, err := helper.GetUserConfirmation(fmt.Sprintf("Command '%s' exists. Rename?", k), h.app)
+			if err != nil {
+				return err
+			}
+
+			if !rename {
 				continue
 			}
 			v.Name = k + "_imported"
 		}
 		h.app.AllCommandsByName.Add(k, &v)
-		h.app.Save()
+		if err := h.app.Save(); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -114,7 +121,10 @@ func (h *Handler) ListRegistry() error {
 		return fmt.Errorf("failed to fetch registry: %d", resp.StatusCode)
 	}
 
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
 	var idx RegistryIndex
 	if err := json.Unmarshal(body, &idx); err != nil {
 		return err
@@ -142,7 +152,10 @@ func (h *Handler) Pull(name string) error {
 		return fmt.Errorf("pack not found: %d", resp.StatusCode)
 	}
 
-	body, _ := io.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
 
 	// Save to temp file and import
 	tmp := filepath.Join(os.TempDir(), name+".toml")
@@ -151,9 +164,17 @@ func (h *Handler) Pull(name string) error {
 	}
 	defer os.Remove(tmp)
 
-	fmt.Printf("Importing pack '%s' from %s\n", name, url)
-	fmt.Printf("Contents:\n%s\n\n", string(body))
-	if !helper.GetUserConfirmation("Import?", h.app) {
+	// A preview shown before a confirmation is a diagnostic, not a result: a
+	// script that pipes the results must not receive the pack body.
+	h.app.Logger.Info(fmt.Sprintf("Importing pack '%s' from %s", name, url))
+	h.app.Logger.Info(fmt.Sprintf("Contents:\n%s", string(body)))
+
+	ok, err := helper.GetUserConfirmation("Import?", h.app)
+	if err != nil {
+		return err
+	}
+
+	if !ok {
 		return nil
 	}
 

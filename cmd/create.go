@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/internal/helper"
-
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
 
@@ -19,7 +16,7 @@ var processName string
 
 // Cmd represents the create command
 var createCmd = &cobra.Command{
-	Use:   "create",
+	Use:   "create [name] [exec]",
 	Short: "create a command, file or folder",
 	Long: `create a command, file or folder
 
@@ -43,45 +40,44 @@ Example:
 	crower create --file "C:\Users\Test\Desktop\Test\new_file_1.txt" "C:\Users\Test\Desktop\Test\new_file_2.txt"
 	crower create "C:\Users\Test\Desktop\Test\new_folder"
 	crower create --folder "C:\Users\Test\Desktop\Test\new_folder_1" "C:\Users\Test\Desktop\Test\new_folder_2"`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
-
-		app := app.InitApp(cfgFilePath)
-
-		openHandler := opendom.NewHandler(app)
-		core := createdom.NewCore(app, *openHandler)
-
-		if processName != "" {
-			core.CreateProcess(processName, args)
-		} else if fileFlag {
-			core.CreateFile(args)
-		} else if folderFlag {
-			core.CreateFolder(args)
-		} else if sysPathFlag {
-			core.CreateSystemPathVariable(args)
-		} else if systemFlag {
-			core.CreateSystemVariable(args)
-		} else if executeFlag {
-			core.CreateLastCommand(operations.Execute, args)
-		} else if scriptFlag {
-			core.CreateScriptCommand(args)
-		} else if len(args) > 0 {
-			if utils.IsValidFilePath(args[0]) {
-				core.CreateFile(args)
-			} else if utils.IsValidFolderPath(args[0]) {
-				core.CreateFolder(args)
-			} else {
-				core.CreateCommand(allAlias, args)
-			}
-		} else {
-			core.CreateCommand(allAlias, args)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
 
+		openHandler := opendom.NewHandler(cfg)
+		core := createdom.NewCore(cfg, *openHandler)
+
+		switch {
+		case processName != "":
+			return core.CreateProcess(processName, args)
+		case fileFlag:
+			return core.CreateFile(args)
+		case folderFlag:
+			return core.CreateFolder(args)
+		case sysPathFlag:
+			return core.CreateSystemPathVariable(args)
+		case systemFlag:
+			return core.CreateSystemVariable(args)
+		case executeFlag:
+			return core.CreateLastCommand(operations.Execute, args)
+		case scriptFlag:
+			return core.CreateScriptCommand(args)
+		case len(args) == 0:
+			return core.CreateCommand(allAlias, args)
+		case utils.IsValidFilePath(args[0]):
+			return core.CreateFile(args)
+		case utils.IsValidFolderPath(args[0]):
+			return core.CreateFolder(args)
+		}
+
+		return core.CreateCommand(allAlias, args)
 	},
 }
 
 func init() {
-	helper.AddAllAliasFlag(createCmd, &allAlias)
+	AddAllAliasFlag(createCmd, &allAlias)
 
 	createCmd.Flags().StringVarP(&processName, "process", "p", "", "process name or pid")
 	createCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")

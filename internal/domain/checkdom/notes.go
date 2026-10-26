@@ -11,6 +11,6 @@ func newCheckNote() string {
 
 	return noteBuilder.
 		AddMainOperation(operations.Check).
-		AddCrowerExec("crower --check", nil).
+		AddCrowerExec("--check", nil).
 		Build()
 }

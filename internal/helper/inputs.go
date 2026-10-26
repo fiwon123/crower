@@ -1,8 +1,6 @@
 package helper
 
 import (
-	"bufio"
-	"os"
 	"strconv"
 	"strings"
 	"unicode"
@@ -45,51 +43,59 @@ func CheckYesAnswer(input string) bool {
 	return false
 }
 
-func GetUserInput(ask string, fnValid func(string, *app.Config) (any, error), app *app.Config) any {
-	ok := false
-	input := ""
-	var output any
-	var err error
-	for !ok {
-		app.Logger.Info(ask + ": ")
-		reader := bufio.NewReader(os.Stdin)
-		input, _ = reader.ReadString('\n')
-		input = strings.TrimSuffix(input, "\n")
-		input = strings.TrimSuffix(input, "\r")
-
-		if output, err = fnValid(input, app); err != nil {
-			app.Logger.Info(err.Error())
-			continue
+// GetUserInput asks a question until fnValid accepts the answer.
+//
+// It returns an error instead of looping forever. A closed input stream used to
+// be an empty answer, so `crower create </dev/null` re-prompted as fast as it
+// could write: 876,468 lines in five seconds and no exit. With --no-input the
+// prompt fails before it is printed, so a script gets a clear error rather than
+// a wait.
+func GetUserInput(ask string, fnValid func(string, *app.Config) (any, error), a *app.Config) (any, error) {
+	for {
+		if a.NoInput {
+			return nil, errors.InputRequired(ask)
 		}
 
-		ok = true
-	}
+		a.Logger.Info(ask + ": ")
 
-	return output
+		input, err := a.ReadLine()
+		if err != nil {
+			return nil, err
+		}
+
+		output, err := fnValid(input, a)
+		if err == nil {
+			return output, nil
+		}
+
+		a.Logger.Info(err.Error())
+	}
 }
 
-func GetUserConfirmation(ask string, app *app.Config) bool {
-	ok := false
-	input := ""
-	var confirmation bool
-	var err error
-	for !ok {
-
-		app.Logger.Info(ask + " ([Y]es/[N]o): ")
-		reader := bufio.NewReader(os.Stdin)
-		input, _ = reader.ReadString('\n')
-		input = strings.TrimSuffix(input, "\n")
-		input = strings.TrimSuffix(input, "\r")
-
-		if confirmation, err = IsValidConfirmation(input); err != nil {
-			app.Logger.Info(err.Error())
-			continue
+// GetUserConfirmation asks a yes/no question.
+//
+// A closed stream is an error, not a "no": a script must not silently skip an
+// operation because nobody was there to answer.
+func GetUserConfirmation(ask string, a *app.Config) (bool, error) {
+	for {
+		if a.NoInput {
+			return false, errors.InputRequired(ask)
 		}
 
-		ok = true
-	}
+		a.Logger.Info(ask + " ([Y]es/[N]o): ")
 
-	return confirmation
+		input, err := a.ReadLine()
+		if err != nil {
+			return false, err
+		}
+
+		confirmation, err := IsValidConfirmation(input)
+		if err == nil {
+			return confirmation, nil
+		}
+
+		a.Logger.Info(err.Error())
+	}
 }
 
 func IsValidConfirmation(input string) (bool, error) {
@@ -104,7 +110,7 @@ func IsValidConfirmation(input string) (bool, error) {
 	return true, nil
 }
 
-func IsValidInput(input string, app *app.Config) (any, error) {
+func IsValidInput(input string, a *app.Config) (any, error) {
 	if input == "" {
 		return "", errors.EmptyInput()
 	}
@@ -112,41 +118,54 @@ func IsValidInput(input string, app *app.Config) (any, error) {
 	return input, nil
 }
 
-func InputAlias(app *app.Config) []string {
+// InputAlias asks for aliases until the user enters an empty line.
+func InputAlias(a *app.Config) ([]string, error) {
 	output := []string{}
 
 	alias := "none"
 	for alias != "" {
-		app.Logger.Info("current aliases: ", output)
-		alias = GetUserInput("Add new alias (type enter to skip): ", isValidAlias, app).(string)
+		a.Logger.Info("current aliases: ", output)
 
+		value, err := GetUserInput("Add new alias (type enter to skip): ", isValidAlias, a)
+		if err != nil {
+			return nil, err
+		}
+
+		alias = value.(string)
 		if alias != "" {
 			output = append(output, alias)
 		}
 	}
 
-	return output
+	return output, nil
 }
 
-func InputName(app *app.Config) string {
-	name := ""
-	for name == "" {
-		name = GetUserInput("Add new name: ", IsValidInput, app).(string)
+// InputName asks for a required name.
+func InputName(a *app.Config) (string, error) {
+	return requiredInput("Add new name: ", a)
+}
+
+// InputExec asks for a required command line.
+func InputExec(a *app.Config) (string, error) {
+	return requiredInput("Add new exec: ", a)
+}
+
+// requiredInput asks until the answer is not empty.
+func requiredInput(ask string, a *app.Config) (string, error) {
+	for {
+		value, err := GetUserInput(ask, IsValidInput, a)
+		if err != nil {
+			return "", err
+		}
+
+		input, ok := value.(string)
+		if ok && input != "" {
+			return input, nil
+		}
 	}
-
-	return name
 }
 
-func InputExec(app *app.Config) string {
-	exec := ""
-	for exec == "" {
-		exec = GetUserInput("Add new exec: ", IsValidInput, app).(string)
-	}
-
-	return exec
-}
-
-func isValidAlias(input string, app *app.Config) (any, error) {
+func isValidAlias(input string, a *app.Config) (any, error) {
 	for _, r := range input {
 		if !unicode.IsNumber(r) && !unicode.IsLetter(r) {
 			return "", errors.OnlyLettersAndNumbers()
@@ -156,30 +175,42 @@ func isValidAlias(input string, app *app.Config) (any, error) {
 	return input, nil
 }
 
-func IsValidInputKey(input string, app *app.Config) (any, error) {
-	index, err := strconv.Atoi(input)
+// IsValidInputKey maps a printed row number to the command name on that row.
+func IsValidInputKey(input string, a *app.Config) (any, error) {
+	index, err := rowIndex(input)
 	if err != nil {
+		return "", err
+	}
+
+	if index < 0 || index >= len(a.OrderKeys) {
 		return "", errors.InvalidRows()
 	}
 
-	if index < 0 || index >= len(app.OrderKeys) {
-		return "", errors.InvalidRows()
-	}
-
-	return app.OrderKeys[index], nil
+	return a.OrderKeys[index], nil
 }
 
-func IsValidContentKey(input string, app *app.Config) (any, error) {
-	index, err := strconv.Atoi(input)
+// IsValidContentKey maps a printed row number to a history entry. The history
+// is printed newest first, so row 0 is the last entry.
+func IsValidContentKey(input string, a *app.Config) (any, error) {
+	index, err := rowIndex(input)
 	if err != nil {
-		return "", errors.InvalidRows()
+		return "", err
 	}
 
-	contents := app.History.AllData
+	contents := a.History.AllData
 	correctIndex := len(contents) - 1 - index
 	if correctIndex < 0 || correctIndex >= len(contents) {
 		return "", errors.InvalidRows()
 	}
 
 	return contents[correctIndex], nil
+}
+
+func rowIndex(input string) (int, error) {
+	index, err := strconv.Atoi(strings.TrimSpace(input))
+	if err != nil {
+		return 0, errors.InvalidRows()
+	}
+
+	return index, nil
 }

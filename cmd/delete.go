@@ -1,22 +1,20 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/deletedom"
 	"github.com/fiwon123/crower/internal/domain/listdom"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/fiwon123/crower/pkg/utils"
 
 	"github.com/spf13/cobra"
 )
 
-var historyFlag bool
+var historyFlagDelete bool
 
 // Cmd represents the delete command
 var deleteCmd = &cobra.Command{
-	Use:   "delete",
+	Use:   "delete [command]",
 	Short: "delete command, file or folder",
 	Long: `delete command, file or folder
 
@@ -41,42 +39,41 @@ Example:
 	crower delete --file "C:\Users\Test\Desktop\Test\new_file_1.txt" "C:\Users\Test\Desktop\Test\new_file_2.txt"
 	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder"
 	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder_1" "C:\Users\Test\Desktop\Test\new_folder_2"`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
-
-		app := app.InitApp(cfgFilePath)
-
-		listHandler := listdom.NewHandler(app)
-		core := deletedom.NewCore(app, listHandler)
-
-		if createFlag {
-			core.DeleteLast(operations.Create)
-		} else if updateFlag {
-			core.DeleteLast(operations.Update)
-		} else if executeFlag {
-			core.DeleteLast(operations.Execute)
-		} else if fileFlag {
-			core.DeleteFile(args)
-		} else if folderFlag {
-			core.DeleteFolder(args)
-		} else if systemFlag {
-			core.DeleteSystemVariable(args)
-		} else if sysPathFlag {
-			core.DeleteSystemPathVariable(args)
-		} else if historyFlag {
-			core.DeleteHistoryContent(args)
-		} else if len(args) > 0 {
-			if utils.IsValidFilePath(args[0]) {
-				core.DeleteFile(args)
-			} else if utils.IsValidFolderPath(args[0]) {
-				core.DeleteFolder(args)
-			} else {
-				core.Delete(args)
-			}
-		} else {
-			core.Delete(args)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
 
+		listHandler := listdom.NewHandler(cfg)
+		core := deletedom.NewCore(cfg, listHandler)
+
+		switch {
+		case createFlag:
+			return core.DeleteLast(operations.Create)
+		case updateFlag:
+			return core.DeleteLast(operations.Update)
+		case executeFlag:
+			return core.DeleteLast(operations.Execute)
+		case fileFlag:
+			return core.DeleteFile(args)
+		case folderFlag:
+			return core.DeleteFolder(args)
+		case systemFlag:
+			return core.DeleteSystemVariable(args)
+		case sysPathFlag:
+			return core.DeleteSystemPathVariable(args)
+		case historyFlagDelete:
+			return core.DeleteHistoryContent(args)
+		case len(args) == 0:
+			return core.Delete(args)
+		case utils.IsValidFilePath(args[0]):
+			return core.DeleteFile(args)
+		case utils.IsValidFolderPath(args[0]):
+			return core.DeleteFolder(args)
+		}
+
+		return core.Delete(args)
 	},
 }
 
@@ -86,7 +83,7 @@ func init() {
 	deleteCmd.Flags().BoolVarP(&executeFlag, "execute", "x", false, "delete recent executed command")
 	deleteCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
 	deleteCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
-	deleteCmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")
-	deleteCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "create path variable")
-	deleteCmd.Flags().BoolVar(&historyFlag, "history", false, "delete a history content and linked backup cfg")
+	deleteCmd.Flags().BoolVar(&systemFlag, "system", false, "delete system variable")
+	deleteCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "delete path variable")
+	deleteCmd.Flags().BoolVar(&historyFlagDelete, "history", false, "delete a history content and linked backup cfg")
 }
