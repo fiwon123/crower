@@ -42,18 +42,19 @@ Every change must be traceable end-to-end:
 | From | To | How |
 |------|-----|-----|
 | Branch | Issue | Branch name includes issue number: `feat/42-skill-timeout` |
-| PR | Issue | `Closes #<issue-number>` in PR body — links only; see the note below |
+| PR | Issue | `Closes #<issue-number>` in PR body — closes the issue on merge, since `dev` is the default branch |
 | PR | Milestone | `gh pr edit <pr-number> --milestone "<milestone-name>"` |
 | Issue | Milestone | `gh issue edit <issue-number> --milestone "<milestone-name>"` |
 | Commit | Issue | Conventional commit with issue context |
 
 No orphaned branches, PRs, or issues. Every piece of work is linked.
 
-> **`Closes #N` does not close the issue on a `dev` merge.** GitHub auto-closes
-> a linked issue only when the PR merges into the repository's *default* branch,
-> which is `main`. Feature PRs merge into `dev`, so `Closes #N` gives you the
-> cross-reference and nothing more. The issue is closed explicitly in step 6
-> with `gh issue close`.
+> **`Closes #N` closes the issue on a `dev` merge**, because `dev` is this
+> repository's *default* branch (`gh api repos/fiwon123/crower --jq .default_branch`).
+> GitHub auto-closes a linked issue when the PR merges into the default branch, and
+> every feature PR targets `dev`. Step 6 closes the issue only as a fallback, for a
+> PR that omitted the clause. A `dev` → `main` release PR closes nothing, because
+> `main` is not the default branch.
 
 ### Label mapping (commit type → GitHub label)
 
@@ -185,12 +186,14 @@ gh pr create \
 - After merging to `dev`:
   - **Comment on the issue**: `gh issue comment <issue-number> --body "Merged into dev — ready for release"`
   - **Comment on the PR**: `gh pr comment <pr-number> --body "Merged into dev — thanks!"`
-  - **Close the issue**: `gh issue close <issue-number>`
-    - Required, not optional. `Closes #N` in a PR body closes an issue only when
-      the PR merges into the repository's **default** branch, which is `main`
-      here. A feature PR merges into `dev`, so its `Closes #N` links the issue
-      and closes nothing. Without this step issues stay open forever.
-    - Closing here rather than at release keeps the milestone tracker live —
+  - **Close the issue if the merge did not**: `gh issue close <issue-number>`
+    - A fallback, not the primary mechanism. `Closes #N` closes the issue when the
+      PR merges, because `dev` — where feature PRs merge — **is** the repository's
+      default branch. Run this only when the issue is still open: the PR body
+      omitted the clause or the link was edited out. On an issue that the merge
+      already closed, it prints `already closed` and changes nothing.
+    - Confirm rather than assume: `gh issue view <issue-number> --json state`.
+    - Closing at merge rather than at release keeps the milestone tracker live —
       GitHub computes milestone progress from closed issues — and keeps step 7's
       "all milestone issues are complete" check satisfiable before release. If
       issues only closed during the release merge, that check could never be
@@ -222,8 +225,10 @@ gh pr create \
     --base main
   ```
 - CI runs automatically on this PR
-- **This PR closes no issues.** Every issue in the milestone was closed when its
-  PR merged to `dev` (step 6), so `Closes #N` here would be a no-op at best.
+- **This PR closes no issues.** `main` is not the repository's default branch, so
+  a `dev` → `main` merge triggers no automatic closing. Every issue in the
+  milestone was already closed when its PR merged to `dev` (step 6), so a
+  `Closes #N` here would be a no-op at best.
   If an issue turns out to still be open at release time, close it explicitly
   rather than adding a `Closes` clause to this PR — the milestone check in the
   step above is what should have caught it.
