@@ -143,7 +143,7 @@ func (h *Handler) Pull(name string) error {
 	}
 
 	body, _ := io.ReadAll(resp.Body)
-	
+
 	// Save to temp file and import
 	tmp := filepath.Join(os.TempDir(), name+".toml")
 	if err := os.WriteFile(tmp, body, 0644); err != nil {

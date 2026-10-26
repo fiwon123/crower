@@ -56,13 +56,13 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 	}
 
 	h.app.Logger.Info(command.Exec)
-	
+
 	// Get steps
 	steps := command.Steps
 	if len(steps) == 0 {
 		steps = []string{command.Exec}
 	}
-	
+
 	// Execute steps sequentially
 	var allOut strings.Builder
 	for i, step := range steps {
@@ -70,7 +70,7 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 		if step == "" {
 			continue
 		}
-		
+
 		// Check for nested crower invocation
 		if strings.HasPrefix(step, "crower ") || strings.HasPrefix(step, "cr ") {
 			out, err := h.executeNested(step)
@@ -80,7 +80,7 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 			}
 			continue
 		}
-		
+
 		h.app.Logger.Info(fmt.Sprintf("[%d/%d] %s", i+1, len(steps), step))
 		out, err := h.PerformExecute(step)
 		allOut.WriteString(out)
@@ -94,17 +94,17 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 func (h *Handler) executeNested(step string) (string, error) {
 	execDepth++
 	defer func() { execDepth-- }()
-	
+
 	if execDepth > maxExecDepth {
 		return "", fmt.Errorf("maximum recursion depth (%d) exceeded", maxExecDepth)
 	}
-	
+
 	// Parse args
 	fields := strings.Fields(step)
 	if len(fields) == 0 {
 		return "", fmt.Errorf("empty command")
 	}
-	
+
 	cmdName := fields[1]
 	if len(fields) > 1 {
 		// Check for cycles
@@ -116,7 +116,7 @@ func (h *Handler) executeNested(step string) (string, error) {
 		execStack = append(execStack, cmdName)
 		defer func() { execStack = execStack[:len(execStack)-1] }()
 	}
-	
+
 	// For now, execute via shell - full in-process dispatch would require refactoring
 	// to avoid import cycles; this is a simplified nested execution
 	return h.PerformExecute(step)
@@ -206,7 +206,7 @@ func getSplitCommand(ex string) []string {
 }
 
 var (
-	execDepth     int
-	execStack     []string
-	maxExecDepth  = 8
+	execDepth    int
+	execStack    []string
+	maxExecDepth = 8
 )
