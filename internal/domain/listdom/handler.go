@@ -1,6 +1,7 @@
 package listdom
 
 import (
+	"errors"
 	"fmt"
 	"runtime"
 	"strings"
@@ -12,9 +13,19 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+// ErrUnsupportedOS is returned when a listing command has no shell invocation
+// for the running platform.
+var ErrUnsupportedOS = errors.New("unsupported operating system")
+
 type Handler struct {
 	app     *app.Config
 	execute *executedom.Handler
+
+	// goos is the platform the shell command is built for. It is a field
+	// rather than a read of runtime.GOOS inside each method so the dispatch
+	// can be exercised by a test: runtime.GOOS cannot be overridden at run
+	// time.
+	goos string
 }
 
 func NewHandler(app *app.Config) *Handler {
@@ -24,6 +35,7 @@ func NewHandler(app *app.Config) *Handler {
 	return &Handler{
 		app:     app,
 		execute: execute,
+		goos:    runtime.GOOS,
 	}
 }
 
@@ -73,36 +85,71 @@ func (h *Handler) ListHistory() error {
 
 // List all files and folder from a folderpath
 func (h *Handler) ListFolder(folderPath string) (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return h.execute.PerformExecute(fmt.Sprintf("dir '%s'", folderPath))
-	case "linux":
-		return h.execute.PerformExecute(fmt.Sprintf("\"ls '%s'\"", folderPath))
-	default:
-		return "", fmt.Errorf("unsupported operating system")
+	commandLine, err := listFolderCommand(h.goos, folderPath)
+	if err != nil {
+		return "", err
 	}
+
+	return h.execute.PerformExecute(commandLine)
 }
 
 // List all system variable
 func (h *Handler) ListSystem() (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return h.execute.PerformExecute("'set'")
-	case "linux":
-		return h.execute.PerformExecute("'printenv'")
+	commandLine, err := listSystemCommand(h.goos)
+	if err != nil {
+		return "", err
 	}
 
-	return "", nil
+	return h.execute.PerformExecute(commandLine)
 }
 
 // List system path variable
 func (h *Handler) ListSysPath() (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return h.execute.PerformExecute("'echo %PATH%'")
-	case "linux":
-		return h.execute.PerformExecute("'echo $PATH'")
+	commandLine, err := listSysPathCommand(h.goos)
+	if err != nil {
+		return "", err
 	}
 
-	return "", nil
+	return h.execute.PerformExecute(commandLine)
+}
+
+// The listing commands are ordinary shell invocations that behave the same on
+// every POSIX system, so linux and darwin share one arm. Each function has a
+// default arm that returns an error: an unsupported platform must not look like
+// a successful empty listing.
+func listFolderCommand(goos string, folderPath string) (string, error) {
+	switch goos {
+	case "windows":
+		return fmt.Sprintf("dir '%s'", folderPath), nil
+	case "linux", "darwin":
+		return fmt.Sprintf("\"ls '%s'\"", folderPath), nil
+	default:
+		return "", unsupportedOSError(goos)
+	}
+}
+
+func listSystemCommand(goos string) (string, error) {
+	switch goos {
+	case "windows":
+		return "'set'", nil
+	case "linux", "darwin":
+		return "'printenv'", nil
+	default:
+		return "", unsupportedOSError(goos)
+	}
+}
+
+func listSysPathCommand(goos string) (string, error) {
+	switch goos {
+	case "windows":
+		return "'echo %PATH%'", nil
+	case "linux", "darwin":
+		return "'echo $PATH'", nil
+	default:
+		return "", unsupportedOSError(goos)
+	}
+}
+
+func unsupportedOSError(goos string) error {
+	return fmt.Errorf("%w: %q", ErrUnsupportedOS, goos)
 }

@@ -135,11 +135,9 @@ endif
 #     prints "[no test files]" for those and still exits 0, so a green run
 #     would otherwise look like coverage that does not exist.
 #
-# Known-failing baseline: internal/domain/opendom, internal/domain/deletedom
-# and internal/domain/movedom fail when the suite runs the packages in
-# parallel -- the shared test fixture directory is wiped by every package that
-# uses it (see issue #46). That failure is real and intended to be loud --
-# do not "fix" it by excluding the package.
+# Tests use isolated temp directories (internal/helper/tests.go), so parallel
+# runs are not racing over a shared fixture (#47) — a red run is a regression
+# until proven otherwise, not a baseline to discount.
 # ---------------------------------------------------------------------------
 check: ## gofmt, vet, test, build — the local verification gate
 	@if ! command -v go >/dev/null 2>&1; then \

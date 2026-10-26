@@ -115,7 +115,8 @@ gh issue comment <issue-number> --body "Starting work on this — Milestone: <mi
 gh issue comment <issue-number> --body "PR opened: #<pr-number>"
 gh issue comment <issue-number> --body "Merged into dev — ready for release"
 
-# Close it after the feature PR merges to dev (Closes #N links only)
+# Fallback only: Closes #N closes the issue on a `dev` merge, since `dev` is
+# the default branch. Run this only if the issue is still open afterwards.
 gh issue close <issue-number>
 ```
 
@@ -154,8 +155,8 @@ gh pr merge <pr-number> --squash --delete-branch
   branch and breaks everything that targets `dev`. Never delete `dev` or `main`.
 - Never add `--delete-branch` to a release merge — see `workflow.md` step 7.
 - Run tests before opening a PR
-- Link related issues with `Closes #N` — this links and cross-references only; it
-  does **not** close the issue on a `dev` merge, so close it explicitly.
+- Link related issues with `Closes #N` — the issue closes when the PR merges into
+  `dev`, which is the default branch.
 - Do NOT merge PRs unless explicitly instructed
 
 ### Issue References
@@ -165,6 +166,7 @@ Reference issues in commits and PRs:
 - `Closes #42`
 - `Fixes #42`
 
-Because feature PRs merge into `dev`, not the default branch, `Closes #N` does
-not auto-close the issue. Close it with `gh issue close <issue-number>` after
-the merge to `dev`.
+Because `dev` **is** this repository's default branch, `Closes #N` auto-closes the
+issue when the feature PR merges. Keep `gh issue close <issue-number>` as the
+fallback for a PR that omitted the clause; a `dev` → `main` release PR closes
+nothing, because `main` is not the default branch.
