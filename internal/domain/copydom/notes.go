@@ -12,6 +12,6 @@ func newCopyNote(subOp operations.SubOperationEnum, args []string) string {
 	return noteBuilder.
 		AddMainOperation(operations.Copy).
 		AddSubOperation(subOp).
-		AddCrowerExec("crower copy", args).
+		AddCrowerExec("copy", args).
 		Build()
 }

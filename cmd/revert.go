@@ -1,28 +1,26 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/revertdom"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/spf13/cobra"
 )
 
 // Cmd represents the revert command
 var revertCmd = &cobra.Command{
-	Use:   "revert",
+	Use:   "revert <steps>",
 	Short: "revert history by one",
-	Long:  `revert history by one"`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
+	Long:  `revert history by one`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
+		}
 
-		app := app.InitApp(cfgFilePath)
+		if len(args) == 0 {
+			return missingArgs(cmd, "the number of steps to revert")
+		}
 
-		core := revertdom.NewCore(app)
-
-		core.Revert(args)
+		return revertdom.NewCore(cfg).Revert(args)
 	},
-}
-
-func init() {
 }

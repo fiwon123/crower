@@ -26,18 +26,26 @@ func NewCore(app *app.Config, list interfaces.ListHandler) *Core {
 	}
 }
 
-func (c *Core) Reset() {
-	ok := c.input.CheckResetInput()
+// Reset erases every managed command.
+func (c *Core) Reset() error {
+	ok, err := c.input.CheckResetInput()
+	if err != nil {
+		return err
+	}
 
 	if !ok {
 		c.app.Logger.Info("Cancelling reset...")
-		return
+		return nil
 	}
 
-	c.app.Logger.Info("reset all commands: ", c.app.AllCommandsByName)
+	c.app.Logger.Info("reset all commands")
 	c.handler.Reset()
-	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
+
+	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+		return err
+	}
 
 	c.app.History.Add(operations.Reset, newResetNote())
-	c.app.Save()
+
+	return c.app.Save()
 }

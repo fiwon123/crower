@@ -24,14 +24,13 @@ func TestList(t *testing.T) {
 	})
 
 	t.Run("List History", func(t *testing.T) {
-		err := handler.ListHistory()
-		if err != nil {
-			t.Errorf("list History error: %v", err)
+		if output := handler.ListHistory(); output == "" {
+			t.Error("list History returned nothing")
 		}
 	})
 
 	t.Run("List Process", func(t *testing.T) {
-		err := handler.ListProcess([]string{})
+		_, err := handler.ListProcess([]string{})
 		if err != nil {
 			t.Errorf("list Process error: %v", err)
 		}

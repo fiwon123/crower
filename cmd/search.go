@@ -1,10 +1,7 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/searchdom"
-	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/spf13/cobra"
 )
@@ -13,7 +10,7 @@ var browserFlag bool
 
 // Cmd represents the search command
 var searchCmd = &cobra.Command{
-	Use:   "search",
+	Use:   "search <term> [path]",
 	Short: "search files, folder and on browser",
 	Long: `search files, folder and on browser
 
@@ -29,25 +26,26 @@ search on browser:
 	- Using 'crower search --browser "CONTENT"'
 
 	`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
-
-		app := app.InitApp(cfgFilePath)
-
-		core := searchdom.NewCore(app)
-
-		if browserFlag {
-			core.SearchBrowser(args)
-		} else if fileFlag {
-			core.SearchFile(args)
-		} else if folderFlag {
-			core.SearchFolder(args)
-		} else if len(args) > 0 {
-			core.SearchFileAndFolder(args)
-		} else {
-			errors.PrintCmdHelp("search", app)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
 
+		core := searchdom.NewCore(cfg)
+
+		switch {
+		case browserFlag:
+			return core.SearchBrowser(args)
+		case fileFlag:
+			return core.SearchFile(args)
+		case folderFlag:
+			return core.SearchFolder(args)
+		case len(args) > 0:
+			return core.SearchFileAndFolder(args)
+		}
+
+		return missingArgs(cmd, "a search term")
 	},
 }
 

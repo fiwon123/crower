@@ -158,11 +158,23 @@ func TestOpenSystem(t *testing.T) {
 		t.Fatalf("error before test: %v", err)
 	}
 
-	openHandler := opendom.NewHandler(app)
+	var opened string
+	openHandler := opendom.NewHandler(app).WithEditor(func(file string) error {
+		opened = file
+		return nil
+	})
 
-	err = openHandler.OpenSystem()
-	if err != nil {
+	if err := openHandler.OpenSystem(); err != nil {
 		t.Fatalf("error: %v", err)
 	}
 
+	// The editor is not installed on most build machines, so the file the
+	// handler would have edited is what the test can assert on.
+	if opened == "" {
+		t.Fatal("no file was opened")
+	}
+
+	if !strings.HasPrefix(filepath.Base(opened), ".") {
+		t.Errorf("expected a shell profile, got %q", opened)
+	}
 }
