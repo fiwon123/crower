@@ -1,0 +1,180 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v0.4.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    name: Prepare tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.validate.outputs.tag }}
+      previous_tag: ${{ steps.prev.outputs.previous_tag }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate version
+        id: validate
+        run: |
+          set -euo pipefail
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must match vMAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "Tag $VERSION already exists" >&2
+            exit 1
+          fi
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Get previous tag
+        id: prev
+        run: |
+          PREV=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          echo "previous_tag=$PREV" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.validate.outputs.tag }}" -m "Release ${{ steps.validate.outputs.tag }}"
+          git push origin "${{ steps.validate.outputs.tag }}"
+
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            runner: ubuntu-latest
+          - goos: linux
+            goarch: arm64
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: amd64
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: arm64
+            runner: ubuntu-latest
+          - goos: darwin
+            goarch: amd64
+            runner: macos-13
+          - goos: darwin
+            goarch: arm64
+            runner: macos-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build release assets
+        env:
+          VERSION: ${{ needs.prepare.outputs.tag }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+        run: |
+          make release-platform
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.goos }}-${{ matrix.goarch }}
+          path: build/dist/*
+
+  publish:
+    name: Publish release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare assets
+        run: |
+          mkdir -p dist
+          find artifacts -type f -exec cp {} dist/ \;
+          cd dist
+          sha256sum * > checksums.txt
+          ls -lh
+
+      - name: Create professional release notes
+        id: notes
+        run: |
+          PREV="${{ needs.prepare.outputs.previous_tag }}"
+          {
+            echo "## Crower ${{ needs.prepare.outputs.tag }}"
+            echo ""
+            echo "A cross-platform terminal file manager and command-alias manager with undoable history and per-item notes."
+            echo ""
+            echo "### Downloads"
+            echo "| Platform | CLI | GUI/Desktop |"
+            echo "| --- | --- | --- |"
+            echo "| Linux (amd64) | crower_${{ needs.prepare.outputs.tag }}_linux.tar.gz | crower_gui_${{ needs.prepare.outputs.tag }}_linux_amd64.tar.gz |"
+            echo "| Linux (arm64) | crower_${{ needs.prepare.outputs.tag }}_linux_arm64.tar.gz | crower_gui_${{ needs.prepare.outputs.tag }}_linux_arm64.tar.gz |"
+            echo "| Windows (amd64) | crower_${{ needs.prepare.outputs.tag }}_windows.zip | crower_gui_${{ needs.prepare.outputs.tag }}_windows_amd64.zip |"
+            echo "| Windows (arm64) | crower_${{ needs.prepare.outputs.tag }}_windows_arm64.zip | crower_gui_${{ needs.prepare.outputs.tag }}_windows_arm64.zip |"
+            echo "| macOS (Intel) | crower_${{ needs.prepare.outputs.tag }}_darwin_amd64.tar.gz | crower_gui_${{ needs.prepare.outputs.tag }}_darwin_amd64.tar.gz |"
+            echo "| macOS (Apple Silicon) | crower_${{ needs.prepare.outputs.tag }}_darwin_arm64.tar.gz | crower_gui_${{ needs.prepare.outputs.tag }}_darwin_arm64.tar.gz |"
+            echo ""
+            echo "### Installation"
+            echo "- **Linux/macOS:** Extract, make executable, move \`crower\` and \`cr\` to your PATH"
+            echo "- **Windows:** Extract and add to PATH"
+            echo "- Run \`crower gui\` for TUI or \`crower desktop\` for native desktop UI"
+            echo ""
+            echo "### Verification"
+            echo "See \`checksums.txt\` for SHA256 checksums."
+            echo ""
+            echo "### Changelog"
+          } > notes.md
+          if [ -n "$PREV" ]; then
+            gh api repos/${{ github.repository }}/releases/generate-notes \
+              -f tag_name='${{ needs.prepare.outputs.tag }}' \
+              -f target_commitish='${{ needs.prepare.outputs.tag }}' \
+              -f previous_tag_name="$PREV" \
+              --jq .body >> notes.md 2>/dev/null || echo "_No changes since $PREV_" >> notes.md
+          else
+            echo "_Initial release or first tagged version._" >> notes.md
+          fi
+
+      - name: Create and publish release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ needs.prepare.outputs.tag }}" \
+            --title "Crower ${{ needs.prepare.outputs.tag }}" \
+            --notes-file notes.md \
+            dist/*
