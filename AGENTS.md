@@ -258,7 +258,9 @@ main          ← release merges (CI runs here — dev→main PRs only)
 follow the model above, so the author finds out before a reviewer does. It is a
 **guard rail, not a lock**: an administrator can override a failed required
 check, and a check nobody blocks on is noise. Branch protection (below) is the
-control; the gate is the feedback.
+control; the gate is the feedback. `dependabot/*` branches targeting `dev` are
+exempt (they have no issue number), while `dependabot/*` targeting `main` and
+all non-`dev`/non-`fix/<number>` branches targeting `main` remain blocked.
 
 ### Repository settings (configure by hand)
 
