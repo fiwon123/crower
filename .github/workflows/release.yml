@@ -154,8 +154,15 @@ jobs:
           fi
 
           INFO="$(go version -m "$BIN")"
-          REVISION="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.revision=\([0-9a-f]\{7,40\}\).*/\1/p')"
-          MODIFIED="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.modified=\(true\|false\).*/\1/p')"
+
+          # Strip the prefix rather than capturing the value. POSIX basic regular
+          # expressions have no alternation, and BSD sed -- the one macOS runners
+          # ship -- does not implement the GNU `\|` extension: a pattern using it
+          # matches nothing and yields an empty value. That is how v0.5.0 failed
+          # its first dispatch with "vcs.modified=: the tree had uncommitted
+          # changes" on a clean tree (#111). Keep these patterns POSIX-only.
+          REVISION="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.revision=//p')"
+          MODIFIED="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.modified=//p')"
 
           if [ -z "$REVISION" ]; then
             echo "::error::$BIN carries no vcs.revision, so nothing proves which commit it was built from." >&2
@@ -168,10 +175,22 @@ jobs:
             exit 1
           fi
 
-          if [ "$MODIFIED" != "false" ]; then
-            echo "::error::$BIN reports vcs.modified=$MODIFIED: the tree had uncommitted changes." >&2
-            exit 1
-          fi
+          # An empty value means the field is absent, which is a different
+          # problem from a genuinely modified tree -- and saying "modified" for
+          # both hides the real cause.
+          case "$MODIFIED" in
+            false)
+              ;;
+            true)
+              echo "::error::$BIN reports vcs.modified=true: the tree had uncommitted changes." >&2
+              exit 1
+              ;;
+            *)
+              echo "::error::$BIN carries no vcs.modified, so its tree state is unproven." >&2
+              printf '%s\n' "$INFO" >&2
+              exit 1
+              ;;
+          esac
 
           echo "provenance OK: built from $REVISION, unmodified"
 
