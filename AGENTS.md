@@ -104,38 +104,20 @@ omits them cannot write its own caches. A sandbox created before that fix
 keeps its old root-owned volumes — Docker does not re-initialise a volume that
 already exists — so it needs `make reset` once.
 
-### The known-failing baseline — read this before claiming a change is verified
+### Test coverage — read this before claiming a change is verified
 
-`go test ./...` **fails in three packages when the whole suite runs** —
-`internal/domain/opendom`, `internal/domain/deletedom`, and
-`internal/domain/movedom` — and passes when a failing package is run alone.
+The suite is small: many packages have no test file, and `go test` prints
+`[no test files]` for them while still exiting 0. `make check` lists those
+packages at the end of its output; anything named there has unverified
+behaviour. A green run proves gofmt, vet, and build — and nothing about
+behaviour.
 
-The cause is `internal/helper/tests.go`: it builds one fixed path,
-`~/crower/test`, calls `os.RemoveAll` on it, and recreates it. Every test
-package calls that helper, and `go test ./...` runs the packages in parallel,
-so one package wipes the fixtures another package is using. It is a race, not
-an environment problem.
-
-It is a pre-existing failure, tracked in issue #46, and it is not caused by
-whatever change you are making. It also means:
-
-- `make check` is **red on arrival**. A red run showing only those three
-  packages is the known baseline, not your regression. Say which it is.
-- the same helper writes **outside the repository**, into `~/crower/test` —
-  one directory away from the real crower data — and deletes whatever is
-  there.
-- The remaining suite is small: 16 packages have no test file at all, and
-  `go test` reports those as `[no test files]` while still exiting 0. A green
-  run proves gofmt, vet, and build — not the behaviour. The packages **with**
-  tests are the eight domain packages (`copydom`, `createdom`, `deletedom`,
-  `listdom`, `movedom`, `opendom`, `searchdom`, `updatedom`) and `pkg/logger`;
-  the packages without one are `cmd`, `internal/app`, `internal/data/*`,
-  `internal/domain/checkdom`, `executedom`, `extractdom`, `resetdom`,
-  `restoredom`, `revertdom`, `upgradedom`, `internal/errors`, `internal/helper`,
-  `internal/interfaces` and `pkg/utils`.
-
-Never silence this by excluding a package from `go test` or from CI. Fix it
-in issue #46, where the cause can be investigated properly.
+There is **no known-failing baseline.** Every test gets its own fixture
+directory from `internal/helper.InitCrowerTests` (`os.MkdirTemp`), so parallel
+packages cannot race over a shared path. The failure that used to live in
+`opendom`, `deletedom` and `movedom` was fixed in #47, which closed #46. A red
+run is a regression until proven otherwise — do not discount it, and never
+silence it by excluding a package from `go test` or from CI.
 
 ## Runtime Environment
 
@@ -353,7 +335,7 @@ All workflow rules that agents must follow are documented in this file:
 - milestone and issue conventions;
 - development commands — `make check`, `make release`, `make clean`;
 - environment and secret-file rules;
-- the known-failing baseline above, and the rule that a skipped or empty run is not a pass.
+- the test-coverage notes above, and the rule that a skipped or empty run is not a pass.
 
 ### CI triggers (read this before claiming a change is verified)
 
