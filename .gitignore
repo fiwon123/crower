@@ -26,9 +26,20 @@ go.work.sum
 
 # env file
 .env
+.env.*
+!.env.example
+.envrc
+
+# OpenCode session memory — agent-local state, never committed.
+.opencode/memory/
+.opencode/progress.md
 
 # Editor/IDE
 # .idea/
 # .vscode/
 
 build/
+
+# Dev sandbox markers — the opt-in "start something in the container" signal.
+# Local to each machine; never committed.
+.dev/

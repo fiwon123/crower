@@ -7,7 +7,7 @@ import (
 	"github.com/shirou/gopsutil/v3/process"
 )
 
-func ListAllProcess(partName string, skipUnknown bool) error {
+func GetAllProcess(partName string, skipUnknown bool) (string, error) {
 	const (
 		unknow        = "Unknown"
 		titleLayout   = "%-8s %-30s %s\n"
@@ -16,11 +16,12 @@ func ListAllProcess(partName string, skipUnknown bool) error {
 
 	processes, err := process.Processes()
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	fmt.Printf(titleLayout, "PID", "Name", "Path")
-	fmt.Println("-------------------------------------------------------------")
+	var builder strings.Builder
+	fmt.Fprintf(&builder, titleLayout, "PID", "Name", "Path")
+	builder.WriteString("-------------------------------------------------------------\n")
 
 	for _, p := range processes {
 		pid := p.Pid
@@ -44,10 +45,10 @@ func ListAllProcess(partName string, skipUnknown bool) error {
 			continue
 		}
 
-		fmt.Printf(contentLayout, pid, name, exe)
+		fmt.Fprintf(&builder, contentLayout, pid, name, exe)
 	}
 
-	return nil
+	return builder.String(), nil
 }
 
 func GetProcessNameByID(id int32) (string, error) {

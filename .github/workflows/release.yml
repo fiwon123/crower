@@ -1,0 +1,306 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. v0.5.0)'
+        required: true
+        type: string
+      publish:
+        description: 'Publish immediately (leave unchecked to create or refresh a DRAFT release)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Two dispatches for the same version would race on the same tag and the same
+# draft release.
+concurrency:
+  group: release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.validate.outputs.tag }}
+      commit: ${{ steps.validate.outputs.commit }}
+      previous_tag: ${{ steps.prev.outputs.previous_tag }}
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch release branches
+        run: git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
+
+      - name: Validate version and release source
+        id: validate
+        run: |
+          set -euo pipefail
+
+          VERSION="${{ inputs.version }}"
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Version must match vMAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+
+          # A release ships what main contains. When dev holds commits that main
+          # does not, the artifacts silently omit them: that is how the v0.4.0
+          # draft was cut from dev while this workflow would have built from a
+          # main that lacked the add_to_path.sh fix.
+          if ! git merge-base --is-ancestor origin/dev origin/main; then
+            echo "dev has commits that main does not contain." >&2
+            echo "Merge dev into main before releasing; see the release steps in AGENTS.md." >&2
+            exit 1
+          fi
+
+          COMMIT="$(git rev-parse origin/main)"
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+
+          if git rev-parse -q --verify "refs/tags/$VERSION" >/dev/null; then
+            EXISTING="$(git rev-list -n 1 "$VERSION")"
+            if [ "$EXISTING" != "$COMMIT" ]; then
+              echo "Tag $VERSION already exists at $EXISTING, not at main ($COMMIT)." >&2
+              echo "Bump the version: a published tag is never moved." >&2
+              exit 1
+            fi
+            echo "$VERSION already tags main — the publish job will refresh that release."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$VERSION" -m "Release $VERSION" "$COMMIT"
+            git push origin "$VERSION"
+          fi
+
+          echo "tag=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Get previous tag
+        id: prev
+        run: |
+          # ^ skips a tag created on this commit, so the changelog does not
+          # compare the release against itself.
+          PREV=$(git describe --tags --abbrev=0 "${{ steps.validate.outputs.commit }}^" 2>/dev/null || echo "")
+          echo "previous_tag=$PREV" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            runner: ubuntu-latest
+          - goos: linux
+            goarch: arm64
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: amd64
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: arm64
+            runner: ubuntu-latest
+          - goos: darwin
+            goarch: amd64
+            runner: macos-13
+          - goos: darwin
+            goarch: arm64
+            runner: macos-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build release assets
+        env:
+          VERSION: ${{ needs.prepare.outputs.tag }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '0'
+        run: |
+          make release-platform
+
+      # Go records the revision it was built from inside the binary. The v0.4.0
+      # assets turned out to come from 943146a, a commit on no release branch,
+      # and nothing failed. This is the check that fails.
+      - name: Verify build provenance
+        env:
+          EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
+          TARGET_GOOS: ${{ matrix.goos }}
+        run: |
+          set -euo pipefail
+
+          BIN="build/crower"
+          if [ "$TARGET_GOOS" = "windows" ]; then
+            BIN="build/crower.exe"
+          fi
+
+          INFO="$(go version -m "$BIN")"
+
+          # Strip the prefix rather than capturing the value. POSIX basic regular
+          # expressions have no alternation, and BSD sed -- the one macOS runners
+          # ship -- does not implement the GNU `\|` extension: a pattern using it
+          # matches nothing and yields an empty value. That is how v0.5.0 failed
+          # its first dispatch with "vcs.modified=: the tree had uncommitted
+          # changes" on a clean tree (#111). Keep these patterns POSIX-only.
+          REVISION="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.revision=//p')"
+          MODIFIED="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.modified=//p')"
+
+          if [ -z "$REVISION" ]; then
+            echo "::error::$BIN carries no vcs.revision, so nothing proves which commit it was built from." >&2
+            printf '%s\n' "$INFO" >&2
+            exit 1
+          fi
+
+          if [ "$REVISION" != "$EXPECTED_COMMIT" ]; then
+            echo "::error::$BIN was built from $REVISION, but the release tag points at $EXPECTED_COMMIT." >&2
+            exit 1
+          fi
+
+          # An empty value means the field is absent, which is a different
+          # problem from a genuinely modified tree -- and saying "modified" for
+          # both hides the real cause.
+          case "$MODIFIED" in
+            false)
+              ;;
+            true)
+              echo "::error::$BIN reports vcs.modified=true: the tree had uncommitted changes." >&2
+              exit 1
+              ;;
+            *)
+              echo "::error::$BIN carries no vcs.modified, so its tree state is unproven." >&2
+              printf '%s\n' "$INFO" >&2
+              exit 1
+              ;;
+          esac
+
+          echo "provenance OK: built from $REVISION, unmodified"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.goos }}-${{ matrix.goarch }}
+          path: build/dist/*
+
+  publish:
+    name: Publish release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Prepare assets
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          find artifacts -type f -exec cp {} dist/ \;
+          cd dist
+          sha256sum * > checksums.txt
+          ls -lh
+
+      - name: Create professional release notes
+        id: notes
+        run: |
+          set -euo pipefail
+          TAG="${{ needs.prepare.outputs.tag }}"
+          PREV="${{ needs.prepare.outputs.previous_tag }}"
+          {
+            echo "## Crower $TAG"
+            echo ""
+            echo "A cross-platform terminal file manager and command-alias manager with undoable history and per-item notes."
+            echo ""
+            echo "### Downloads"
+            echo "| Platform | CLI | GUI/Desktop |"
+            echo "| --- | --- | --- |"
+            echo "| Linux (amd64) | crower_${TAG}_linux_amd64.tar.gz | crower_gui_${TAG}_linux_amd64.tar.gz |"
+            echo "| Linux (arm64) | crower_${TAG}_linux_arm64.tar.gz | crower_gui_${TAG}_linux_arm64.tar.gz |"
+            echo "| Windows (amd64) | crower_${TAG}_windows_amd64.zip | crower_gui_${TAG}_windows_amd64.zip |"
+            echo "| Windows (arm64) | crower_${TAG}_windows_arm64.zip | crower_gui_${TAG}_windows_arm64.zip |"
+            echo "| macOS (Intel) | crower_${TAG}_darwin_amd64.tar.gz | crower_gui_${TAG}_darwin_amd64.tar.gz |"
+            echo "| macOS (Apple Silicon) | crower_${TAG}_darwin_arm64.tar.gz | crower_gui_${TAG}_darwin_arm64.tar.gz |"
+            echo ""
+            echo "### Installation"
+            echo "- **Linux/macOS:** extract, make executable, move \`crower\` and \`cr\` to your PATH — or run the bundled \`add_to_path.sh\`"
+            echo "- **Windows:** extract and add to PATH — or run the bundled \`add_to_path.bat\`"
+            echo "- Run \`crower gui\` for TUI or \`crower desktop\` for native desktop UI"
+            echo ""
+            echo "### Verification"
+            echo "See \`checksums.txt\` for SHA256 checksums. Every binary reports the commit it was built from:"
+            echo "\`go version -m crower | grep vcs.revision\`."
+            echo ""
+            echo "### Changelog"
+          } > notes.md
+          if [ -n "$PREV" ]; then
+            gh api repos/${{ github.repository }}/releases/generate-notes \
+              -f tag_name="$TAG" \
+              -f target_commitish="$TAG" \
+              -f previous_tag_name="$PREV" \
+              --jq .body >> notes.md 2>/dev/null || echo "_No changes since $PREV_" >> notes.md
+          else
+            echo "_Initial release or first tagged version._" >> notes.md
+          fi
+
+      # A draft is the default so the artifacts can be inspected — and rebuilt by
+      # re-running — before anyone can download them. A published release is
+      # never rewritten: that would silently change what a user already has.
+      - name: Create or refresh draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            DRAFT="$(gh release view "$TAG" --json isDraft --jq .isDraft)"
+            if [ "$DRAFT" != "true" ]; then
+              echo "::error::Release $TAG is already published. Bump the version instead of rebuilding it." >&2
+              exit 1
+            fi
+            gh release upload "$TAG" dist/* --clobber
+            gh release edit "$TAG" --title "Crower $TAG" --notes-file notes.md
+            echo "Refreshed draft release $TAG."
+          else
+            gh release create "$TAG" \
+              --title "Crower $TAG" \
+              --notes-file notes.md \
+              --draft \
+              dist/*
+            echo "Created draft release $TAG. Inspect the assets, then publish it."
+          fi
+
+      - name: Publish the draft
+        if: ${{ inputs.publish }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --draft=false --latest
+          echo "Published $TAG."
