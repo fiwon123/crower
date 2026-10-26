@@ -95,23 +95,23 @@ scripts/             add_to_path installers
 
 ## Status
 
-- **Done**: command-alias management (add, update, delete, reset, list, search, extract); file operations (create, copy, move, open, restore, revert); notes and history; self-update; release archives for Windows and Linux.
-- **In progress**: the test suite fails in three packages when it runs in parallel — the shared test fixture directory is wiped by every package that uses it (issue #46).
+- **Done**: command-alias management (add, update, delete, reset, list, search, extract); file operations (create, copy, move, open, restore, revert); notes and history; self-update; release archives for Windows, Linux and macOS (amd64 and arm64).
+- **In progress**: v0.5.0 — `listdom` support for macOS, installation documentation that runs as written, and a draft-first release workflow that refuses a stale source and asserts build provenance.
 
 ## Backlog
 
-1. Fix the shared test fixture directory so the suite passes when the packages run in parallel (issue #46).
+1. ~~Fix the shared test fixture directory so the suite passes when the packages run in parallel~~ — done in #47: every test gets its own `os.MkdirTemp` directory.
 2. Add tests for the domains that have none — `executedom`, `extractdom`, `resetdom`, `restoredom`, `revertdom`, `upgradedom`, `checkdom`.
-3. Extend the release matrix to macOS and Linux arm64.
+3. ~~Extend the release matrix to macOS and Linux arm64~~ — done: `.github/workflows/release.yml` builds `linux/{amd64,arm64}`, `windows/{amd64,arm64}` and `darwin/{amd64,arm64}`.
 
 ## Notes
 
 - The `cr` alias is the same binary under a second name; both are shipped in
   the release archive.
-- `internal/helper/tests.go` creates and removes `$HOME/crower/test` when the
-  test suite runs. It is outside the repository, and it is why running the
-  suite touches the user's home directory — and why the packages race each
-  other when they run in parallel (issue #46).
+- `internal/helper.InitCrowerTests` gives each test its own directory under the
+  system temporary directory (`os.MkdirTemp`), so parallel packages cannot race
+  over a shared fixture path — the failure that used to affect `opendom`,
+  `deletedom` and `movedom` (#46, fixed in #47).
 - Windows uses `cmd` to execute commands, Linux uses `sh`.
 - The config file is TOML and lives under the user's home directory. It is
   never committed.
