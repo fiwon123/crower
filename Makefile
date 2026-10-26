@@ -22,7 +22,7 @@ LINUX_SCRIPT :=  $(SCRIPTS_DIR)/$(SCRIPT_NAME).sh
 .PHONY: all windows linux zip_linux zip_windows clean release check \
 	help dev-up dev-down dev-shell dev-opencode dev-opencode-auto dev-log dev-build reset \
 	preflight require-agent prepare-agent-mounts check-identity opencode-version opencode-upgrade \
-	shell opencode opencode-auto release-platform package-cli package-gui
+	shell opencode opencode-auto release-platform package-cli package-gui verify-release
 
 all: release
 
@@ -60,13 +60,27 @@ release: zip_windows zip_linux
 	@echo "Release ready: $(VERSION)"
 
 # Platform release for CI (cross-compile)
+#
+# The binary inside the archive is always named $(APP_NAME)$(EXT) /
+# $(APP_NAME_SHORT)$(EXT) — never arch-suffixed. The platform and architecture
+# are already in the archive filename, and the documentation tells users to run
+# `crower` and `cr`, so a suffixed binary is unreachable by the name it ships.
+# verify-release enforces that.
 release-platform: $(BUILD_DIR)
 	mkdir -p $(DIST_DIR)
 	@echo "Building $(APP_NAME) for $(GOOS)/$(GOARCH) with version $(VERSION)"
-	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(APP_NAME)_$(GOOS)_$(GOARCH)$(EXT)
-	cp $(BUILD_DIR)/$(APP_NAME)_$(GOOS)_$(GOARCH)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)_$(GOOS)_$(GOARCH)$(EXT)
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(APP_NAME)$(EXT)
+	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT)
 	@$(MAKE) package-cli GOOS=$(GOOS) GOARCH=$(GOARCH)
 	@$(MAKE) package-gui GOOS=$(GOOS) GOARCH=$(GOARCH)
+	@$(MAKE) verify-release
+
+# Fail the build if an archive does not carry the names users are told to run.
+# GOOS/GOARCH are pinned to the host: this target inspects archives, so it must
+# run on the machine doing the build rather than be cross-compiled to the
+# archive's target.
+verify-release:
+	@GOOS=$$(go env GOHOSTOS) GOARCH=$$(go env GOHOSTARCH) go run ./internal/tools/archiveverify $(DIST_DIR)
 
 ifeq ($(GOOS),windows)
 EXT := .exe
@@ -85,12 +99,12 @@ endif
 package-cli: $(BUILD_DIR)
 	@mkdir -p $(DIST_DIR)
 ifeq ($(GOOS),windows)
-	zip -j $(CLI_ARCHIVE) $(BUILD_DIR)/$(APP_NAME)_$(GOOS)_$(GOARCH)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)_$(GOOS)_$(GOARCH)$(EXT) $(SCRIPTS_DIR)/add_to_path$(SCRIPT_EXT) README.md LICENSE LICENSE-APACHE NOTICE
+	zip -j $(CLI_ARCHIVE) $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT) $(SCRIPTS_DIR)/add_to_path$(SCRIPT_EXT) README.md LICENSE LICENSE-APACHE NOTICE
 ifeq ($(GOARCH),amd64)
 	cp $(CLI_ARCHIVE) $(LEGACY_CLI_ARCHIVE)
 endif
 else
-	tar -czvf $(CLI_ARCHIVE) -C $(BUILD_DIR) $(APP_NAME)_$(GOOS)_$(GOARCH) $(APP_NAME_SHORT)_$(GOOS)_$(GOARCH) -C ../$(SCRIPTS_DIR) add_to_path$(SCRIPT_EXT) ../README.md ../LICENSE ../LICENSE-APACHE ../NOTICE
+	tar -czvf $(CLI_ARCHIVE) -C $(BUILD_DIR) $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) -C ../$(SCRIPTS_DIR) add_to_path$(SCRIPT_EXT) ../README.md ../LICENSE ../LICENSE-APACHE ../NOTICE
 ifeq ($(GOARCH),amd64)
 	cp $(CLI_ARCHIVE) $(LEGACY_CLI_ARCHIVE)
 endif
@@ -100,9 +114,9 @@ endif
 package-gui: $(BUILD_DIR)
 	@mkdir -p $(DIST_DIR)
 ifeq ($(GOOS),windows)
-	zip -j $(GUI_ARCHIVE) $(BUILD_DIR)/$(APP_NAME)_$(GOOS)_$(GOARCH)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)_$(GOOS)_$(GOARCH)$(EXT) README.md NOTICE LICENSE LICENSE-APACHE
+	zip -j $(GUI_ARCHIVE) $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT) README.md NOTICE LICENSE LICENSE-APACHE
 else
-	tar -czvf $(GUI_ARCHIVE) -C $(BUILD_DIR) $(APP_NAME)_$(GOOS)_$(GOARCH) $(APP_NAME_SHORT)_$(GOOS)_$(GOARCH) ../README.md ../NOTICE ../LICENSE ../LICENSE-APACHE
+	tar -czvf $(GUI_ARCHIVE) -C $(BUILD_DIR) $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) ../README.md ../NOTICE ../LICENSE ../LICENSE-APACHE
 endif
 	@echo "GUI package: $(GUI_ARCHIVE)"
 
