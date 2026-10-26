@@ -44,11 +44,12 @@ env:
   # Branches that may target `dev`. Keep in sync with the branch types
   # documented in AGENTS.md and workflow.md -- they are the same list, and the
   # issue number is part of the convention (`<type>/<issue-number>-<slug>`), so
-  # a branch that names no issue is rejected too.
+  # a branch that names no issue is rejected too. Dependabot branches have no
+  # issue number, so they are allowed as a separate alternative.
   #
   # If your project keeps release branches, add `release/` to the main pattern
   # below rather than loosening it further.
-  DEV_BRANCH_PATTERN: '^(feat|fix|refactor|docs|test|chore|ci)/[0-9]+-'
+  DEV_BRANCH_PATTERN: '^((feat|fix|refactor|docs|test|chore|ci)/[0-9]+-|dependabot/)'
 
   # Branches that may target `main`:
   #   - `dev`  -- the release pull request. The head of that PR *is* the
