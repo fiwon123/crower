@@ -12,9 +12,9 @@ import (
 )
 
 type TUI struct {
-	app     *app.Config
-	exec    *executedom.Handler
-	reader  *bufio.Reader
+	app    *app.Config
+	exec   *executedom.Handler
+	reader *bufio.Reader
 }
 
 func NewTUI(app *app.Config) *TUI {

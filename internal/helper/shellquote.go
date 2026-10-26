@@ -27,7 +27,7 @@ func quotePosix(s string) string {
 	if !strings.Contains(s, "'") {
 		return "'" + s + "'"
 	}
-	// Replace ' with '\'' 
+	// Replace ' with '\''
 	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }
 

@@ -81,8 +81,6 @@ func (h *Handler) ListFolder(folderPath string) (string, error) {
 	default:
 		return "", fmt.Errorf("unsupported operating system")
 	}
-
-	return "", nil
 }
 
 // List all system variable
