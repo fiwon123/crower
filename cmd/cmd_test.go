@@ -1139,6 +1139,84 @@ func TestCreateNameThatIsAnAliasFails(t *testing.T) {
 	}
 }
 
+// update must not create the shadow that create refuses: a new name that is an
+// alias would win over it, and a new alias that is a name would never be
+// reachable at all, because lookups try the name map first.
+func TestUpdateCannotShadowANameOrAlias(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "holder", "-a", "g2", "echo two"); err != nil {
+		t.Fatalf("create holder returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "other", "echo other"); err != nil {
+		t.Fatalf("create other returned an error: %v", err)
+	}
+
+	_, _, err := runWith(t, cfgPath, "y\n", "update", "other", "--name", "g2", "-a", "o1", "--exec", "echo other")
+	if err == nil {
+		t.Fatal("update accepted a name that is already an alias")
+	}
+
+	if !strings.Contains(err.Error(), `already an alias of "holder"`) {
+		t.Errorf("error = %v, want it to name the alias owner", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "execute", "g2")
+	if err != nil {
+		t.Fatalf("execute g2 returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "two") {
+		t.Errorf("alias g2 no longer resolves to holder: %q", stdout)
+	}
+
+	_, _, err = runWith(t, cfgPath, "y\n", "update", "other", "--name", "other", "-a", "holder", "--exec", "echo other")
+	if err == nil {
+		t.Fatal("update accepted an alias that is already a command name")
+	}
+
+	if !strings.Contains(err.Error(), "already a command name") {
+		t.Errorf("error = %v, want it to name the conflict", err)
+	}
+
+	// A name-first lookup finds holder whether or not the alias was accepted,
+	// so inspect other's alias list: the rejected alias must not be there.
+	stdout, _, err = runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Name    string   `json:"name"`
+			Aliases []string `json:"aliases"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	found := false
+	for _, command := range payload.Commands {
+		if command.Name != "other" {
+			continue
+		}
+
+		found = true
+		for _, alias := range command.Aliases {
+			if alias == "holder" {
+				t.Errorf("the rejected alias was still registered: %q", stdout)
+			}
+		}
+	}
+
+	if !found {
+		t.Errorf("other is missing, so the check above proves nothing: %q", stdout)
+	}
+}
+
 // delete --create removes the command the last create added. With the empty
 // name it failed before touching anything.
 func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {
