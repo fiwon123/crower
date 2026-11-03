@@ -66,7 +66,7 @@ func (h *Handler) CreateCommand(name string, alias []string, exec string) (*comm
 // name is the command to create; args[0] is the process name or pid. The
 // missing-process case used to index an empty slice and panic, so `crower
 // create -p <name>` crashed instead of saying what was missing.
-func (h *Handler) CreateProcess(name string, args []string) (*command.Data, error) {
+func (h *Handler) CreateProcess(name string, allAlias []string, args []string) (*command.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]
@@ -110,7 +110,7 @@ func (h *Handler) CreateProcess(name string, args []string) (*command.Data, erro
 		}
 
 		execCommand := fmt.Sprintf("flatpak run %s", appID)
-		command, err := h.CreateCommand(name, nil, execCommand)
+		command, err := h.CreateCommand(name, allAlias, execCommand)
 
 		if err != nil {
 			return nil, err
@@ -119,7 +119,7 @@ func (h *Handler) CreateProcess(name string, args []string) (*command.Data, erro
 		return command, nil
 	} else if pathStr != "" {
 		pathStr = fmt.Sprintf("'%s'", pathStr)
-		command, err := h.CreateCommand(name, nil, pathStr)
+		command, err := h.CreateCommand(name, allAlias, pathStr)
 
 		if err != nil {
 			return nil, err

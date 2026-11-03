@@ -109,8 +109,8 @@ func (c *Core) performCreateCommand(name string, allAlias []string, exec string)
 }
 
 // CreateProcess adds a managed command built from a running process.
-func (c *Core) CreateProcess(name string, args []string) error {
-	created, err := c.handler.CreateProcess(name, args)
+func (c *Core) CreateProcess(name string, allAlias []string, args []string) error {
+	created, err := c.handler.CreateProcess(name, allAlias, args)
 	if err != nil {
 		return fmt.Errorf("add command by process: %w", err)
 	}
@@ -251,7 +251,7 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, allAlias []str
 
 // CreateScriptCommand creates a script file, registers it as a command, and
 // opens the folder that holds it.
-func (c *Core) CreateScriptCommand(args []string) error {
+func (c *Core) CreateScriptCommand(allAlias []string, args []string) error {
 	if len(args) == 0 {
 		return errors.NotEnoughArgs("name")
 	}
@@ -268,7 +268,7 @@ func (c *Core) CreateScriptCommand(args []string) error {
 	// repeated the same call for two systems and returned success on any
 	// other, which is how `create --script` could report success and create
 	// nothing.
-	created, err := c.performCreateCommand(name, []string{}, scriptFilePath)
+	created, err := c.performCreateCommand(name, allAlias, scriptFilePath)
 	if err != nil {
 		return err
 	}
