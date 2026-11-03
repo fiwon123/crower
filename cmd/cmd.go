@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fiwon123/crower/internal/legacy/checkdom"
+	"github.com/fiwon123/crower/internal/application/checkrelease"
 	"github.com/fiwon123/crower/internal/legacy/executedom"
 	"github.com/fiwon123/crower/internal/legacy/listdom"
 	"github.com/fiwon123/crower/internal/legacy/upgradedom"
@@ -80,7 +80,8 @@ Every command has its own help: crower <command> --help.`,
 
 		switch {
 		case checkNewVersion:
-			return checkdom.NewCore(cfg).CheckNewVersion(Version)
+			session := newLegacySession(cfg, listdom.NewHandler(cfg).CommandsTable)
+			return checkrelease.New(latestTag{}, session, session, session).Run(Version)
 
 		case upgradeFlag:
 			return upgradedom.NewCore(cfg).UpgradeApp(Version)
