@@ -35,8 +35,8 @@ crower create backup -a bkp,bk "tar -czf ~/b.tgz ~/data"
 crower create --file notes.md todo.txt
 crower create --folder tmp logs
 
-# Turn the command you just ran into a shortcut
-crower create --execute
+# Re-create the command you last executed under a new name
+crower create --execute greet2
 ```
 
 > [!TIP]

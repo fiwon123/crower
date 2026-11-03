@@ -711,6 +711,64 @@ func TestExecuteLastRunsTheLastExecutedCommand(t *testing.T) {
 	}
 }
 
+// create --execute re-creates the line the last execute ran under a new name.
+// The reader looked for a bare "exec" note field that no note builder ever
+// wrote, so the command failed every time with "carries no exec to reuse".
+func TestCreateExecuteReusesTheLastExecutedCommand(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "execute", "greet"); err != nil {
+		t.Fatalf("execute returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "--execute", "greet2"); err != nil {
+		t.Fatalf("create --execute returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Name string `json:"name"`
+			Exec string `json:"exec"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	found := false
+	for _, command := range payload.Commands {
+		if command.Name == "greet2" {
+			found = true
+			if command.Exec != "echo hello" {
+				t.Errorf("greet2 exec = %q, want the last executed line", command.Exec)
+			}
+		}
+	}
+
+	if !found {
+		t.Fatalf("create --execute did not add greet2: %q", stdout)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "execute", "greet2")
+	if err != nil {
+		t.Fatalf("execute greet2 returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "hello") {
+		t.Errorf("execute greet2 wrote %q, want the reused command's output", stdout)
+	}
+}
+
 // delete --create removes the command the last create added. With the empty
 // name it failed before touching anything.
 func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {

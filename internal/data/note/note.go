@@ -75,6 +75,29 @@ func (note *Note) Build() string {
 	return strings.Trim(note.builder.String(), ";")
 }
 
+// CommandExec reads the command_exec field out of a built note.
+//
+// The execute note that `create --execute` reuses records the command's exec
+// under command_exec. The reader used to look for a bare "exec" key, which no
+// note builder has ever written, so the reuse could only ever fail.
+//
+// Like CommandName, it only answers for a note whose sub-operation acts on a
+// managed command: a file or folder note can carry the same text inside a
+// quoted path, and reading that would hand back a line the operation never ran.
+func CommandExec(built string) string {
+	if !namesACommand(built) {
+		return ""
+	}
+
+	for field := range strings.SplitSeq(built, ";") {
+		if exec, ok := strings.CutPrefix(field, "command_exec="); ok {
+			return exec
+		}
+	}
+
+	return ""
+}
+
 // CommandName reads the command_name field out of a built note.
 //
 // A note is a ";"-separated list of key=value fields. History entries written
