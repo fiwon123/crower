@@ -1,43 +1,36 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
   <title id="logoTitle">crower</title>
-  <desc id="logoDesc">A raven with an open beak, perched on a cream terminal cursor.</desc>
+  <desc id="logoDesc">A black crow perched on a teal terminal cursor.</desc>
 
   <defs>
     <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#22D3EE"/>
-      <stop offset="1" stop-color="#0891B2"/>
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#E2E8F0"/>
     </linearGradient>
   </defs>
 
   <rect width="512" height="512" rx="112" fill="url(#tile)"/>
-  <rect x="6" y="6" width="500" height="500" rx="106" fill="none" stroke="#0E7490" stroke-width="4"/>
+  <rect x="6" y="6" width="500" height="500" rx="106" fill="none" stroke="#CBD5E1" stroke-width="4"/>
 
-  <!-- Long wedge tail -->
+  <!-- Wedge tail -->
   <path d="M170 324 L56 354 L90 371 L50 390 L154 382 L196 344 Z" fill="#0B1220"/>
 
   <!-- Body -->
   <ellipse cx="226" cy="308" rx="106" ry="68" transform="rotate(-8 226 308)" fill="#0B1220"/>
 
-  <!-- Wing edge -->
-  <path d="M168 300 C 205 272, 268 272, 308 302 C 272 328, 210 330, 168 300 Z" fill="#1E293B"/>
-
   <!-- Head -->
   <ellipse cx="320" cy="216" rx="60" ry="56" fill="#0B1220"/>
 
-  <!-- Throat hackles -->
-  <path d="M354 252 L364 282 L349 270 L346 294 L332 274 Z" fill="#0B1220"/>
-
-  <!-- Open beak: upper and lower mandibles -->
-  <path d="M368 194 L464 208 L368 222 Z" fill="#0B1220"/>
-  <path d="M368 232 L446 248 L368 252 Z" fill="#0B1220"/>
+  <!-- Beak: closed, long, slightly lowered -->
+  <path d="M374 210 L466 228 L374 246 Z" fill="#0B1220"/>
 
   <!-- Eye -->
-  <circle cx="332" cy="206" r="6" fill="#F8FAFC"/>
+  <circle cx="334" cy="206" r="5" fill="#F8FAFC"/>
 
   <!-- Short legs, feet on the cursor -->
-  <path d="M246 356 L246 405 M284 350 L284 405" stroke="#0B1220" stroke-width="9" stroke-linecap="round"/>
-  <path d="M234 405 L246 393 L258 405 M272 405 L284 393 L296 405" stroke="#0B1220" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M246 354 L246 403 M286 348 L286 403" stroke="#0B1220" stroke-width="9" stroke-linecap="round"/>
+  <path d="M234 403 L246 391 L258 403 M274 403 L286 391 L298 403" stroke="#0B1220" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
 
   <!-- Cursor -->
-  <rect x="214" y="405" width="106" height="16" rx="8" fill="#F8FAFC"/>
+  <rect x="212" y="403" width="110" height="16" rx="8" fill="#0891B2"/>
 </svg>
