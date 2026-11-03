@@ -5,6 +5,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/fiwon123/crower/internal/adapters/system"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/shell"
 )
@@ -38,7 +39,7 @@ func (h *Handler) CopyFolder(folderPath string, destFolder string) error {
 // double quotes for a tokenizer that has since been removed, and the shell then
 // read the whole line as the name of a single command: `cp` was never run.
 func (h *Handler) copy(source string, destFolder string, folder bool) error {
-	commandLine, err := copyCommand(runtime.GOOS, source, destFolder, folder)
+	commandLine, err := system.CopyCommand(runtime.GOOS, source, destFolder, folder)
 	if err != nil {
 		return err
 	}
