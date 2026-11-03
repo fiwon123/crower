@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/fiwon123/crower/internal/adapters/github"
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/catalog"
@@ -110,6 +111,20 @@ func (s legacySession) NewExec() (string, error) {
 	return helper.InputExec(s.cfg)
 }
 
+// Record appends a history entry and persists the index.
+//
+// A read-only operation -- a check, an open -- changes no command, so it must
+// not rewrite the command file; that is why this is separate from Commit.
+func (s legacySession) Record(op operation.Operation, commandName, note string) error {
+	s.cfg.History.Add(op, commandName, note)
+	return s.cfg.Save()
+}
+
+// Check is the history note for --check.
+func (s legacySession) Check() string {
+	return notes.Check()
+}
+
 // Reset is the history note for a reset.
 func (s legacySession) Reset() string {
 	return notes.Reset()
@@ -118,4 +133,12 @@ func (s legacySession) Reset() string {
 // Update is the history note for an update.
 func (s legacySession) Update(before, after catalog.Command, last operation.Operation) string {
 	return notes.UpdateNote(before, after, last)
+}
+
+// latestTag adapts the github adapter's function to the Releases port, so cmd
+// stays wiring and the port stays an interface.
+type latestTag struct{}
+
+func (latestTag) LatestTag() (string, error) {
+	return github.LatestTag()
 }

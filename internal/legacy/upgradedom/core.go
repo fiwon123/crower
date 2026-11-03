@@ -1,32 +1,29 @@
 package upgradedom
 
 import (
+	"github.com/fiwon123/crower/internal/adapters/github"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/operation"
-	"github.com/fiwon123/crower/internal/legacy/checkdom"
 )
 
 type Core struct {
-	app          *app.Config
-	handler      *Handler
-	checkHandler *checkdom.Handler
+	app     *app.Config
+	handler *Handler
 }
 
 func NewCore(app *app.Config) *Core {
 
 	handler := NewHandler(app)
-	checkHandler := checkdom.NewHandler(app)
 
 	return &Core{
-		app:          app,
-		handler:      handler,
-		checkHandler: checkHandler,
+		app:     app,
+		handler: handler,
 	}
 }
 
 // UpgradeApp replaces the running binary with the newest release.
 func (c *Core) UpgradeApp(currentVersion string) error {
-	newVersion, err := c.checkHandler.CheckNewVersion(currentVersion)
+	newVersion, err := github.LatestTag()
 	if err != nil {
 		return err
 	}
