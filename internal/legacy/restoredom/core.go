@@ -45,6 +45,13 @@ func (c *Core) Restore(args []string) error {
 		return err
 	}
 
+	// The restored command has to reach the command file, not only the map this
+	// process holds: Save() writes the history snapshot and index, and nothing
+	// else writes the configuration.
+	if err := c.app.SaveCommands(); err != nil {
+		return err
+	}
+
 	c.app.Logger.Info("restored command: ", out)
 
 	c.app.History.Add(operation.Restore, "", newRestoreNote(args))

@@ -1470,3 +1470,68 @@ func TestResetNoInputFails(t *testing.T) {
 		t.Fatal("reset --no-input returned no error, so it would wait")
 	}
 }
+
+// restore has to write the command it restores to the configuration file, not
+// only to the map this process holds: Save() writes the history snapshot and
+// index, and nothing else writes the command file (#247).
+func TestRestoreWritesTheCommandFile(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo one"); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	// update --exec still offers the other fields, so answer them.
+	if _, _, err := runWith(t, cfgPath, "n\nn\ny\n", "update", "greet", "--exec", "echo two"); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if got := configExec(t, cfgPath); got != "echo two" {
+		t.Fatalf("exec after update = %q, want echo two", got)
+	}
+
+	// The history lists the newest entry first: row 1 is the create.
+	stdout, stderr, err := runWith(t, cfgPath, "1\ny\n", "restore", "greet")
+	if err != nil {
+		t.Fatalf("restore: %v", err)
+	}
+
+	if stdout != "" {
+		t.Errorf("restore wrote a result: %q", stdout)
+	}
+
+	if !strings.Contains(stderr, "restored command:") {
+		t.Errorf("restore reported nothing: %q", stderr)
+	}
+
+	if got := configExec(t, cfgPath); got != "echo one" {
+		t.Errorf("exec after restore = %q, want the restored value echo one", got)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "list")
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if !strings.Contains(stdout, "echo one") {
+		t.Errorf("list does not show the restored command:\n%s", stdout)
+	}
+}
+
+// configExec reads the exec of the one command in a test configuration.
+func configExec(t *testing.T, path string) string {
+	t.Helper()
+
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read config: %v", err)
+	}
+
+	for _, line := range strings.Split(string(body), "\n") {
+		if value, ok := strings.CutPrefix(strings.TrimSpace(line), "Exec = "); ok {
+			return strings.Trim(value, `"`)
+		}
+	}
+
+	return ""
+}
