@@ -85,6 +85,6 @@ worked" — is the most useful contribution right now.
 **[🎯 Roadmap board](https://github.com/users/fiwon123/projects/5)** ·
 **[🤝 Contributing](https://github.com/fiwon123/crower/blob/dev/CONTRIBUTING.md)**
 
-<sub>MIT licensed · built with an AI agent, reviewed by a human</sub>
+<sub>MIT licensed · Apache-2.0 notices ship in the archives · built with an AI agent, reviewed by a human</sub>
 
 </div>
