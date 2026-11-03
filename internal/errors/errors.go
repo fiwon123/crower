@@ -23,6 +23,12 @@ func NotEnoughArgs(what string) error {
 	return fmt.Errorf("missing arguments: %s", what)
 }
 
+// TooManyArgs reports a command given more arguments than it accepts. what
+// describes what the command expects, so the message says what to remove.
+func TooManyArgs(what string) error {
+	return fmt.Errorf("too many arguments: expected %s", what)
+}
+
 // CommandNotFound reports a name or alias that matches no managed command.
 func CommandNotFound(key string) error {
 	return fmt.Errorf("command not found: %q", key)

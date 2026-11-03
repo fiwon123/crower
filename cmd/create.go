@@ -61,7 +61,7 @@ Example:
 		case systemFlag:
 			return core.CreateSystemVariable(args)
 		case executeFlag:
-			return core.CreateLastCommand(operations.Execute, args)
+			return core.CreateLastCommand(operations.Execute, allAlias, args)
 		case scriptFlag:
 			return core.CreateScriptCommand(args)
 		case len(args) == 0:

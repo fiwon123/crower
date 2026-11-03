@@ -36,7 +36,8 @@ crower create --file notes.md todo.txt
 crower create --folder tmp logs
 
 # Re-create the command you last executed under a new name
-crower create --execute greet2
+# (one name; --alias and the other create flags still apply)
+crower create --execute greet2 -a g2
 ```
 
 > [!TIP]

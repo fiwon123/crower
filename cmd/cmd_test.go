@@ -769,6 +769,110 @@ func TestCreateExecuteReusesTheLastExecutedCommand(t *testing.T) {
 	}
 }
 
+// create --execute takes one name and the flags any other create form takes.
+// The aliases were hard-coded to an empty slice, so --alias succeeded and did
+// nothing, and a trailing word was ignored instead of rejected.
+func TestCreateExecuteHonoursAliasAndRejectsExtraArguments(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	// Execute a *different* command, so the reused line cannot be mistaken for
+	// greet's when the alias is resolved below.
+	if _, _, err := runWith(t, cfgPath, "", "create", "other", "echo other"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "execute", "other"); err != nil {
+		t.Fatalf("execute returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "--execute", "greet2", "-a", "g2"); err != nil {
+		t.Fatalf("create --execute with an alias returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Name    string   `json:"name"`
+			Aliases []string `json:"aliases"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	hasAlias := false
+	for _, command := range payload.Commands {
+		if command.Name == "greet2" {
+			for _, alias := range command.Aliases {
+				if alias == "g2" {
+					hasAlias = true
+				}
+			}
+		}
+	}
+
+	if !hasAlias {
+		t.Errorf("create --execute dropped the alias: %q", stdout)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "execute", "g2")
+	if err != nil {
+		t.Fatalf("execute by alias returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "other") {
+		t.Errorf("execute g2 wrote %q, want the reused command's output", stdout)
+	}
+
+	_, _, err = runWith(t, cfgPath, "", "create", "--execute", "greet3", "extra")
+	if err == nil {
+		t.Fatal("create --execute with a trailing argument returned no error")
+	}
+
+	if !strings.Contains(err.Error(), "too many arguments") {
+		t.Errorf("error = %v, want a too-many-arguments error", err)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	if strings.Contains(stdout, "greet3") {
+		t.Errorf("a rejected create --execute still added the command: %q", stdout)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "list", "--history", "--json")
+	if err != nil {
+		t.Fatalf("list --history --json returned an error: %v", err)
+	}
+
+	var history struct {
+		History []struct {
+			Command string `json:"command"`
+		} `json:"history"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &history); err != nil {
+		t.Fatalf("history is not valid json: %v (%q)", err, stdout)
+	}
+
+	for _, entry := range history.History {
+		if entry.Command == "greet3" {
+			t.Errorf("a rejected create --execute still wrote a history entry: %q", stdout)
+		}
+	}
+}
+
 // delete --create removes the command the last create added. With the empty
 // name it failed before touching anything.
 func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {

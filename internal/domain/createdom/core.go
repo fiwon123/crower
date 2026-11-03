@@ -213,9 +213,18 @@ func (c *Core) CreateFolder(args []string) error {
 
 // CreateLastCommand re-creates the command touched by the last operation of the
 // given kind.
-func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string) error {
+//
+// It takes exactly one argument, the new name. Extra words used to be ignored,
+// so `create --execute name typo` succeeded and dropped the typo; and the
+// --alias flag was accepted but never reached the command, because the aliases
+// were hard-coded to an empty slice.
+func (c *Core) CreateLastCommand(op operations.MainOperationEnum, allAlias []string, args []string) error {
 	if len(args) == 0 {
 		return errors.NotEnoughArgs("name")
+	}
+
+	if len(args) > 1 {
+		return errors.TooManyArgs("one name")
 	}
 
 	name := args[0]
@@ -230,7 +239,7 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string)
 		return fmt.Errorf("the last %q operation carries no exec to reuse", op)
 	}
 
-	created, err := c.performCreateCommand(name, []string{}, exec)
+	created, err := c.performCreateCommand(name, allAlias, exec)
 	if err != nil {
 		return err
 	}
