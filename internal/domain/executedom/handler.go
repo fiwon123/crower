@@ -43,13 +43,16 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 		return "", nil, errors.CommandNotFound(key)
 	}
 
-	execLine := applyParams(cmd.Exec, params)
-
-	h.app.Logger.Debug("exec: " + execLine)
-
 	// Get steps
 	steps := cmd.Steps
 	if len(steps) == 0 {
+		execLine, err := applyParams(cmd.Exec, params)
+		if err != nil {
+			return "", cmd, err
+		}
+
+		h.app.Logger.Debug("exec: " + execLine)
+
 		steps = []string{execLine}
 	}
 
@@ -83,11 +86,60 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 	return allOut.String(), cmd, nil
 }
 
+// paramToken is one brace token in a line, with the bounds of its text.
+type paramToken struct {
+	start int
+	end   int
+	token string
+}
+
+// paramTokens finds the brace tokens in a line. A "{" whose span contains
+// another "{" is literal (a shell snippet before a real placeholder), so it is
+// skipped rather than swallowing the placeholder that follows.
+func paramTokens(line string) []paramToken {
+	var tokens []paramToken
+
+	for i := 0; i < len(line); {
+		if line[i] != '{' {
+			i++
+			continue
+		}
+
+		relative := strings.IndexByte(line[i+1:], '}')
+		if relative < 0 {
+			break
+		}
+
+		end := i + 1 + relative
+		token := line[i+1 : end]
+		if strings.ContainsRune(token, '{') {
+			i++
+			continue
+		}
+
+		tokens = append(tokens, paramToken{start: i, end: end, token: token})
+		i = end + 1
+	}
+
+	return tokens
+}
+
 // applyParams fills the placeholders of an exec line, or appends the parameters
-// when it has none.
-func applyParams(execLine string, params []string) string {
+// when the line has no braces at all.
+//
+// The line is scanned once: substituting sequentially re-scanned the text that
+// had already been inserted, so a parameter containing "{2}" was replaced again
+// by the second parameter. A brace that is not a placeholder (`{a,b}`, `{0}`,
+// an index past the parameters) is left as written, and a line with braces but
+// no usable placeholder is an error — the old code returned the line unchanged
+// and dropped the parameters without a word.
+//
+// `{}` takes the parameters no `{n}` consumed, as the docs say; with no `{n}`
+// that is every parameter. A `find … -exec … {}` template is only affected when
+// parameters are passed explicitly.
+func applyParams(execLine string, params []string) (string, error) {
 	if len(params) == 0 {
-		return execLine
+		return execLine, nil
 	}
 
 	quoted := make([]string, 0, len(params))
@@ -96,15 +148,91 @@ func applyParams(execLine string, params []string) string {
 	}
 
 	if !strings.Contains(execLine, "{") {
-		return execLine + " " + strings.Join(quoted, " ")
+		return execLine + " " + strings.Join(quoted, " "), nil
 	}
 
+	tokens := paramTokens(execLine)
+	used := make([]bool, len(quoted))
+	found := false
+	outOfRange := ""
+
+	for _, token := range tokens {
+		switch {
+		case token.token == "":
+			found = true
+		case !isParamIndex(token.token):
+		default:
+			n, err := strconv.Atoi(token.token)
+			if err != nil || n < 1 || n > len(quoted) {
+				if outOfRange == "" {
+					outOfRange = token.token
+				}
+				continue
+			}
+
+			used[n-1] = true
+			found = true
+		}
+	}
+
+	if !found {
+		if outOfRange != "" {
+			return "", fmt.Errorf("parameter {%s} is out of range: %d given", outOfRange, len(params))
+		}
+
+		return "", fmt.Errorf("no parameter placeholder in %q", execLine)
+	}
+
+	remaining := make([]string, 0, len(quoted))
 	for i, param := range quoted {
-		execLine = strings.ReplaceAll(execLine, fmt.Sprintf("{%d}", i+1), param)
+		if !used[i] {
+			remaining = append(remaining, param)
+		}
 	}
 
-	// {} is the first parameter.
-	return strings.ReplaceAll(execLine, "{}", quoted[0])
+	remainder := strings.Join(remaining, " ")
+
+	var out strings.Builder
+	cursor := 0
+
+	for _, token := range tokens {
+		out.WriteString(execLine[cursor:token.start])
+
+		switch {
+		case token.token == "":
+			out.WriteString(remainder)
+		case !isParamIndex(token.token):
+			out.WriteString(execLine[token.start : token.end+1])
+		default:
+			n, err := strconv.Atoi(token.token)
+			if err != nil || n < 1 || n > len(quoted) {
+				out.WriteString(execLine[token.start : token.end+1])
+			} else {
+				out.WriteString(quoted[n-1])
+			}
+		}
+
+		cursor = token.end + 1
+	}
+
+	out.WriteString(execLine[cursor:])
+
+	return out.String(), nil
+}
+
+// isParamIndex reports whether token is a positive decimal index.
+func isParamIndex(token string) bool {
+	if token == "" {
+		return false
+	}
+
+	for _, r := range token {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+
+	return true
 }
 
 // executeNested runs a step that calls crower again.
