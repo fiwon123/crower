@@ -120,7 +120,7 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 	cfgPath := filepath.Join(dir, "crower.yaml")
 
 	legacy := history.New(filepath.Join(dir, "history"))
-	legacy.Add(operations.Create, "", "main_operation=create;command_name=greet;command_exec=echo hi")
+	legacy.Add(operations.Create, "", "main_operation=create;sub_operation=command;command_name=greet;command_exec=echo hi")
 
 	if err := utils.WriteJson(legacy, filepath.Join(dir, "historyhelper.json")); err != nil {
 		t.Fatalf("write legacy history: %v", err)
@@ -138,5 +138,32 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 
 	if last.CommandName != "greet" {
 		t.Errorf("CommandName = %q, want it backfilled from the note", last.CommandName)
+	}
+}
+
+// A file note can carry the same text inside a path; resolving that would point
+// `--last` at a command the operation never touched.
+func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
+	dir := t.TempDir()
+
+	legacy := history.New(filepath.Join(dir, "history"))
+	legacy.Add(operations.Create, "", `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_name=greet"`)
+	legacy.Add(operations.Execute, "real", "main_operation=execute;sub_operation=command;command_name=other")
+
+	if err := utils.WriteJson(legacy, filepath.Join(dir, "historyhelper.json")); err != nil {
+		t.Fatalf("write legacy history: %v", err)
+	}
+
+	cfg, err := InitApp(filepath.Join(dir, "crower.yaml"), Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
+	if err != nil {
+		t.Fatalf("InitApp: %v", err)
+	}
+
+	if got := cfg.History.AllData[0].CommandName; got != "" {
+		t.Errorf("file note backfilled %q, want no name", got)
+	}
+
+	if got := cfg.History.AllData[1].CommandName; got != "real" {
+		t.Errorf("stored name = %q, want it left alone", got)
 	}
 }

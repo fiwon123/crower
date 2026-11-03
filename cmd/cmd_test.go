@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"archive/tar"
 	"bytes"
 	"encoding/json"
 	"os"
@@ -392,6 +393,7 @@ func TestListHistoryJSON(t *testing.T) {
 			Version   int    `json:"version"`
 			Timestamp string `json:"timestamp"`
 			Operation string `json:"operation"`
+			Command   string `json:"command"`
 			Note      string `json:"note"`
 		} `json:"history"`
 	}
@@ -413,6 +415,10 @@ func TestListHistoryJSON(t *testing.T) {
 
 	if newest.Timestamp == "" || newest.Note == "" {
 		t.Errorf("newest entry = %+v, want a timestamp and a note", newest)
+	}
+
+	if newest.Command != "greet" {
+		t.Errorf("newest entry command = %q, want greet", newest.Command)
 	}
 }
 
@@ -725,5 +731,68 @@ func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {
 
 	if strings.Contains(stdout, "greet") {
 		t.Errorf("delete --create left the command behind: %q", stdout)
+	}
+}
+
+func writeTestTar(t *testing.T, archivePath string) {
+	t.Helper()
+
+	file, err := os.Create(archivePath)
+	if err != nil {
+		t.Fatalf("create %s: %v", archivePath, err)
+	}
+
+	writer := tar.NewWriter(file)
+
+	header := &tar.Header{Name: "x.txt", Mode: 0o644, Size: 1}
+	if err := writer.WriteHeader(header); err != nil {
+		t.Fatalf("write header: %v", err)
+	}
+
+	if _, err := writer.Write([]byte("x")); err != nil {
+		t.Fatalf("write payload: %v", err)
+	}
+
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close tar: %v", err)
+	}
+
+	if err := file.Close(); err != nil {
+		t.Fatalf("close %s: %v", archivePath, err)
+	}
+}
+
+// `extract` records the extract operation, not an execute: it used to be filed
+// as Execute with no command, so `execute --last` after an extract ran nothing
+// and failed with `command not found: ""`.
+func TestExtractDoesNotCountAsTheLastExecute(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("no gate runs a Windows shell: extraction there is unverified")
+	}
+
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "execute", "greet"); err != nil {
+		t.Fatalf("execute returned an error: %v", err)
+	}
+
+	archive := filepath.Join(t.TempDir(), "x.tar")
+	writeTestTar(t, archive)
+
+	if _, _, err := runWith(t, cfgPath, "", "extract", archive); err != nil {
+		t.Fatalf("extract returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "execute", "--last")
+	if err != nil {
+		t.Fatalf("execute --last after an extract returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "hello") {
+		t.Errorf("execute --last wrote %q, want the last executed command's output", stdout)
 	}
 }
