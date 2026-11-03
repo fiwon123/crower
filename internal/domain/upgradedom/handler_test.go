@@ -5,7 +5,9 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -123,6 +125,60 @@ func zipArchive(t *testing.T, files map[string]string) []byte {
 	return archive.Bytes()
 }
 
+// checksumLine is the shape `sha256sum *` writes for one file.
+func checksumLine(body []byte, asset string) string {
+	sum := sha256.Sum256(body)
+
+	return fmt.Sprintf("%x  %s\n", sum, asset)
+}
+
+func TestParseChecksum(t *testing.T) {
+	hash := strings.Repeat("a", 64)
+
+	asset := "crower_v1_linux_amd64.tar.gz"
+
+	tests := []struct {
+		name    string
+		body    string
+		asset   string
+		want    string
+		wantErr bool
+	}{
+		{"text mode", hash + "  " + asset + "\n", asset, hash, false},
+		{"binary mode", hash + " *" + asset + "\n", asset, hash, false},
+		{"CRLF", hash + "  " + asset + "\r\n", asset, hash, false},
+		{"tabs and extra spaces", hash + "\t\t" + asset + "  \n", asset, hash, false},
+		{"no trailing newline", hash + "  " + asset, asset, hash, false},
+		{"another asset first", strings.Repeat("b", 64) + "  other.tar.gz\n" + hash + "  " + asset + "\n", asset, hash, false},
+		{"a superstring is not the asset", strings.Repeat("b", 64) + "  x" + asset + ".bak\n", asset, "", true},
+		{"missing entry", hash + "  other.tar.gz\n", asset, "", true},
+		{"malformed hash", "not-a-hash  " + asset + "\n", asset, "", true},
+		{"empty", "", asset, "", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseChecksum([]byte(tt.body), tt.asset)
+
+			if tt.wantErr {
+				if !errors.Is(err, crowererrors.ErrChecksumUnavailable) {
+					t.Errorf("error = %v, want ErrChecksumUnavailable", err)
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("parseChecksum() error = %v", err)
+			}
+
+			if got == nil || fmt.Sprintf("%x", got) != tt.want {
+				t.Errorf("parseChecksum() = %x, want %s", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestBinaryFromArchive(t *testing.T) {
 	binary := "#!/bin/sh\necho crower\n"
 
@@ -219,13 +275,17 @@ func TestFetchBinaryReturnsTheExecutable(t *testing.T) {
 	binary := "binary"
 	body := tarGzArchive(t, map[string]string{"crower": binary})
 
-	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1.2.3/crower_v1.2.3_linux_amd64.tar.gz" {
-			http.NotFound(w, r)
-			return
-		}
+	asset := "crower_v1.2.3_linux_amd64.tar.gz"
 
-		w.Write(body)
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1.2.3/" + asset:
+			w.Write(body)
+		case "/v1.2.3/checksums.txt":
+			io.WriteString(w, checksumLine(body, asset))
+		default:
+			http.NotFound(w, r)
+		}
 	}))
 	defer server.Close()
 
@@ -288,12 +348,14 @@ func TestUpgradeAppAppliesTheExtractedBinary(t *testing.T) {
 	}
 
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1.2.3/"+asset {
+		switch r.URL.Path {
+		case "/v1.2.3/" + asset:
+			w.Write(body)
+		case "/v1.2.3/checksums.txt":
+			io.WriteString(w, checksumLine(body, asset))
+		default:
 			http.NotFound(w, r)
-			return
 		}
-
-		w.Write(body)
 	}))
 	defer server.Close()
 
@@ -361,5 +423,97 @@ func TestFetchBinaryRefusesAPlaintextBase(t *testing.T) {
 	_, err = handler.fetchBinary("v1.2.3", "crower_v1.2.3_linux_amd64.tar.gz")
 	if err == nil || !strings.Contains(err.Error(), "only HTTPS") {
 		t.Errorf("error = %v, want the HTTPS refusal", err)
+	}
+}
+
+func TestFetchBinaryRejectsATamperedArchive(t *testing.T) {
+	cfg, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	asset := "crower_v1.2.3_linux_amd64.tar.gz"
+	body := tarGzArchive(t, map[string]string{"crower": "binary"})
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1.2.3/" + asset:
+			w.Write(body)
+		case "/v1.2.3/checksums.txt":
+			io.WriteString(w, strings.Repeat("0", 64)+"  "+asset+"\n")
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+
+	_, err = handler.fetchBinary("v1.2.3", asset)
+	if !errors.Is(err, crowererrors.ErrChecksumMismatch) {
+		t.Errorf("error = %v, want ErrChecksumMismatch", err)
+	}
+}
+
+func TestFetchBinaryRequiresAChecksumEntry(t *testing.T) {
+	cfg, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	asset := "crower_v1.2.3_linux_amd64.tar.gz"
+	body := tarGzArchive(t, map[string]string{"crower": "binary"})
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1.2.3/" + asset:
+			w.Write(body)
+		case "/v1.2.3/checksums.txt":
+			io.WriteString(w, strings.Repeat("0", 64)+"  another.tar.gz\n")
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+
+	_, err = handler.fetchBinary("v1.2.3", asset)
+	if !errors.Is(err, crowererrors.ErrChecksumUnavailable) {
+		t.Errorf("error = %v, want ErrChecksumUnavailable", err)
+	}
+}
+
+// A release without checksums.txt must fail before the archive is fetched.
+func TestFetchBinaryRequiresChecksums(t *testing.T) {
+	cfg, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	asset := "crower_v1.2.3_linux_amd64.tar.gz"
+	body := tarGzArchive(t, map[string]string{"crower": "binary"})
+	archiveFetched := false
+
+	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1.2.3/" + asset:
+			archiveFetched = true
+			w.Write(body)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+
+	_, err = handler.fetchBinary("v1.2.3", asset)
+	if err == nil {
+		t.Fatal("a release without checksums.txt returned no error")
+	}
+
+	if archiveFetched {
+		t.Error("the archive was downloaded before the checksum was known to exist")
 	}
 }
