@@ -57,6 +57,9 @@ func (app *Config) ConfigFolder() string {
 
 // NewApp builds the run from an already-read configuration.
 //
+// allAliases must have been built by getAliasMap from allCommands; NewApp warns
+// about collisions but does not rebuild the index.
+//
 // It returns an error instead of panicking: a state directory that cannot be
 // created, a history file that cannot be parsed, and a log that cannot be
 // opened are conditions of the environment, not reasons to crash. The old code
@@ -103,7 +106,7 @@ func NewApp(
 		return nil, err
 	}
 
-	return &Config{
+	cfg := &Config{
 		History:            history,
 		cfgFilePath:        cfgFilePath,
 		historyFilePath:    historyFilePath,
@@ -117,5 +120,14 @@ func NewApp(
 		in:                 bufio.NewReader(opts.Streams.In),
 		out:                opts.Streams.Out,
 		err:                opts.Streams.Err,
-	}, nil
+	}
+
+	// A config written by an older build (or edited by hand) can hold a
+	// collision. Resolution is deterministic now, but the user still needs to
+	// know that one of the two commands is unreachable by that key.
+	for _, warning := range commandCollisions(allCommands) {
+		cfg.Logger.Warning(warning)
+	}
+
+	return cfg, nil
 }
