@@ -50,6 +50,11 @@ so two entries can never share a key.
 Any HTTP server can host packs: `index.json` plus `packs/<name>.toml`. See
 [crower-resources](https://github.com/fiwon123/crower-resources) for examples.
 
+> [!NOTE]
+> A pack name is a registry slug (`A-Z a-z 0-9 . _ -`). `share pull` rejects a
+> name containing a separator or `..`, and the downloaded pack is written to a
+> program-named temporary file only **after** you confirm the import.
+
 > [!WARNING]
 > An exported file contains what you typed — hosts, paths, sometimes secrets.
 > Read it before you commit or send it, and prefer `{1}`-style parameters over

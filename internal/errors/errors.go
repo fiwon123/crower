@@ -17,6 +17,11 @@ import (
 // that did nothing must not look like one that succeeded.
 var ErrUnsupportedOS = stderrors.New("unsupported operating system")
 
+// ErrInvalidPackName reports a pack name that is not a registry slug. The name
+// is interpolated into a URL and used to derive a file, so a path or a URL
+// metacharacter must be rejected before either happens.
+var ErrInvalidPackName = stderrors.New("invalid pack name")
+
 // NotEnoughArgs reports a command that was run without the arguments it needs.
 // what names the missing input, so the message says what to add.
 func NotEnoughArgs(what string) error {
