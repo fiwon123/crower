@@ -19,9 +19,10 @@ func TestListFolderCommand(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"windows", "windows", "/tmp/example", `dir "/tmp/example"`, false},
-		{"linux", "linux", "/tmp/example", `ls -la "/tmp/example"`, false},
-		{"darwin", "darwin", "/tmp/example", `ls -la "/tmp/example"`, false},
+		{"windows", "windows", "/tmp/example", `dir /tmp/example`, false},
+		{"windows with a space", "windows", `C:\My Files`, `dir "C:\My Files"`, false},
+		{"linux", "linux", "/tmp/example", `ls -la -- '/tmp/example'`, false},
+		{"darwin", "darwin", "/tmp/example", `ls -la -- '/tmp/example'`, false},
 		{"unsupported freebsd", "freebsd", "/tmp/example", "", true},
 		{"unsupported empty", "", "/tmp/example", "", true},
 	}
@@ -79,7 +80,7 @@ func TestListSysPathCommand(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"windows", "windows", "echo %PATH%", false},
+		{"windows", "windows", `echo "%PATH%"`, false},
 		{"linux", "linux", `echo "$PATH"`, false},
 		{"darwin", "darwin", `echo "$PATH"`, false},
 		{"unsupported freebsd", "freebsd", "", true},

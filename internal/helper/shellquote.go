@@ -9,8 +9,8 @@ import (
 // QuoteFor quotes a string for safe use in shell commands on the given OS.
 // goos should be runtime.GOOS or "windows"/"linux" for testing.
 //
-// The implementation lives in pkg/utils so the note writer can quote a recorded
-// command line without importing this package, which depends on app.
+// The implementation lives in internal/shell so the note writer can quote a
+// recorded command line without importing this package, which depends on app.
 func QuoteFor(goos, s string) string {
 	return shell.QuoteFor(goos, s)
 }

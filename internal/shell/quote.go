@@ -46,9 +46,9 @@ func quotePosix(s string) string {
 //
 // A trailing run of backslashes is doubled when the value is quoted: a single
 // "\" before the closing quote escapes it, and the argument swallows whatever
-// follows. A backslash immediately before an embedded quote cannot be carried:
-// the backslash is kept and the quote is dropped, because an odd backslash run
-// would flip cmd's quoting state.
+// follows. A backslash immediately before an embedded quote cannot be carried
+// exactly: the run is doubled so the quote state stays balanced, which is the
+// safe choice even though the value is not preserved byte for byte.
 func quoteWindows(s string) string {
 	if s == "" {
 		return `""`

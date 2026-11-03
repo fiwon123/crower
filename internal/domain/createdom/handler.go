@@ -11,6 +11,7 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/internal/shell"
 
 	"github.com/fiwon123/crower/pkg/utils"
@@ -126,7 +127,10 @@ func (h *Handler) CreateProcess(name string, allAlias []string, args []string) (
 
 		return command, nil
 	} else if pathStr != "" {
-		pathStr = fmt.Sprintf("'%s'", pathStr)
+		// The path becomes the stored exec and is later run by a shell, so it
+		// gets the same quoting every other domain uses. Hand-written single
+		// quotes are literal to cmd and break on a path containing one.
+		pathStr = helper.Quote(pathStr)
 		command, err := h.CreateCommand(name, allAlias, pathStr)
 
 		if err != nil {
