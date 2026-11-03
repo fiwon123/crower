@@ -4,14 +4,14 @@ import (
 	"testing"
 
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 // The prompt and the handler share findCommand, so the command shown for
 // confirmation is the command that gets updated. A colliding key resolves name
 // first, as every lookup in the project does.
 func TestFindCommand(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

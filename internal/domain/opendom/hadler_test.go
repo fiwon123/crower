@@ -7,7 +7,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 // recordingOpener returns a CommandRunner that records the command it was
@@ -46,7 +46,7 @@ func assertOpensPath(t *testing.T, commands []string, path string) {
 
 func TestOpenFile(t *testing.T) {
 	t.Run("Open File single name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -72,7 +72,7 @@ func TestOpenFile(t *testing.T) {
 	})
 
 	t.Run("Open File name with space", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -100,7 +100,7 @@ func TestOpenFile(t *testing.T) {
 
 func TestOpenFolder(t *testing.T) {
 	t.Run("Open c single name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -126,7 +126,7 @@ func TestOpenFolder(t *testing.T) {
 	})
 
 	t.Run("Open Folder name with space", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -153,7 +153,7 @@ func TestOpenFolder(t *testing.T) {
 }
 
 func TestOpenSystem(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

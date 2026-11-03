@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/domain/searchdom"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 // recordingRunner stands in for the shell: a search has to reach the runner it
@@ -27,7 +27,7 @@ func (r *recordingRunner) Start(ex string) error {
 }
 
 func TestSearchUsesTheInjectedRunner(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("InitCrowerTests: %v", err)
 	}

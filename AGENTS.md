@@ -121,7 +121,7 @@ behaviour. A green run proves gofmt, vet, and build — and nothing about
 behaviour.
 
 There is **no known-failing baseline.** Every test gets its own fixture
-directory from `internal/helper.InitCrowerTests` (`os.MkdirTemp`), so parallel
+directory from `internal/testutil.New(t)` (`t.TempDir`), so parallel
 packages cannot race over a shared path. The failure that used to live in
 `opendom`, `deletedom` and `movedom` was fixed in #47, which closed #46. A red
 run is a regression until proven otherwise — do not discount it, and never

@@ -12,14 +12,14 @@ import (
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 func TestUpdate(t *testing.T) {
 
 	t.Run("Update command name", func(t *testing.T) {
 
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -84,7 +84,7 @@ func TestUpdateRejectsShadowing(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			app, _, err := helper.InitCrowerTests()
+			app, _, err := testutil.New(t)
 			if err != nil {
 				t.Fatalf("error before test: %v", err)
 			}
@@ -119,7 +119,7 @@ func TestUpdateRejectsShadowing(t *testing.T) {
 // A rename must move the command and drop the aliases it no longer has: the
 // old name and the old alias have to disappear from their maps.
 func TestUpdateRenamesAndReplacesAliases(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -155,7 +155,7 @@ func TestUpdateRenamesAndReplacesAliases(t *testing.T) {
 // its own name must not be reported as a conflict, and an omitted alias list
 // keeps the aliases it already had.
 func TestUpdateAllowsTheCommandsOwnNameAndAliases(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -184,7 +184,7 @@ func TestUpdateAllowsTheCommandsOwnNameAndAliases(t *testing.T) {
 // values the update changes are validated.
 func TestUpdateWorksOnAPreExistingCollision(t *testing.T) {
 	t.Run("a name that is also an alias", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -208,7 +208,7 @@ func TestUpdateWorksOnAPreExistingCollision(t *testing.T) {
 	})
 
 	t.Run("an alias that is also a name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -272,7 +272,7 @@ func TestUpdateLeavesAnAliasAnotherCommandOwns(t *testing.T) {
 // An update of another field must not delete the dormant claim: the record is
 // only normalised when the user replaces the alias list.
 func TestUpdateKeepsADormantAliasOnAnUnrelatedField(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -302,7 +302,7 @@ func TestUpdateKeepsADormantAliasOnAnUnrelatedField(t *testing.T) {
 // The same for an alias that is another command's name: name-first lookup
 // makes it unreachable, so a supplied list drops the claim.
 func TestUpdateLeavesAnAliasThatIsAnotherName(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -362,7 +362,7 @@ func TestUpdateKeepsSteps(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg, _, err := helper.InitCrowerTests()
+			cfg, _, err := testutil.New(t)
 			if err != nil {
 				t.Fatalf("error before test: %v", err)
 			}
