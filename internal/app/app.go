@@ -42,8 +42,8 @@ type Config struct {
 
 // ConfigFile is the configuration file this run uses.
 //
-// It is read-only on purpose: writing it is SaveCommands' job, so a domain
-// does not have to know the format or the location.
+// It is read-only on purpose: writing it is this package's job (SaveCommands,
+// RevertTo), so a domain does not have to know the format or the location.
 func (app *Config) ConfigFile() string {
 	return app.cfgFilePath
 }

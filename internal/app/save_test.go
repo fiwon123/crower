@@ -13,11 +13,11 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func newTestConfig(t *testing.T) *Config {
+func newTestConfigAt(t *testing.T, cfgPath string) *Config {
 	t.Helper()
 
 	cfg, err := InitApp(
-		filepath.Join(t.TempDir(), "crower.yaml"),
+		cfgPath,
 		Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}},
 	)
 	if err != nil {
@@ -27,13 +27,15 @@ func newTestConfig(t *testing.T) *Config {
 	return cfg
 }
 
+func newTestConfig(t *testing.T) *Config {
+	t.Helper()
+
+	return newTestConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
+}
+
 func TestConfigPaths(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "nested", "crower.yaml")
-
-	cfg, err := InitApp(cfgPath, Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
-	if err != nil {
-		t.Fatalf("InitApp: %v", err)
-	}
+	cfg := newTestConfigAt(t, cfgPath)
 
 	if got := cfg.ConfigFile(); got != cfgPath {
 		t.Errorf("ConfigFile() = %q, want %q", got, cfgPath)
@@ -47,7 +49,10 @@ func TestConfigPaths(t *testing.T) {
 // SaveCommands is the one writer of the configuration file. A domain calls it
 // instead of knowing that the file is TOML or where it is.
 func TestSaveCommandsWritesTheCommandMap(t *testing.T) {
-	cfg := newTestConfig(t)
+	// Read back the path handed to InitApp, not ConfigFile(): a wrong path on
+	// both sides would otherwise hide itself.
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+	cfg := newTestConfigAt(t, cfgPath)
 
 	cfg.AllCommandsByName.Add("greet", command.New("greet", []string{"hi"}, "echo hello"))
 
@@ -56,8 +61,8 @@ func TestSaveCommandsWritesTheCommandMap(t *testing.T) {
 	}
 
 	read := command.NewMapData()
-	if err := utils.ReadToml(cfg.ConfigFile(), &read); err != nil {
-		t.Fatalf("read back %s: %v", cfg.ConfigFile(), err)
+	if err := utils.ReadToml(cfgPath, &read); err != nil {
+		t.Fatalf("read back %s: %v", cfgPath, err)
 	}
 
 	written := read.Get("greet")
@@ -91,5 +96,17 @@ func TestDeleteHistoryBackup(t *testing.T) {
 
 	if _, err := os.Stat(snapshot); !os.IsNotExist(err) {
 		t.Errorf("snapshot still exists after DeleteHistoryBackup: %v", err)
+	}
+}
+
+// The file name comes from a history entry, which can be hand-edited: it must
+// not be able to point outside the history folder.
+func TestDeleteHistoryBackupRejectsAPath(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	for _, name := range []string{"", "../escape", "/abs/path"} {
+		if err := cfg.DeleteHistoryBackup(name); err == nil {
+			t.Errorf("DeleteHistoryBackup(%q) returned no error", name)
+		}
 	}
 }
