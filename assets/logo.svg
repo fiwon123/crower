@@ -1,39 +1,37 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">crower</title>
+  <desc id="logoDesc">A black crow's head with a teal beak shaped like a prompt, inside a folder.</desc>
+
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    <linearGradient id="folder" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E2E8F0"/>
+      <stop offset="1" stop-color="#CBD5E1"/>
+    </linearGradient>
+    <linearGradient id="beak" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#06B6D4"/>
+      <stop offset="1" stop-color="#0891B2"/>
     </linearGradient>
   </defs>
-  
-  <!-- Solid black background -->
-  <rect width="512" height="512" rx="80" fill="#000000"/>
-  
-  <!-- Crow head/face - white silhouette -->
-  <!-- Main head shape -->
-  <ellipse cx="256" cy="230" rx="95" ry="105" fill="#ffffff"/>
-  
-  <!-- Beak - sharp angular beak -->
-  <path d="M 345 230 L 390 225 L 345 245 Z" fill="#ffffff"/>
-  
-  <!-- Eye socket shadow for depth -->
-  <ellipse cx="295" cy="210" rx="18" ry="22" fill="#000000" opacity="0.15"/>
-  
+
+  <!-- Folder tile -->
+  <path d="M64 180 Q64 152 92 152 H190 Q206 152 216 166 L232 186 H420 Q448 186 448 214 V392 Q448 420 420 420 H92 Q64 420 64 392 Z" fill="url(#folder)"/>
+  <path d="M64 180 Q64 152 92 152 H190 Q206 152 216 166 L232 186 H420 Q448 186 448 214 V392 Q448 420 420 420 H92 Q64 420 64 392 Z" fill="none" stroke="#94A3B8" stroke-width="5"/>
+
+  <!-- Crow head and neck -->
+  <path d="M146 362
+    C 128 316, 140 258, 180 226
+    C 214 198, 268 192, 308 212
+    C 336 226, 354 250, 358 274
+    L 358 292
+    C 348 318, 326 336, 298 346
+    C 272 356, 242 358, 216 350
+    L 224 382
+    L 146 382 Z" fill="#0F172A"/>
+
+  <!-- Beak: a thick prompt arrow attached to the head -->
+  <path d="M336 226 L438 256 L336 286 L336 268 L398 256 L336 244 Z" fill="url(#beak)"/>
+
   <!-- Eye -->
-  <circle cx="295" cy="210" r="14" fill="#000000"/>
-  <circle cx="300" cy="205" r="5" fill="#ffffff"/>
-  
-  <!-- Nostrils -->
-  <circle cx="348" cy="232" r="2" fill="#000000"/>
-  <circle cx="348" cy="238" r="2" fill="#000000"/>
-  
-  <!-- Head feather tuft -->
-  <path d="M 200 150 Q 210 135 225 145 Q 215 160 200 150" fill="#ffffff"/>
-  <path d="M 215 142 Q 230 125 245 138 Q 235 155 215 142" fill="#ffffff"/>
-  
-  <!-- Command prompt integrated -->
-  <g opacity="0.95">
-    <path d="M 170 310 L 195 335 L 170 360" stroke="#ffffff" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="210" y1="360" x2="240" y2="360" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
-  </g>
+  <circle cx="300" cy="244" r="6" fill="#F8FAFC"/>
+  <circle cx="302" cy="242" r="2" fill="#0891B2"/>
 </svg>
