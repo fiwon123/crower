@@ -32,14 +32,34 @@ var Version = "vx.x.x"
 // rootCmd represents the base command when called without any subcommands.
 var rootCmd = &cobra.Command{
 	Use:   "crower",
-	Short: "A dev tool that manages system commands to help developers in their daily workflow.",
-	Long: `A dev tool that manages system commands to help developers in their daily workflow.
+	Short: "A terminal file manager and command-alias manager with undoable history.",
+	Long: `crower keeps the commands you run often and the files you touch, and it can
+undo what it did.
 
-It has useful operations like create, edit, remove, list and more.
+Run a managed command:
+	crower greet
+	crower execute greet
 
-Execute Command:
-	- Use 'crower "command"' or 'cr "command"'
-	- Use 'crower execute "command"' or 'cr execute "command"'`,
+Manage the command set:
+	crower create greet "echo hello" --alias hi
+	crower list
+	crower update greet --exec "echo hi"
+	crower delete greet
+
+Work with files:
+	crower create --file notes.txt
+	crower copy notes.txt ~/backup
+	crower open --folder .
+
+Undo what happened:
+	crower list --history
+	crower revert 1
+
+Results go to stdout and diagnostics go to stderr, so "crower list | wc -l"
+counts rows. A failure exits 1, and a prompt with no input available fails
+instead of waiting.
+
+Every command has its own help: crower <command> --help.`,
 	Aliases: []string{"cr"},
 	Args:    cobra.ArbitraryArgs,
 	// Cobra must not print the error itself: Execute prints it once, to the

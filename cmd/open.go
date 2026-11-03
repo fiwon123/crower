@@ -9,15 +9,16 @@ import (
 // Cmd represents the open command
 var openCmd = &cobra.Command{
 	Use:   "open [path...]",
-	Short: "open current configuration file path, folder and system",
-	Long: `open current configuration file path, folder and system
+	Short: "Open the configuration, a file, a folder or a system dialog.",
+	Long: `Open the configuration, a file, a folder or a system dialog.
 
-Examples:
 	crower open
-	crower open --file "FILE_PATH"
-	crower open --folder "FOLDER_PATH"
-	crower open --system
-`,
+	crower open --file notes.txt
+	crower open --folder ~/projects
+	crower open --system`,
+	Example: `	crower open
+	crower open --file notes.txt
+	crower open --folder ~/projects`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

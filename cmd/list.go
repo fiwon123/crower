@@ -11,19 +11,24 @@ var historyFlag bool
 // Cmd represents the list command
 var listCmd = &cobra.Command{
 	Use:   "list [flags]",
-	Short: "list all commands, history, process, folder, system, path system",
-	Long: `list all commands, history, process, folder, system, path system
+	Short: "List commands, history, processes, folders or variables.",
+	Long: `List commands, history, processes, folders or variables.
 
-list all commands by default
+With no flag, crower lists the managed commands in the order they were
+saved.
 
-Example:
 	crower list
 	crower list --history
 	crower list --process
-	crower list --folder "FOLDER_PATH"
+	crower list --folder ~/projects
 	crower list --system
 	crower list --syspath
-`,
+
+--json prints one JSON object on stdout instead of a table.`,
+	Example: `	crower list
+	crower list --history
+	crower list --folder ~/projects
+	crower list --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

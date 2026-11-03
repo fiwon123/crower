@@ -17,23 +17,23 @@ var execute bool
 // Cmd represents the update command
 var updateCmd = &cobra.Command{
 	Use:   "update [command]",
-	Short: "update commands",
-	Long: `update commands
+	Short: "Change a command's name, aliases or exec.",
+	Long: `Change a command's name, aliases or exec.
 
-update command:
-	- Use interactive input just typing 'crower update' without arguments
-	- Use argument key (command name or command alias) 'crower update "COMMAND_KEY"'
-	- using flags --last (update), --create or --execute to update last operation flag
+	crower update greet --exec "echo hi"
+	crower update greet --name hello --alias hi
 
-Examples:
-	crower update
-	crower update com_name
-	crower update com_alias
+The command is found by name or by alias. The last touched command can be
+updated instead:
 	crower update --last
 	crower update --create
 	crower update --execute
-	crower update com_name --name "test" --exec "echo t"
-`,
+
+With no field given, crower asks for each one.`,
+	Example: `	crower update greet --exec "echo hi"
+	crower update hi --name hello
+	crower update --last
+	crower update --create`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

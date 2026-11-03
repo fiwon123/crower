@@ -8,8 +8,11 @@ import (
 
 var exportCmd = &cobra.Command{
 	Use:   "export [name]",
-	Short: "Export commands to a file",
-	Long:  "Export a command or all commands to a TOML file for sharing",
+	Short: "Export commands to a file.",
+	Long:  `Export one command, or all of them, to a TOML file for sharing.`,
+	Example: `	crower export
+	crower export greet
+	crower export --out ./commands.toml`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
@@ -32,8 +35,11 @@ var exportCmd = &cobra.Command{
 
 var importCmd = &cobra.Command{
 	Use:   "import <file>",
-	Short: "Import commands from a file",
-	Long:  "Import commands from a TOML file",
+	Short: "Import commands from a file.",
+	Long: `Import commands from a TOML file. --overwrite replaces a command that
+already exists with the same name.`,
+	Example: `	crower import ./commands.toml
+	crower import ./commands.toml --overwrite`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return missingArgs(cmd, "a file to import")
@@ -55,13 +61,17 @@ var importCmd = &cobra.Command{
 
 var shareCmd = &cobra.Command{
 	Use:   "share",
-	Short: "Share commands via registry",
-	Long:  "List and pull commands from a registry",
+	Short: "Share commands through a registry.",
+	Long:  `List the packs a registry publishes, and pull one into the command set.`,
+	Example: `	crower share list
+	crower share pull tools`,
 }
 
 var shareListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List available packs in registry",
+	Use:     "list",
+	Short:   "List the packs available in the registry.",
+	Long:    `List the packs available in the registry.`,
+	Example: `	crower share list`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
@@ -73,8 +83,10 @@ var shareListCmd = &cobra.Command{
 }
 
 var sharePullCmd = &cobra.Command{
-	Use:   "pull <name>",
-	Short: "Pull a pack from registry",
+	Use:     "pull <name>",
+	Short:   "Pull a pack from the registry.",
+	Long:    `Pull a pack from the registry into the command set.`,
+	Example: `	crower share pull tools`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return missingArgs(cmd, "a pack name")

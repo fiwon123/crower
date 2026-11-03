@@ -11,21 +11,19 @@ var browserFlag bool
 // Cmd represents the search command
 var searchCmd = &cobra.Command{
 	Use:   "search <term> [path]",
-	Short: "search files, folder and on browser",
-	Long: `search files, folder and on browser
+	Short: "Search files, folders, or the web.",
+	Long: `Search files, folders, or the web.
 
-search files:
-	- Using 'crower search "PART_NAME" ./'
-	- Using 'crower search --file "PART_NAME" ./'
+	crower search report ./notes
+	crower search --file report ./notes
+	crower search --folder projects ~
+	crower search --browser "golang context"
 
-search folder:
-	- Using 'crower search "PART_NAME" ./'
-	- Using 'crower search --folder "PART_NAME" ./'
-
-search on browser:
-	- Using 'crower search --browser "CONTENT"'
-
-	`,
+--json prints one JSON object on stdout instead of a table.`,
+	Example: `	crower search report ./notes
+	crower search --folder projects ~
+	crower search --browser "golang context"
+	crower search report ./notes --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
