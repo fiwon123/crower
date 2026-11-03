@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 // A value the format cannot carry raw has to come back exactly as it went in:
@@ -112,6 +113,32 @@ func TestCommandName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := CommandName(tt.built); got != tt.want {
 				t.Errorf("CommandName(%q) = %q, want %q", tt.built, got, tt.want)
+			}
+		})
+	}
+}
+
+// A positional that looks like a flag needs a "--" before the positionals, or
+// the recorded line fails to replay with "unknown flag".
+func TestAddCrowerExecTerminator(t *testing.T) {
+	tests := []struct {
+		name    string
+		command string
+		args    []string
+		want    string
+	}{
+		{"no flag value", "copy", []string{"a", "b"}, "crower copy " + shell.Quote("a") + " " + shell.Quote("b")},
+		{"a dash after another positional", "create", []string{"a", "-x"}, "crower create -- " + shell.Quote("a") + " " + shell.Quote("-x")},
+		{"a literal terminator", "create", []string{"--", "a"}, "crower create -- " + shell.Quote("--") + " " + shell.Quote("a")},
+		{"a lone dash", "create", []string{"-", "a"}, "crower create -- " + shell.Quote("-") + " " + shell.Quote("a")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			built := New().AddCrowerExec(tt.command, tt.args).Build()
+
+			if want := "crower_exec=" + tt.want; !strings.Contains(built, want) {
+				t.Errorf("note = %q, want it to contain %q", built, want)
 			}
 		})
 	}

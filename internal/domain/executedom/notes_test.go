@@ -6,6 +6,7 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 // create --execute rebuilds a command from the note of the last execute. The
@@ -25,7 +26,12 @@ func TestExecuteCommandNoteCarriesTheExecCreateReuses(t *testing.T) {
 		t.Errorf("CommandName(%q) = %q, want greet", built, got)
 	}
 
-	if want := `crower_exec=crower execute 'greet' 'a b'`; !strings.Contains(built, want) {
+	if want := "crower_exec=crower execute " + shell.Quote("greet") + " " + shell.Quote("a b"); !strings.Contains(built, want) {
 		t.Errorf("note = %q, want it to contain %q", built, want)
+	}
+
+	dashed := newExecuteCommandNote(cmd, []string{"-x"})
+	if want := "crower_exec=crower execute -- " + shell.Quote("greet") + " " + shell.Quote("-x"); !strings.Contains(dashed, want) {
+		t.Errorf("note = %q, want it to contain %q", dashed, want)
 	}
 }

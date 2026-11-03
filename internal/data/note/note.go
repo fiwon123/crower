@@ -48,14 +48,28 @@ func (note *Note) AddOldCommandExec(exec string) *Note {
 	return note
 }
 
+// AddCrowerExec records the command that produced a history entry.
+//
+// command is the operation, its flags and their values, without the program
+// name ("copy", "create --process 'editor'"), written raw. args are positional
+// values only and are quoted for the OS that records the line, so a history
+// moved to another platform can still be read but its crower_exec is
+// best-effort to replay. Keeping a flag value in args would put the "--"
+// terminator between the flag and its value.
 func (note *Note) AddCrowerExec(command string, args []string) *Note {
 	var execBuilder strings.Builder
-	// command is the operation and its flags without the program name, so the
-	// recorded line reads "crower copy a b". A caller that included the name
-	// produced "crower crower copy a b". It is written raw; args are quoted
-	// for the OS that records the line, so a history moved to another platform
-	// can still be read but its crower_exec is best-effort to replay.
 	fmt.Fprintf(&execBuilder, "crower %s", command)
+
+	// A positional value that looks like a flag needs the terminator, or the
+	// replay fails with "unknown flag". Put it before every positional when
+	// any of them needs it.
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "-") {
+			execBuilder.WriteString(" --")
+			break
+		}
+	}
+
 	for _, arg := range args {
 		// Quote each argument the way the current shell would receive it, so
 		// the recorded line can be replayed: an argument with a space used to
