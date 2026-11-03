@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/errors"
 )
 
@@ -56,7 +56,7 @@ func (c *Core) Revert(args []string) error {
 
 	c.app.Logger.Info("reverted to history version ", backHistory.Version)
 
-	c.app.History.Add(operations.Revert, "", newRevertNote(args))
+	c.app.History.Add(operation.Revert, "", newRevertNote(args))
 
 	return c.app.Save()
 }

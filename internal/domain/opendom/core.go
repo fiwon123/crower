@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 type Core struct {
@@ -43,7 +43,7 @@ func (c *Core) Open(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Open, "", newOpenNote(args))
+	c.app.History.Add(operation.Open, "", newOpenNote(args))
 
 	return c.app.Save()
 }
@@ -59,7 +59,7 @@ func (c *Core) OpenFile(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Open, "", newOpenFolderNote(args))
+	c.app.History.Add(operation.Open, "", newOpenFolderNote(args))
 
 	return c.app.Save()
 }
@@ -75,7 +75,7 @@ func (c *Core) OpenFolder(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Open, "", newOpenFolderNote(args))
+	c.app.History.Add(operation.Open, "", newOpenFolderNote(args))
 
 	return c.app.Save()
 }
@@ -86,7 +86,7 @@ func (c *Core) OpenSystem() error {
 		return err
 	}
 
-	c.app.History.Add(operations.Open, "", newOpenSystemNote())
+	c.app.History.Add(operation.Open, "", newOpenSystemNote())
 
 	return c.app.Save()
 }

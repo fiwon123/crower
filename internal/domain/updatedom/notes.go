@@ -8,7 +8,7 @@ import (
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
 
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -57,8 +57,8 @@ func newUpdateCommmandNote(oldCommand *command.Data, newCommand *command.Data) s
 	noteBuilder := note.New()
 
 	noteBuilder.
-		AddMainOperation(operations.Update).
-		AddSubOperation(operations.Command)
+		AddMainOperation(operation.Update).
+		AddSubOperation(operation.Command)
 
 	addCommandDiff(noteBuilder, oldCommand, newCommand)
 
@@ -67,23 +67,23 @@ func newUpdateCommmandNote(oldCommand *command.Data, newCommand *command.Data) s
 		Build()
 }
 
-func newUpdateLastNote(op operations.MainOperationEnum, oldCommand *command.Data, newCommand *command.Data) string {
+func newUpdateLastNote(op operation.Operation, oldCommand *command.Data, newCommand *command.Data) string {
 	noteBuilder := note.New()
 
 	noteBuilder.
-		AddMainOperation(operations.Update).
-		AddSubOperation(operations.Command)
+		AddMainOperation(operation.Update).
+		AddSubOperation(operation.Command)
 
 	addCommandDiff(noteBuilder, oldCommand, newCommand)
 
 	// The --last forms take no positional key; the flags still apply to the
 	// command the last operation touched.
 	switch op {
-	case operations.Update:
+	case operation.Update:
 		noteBuilder.AddCrowerExec("update --last"+updateFlags(oldCommand, newCommand), nil)
-	case operations.Create:
+	case operation.Create:
 		noteBuilder.AddCrowerExec("update --create"+updateFlags(oldCommand, newCommand), nil)
-	case operations.Execute:
+	case operation.Execute:
 		noteBuilder.AddCrowerExec("update --execute"+updateFlags(oldCommand, newCommand), nil)
 	}
 

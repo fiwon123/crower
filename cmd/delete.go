@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/deletedom"
 	"github.com/fiwon123/crower/internal/domain/listdom"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/fiwon123/crower/pkg/utils"
 
@@ -50,11 +50,11 @@ Example:
 
 		switch {
 		case createFlag:
-			return core.DeleteLast(operations.Create)
+			return core.DeleteLast(operation.Create)
 		case updateFlag:
-			return core.DeleteLast(operations.Update)
+			return core.DeleteLast(operation.Update)
 		case executeFlag:
-			return core.DeleteLast(operations.Execute)
+			return core.DeleteLast(operation.Execute)
 		case fileFlag:
 			return core.DeleteFile(args)
 		case folderFlag:

@@ -3,7 +3,7 @@ package searchdom
 import (
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 func TestSearchPayload(t *testing.T) {
@@ -21,7 +21,7 @@ func TestSearchPayload(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := searchPayload(operations.File, "a.txt", ".", tt.out).Search.Results
+			got := searchPayload(operation.File, "a.txt", ".", tt.out).Search.Results
 
 			if got == nil {
 				t.Fatal("results encoded a null list")
@@ -41,9 +41,9 @@ func TestSearchPayload(t *testing.T) {
 }
 
 func TestSearchPayloadCarriesTheQuery(t *testing.T) {
-	payload := searchPayload(operations.FileAndFolder, "report", "./docs", "")
+	payload := searchPayload(operation.FileAndFolder, "report", "./docs", "")
 
-	if payload.Search.Kind != string(operations.FileAndFolder) {
+	if payload.Search.Kind != string(operation.FileAndFolder) {
 		t.Errorf("kind = %q", payload.Search.Kind)
 	}
 
@@ -55,9 +55,9 @@ func TestSearchPayloadCarriesTheQuery(t *testing.T) {
 // A browser search returns nothing on stdout: the object still has to describe
 // what was asked for, and still has to carry an empty collection.
 func TestSearchPayloadBrowser(t *testing.T) {
-	payload := searchPayload(operations.Browser, "golang", "", "")
+	payload := searchPayload(operation.Browser, "golang", "", "")
 
-	if payload.Search.Kind != string(operations.Browser) {
+	if payload.Search.Kind != string(operation.Browser) {
 		t.Errorf("kind = %q", payload.Search.Kind)
 	}
 

@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -103,12 +103,12 @@ func (note *Note) AddCrowerExec(command string, args []string) *Note {
 	return note
 }
 
-func (note *Note) AddMainOperation(op operations.MainOperationEnum) *Note {
+func (note *Note) AddMainOperation(op operation.Operation) *Note {
 	fmt.Fprintf(&note.builder, ";main_operation=%s", op)
 	return note
 }
 
-func (note *Note) AddSubOperation(op operations.SubOperationEnum) *Note {
+func (note *Note) AddSubOperation(op operation.SubOperation) *Note {
 	fmt.Fprintf(&note.builder, ";sub_operation=%s", op)
 	return note
 }

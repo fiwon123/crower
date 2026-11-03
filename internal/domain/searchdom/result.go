@@ -3,7 +3,7 @@ package searchdom
 import (
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 // SearchResult is the JSON result of one search.
@@ -23,7 +23,7 @@ type Result struct {
 	Search SearchResult `json:"search"`
 }
 
-func searchPayload(kind operations.SubOperationEnum, query string, path string, out string) Result {
+func searchPayload(kind operation.SubOperation, query string, path string, out string) Result {
 	return Result{Search: SearchResult{
 		Kind:    string(kind),
 		Query:   query,

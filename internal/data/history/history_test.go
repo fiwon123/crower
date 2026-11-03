@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 // Every history row used to end with a space, because the last column was
@@ -14,7 +14,7 @@ import (
 // comparison.
 func TestGetListHasNoTrailingSpace(t *testing.T) {
 	data := New(t.TempDir())
-	data.Add(operations.Copy, "", "main_operation=copy;crower_exec=crower copy a b")
+	data.Add(operation.Copy, "", "main_operation=copy;crower_exec=crower copy a b")
 
 	list := data.GetList()
 
@@ -37,8 +37,8 @@ func TestGetListHasNoTrailingSpace(t *testing.T) {
 // reader expects.
 func TestGetListPutsTheNewestEntryFirst(t *testing.T) {
 	data := New(t.TempDir())
-	data.Add(operations.Create, "first-command", "first")
-	data.Add(operations.Delete, "second-command", "second")
+	data.Add(operation.Create, "first-command", "first")
+	data.Add(operation.Delete, "second-command", "second")
 
 	list := data.GetList()
 
@@ -51,7 +51,7 @@ func TestGetListPutsTheNewestEntryFirst(t *testing.T) {
 // `--last` family resolved an empty name and could never act.
 func TestAddRecordsTheCommandName(t *testing.T) {
 	data := New(t.TempDir())
-	data.Add(operations.Execute, "greet", "main_operation=execute;command_name=greet")
+	data.Add(operation.Execute, "greet", "main_operation=execute;command_name=greet")
 
 	last := data.GetLast()
 	if last == nil {
@@ -68,8 +68,8 @@ func TestAddRecordsTheCommandName(t *testing.T) {
 func TestGetListShowsTheCommand(t *testing.T) {
 	data := New("history")
 
-	data.Add(operations.Create, "greet", "a plain note")
-	data.Add(operations.Copy, "", "another note")
+	data.Add(operation.Create, "greet", "a plain note")
+	data.Add(operation.Copy, "", "another note")
 
 	list := data.GetList()
 
@@ -89,9 +89,9 @@ func TestGetListShowsTheCommand(t *testing.T) {
 // One entry is dropped and the rest keep their order.
 func TestRemoveContentDropsOneEntry(t *testing.T) {
 	data := New(t.TempDir())
-	data.Add(operations.Create, "first", "one")
-	data.Add(operations.Update, "second", "two")
-	data.Add(operations.Delete, "third", "three")
+	data.Add(operation.Create, "first", "one")
+	data.Add(operation.Update, "second", "two")
+	data.Add(operation.Delete, "third", "three")
 
 	target := data.AllData[1]
 
@@ -114,8 +114,8 @@ func TestRemoveContentDropsOneEntry(t *testing.T) {
 // history. The call reports the miss and changes nothing (#218).
 func TestRemoveContentLeavesTheHistoryOnAMiss(t *testing.T) {
 	data := New(t.TempDir())
-	data.Add(operations.Create, "first", "one")
-	data.Add(operations.Update, "second", "two")
+	data.Add(operation.Create, "first", "one")
+	data.Add(operation.Update, "second", "two")
 
 	before := slices.Clone(data.AllData)
 

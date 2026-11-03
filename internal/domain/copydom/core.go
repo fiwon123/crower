@@ -4,7 +4,7 @@ import (
 	stderrors "errors"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/pkg/utils"
@@ -67,11 +67,11 @@ func (c *Core) Copy(args []string) error {
 	}
 
 	if isCopyFile && isCopyFolder {
-		c.app.History.Add(operations.Copy, "", newCopyNote(operations.FileAndFolder, args))
+		c.app.History.Add(operation.Copy, "", newCopyNote(operation.FileAndFolder, args))
 	} else if isCopyFile {
-		c.app.History.Add(operations.Copy, "", newCopyNote(operations.File, args))
+		c.app.History.Add(operation.Copy, "", newCopyNote(operation.File, args))
 	} else if isCopyFolder {
-		c.app.History.Add(operations.Copy, "", newCopyNote(operations.Folder, args))
+		c.app.History.Add(operation.Copy, "", newCopyNote(operation.Folder, args))
 	}
 
 	return c.app.Save()

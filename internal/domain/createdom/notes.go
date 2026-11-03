@@ -7,7 +7,7 @@ import (
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
 
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -39,8 +39,8 @@ func newCreateCommandNote(command *command.Data) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Create).
-		AddSubOperation(operations.Command).
+		AddMainOperation(operation.Create).
+		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
@@ -52,8 +52,8 @@ func newCreateScriptCommandNote(command *command.Data) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Create).
-		AddSubOperation(operations.Script).
+		AddMainOperation(operation.Create).
+		AddSubOperation(operation.Script).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
@@ -65,8 +65,8 @@ func newCreateCommandLastExecuteNote(command *command.Data) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Create).
-		AddSubOperation(operations.Last).
+		AddMainOperation(operation.Create).
+		AddSubOperation(operation.Last).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
@@ -79,8 +79,8 @@ func newCreateProcessNote(command *command.Data, args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Create).
-		AddSubOperation(operations.Process).
+		AddMainOperation(operation.Create).
+		AddSubOperation(operation.Process).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
@@ -92,8 +92,8 @@ func newCreateSystemVariableNote(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Create).
-		AddSubOperation(operations.System).
+		AddMainOperation(operation.Create).
+		AddSubOperation(operation.System).
 		AddCrowerExec("create --system", args).
 		Build()
 }
@@ -102,8 +102,8 @@ func newCreateSystemPathVariableNote(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Create).
-		AddSubOperation(operations.SysPath).
+		AddMainOperation(operation.Create).
+		AddSubOperation(operation.SysPath).
 		AddCrowerExec("create --syspath", args).
 		Build()
 }
@@ -112,8 +112,8 @@ func generateCreateFile(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Create).
-		AddSubOperation(operations.File).
+		AddMainOperation(operation.Create).
+		AddSubOperation(operation.File).
 		AddCrowerExec("create --file", args).
 		Build()
 }
@@ -122,8 +122,8 @@ func newCreateFolder(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Create).
-		AddSubOperation(operations.Folder).
+		AddMainOperation(operation.Create).
+		AddSubOperation(operation.Folder).
 		AddCrowerExec("create --folder", args).
 		Build()
 }

@@ -2,8 +2,8 @@ package upgradedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/checkdom"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 type Core struct {
@@ -44,7 +44,7 @@ func (c *Core) UpgradeApp(currentVersion string) error {
 
 	c.app.Logger.Info("crower upgraded from ", currentVersion, " to ", newVersion)
 
-	c.app.History.Add(operations.Upgrade, "", newUpgradeNote())
+	c.app.History.Add(operation.Upgrade, "", newUpgradeNote())
 
 	return c.app.Save()
 }

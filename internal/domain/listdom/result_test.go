@@ -8,7 +8,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -45,8 +45,8 @@ func TestCommandsPayload(t *testing.T) {
 
 func TestHistoryPayloadIsNewestFirst(t *testing.T) {
 	rows := []history.Content{
-		{Version: 1, File: "00001.yaml", Timestemp: "2026-01-01T00:00:00Z", Operation: operations.List, Note: "first"},
-		{Version: 2, File: "00002.yaml", Timestemp: "2026-01-02T00:00:00Z", Operation: operations.Create, CommandName: "greet", Note: "second"},
+		{Version: 1, File: "00001.yaml", Timestemp: "2026-01-01T00:00:00Z", Operation: operation.List, Note: "first"},
+		{Version: 2, File: "00002.yaml", Timestemp: "2026-01-02T00:00:00Z", Operation: operation.Create, CommandName: "greet", Note: "second"},
 	}
 
 	payload := historyPayload(rows)
@@ -63,7 +63,7 @@ func TestHistoryPayloadIsNewestFirst(t *testing.T) {
 		t.Errorf("timestamp = %q", payload.History[0].Timestamp)
 	}
 
-	if payload.History[0].Operation != string(operations.Create) {
+	if payload.History[0].Operation != string(operation.Create) {
 		t.Errorf("operation = %q", payload.History[0].Operation)
 	}
 

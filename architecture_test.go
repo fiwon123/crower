@@ -68,14 +68,19 @@ func legacyOperationPackage(relativeDir string) bool {
 
 var rules = []importRule{
 	{
-		// The model and the stores below it know nothing about the terminal,
-		// the composition root, or the commands that drive them.
+		// The old storage-shaped packages. They know nothing about the
+		// terminal, the composition root, or the commands that drive them.
+		//
+		// internal/domain is deliberately absent from the forbid list: during
+		// the migration a legacy shape may hold a domain value object (the
+		// history index stores an operation.Operation). The reverse stays
+		// forbidden -- the domain rule below allows a ring's own subtree only
+		// -- so the arrow still points one way.
 		name: "internal/data",
 		dir:  "internal/data",
 		forbid: []string{
 			"internal/app",
 			"internal/helper",
-			"internal/domain",
 			"internal/gui",
 			"internal/desktop",
 			"cmd",

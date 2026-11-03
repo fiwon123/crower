@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/listdom"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
 
 	"github.com/spf13/cobra"
@@ -45,11 +45,11 @@ Examples:
 
 		switch {
 		case last:
-			return core.UpdateLast(operations.Update, name, allAlias, exec)
+			return core.UpdateLast(operation.Update, name, allAlias, exec)
 		case create:
-			return core.UpdateLast(operations.Create, name, allAlias, exec)
+			return core.UpdateLast(operation.Create, name, allAlias, exec)
 		case execute:
-			return core.UpdateLast(operations.Execute, name, allAlias, exec)
+			return core.UpdateLast(operation.Execute, name, allAlias, exec)
 		case len(args) > 0:
 			return core.UpdateCommand(args, name, allAlias, exec)
 		}

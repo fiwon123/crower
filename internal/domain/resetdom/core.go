@@ -2,7 +2,7 @@ package resetdom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/fiwon123/crower/internal/interfaces"
 )
@@ -44,7 +44,7 @@ func (c *Core) Reset() error {
 		return err
 	}
 
-	c.app.History.Add(operations.Reset, "", newResetNote())
+	c.app.History.Add(operation.Reset, "", newResetNote())
 
 	return c.app.Save()
 }

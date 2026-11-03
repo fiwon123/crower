@@ -8,9 +8,9 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
-	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
 )
 
@@ -264,18 +264,18 @@ func TestCreateExecuteRefusesAStepsCommand(t *testing.T) {
 	}
 
 	built := note.New().
-		AddMainOperation(operations.Execute).
-		AddSubOperation(operations.Command).
+		AddMainOperation(operation.Execute).
+		AddSubOperation(operation.Command).
 		AddCommandName("multi").
 		AddCommandExec("unused").
 		AddCommandSteps([]string{"echo a"}).
 		Build()
 
-	app.History.Add(operations.Execute, "multi", built)
+	app.History.Add(operation.Execute, "multi", built)
 
 	core := createdom.NewCore(app, *opendom.NewHandler(app))
 
-	err = core.CreateLastCommand(operations.Execute, nil, []string{"copy"})
+	err = core.CreateLastCommand(operation.Execute, nil, []string{"copy"})
 	if err == nil {
 		t.Fatal("CreateLastCommand rebuilt a command that ran steps")
 	}
@@ -306,17 +306,17 @@ func TestCreateExecuteRefusesAStepsCommandFromAnOldNote(t *testing.T) {
 	app.AllCommandsByName.Add("multi", multi)
 
 	built := note.New().
-		AddMainOperation(operations.Execute).
-		AddSubOperation(operations.Command).
+		AddMainOperation(operation.Execute).
+		AddSubOperation(operation.Command).
 		AddCommandName("multi").
 		AddCommandExec("unused").
 		Build()
 
-	app.History.Add(operations.Execute, "multi", built)
+	app.History.Add(operation.Execute, "multi", built)
 
 	core := createdom.NewCore(app, *opendom.NewHandler(app))
 
-	if err := core.CreateLastCommand(operations.Execute, nil, []string{"copy"}); err == nil {
+	if err := core.CreateLastCommand(operation.Execute, nil, []string{"copy"}); err == nil {
 		t.Fatal("CreateLastCommand rebuilt a steps command from an old note")
 	}
 }

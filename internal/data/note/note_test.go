@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -15,8 +15,8 @@ func TestNoteValuesRoundTrip(t *testing.T) {
 	exec := "make; echo done 100% %3B"
 
 	built := New().
-		AddMainOperation(operations.Execute).
-		AddSubOperation(operations.Command).
+		AddMainOperation(operation.Execute).
+		AddSubOperation(operation.Command).
 		AddCommandName("build;all").
 		AddCommandAlias([]string{"b;1", "b2"}).
 		AddCommandExec(exec).
@@ -149,8 +149,8 @@ func TestCommandSteps(t *testing.T) {
 	steps := []string{"echo a; b", "echo 100%"}
 
 	built := New().
-		AddMainOperation(operations.Execute).
-		AddSubOperation(operations.Command).
+		AddMainOperation(operation.Execute).
+		AddSubOperation(operation.Command).
 		AddCommandSteps(steps).
 		Build()
 
@@ -178,8 +178,8 @@ func TestCommandSteps(t *testing.T) {
 // A step with && must read as written, not HTML-escaped.
 func TestDisplayKeepsStepsReadable(t *testing.T) {
 	built := New().
-		AddMainOperation(operations.Execute).
-		AddSubOperation(operations.Command).
+		AddMainOperation(operation.Execute).
+		AddSubOperation(operation.Command).
 		AddCommandSteps([]string{"echo a && echo b"}).
 		Build()
 

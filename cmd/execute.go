@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/domain/listdom"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/spf13/cobra"
 )
@@ -26,11 +26,11 @@ var executeCmd = &cobra.Command{
 
 		switch {
 		case last:
-			return core.ExecuteLast(operations.Execute, args)
+			return core.ExecuteLast(operation.Execute, args)
 		case createFlag:
-			return core.ExecuteLast(operations.Create, args)
+			return core.ExecuteLast(operation.Create, args)
 		case updateFlag:
-			return core.ExecuteLast(operations.Update, args)
+			return core.ExecuteLast(operation.Update, args)
 		}
 
 		return core.ExecuteCommand(args)

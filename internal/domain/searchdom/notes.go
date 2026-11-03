@@ -2,7 +2,7 @@ package searchdom
 
 import (
 	"github.com/fiwon123/crower/internal/data/note"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 // Create a new search browser note
@@ -10,8 +10,8 @@ func newSearchBrowserNote(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Search).
-		AddSubOperation(operations.Browser).
+		AddMainOperation(operation.Search).
+		AddSubOperation(operation.Browser).
 		AddCrowerExec("search --browser", args).
 		Build()
 }
@@ -20,8 +20,8 @@ func newSearchFileNote(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Search).
-		AddSubOperation(operations.File).
+		AddMainOperation(operation.Search).
+		AddSubOperation(operation.File).
 		AddCrowerExec("search --file", args).
 		Build()
 }
@@ -30,8 +30,8 @@ func newSearchFolderNote(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Search).
-		AddSubOperation(operations.Folder).
+		AddMainOperation(operation.Search).
+		AddSubOperation(operation.Folder).
 		AddCrowerExec("search --folder", args).
 		Build()
 }
@@ -40,8 +40,8 @@ func newSearchFileAndFolderNote(args []string) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
-		AddMainOperation(operations.Search).
-		AddSubOperation(operations.FileAndFolder).
+		AddMainOperation(operation.Search).
+		AddSubOperation(operation.FileAndFolder).
 		AddCrowerExec("search", args).
 		Build()
 }

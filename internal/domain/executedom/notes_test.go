@@ -7,7 +7,7 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -50,7 +50,7 @@ func TestExecuteNoteRecordsSteps(t *testing.T) {
 		t.Errorf("CommandSteps(%q) = %v, %v, want %v, true", built, got, present, cmd.Steps)
 	}
 
-	last := NewExecuteLastNote(operations.Execute, cmd, []string{"a"})
+	last := NewExecuteLastNote(operation.Execute, cmd, []string{"a"})
 	if got, present := note.CommandSteps(last); !present || !slices.Equal(got, cmd.Steps) {
 		t.Errorf("CommandSteps(%q) = %v, %v, want the steps", last, got, present)
 	}

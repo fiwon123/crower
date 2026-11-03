@@ -1,4 +1,4 @@
-package operations
+package operation
 
 import "testing"
 
@@ -8,7 +8,7 @@ import "testing"
 // user unreadable, so the wire form is pinned here.
 func TestMainOperationValues(t *testing.T) {
 	tests := []struct {
-		op   MainOperationEnum
+		op   Operation
 		want string
 	}{
 		{Execute, "execute"},
@@ -37,7 +37,7 @@ func TestMainOperationValues(t *testing.T) {
 
 func TestSubOperationValues(t *testing.T) {
 	tests := []struct {
-		op   SubOperationEnum
+		op   SubOperation
 		want string
 	}{
 		{Command, "command"},
@@ -66,7 +66,7 @@ func TestSubOperationValues(t *testing.T) {
 func TestOperationValuesAreUnique(t *testing.T) {
 	count := map[string]int{}
 
-	for _, op := range []MainOperationEnum{
+	for _, op := range []Operation{
 		Execute, Create, Delete, Update, List, Reset, Open,
 		Revert, Search, Extract, Copy, Move, Restore, Check, Upgrade,
 	} {
@@ -81,7 +81,7 @@ func TestOperationValuesAreUnique(t *testing.T) {
 }
 
 func TestOperationValuesAreNotEmpty(t *testing.T) {
-	for _, op := range []MainOperationEnum{
+	for _, op := range []Operation{
 		Execute, Create, Delete, Update, List, Reset, Open,
 		Revert, Search, Extract, Copy, Move, Restore, Check, Upgrade,
 	} {
@@ -90,7 +90,7 @@ func TestOperationValuesAreNotEmpty(t *testing.T) {
 		}
 	}
 
-	for _, op := range []SubOperationEnum{
+	for _, op := range []SubOperation{
 		Command, Script, Process, File, Folder, FileAndFolder,
 		History, SysPath, System, Last, Browser,
 	} {

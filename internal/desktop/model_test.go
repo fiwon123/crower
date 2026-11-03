@@ -8,7 +8,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 func testApp(t *testing.T) *app.Config {
@@ -74,8 +74,8 @@ func TestFilter(t *testing.T) {
 // an operation that touched no command.
 func TestHistoryTextShowsTheCommand(t *testing.T) {
 	a := testApp(t)
-	a.History.Add(operations.Create, "greet", "note")
-	a.History.Add(operations.Copy, "", "note")
+	a.History.Add(operation.Create, "greet", "note")
+	a.History.Add(operation.Copy, "", "note")
 
 	m := NewModel(a)
 	text := m.historyText()

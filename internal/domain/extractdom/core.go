@@ -4,7 +4,7 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/errors"
 )
 
@@ -49,7 +49,7 @@ func (c *Core) Extract(args []string, outDir string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Extract, "", newExtractNote(outDir, args))
+	c.app.History.Add(operation.Extract, "", newExtractNote(outDir, args))
 
 	return c.app.Save()
 }

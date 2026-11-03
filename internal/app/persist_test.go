@@ -10,7 +10,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -181,8 +181,8 @@ func TestHistoryJSONKeepsItsOnDiskKeys(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "historyhelper.json")
 
 	data := history.New(filepath.Join(t.TempDir(), "history"))
-	data.Add(operations.Create, "greet", "main_operation=create;command_name=greet")
-	data.Add(operations.Copy, "", "main_operation=copy;crower_exec=crower copy a b")
+	data.Add(operation.Create, "greet", "main_operation=create;command_name=greet")
+	data.Add(operation.Copy, "", "main_operation=copy;crower_exec=crower copy a b")
 
 	if err := utils.WriteJson(data, path); err != nil {
 		t.Fatalf("WriteJson: %v", err)

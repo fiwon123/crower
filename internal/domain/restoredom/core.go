@@ -2,7 +2,7 @@ package restoredom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 type Core struct {
@@ -47,7 +47,7 @@ func (c *Core) Restore(args []string) error {
 
 	c.app.Logger.Info("restored command: ", out)
 
-	c.app.History.Add(operations.Restore, "", newRestoreNote(args))
+	c.app.History.Add(operation.Restore, "", newRestoreNote(args))
 
 	return c.app.Save()
 }
