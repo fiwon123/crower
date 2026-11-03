@@ -10,7 +10,7 @@ crower extract <archive...> [flags]
 
 | Flag | Effect |
 | --- | --- |
-| `-o`, `--out` | Output folder (default: the current one) |
+| `-o`, `--out` | Output folder (default: each archive's own folder) |
 
 ## 💡 Examples
 
