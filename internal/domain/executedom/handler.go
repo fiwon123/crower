@@ -72,7 +72,7 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 		}
 
 		// Check for nested crower invocation
-		if strings.HasPrefix(step, "crower ") || strings.HasPrefix(step, "cr ") {
+		if isNestedCrower(step) {
 			out, err := executeNested(h.shell, step)
 			allOut.WriteString(out)
 			if err != nil {
@@ -297,6 +297,23 @@ func isParamIndex(token string) bool {
 	}
 
 	return true
+}
+
+// isNestedCrower reports whether a step invokes crower itself.
+//
+// The first word is compared after unquoting: parameters are shell-quoted
+// before substitution, so `{1} list` with the parameter "crower" becomes
+// `'crower' list`. A raw prefix check missed that and ran the child through
+// the plain shell, without the depth counter that limits recursion.
+func isNestedCrower(step string) bool {
+	fields := strings.Fields(step)
+	if len(fields) == 0 {
+		return false
+	}
+
+	first := strings.Trim(fields[0], `'"`)
+
+	return first == "crower" || first == "cr"
 }
 
 // executeNested runs a step that calls crower again.
