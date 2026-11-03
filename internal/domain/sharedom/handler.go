@@ -57,7 +57,7 @@ func (h *Handler) Export(name string, outPath string) error {
 		return fmt.Errorf("command not found")
 	}
 
-	data := map[string]*command.Data{name: cmd}
+	data := map[string]*command.Data{cmd.Name: cmd}
 	out, err := toml.Marshal(data)
 	if err != nil {
 		return err
@@ -79,13 +79,14 @@ func (h *Handler) Import(inPath string, overwrite bool) error {
 		return err
 	}
 
-	changed := false
+	// Stage the whole file before touching the run: a prompt or a write that
+	// fails must leave both the map and the file as they were.
+	staged := command.NewMapData()
 
 	for k, v := range commands {
 		key := k
 
-		if h.app.AllCommandsByName.Exists(k) && !overwrite {
-			// Ask to rename or skip
+		if importKeyTaken(key, h.app.AllCommandsByName, staged) && !overwrite {
 			rename, err := helper.GetUserConfirmation(fmt.Sprintf("Command '%s' exists. Rename?", k), h.app)
 			if err != nil {
 				return err
@@ -95,28 +96,54 @@ func (h *Handler) Import(inPath string, overwrite bool) error {
 				continue
 			}
 
-			key = k + "_imported"
+			key = firstFreeImportKey(k, h.app.AllCommandsByName, staged)
 		}
 
 		// The map is keyed by the command's name everywhere else; an imported
 		// file must not produce a key and a Name that disagree.
 		v.Name = key
-		h.app.AllCommandsByName.Add(key, &v)
-		changed = true
+		staged.Add(key, &v)
 	}
 
-	if !changed {
+	if len(staged) == 0 {
 		return nil
 	}
 
-	// Persist once, after the whole file is applied. Writing per command left
-	// a partial import behind when a later prompt failed, and never wrote the
-	// configuration file at all: Save writes a history snapshot and the index,
-	// not the command map, so the imported commands vanished on the next run.
+	for key, cmd := range staged {
+		h.app.AllCommandsByName.Add(key, &cmd)
+	}
+
+	// Persist once, after the whole file is applied. The old code called Save
+	// per command, which writes a history snapshot and the index -- never the
+	// command map -- so the imported commands vanished on the next run, and it
+	// overwrote the snapshot of the operation before the import.
 	//
 	// No history entry is recorded: import is a bulk setup, and one entry per
 	// imported command would describe states that never existed.
 	return h.app.SaveCommands()
+}
+
+// importKeyTaken reports whether key is used in any of the maps.
+func importKeyTaken(key string, maps ...command.MapData) bool {
+	for _, m := range maps {
+		if m.Exists(key) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// firstFreeImportKey is base+"_imported", or the first free numbered variant,
+// so a rename never silently replaces a command that already has that name.
+func firstFreeImportKey(base string, maps ...command.MapData) string {
+	key := base + "_imported"
+
+	for n := 2; importKeyTaken(key, maps...); n++ {
+		key = fmt.Sprintf("%s_imported%d", base, n)
+	}
+
+	return key
 }
 
 func (h *Handler) getRegistryURL() string {
