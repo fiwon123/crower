@@ -47,6 +47,7 @@ func (h *Handler) Extract(paths []string, output string) error {
 		}
 
 		if ext == "" {
+			failures = append(failures, fmt.Errorf("%s: no file extension to choose an extractor", f))
 			continue
 		}
 

@@ -16,7 +16,7 @@ func TestUpgradeAsset(t *testing.T) {
 	}{
 		{"windows", "windows", "crower_v1.2.3_windows.zip", false},
 		{"linux", "linux", "crower_v1.2.3_linux.tar.gz", false},
-		{"darwin", "darwin", "crower_v1.2.3_darwin.tar.gz", false},
+		{"darwin is not applied by an archive", "darwin", "", true},
 		{"unsupported platform", "plan9", "", true},
 	}
 
