@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="crower logo" width="128" height="128">
+  <img src="assets/logo.svg?v=2" alt="crower logo — a crow perched on a terminal cursor" width="128" height="128">
 </p>
 
 <h1 align="center">crower</h1>

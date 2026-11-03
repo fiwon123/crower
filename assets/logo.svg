@@ -1,39 +1,36 @@
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
+  <title id="logoTitle">crower</title>
+  <desc id="logoDesc">A black crow perched on a teal terminal cursor.</desc>
+
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#000000;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#000000;stop-opacity:1" />
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F8FAFC"/>
+      <stop offset="1" stop-color="#E2E8F0"/>
     </linearGradient>
   </defs>
-  
-  <!-- Solid black background -->
-  <rect width="512" height="512" rx="80" fill="#000000"/>
-  
-  <!-- Crow head/face - white silhouette -->
-  <!-- Main head shape -->
-  <ellipse cx="256" cy="230" rx="95" ry="105" fill="#ffffff"/>
-  
-  <!-- Beak - sharp angular beak -->
-  <path d="M 345 230 L 390 225 L 345 245 Z" fill="#ffffff"/>
-  
-  <!-- Eye socket shadow for depth -->
-  <ellipse cx="295" cy="210" rx="18" ry="22" fill="#000000" opacity="0.15"/>
-  
+
+  <rect width="512" height="512" rx="112" fill="url(#tile)"/>
+  <rect x="6" y="6" width="500" height="500" rx="106" fill="none" stroke="#CBD5E1" stroke-width="4"/>
+
+  <!-- Wedge tail -->
+  <path d="M170 324 L56 354 L90 371 L50 390 L154 382 L196 344 Z" fill="#0B1220"/>
+
+  <!-- Body -->
+  <ellipse cx="226" cy="308" rx="106" ry="68" transform="rotate(-8 226 308)" fill="#0B1220"/>
+
+  <!-- Head -->
+  <ellipse cx="320" cy="216" rx="60" ry="56" fill="#0B1220"/>
+
+  <!-- Beak: closed, long, slightly lowered -->
+  <path d="M374 210 L466 228 L374 246 Z" fill="#0B1220"/>
+
   <!-- Eye -->
-  <circle cx="295" cy="210" r="14" fill="#000000"/>
-  <circle cx="300" cy="205" r="5" fill="#ffffff"/>
-  
-  <!-- Nostrils -->
-  <circle cx="348" cy="232" r="2" fill="#000000"/>
-  <circle cx="348" cy="238" r="2" fill="#000000"/>
-  
-  <!-- Head feather tuft -->
-  <path d="M 200 150 Q 210 135 225 145 Q 215 160 200 150" fill="#ffffff"/>
-  <path d="M 215 142 Q 230 125 245 138 Q 235 155 215 142" fill="#ffffff"/>
-  
-  <!-- Command prompt integrated -->
-  <g opacity="0.95">
-    <path d="M 170 310 L 195 335 L 170 360" stroke="#ffffff" stroke-width="14" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <line x1="210" y1="360" x2="240" y2="360" stroke="#ffffff" stroke-width="14" stroke-linecap="round"/>
-  </g>
+  <circle cx="334" cy="206" r="5" fill="#F8FAFC"/>
+
+  <!-- Short legs, feet on the cursor -->
+  <path d="M246 354 L246 403 M286 348 L286 403" stroke="#0B1220" stroke-width="9" stroke-linecap="round"/>
+  <path d="M234 403 L246 391 L258 403 M274 403 L286 391 L298 403" stroke="#0B1220" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Cursor -->
+  <rect x="212" y="403" width="110" height="16" rx="8" fill="#0891B2"/>
 </svg>
