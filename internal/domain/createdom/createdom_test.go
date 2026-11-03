@@ -2,6 +2,7 @@ package createdom_test
 
 import (
 	"path/filepath"
+	"strings"
 	"testing"
 
 	command "github.com/fiwon123/crower/internal/data/command"
@@ -94,6 +95,42 @@ func TestCreate(t *testing.T) {
 		}
 
 	})
+}
+
+// A process create without a process is a usage error, not a panic: both the
+// missing-argument form and the form where the only word was taken as the name
+// used to index an empty slice.
+func TestCreateProcessRequiresAProcess(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	handler := createdom.NewHandler(app)
+
+	tests := []struct {
+		name        string
+		commandName string
+		args        []string
+	}{
+		{"no arguments", "name", nil},
+		{"the only word is taken as the name", "", []string{"only-name"}},
+		{"an empty process argument", "name", []string{""}},
+		{"a whitespace process argument", "name", []string{"   "}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := handler.CreateProcess(tt.commandName, tt.args)
+			if err == nil {
+				t.Fatal("CreateProcess with no process returned no error")
+			}
+
+			if !strings.Contains(err.Error(), "process name or pid") {
+				t.Errorf("error = %v, want it to name the missing process", err)
+			}
+		})
+	}
 }
 
 func TestCreateFile(t *testing.T) {
