@@ -7,27 +7,18 @@
 //   - the order the commands were saved in,
 //   - which command owns an alias when two claim the same one (the first name
 //     in sorted order wins, so a config resolves the same way on every run),
-//   - the collisions the user has to be told about.
+//   - the collisions the user has to be told about,
+//   - and the rules an update has to satisfy.
 //
 // The load path used to build the alias index and the warnings itself, and two
 // operations re-implemented the lookup order. Keeping them in one aggregate is
-// what makes a later create/update/delete able to share the same rules.
+// what lets every operation share the same rules.
 package catalog
 
 import (
 	"maps"
 	"slices"
 )
-
-// Command is one managed command: the name it is invoked by, the aliases it
-// also answers to, the line it runs, and the lines it runs instead when it is a
-// Steps command.
-type Command struct {
-	Name    string
-	Aliases []string
-	Exec    string
-	Steps   []string
-}
 
 // Catalog is the set of commands, in display order, with the alias index
 // derived from it.
@@ -155,87 +146,4 @@ func (c Catalog) AliasOwner(alias string) (string, bool) {
 // AliasIndex returns a copy of the alias index: alias to owning command name.
 func (c Catalog) AliasIndex() map[string]string {
 	return maps.Clone(c.alias)
-}
-
-// Warnings reports every key two commands claim, and every alias that is also
-// another command's name.
-//
-// The load keeps the first claim and lookups try the name map first, so the
-// message names both sides and tells the user which one is reachable: a
-// command the user cannot invoke is otherwise indistinguishable from one that
-// simply did not run.
-//
-// The output is deduplicated and keeps the order the problems are found in, so
-// a config produces the same warnings on every start.
-func (c Catalog) Warnings() []string {
-	var (
-		warnings []string
-		seen     map[string]bool
-		owner    = map[string]string{}
-	)
-
-	report := func(warning string) {
-		if seen == nil {
-			seen = map[string]bool{}
-		}
-
-		if seen[warning] {
-			return
-		}
-
-		seen[warning] = true
-		warnings = append(warnings, warning)
-	}
-
-	names := slices.Sorted(maps.Keys(c.byName))
-
-	for _, name := range names {
-		for _, alias := range c.byName[name].Aliases {
-			if alias == "" {
-				continue
-			}
-
-			existing, claimed := owner[alias]
-			if claimed && existing != name {
-				// A command name wins over every alias, so saying "using X"
-				// would be false when the key is also a name; the second pass
-				// explains that case.
-				if _, isName := c.byName[alias]; isName {
-					report("alias " + quote(alias) + " is claimed by " + quote(existing) + " and " + quote(name))
-				} else {
-					report("alias " + quote(alias) + " is claimed by " + quote(existing) + " and " + quote(name) + "; using " + quote(existing))
-				}
-
-				continue
-			}
-
-			owner[alias] = name
-		}
-	}
-
-	for _, name := range names {
-		for _, alias := range c.byName[name].Aliases {
-			if alias == "" || alias == name {
-				continue
-			}
-
-			if _, isName := c.byName[alias]; isName {
-				report("alias " + quote(alias) + " of " + quote(name) + " is also a command name; the name wins")
-			}
-		}
-	}
-
-	return warnings
-}
-
-// clone returns a command whose slices do not share storage with the catalog.
-func (c Command) clone() Command {
-	c.Aliases = slices.Clone(c.Aliases)
-	c.Steps = slices.Clone(c.Steps)
-	return c
-}
-
-// quote renders a name the way the warnings above quote it.
-func quote(value string) string {
-	return `"` + value + `"`
 }

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/desktop"
-	"github.com/fiwon123/crower/internal/gui"
+	"github.com/fiwon123/crower/internal/tui"
 
 	"github.com/spf13/cobra"
 )
@@ -31,7 +31,7 @@ var guiCmd = &cobra.Command{
 			return err
 		}
 
-		return gui.NewTUI(cfg).Run()
+		return tui.NewTUI(cfg).Run()
 	},
 }
 
