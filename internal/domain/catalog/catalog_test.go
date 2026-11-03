@@ -194,3 +194,37 @@ func TestLen(t *testing.T) {
 		t.Errorf("Len() = %d, want 2", got)
 	}
 }
+
+// A name wins over an alias. A key that is both must resolve to the command
+// whose name it is, or that command would be unreachable by its own name --
+// and `crower update` would silently change the wrong command.
+func TestResolvePrefersTheName(t *testing.T) {
+	c := New(nil, []Command{
+		{Name: "a", Aliases: []string{"x"}},
+		{Name: "x", Aliases: []string{"y"}},
+	})
+
+	got, found := c.Resolve("x")
+	if !found {
+		t.Fatal("Resolve(x) found nothing")
+	}
+
+	if got.Name != "x" {
+		t.Errorf("Resolve(x) = %q, want the command named x", got.Name)
+	}
+}
+
+func TestResolveFallsBackToAnAlias(t *testing.T) {
+	c := New(nil, []Command{{Name: "greet", Aliases: []string{"hi"}}})
+
+	got, found := c.Resolve("hi")
+	if !found || got.Name != "greet" {
+		t.Errorf("Resolve(hi) = %q (found %v), want greet", got.Name, found)
+	}
+}
+
+func TestResolveUnknownKey(t *testing.T) {
+	if _, found := New(nil, []Command{{Name: "greet"}}).Resolve("nope"); found {
+		t.Fatal("Resolve(nope) found a command")
+	}
+}
