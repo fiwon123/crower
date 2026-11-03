@@ -1,37 +1,43 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logoTitle logoDesc">
   <title id="logoTitle">crower</title>
-  <desc id="logoDesc">A black crow's head with a teal beak shaped like a prompt, inside a folder.</desc>
+  <desc id="logoDesc">A raven with an open beak, perched on a cream terminal cursor.</desc>
 
   <defs>
-    <linearGradient id="folder" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#E2E8F0"/>
-      <stop offset="1" stop-color="#CBD5E1"/>
-    </linearGradient>
-    <linearGradient id="beak" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#06B6D4"/>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22D3EE"/>
       <stop offset="1" stop-color="#0891B2"/>
     </linearGradient>
   </defs>
 
-  <!-- Folder tile -->
-  <path d="M64 180 Q64 152 92 152 H190 Q206 152 216 166 L232 186 H420 Q448 186 448 214 V392 Q448 420 420 420 H92 Q64 420 64 392 Z" fill="url(#folder)"/>
-  <path d="M64 180 Q64 152 92 152 H190 Q206 152 216 166 L232 186 H420 Q448 186 448 214 V392 Q448 420 420 420 H92 Q64 420 64 392 Z" fill="none" stroke="#94A3B8" stroke-width="5"/>
+  <rect width="512" height="512" rx="112" fill="url(#tile)"/>
+  <rect x="6" y="6" width="500" height="500" rx="106" fill="none" stroke="#0E7490" stroke-width="4"/>
 
-  <!-- Crow head and neck -->
-  <path d="M146 362
-    C 128 316, 140 258, 180 226
-    C 214 198, 268 192, 308 212
-    C 336 226, 354 250, 358 274
-    L 358 292
-    C 348 318, 326 336, 298 346
-    C 272 356, 242 358, 216 350
-    L 224 382
-    L 146 382 Z" fill="#0F172A"/>
+  <!-- Long wedge tail -->
+  <path d="M170 324 L56 354 L90 371 L50 390 L154 382 L196 344 Z" fill="#0B1220"/>
 
-  <!-- Beak: a thick prompt arrow attached to the head -->
-  <path d="M336 226 L438 256 L336 286 L336 268 L398 256 L336 244 Z" fill="url(#beak)"/>
+  <!-- Body -->
+  <ellipse cx="226" cy="308" rx="106" ry="68" transform="rotate(-8 226 308)" fill="#0B1220"/>
+
+  <!-- Wing edge -->
+  <path d="M168 300 C 205 272, 268 272, 308 302 C 272 328, 210 330, 168 300 Z" fill="#1E293B"/>
+
+  <!-- Head -->
+  <ellipse cx="320" cy="216" rx="60" ry="56" fill="#0B1220"/>
+
+  <!-- Throat hackles -->
+  <path d="M354 252 L364 282 L349 270 L346 294 L332 274 Z" fill="#0B1220"/>
+
+  <!-- Open beak: upper and lower mandibles -->
+  <path d="M368 194 L464 208 L368 222 Z" fill="#0B1220"/>
+  <path d="M368 232 L446 248 L368 252 Z" fill="#0B1220"/>
 
   <!-- Eye -->
-  <circle cx="300" cy="244" r="6" fill="#F8FAFC"/>
-  <circle cx="302" cy="242" r="2" fill="#0891B2"/>
+  <circle cx="332" cy="206" r="6" fill="#F8FAFC"/>
+
+  <!-- Short legs, feet on the cursor -->
+  <path d="M246 356 L246 405 M284 350 L284 405" stroke="#0B1220" stroke-width="9" stroke-linecap="round"/>
+  <path d="M234 405 L246 393 L258 405 M272 405 L284 393 L296 405" stroke="#0B1220" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Cursor -->
+  <rect x="214" y="405" width="106" height="16" rx="8" fill="#F8FAFC"/>
 </svg>
