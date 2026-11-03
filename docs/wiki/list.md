@@ -33,6 +33,9 @@ crower list -i --json | jq '.history[0]'
 > The table goes to **stdout**; status lines go to stderr. `crower list > file`
 > captures the list and nothing else.
 
+The history table has a `Command` column: the command an entry touched, or a
+dash for an operation that touched a file or a variable.
+
 ## 🔗 Related
 
 [`execute`](execute) · [`revert`](revert) · [🧩 Scripting](Scripting) · **[📖 Commands](How-to-Use)**

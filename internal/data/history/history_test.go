@@ -61,3 +61,26 @@ func TestAddRecordsTheCommandName(t *testing.T) {
 		t.Errorf("CommandName = %q, want greet", last.CommandName)
 	}
 }
+
+// The table names the command an entry touched. The note itself may contain
+// that text, so the fixture uses a note without it.
+func TestGetListShowsTheCommand(t *testing.T) {
+	data := New("history")
+
+	data.Add(operations.Create, "greet", "a plain note")
+	data.Add(operations.Copy, "", "another note")
+
+	list := data.GetList()
+
+	if !strings.Contains(list, "Command") {
+		t.Errorf("GetList() = %q, want a Command column", list)
+	}
+
+	if !strings.Contains(list, "greet") {
+		t.Errorf("GetList() = %q, want the command name", list)
+	}
+
+	if !strings.Contains(list, "-") {
+		t.Errorf("GetList() = %q, want a dash for the command-less entry", list)
+	}
+}

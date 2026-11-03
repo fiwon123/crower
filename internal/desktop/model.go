@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
@@ -131,4 +132,32 @@ func (m *Model) execute() {
 		m.LastCmd = m.SelectedKey
 	}
 	m.State = ViewOutput
+}
+
+// historyText renders the history screen. It is a method so a test can check
+// that a command operation shows which command it touched.
+func (m *Model) historyText() string {
+	var sb strings.Builder
+
+	sb.WriteString("[HISTORY] Enter/Esc=back\n\n")
+
+	if len(m.App.History.AllData) == 0 {
+		sb.WriteString("No history\n")
+		return sb.String()
+	}
+
+	for i, entry := range m.App.History.AllData {
+		if i > 20 {
+			break
+		}
+
+		commandName := entry.CommandName
+		if commandName == "" {
+			commandName = "-"
+		}
+
+		sb.WriteString(fmt.Sprintf("%d. [%s] %s %s\n", i+1, entry.Operation, commandName, entry.Timestemp))
+	}
+
+	return sb.String()
 }

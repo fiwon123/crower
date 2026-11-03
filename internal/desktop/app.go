@@ -108,17 +108,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		sb.WriteString(fmt.Sprintf("Command: %s\n\n", m.SelectedKey))
 		sb.WriteString("Parameters: " + m.ParamInput + "_\n")
 	} else if m.State == ViewHistory {
-		sb.WriteString("[HISTORY] Enter/Esc=back\n\n")
-		if len(m.App.History.AllData) == 0 {
-			sb.WriteString("No history\n")
-		} else {
-			for i, h := range m.App.History.AllData {
-				if i > 20 {
-					break
-				}
-				sb.WriteString(fmt.Sprintf("%d. [%s] %s\n", i+1, h.Operation, h.Timestemp))
-			}
-		}
+		sb.WriteString(m.historyText())
 	} else if m.State == ViewOutput {
 		sb.WriteString("[OUTPUT] Enter/Esc=back\n\n")
 		sb.WriteString(fmt.Sprintf("Cmd: %s\n\n", m.LastCmd))
