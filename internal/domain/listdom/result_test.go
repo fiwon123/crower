@@ -9,7 +9,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/operation"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -129,7 +129,7 @@ func TestVariablePayloadTrimsCarriageReturn(t *testing.T) {
 }
 
 func TestFolderResult(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("InitCrowerTests: %v", err)
 	}
@@ -169,7 +169,7 @@ func TestFolderResult(t *testing.T) {
 }
 
 func TestFolderResultMissingFolderIsAnError(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("InitCrowerTests: %v", err)
 	}

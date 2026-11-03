@@ -7,14 +7,14 @@ import (
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/deletedom"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using name", func(t *testing.T) {
 
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -57,7 +57,7 @@ func TestDelete(t *testing.T) {
 
 	t.Run("Delete command using alias", func(t *testing.T) {
 
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -104,7 +104,7 @@ func TestDelete(t *testing.T) {
 
 func TestDeleteFile(t *testing.T) {
 	t.Run("Delete File single name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -126,7 +126,7 @@ func TestDeleteFile(t *testing.T) {
 	})
 
 	t.Run("Delete File using name with space", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -151,7 +151,7 @@ func TestDeleteFile(t *testing.T) {
 func TestDeleteFolder(t *testing.T) {
 
 	t.Run("Delete Folder single name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -172,7 +172,7 @@ func TestDeleteFolder(t *testing.T) {
 	})
 
 	t.Run("Delete Folder using name with space", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -203,7 +203,7 @@ func assertDeleteTest(want bool, got bool, t *testing.T) {
 // A legacy duplicate alias may already belong to another command; deleting a
 // command that still lists it must not remove that other command's key.
 func TestDeleteLeavesAnAliasAnotherCommandOwns(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

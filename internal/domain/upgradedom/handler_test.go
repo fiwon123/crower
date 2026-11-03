@@ -16,7 +16,7 @@ import (
 	"testing"
 
 	crowererrors "github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 	"github.com/minio/selfupdate"
 )
 
@@ -244,7 +244,7 @@ func TestBinaryFromArchive(t *testing.T) {
 }
 
 func TestFetchBinaryChecksTheStatus(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -267,7 +267,7 @@ func TestFetchBinaryChecksTheStatus(t *testing.T) {
 }
 
 func TestFetchBinaryReturnsTheExecutable(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -328,7 +328,7 @@ func TestHTTPSOnlyRedirect(t *testing.T) {
 // The upgrade must hand the extracted executable, not the archive, to
 // selfupdate. The applier is replaced so the test binary survives.
 func TestUpgradeAppAppliesTheExtractedBinary(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -382,7 +382,7 @@ func TestUpgradeAppAppliesTheExtractedBinary(t *testing.T) {
 
 // A failed download must not reach the applier.
 func TestUpgradeAppDoesNotApplyAFailedDownload(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -413,7 +413,7 @@ func TestUpgradeAppDoesNotApplyAFailedDownload(t *testing.T) {
 }
 
 func TestFetchBinaryRefusesAPlaintextBase(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -427,7 +427,7 @@ func TestFetchBinaryRefusesAPlaintextBase(t *testing.T) {
 }
 
 func TestFetchBinaryRejectsATamperedArchive(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -456,7 +456,7 @@ func TestFetchBinaryRejectsATamperedArchive(t *testing.T) {
 }
 
 func TestFetchBinaryRequiresAChecksumEntry(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -486,7 +486,7 @@ func TestFetchBinaryRequiresAChecksumEntry(t *testing.T) {
 
 // A release without checksums.txt must fail before the archive is fetched.
 func TestFetchBinaryRequiresChecksums(t *testing.T) {
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

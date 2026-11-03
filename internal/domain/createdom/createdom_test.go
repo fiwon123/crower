@@ -11,14 +11,14 @@ import (
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
 	"github.com/fiwon123/crower/internal/domain/operation"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 func TestCreate(t *testing.T) {
 
 	t.Run("Create a single command using only name", func(t *testing.T) {
 
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -36,7 +36,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("Create multiple commands using only name", func(t *testing.T) {
 
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -69,7 +69,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("Create multiple commands using only name, alias", func(t *testing.T) {
 
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -102,7 +102,7 @@ func TestCreate(t *testing.T) {
 
 	t.Run("Reject a name that is an existing alias", func(t *testing.T) {
 
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -132,7 +132,7 @@ func TestCreate(t *testing.T) {
 // missing-argument form and the form where the only word was taken as the name
 // used to index an empty slice.
 func TestCreateProcessRequiresAProcess(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -168,7 +168,7 @@ func TestCreateProcessRequiresAProcess(t *testing.T) {
 // an empty slice, so the flag was accepted and dropped; the fake runner keeps
 // the folder-open step out of the test.
 func TestCreateScriptCommandRegistersAlias(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -196,7 +196,7 @@ func TestCreateScriptCommandRegistersAlias(t *testing.T) {
 
 func TestCreateFile(t *testing.T) {
 
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -223,7 +223,7 @@ func TestCreateFile(t *testing.T) {
 
 func TestCreateFolder(t *testing.T) {
 
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -258,7 +258,7 @@ func assertCreateTest(command *command.Data, want bool, got bool, err error, t *
 // A Steps command never runs its exec, so create --execute must refuse it
 // rather than rebuild a command that does something else.
 func TestCreateExecuteRefusesAStepsCommand(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -296,7 +296,7 @@ func TestCreateExecuteRefusesAStepsCommand(t *testing.T) {
 // A note written before command_steps existed carries none; the command may
 // still be in the map, where its steps are visible.
 func TestCreateExecuteRefusesAStepsCommandFromAnOldNote(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

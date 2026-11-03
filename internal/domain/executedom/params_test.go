@@ -8,6 +8,7 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 func quoted(s string) string {
@@ -75,7 +76,7 @@ func TestApplyParams(t *testing.T) {
 func TestExecuteRejectsParametersWithoutAPlaceholder(t *testing.T) {
 	t.Chdir(t.TempDir()) // if the guard regresses, mkdir lands here, not in the tree
 
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -106,7 +107,7 @@ func TestApplyParamsNamesAnOutOfRangeIndex(t *testing.T) {
 // A Steps command runs its steps, not Exec. An unusable brace in Exec must not
 // turn into an error for a line that never runs.
 func TestExecuteWithStepsDoesNotValidateExec(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -126,7 +127,7 @@ func TestExecuteWithStepsDoesNotValidateExec(t *testing.T) {
 }
 
 func TestExecuteAppliesParamsToSteps(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -149,7 +150,7 @@ func TestExecuteAppliesParamsToSteps(t *testing.T) {
 
 // A steps set with no placeholder is an error, not a silent drop.
 func TestExecuteRejectsParametersWhenNoStepHasAPlaceholder(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -171,7 +172,7 @@ func TestExecuteRejectsParametersWhenNoStepHasAPlaceholder(t *testing.T) {
 // A step with a literal brace is left alone while another step substitutes.
 // {x} is literal in every shell; {a,b} would be brace-expanded by bash.
 func TestExecuteKeepsALiteralBraceInAStep(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -192,7 +193,7 @@ func TestExecuteKeepsALiteralBraceInAStep(t *testing.T) {
 
 // Executing a Steps command must not rewrite the steps stored on the map.
 func TestExecuteDoesNotRewriteStoredSteps(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

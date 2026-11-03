@@ -113,10 +113,12 @@ scripts/             add_to_path installers
 
 - The `cr` alias is the same binary under a second name; both are shipped in
   the release archive.
-- `internal/helper.InitCrowerTests` gives each test its own directory under the
-  system temporary directory (`os.MkdirTemp`), so parallel packages cannot race
-  over a shared fixture path — the failure that used to affect `opendom`,
-  `deletedom` and `movedom` (#46, fixed in #47).
+- `internal/testutil.New(t)` gives each test its own directory under the
+  system temporary directory (`t.TempDir`, removed when the test ends), so
+  parallel packages cannot race over a shared fixture path — the failure that
+  used to affect `opendom`, `deletedom` and `movedom` (#46, fixed in #47).
+  It replaced `internal/helper.InitCrowerTests`, which used `os.MkdirTemp` and
+  never cleaned up.
 - Windows uses `cmd` to execute commands, Linux uses `sh`.
 - The config file is TOML and lives under the user's home directory. It is
   never committed.

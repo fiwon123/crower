@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/domain/searchdom"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 func TestSearchBrowser(t *testing.T) {
 	t.Run("Search Browser single name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -23,7 +23,7 @@ func TestSearchBrowser(t *testing.T) {
 	})
 
 	t.Run("Search Browser name with space", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -39,7 +39,7 @@ func TestSearchBrowser(t *testing.T) {
 
 func TestSearchFile(t *testing.T) {
 	t.Run("Search File single name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -53,7 +53,7 @@ func TestSearchFile(t *testing.T) {
 	})
 
 	t.Run("Search File name with space", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -69,7 +69,7 @@ func TestSearchFile(t *testing.T) {
 
 func TestSearchFolder(t *testing.T) {
 	t.Run("Search Folder single name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -83,7 +83,7 @@ func TestSearchFolder(t *testing.T) {
 	})
 
 	t.Run("Search Folder name with space", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -99,7 +99,7 @@ func TestSearchFolder(t *testing.T) {
 
 func TestSearchFileAndFolder(t *testing.T) {
 	t.Run("Search Folder and File single name", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
@@ -113,7 +113,7 @@ func TestSearchFileAndFolder(t *testing.T) {
 	})
 
 	t.Run("Search Folder anf File name with space", func(t *testing.T) {
-		app, _, err := helper.InitCrowerTests()
+		app, _, err := testutil.New(t)
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}

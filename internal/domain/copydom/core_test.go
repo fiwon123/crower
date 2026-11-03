@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/domain/copydom"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 // The history entry has to describe the whole command.
@@ -16,7 +16,7 @@ import (
 // taken off the end, so `crower copy a.txt out/` was recorded as
 // `crower copy a.txt`: the entry could not say where the file went.
 func TestCopyRecordsTheWholeCommand(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestCopyRecordsTheWholeCommand(t *testing.T) {
 // A batch is attempted whole and reports the failures together, so a script can
 // see that some of the work did not happen.
 func TestCopyReportsEveryFailure(t *testing.T) {
-	app, _, err := helper.InitCrowerTests()
+	app, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("error before test: %v", err)
 	}

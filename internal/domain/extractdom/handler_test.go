@@ -8,13 +8,13 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/domain/extractdom"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/testutil"
 )
 
 func newHandler(t *testing.T) *extractdom.Handler {
 	t.Helper()
 
-	cfg, _, err := helper.InitCrowerTests()
+	cfg, _, err := testutil.New(t)
 	if err != nil {
 		t.Fatalf("InitCrowerTests: %v", err)
 	}
