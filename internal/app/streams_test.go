@@ -89,9 +89,9 @@ func TestReaderKeepsOneBuffer(t *testing.T) {
 // A stream that was left out falls back to the terminal, so a caller that only
 // cares about one stream does not have to build the other two.
 func TestStreamsFillsInTheDefaults(t *testing.T) {
-	filled := Streams{}.withDefaults()
+	filled := Streams{}.WithDefaults()
 
 	if filled.In == nil || filled.Out == nil || filled.Err == nil {
-		t.Fatalf("withDefaults() left a stream nil: %+v", filled)
+		t.Fatalf("WithDefaults() left a stream nil: %+v", filled)
 	}
 }
