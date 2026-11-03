@@ -22,11 +22,14 @@ func unsupportedOSError(goos string) error {
 func browserCommand(goos string, content string) (string, error) {
 	switch goos {
 	case "windows":
+		// cmd.exe has no single-quote quoting: `start ' ' 'url'` makes the
+		// first quote the window title and launches nothing. The empty ""
+		// is the title; the URL is a real quoted argument, as opendom does.
 		if utils.IsURL(content) {
-			return fmt.Sprintf(`start ' ' '%s' `, content), nil
+			return fmt.Sprintf(`start "" "%s"`, content), nil
 		}
 
-		return fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s' `, content), nil
+		return fmt.Sprintf(`start "" "https://duckduckgo.com/?q=%s"`, content), nil
 
 	case "linux":
 		if utils.IsURL(content) {

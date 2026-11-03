@@ -18,12 +18,12 @@ func TestBrowserCommand(t *testing.T) {
 		{
 			"windows URL",
 			"windows", "https://example.com",
-			`start ' ' 'https://example.com' `, false,
+			`start "" "https://example.com"`, false,
 		},
 		{
 			"windows search",
 			"windows", "golang context",
-			`start ' ' 'https://duckduckgo.com/?q=golang context' `, false,
+			`start "" "https://duckduckgo.com/?q=golang context"`, false,
 		},
 		{
 			"linux URL",
