@@ -14,7 +14,7 @@ crower share pull <pack>
 | Command | Flag | Effect |
 | --- | --- | --- |
 | `export` | `-o`, `--out` | Output file path |
-| `import` | `--overwrite` | Replace commands that already exist |
+| `import` | `--overwrite` | Replace a command with the same name; drop aliases that conflict |
 
 ## 💡 Examples
 
@@ -26,6 +26,24 @@ crower import team.toml --overwrite
 crower share list
 crower share pull docker-setup
 ```
+
+## 🔀 Name and alias collisions
+
+Import never lets two commands share a name or an alias. If a pack entry's name
+or alias is already taken:
+
+- **without `--overwrite`**, crower asks once per command; accepting renames the
+  conflicting name or alias to `x_imported` (numbered if needed), declining
+  skips that command;
+- **with `--overwrite`**, a command with the same *name* is replaced, and a
+  conflicting *alias* is dropped — taking it would silently edit the command
+  that owns it.
+
+Entries are processed in name order. Within one pack, a later entry that
+collides with an earlier one is renamed the same way, even with `--overwrite`,
+so two entries can never share a key.
+
+`share pull` uses the non-overwrite path after its own confirmation.
 
 ## 🛰️ Registry protocol
 

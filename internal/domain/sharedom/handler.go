@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -79,15 +81,51 @@ func (h *Handler) Import(inPath string, overwrite bool) error {
 		return err
 	}
 
-	// Stage the whole file before touching the run: a prompt or a write that
-	// fails must leave both the map and the file as they were.
+	// Stage the whole file before touching the run: a prompt error must leave
+	// both the maps and the file as they were. The apply below mutates memory
+	// and then persists; the process exits with the import, so only a write
+	// failure can leave memory ahead of the file.
+	//
+	// Names and aliases share one namespace. An import may not shadow either:
+	// a conflicting name is renamed (or replaced by --overwrite), and a
+	// conflicting alias is renamed, or dropped under --overwrite because
+	// taking it would silently edit another command.
 	staged := command.NewMapData()
+	stagedAliases := command.NewMapData()
 
-	for k, v := range commands {
+	for _, k := range slices.Sorted(maps.Keys(commands)) {
+		v := commands[k]
 		key := k
 
-		if importKeyTaken(key, h.app.AllCommandsByName, staged) && !overwrite {
-			rename, err := helper.GetUserConfirmation(fmt.Sprintf("Command '%s' exists. Rename?", k), h.app)
+		nameStaged := staged.Exists(key) || stagedAliases.Exists(key)
+		nameExists := h.app.AllCommandsByName.Exists(key) || h.app.AllCommandsByAlias.Exists(key)
+
+		// Two entries in one pack still need distinct keys: --overwrite only
+		// replaces commands that already exist on disk.
+		if overwrite && nameStaged {
+			key = firstFreeImportKey(k, h.app.AllCommandsByName, h.app.AllCommandsByAlias, staged, stagedAliases)
+		}
+
+		local := command.NewMapData()
+		aliases := make([]string, 0, len(v.AllAlias))
+		conflicting := make([]bool, 0, len(v.AllAlias))
+
+		for _, alias := range v.AllAlias {
+			if alias == "" {
+				continue
+			}
+
+			conflicting = append(conflicting, h.importAliasTaken(alias, key, overwrite, staged, stagedAliases, local))
+			aliases = append(aliases, alias)
+			local.Add(alias, &command.Data{Name: alias})
+		}
+
+		needRename := (!overwrite && (nameStaged || nameExists)) || slices.Contains(conflicting, true)
+		rename := false
+
+		if needRename && !overwrite {
+			rename, err = helper.GetUserConfirmation(
+				fmt.Sprintf("Command '%s' conflicts with an existing name or alias. Rename it? (no skips this command)", k), h.app)
 			if err != nil {
 				return err
 			}
@@ -95,22 +133,63 @@ func (h *Handler) Import(inPath string, overwrite bool) error {
 			if !rename {
 				continue
 			}
+		}
 
-			key = firstFreeImportKey(k, h.app.AllCommandsByName, staged)
+		if rename && (nameStaged || nameExists) {
+			key = firstFreeImportKey(k, h.app.AllCommandsByName, h.app.AllCommandsByAlias, staged, stagedAliases, local)
+		}
+
+		kept := aliases[:0]
+		for i, alias := range aliases {
+			if !conflicting[i] {
+				kept = append(kept, alias)
+				continue
+			}
+
+			// --overwrite says "do not ask"; an alias that would shadow is
+			// dropped rather than taken from the command that owns it.
+			if overwrite {
+				continue
+			}
+
+			// The command's own name is not in the maps yet; reserve it so a
+			// renamed alias cannot land on it and create a self-alias.
+			reserved := command.NewMapData()
+			reserved.Add(key, &command.Data{Name: key})
+
+			renamed := firstFreeImportKey(alias, h.app.AllCommandsByName, h.app.AllCommandsByAlias, staged, stagedAliases, local, reserved)
+			local.Add(renamed, &command.Data{Name: renamed})
+			kept = append(kept, renamed)
 		}
 
 		// The map is keyed by the command's name everywhere else; an imported
 		// file must not produce a key and a Name that disagree.
 		v.Name = key
+		v.AllAlias = kept
 		staged.Add(key, &v)
+
+		for _, alias := range kept {
+			stagedAliases.Add(alias, &v)
+		}
 	}
 
 	if len(staged) == 0 {
 		return nil
 	}
 
-	for key, cmd := range staged {
-		h.app.AllCommandsByName.Add(key, &cmd)
+	for _, key := range slices.Sorted(maps.Keys(staged)) {
+		cmd := staged.Get(key)
+
+		// --overwrite may be replacing a command with this name, or taking a
+		// name that another command used as an alias. Remove that ownership
+		// first, or the reaches-old-command alias would survive the import.
+		h.takeName(key)
+
+		h.app.AllCommandsByName.Add(key, cmd)
+
+		for _, alias := range cmd.AllAlias {
+			h.app.AllCommandsByAlias.Add(alias, cmd)
+		}
 	}
 
 	// Persist once, after the whole file is applied. The old code called Save
@@ -144,6 +223,63 @@ func firstFreeImportKey(base string, maps ...command.MapData) string {
 	}
 
 	return key
+}
+
+// importAliasTaken reports whether alias already belongs to a name or an alias
+// anywhere: on disk, in an entry staged earlier in this pack, or earlier in the
+// same command.
+//
+// Under --overwrite a key the command being replaced already owns is not a
+// conflict: re-importing the same command has to keep its aliases.
+func (h *Handler) importAliasTaken(alias, key string, overwrite bool, staged, stagedAliases, local command.MapData) bool {
+	if staged.Exists(alias) || stagedAliases.Exists(alias) || local.Exists(alias) {
+		return true
+	}
+
+	if owner := h.app.AllCommandsByAlias.Get(alias); owner != nil && !(overwrite && owner.Name == key) {
+		return true
+	}
+
+	if owner := h.app.AllCommandsByName.Get(alias); owner != nil && !(overwrite && alias == key) {
+		return true
+	}
+
+	return false
+}
+
+// takeName removes any ownership of key so an imported command can take it,
+// keeping both maps consistent with the records they hold.
+func (h *Handler) takeName(key string) {
+	if old := h.app.AllCommandsByName.Get(key); old != nil {
+		h.app.AllCommandsByName.Remove(key)
+
+		for _, alias := range old.AllAlias {
+			// Only drop the alias entry when it still points at this command:
+			// a legacy duplicate may already have handed it to another one.
+			if owner := h.app.AllCommandsByAlias.Get(alias); owner != nil && (owner.Name == old.Name || owner.Name == "") {
+				h.app.AllCommandsByAlias.Remove(alias)
+			}
+		}
+	}
+
+	if h.app.AllCommandsByAlias.Get(key) == nil {
+		return
+	}
+
+	h.app.AllCommandsByAlias.Remove(key)
+
+	// Drop the alias from every record that claims it. Looking the owner up by
+	// Name would miss a hand-edited record that omits Name.
+	for name, c := range h.app.AllCommandsByName {
+		if !slices.Contains(c.AllAlias, key) {
+			continue
+		}
+
+		c.AllAlias = slices.DeleteFunc(slices.Clone(c.AllAlias), func(alias string) bool {
+			return alias == key
+		})
+		h.app.AllCommandsByName.Update(name, &c)
+	}
 }
 
 func (h *Handler) getRegistryURL() string {
