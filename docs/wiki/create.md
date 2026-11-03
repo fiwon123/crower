@@ -14,7 +14,7 @@ crower create [name] [exec] [flags]
 | `-f`, `--file` | Treat the arguments as file paths |
 | `-o`, `--folder` | Treat the arguments as folder paths |
 | `--execute` | Create from the last executed command |
-| `-p`, `--process` | Create from a process name or pid |
+| `-p`, `--process` | New command name; pass the process name or pid as an argument |
 | `--script` | Create a helper script for a complex command |
 | `--syspath` | Create a `PATH` entry |
 | `--system` | Create a system variable |
@@ -38,6 +38,10 @@ crower create --folder tmp logs
 # Re-create the command you last executed under a new name
 # (one name; --alias and the other create flags still apply)
 crower create --execute greet2 -a g2
+
+# Create a shortcut for a running process:
+# -p is the new command name, the process comes last
+crower create -p editor code
 ```
 
 > [!TIP]

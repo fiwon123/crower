@@ -965,6 +965,20 @@ func TestCreateExecuteKeepsASemicolonInTheExec(t *testing.T) {
 	}
 }
 
+// create -p names the new command and takes the process as an argument. With
+// no process it indexed an empty slice and panicked; it must fail like any
+// other missing argument.
+func TestCreateProcessWithoutAProcessFails(t *testing.T) {
+	_, _, err := run(t, "create", "-p", "only-a-name")
+	if err == nil {
+		t.Fatal("create -p with no process returned no error")
+	}
+
+	if !strings.Contains(err.Error(), "process name or pid") {
+		t.Errorf("error = %v, want it to name the missing process", err)
+	}
+}
+
 // delete --create removes the command the last create added. With the empty
 // name it failed before touching anything.
 func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {

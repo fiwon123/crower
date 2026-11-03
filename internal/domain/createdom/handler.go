@@ -10,6 +10,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/shell"
 
 	"github.com/fiwon123/crower/pkg/utils"
@@ -60,11 +61,19 @@ func (h *Handler) CreateCommand(name string, alias []string, exec string) (*comm
 	return command, nil
 }
 
-// Create command based on process name or id process
+// Create command based on process name or id process.
+//
+// name is the command to create; args[0] is the process name or pid. The
+// missing-process case used to index an empty slice and panic, so `crower
+// create -p <name>` crashed instead of saying what was missing.
 func (h *Handler) CreateProcess(name string, args []string) (*command.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]
+	}
+
+	if len(args) == 0 || strings.TrimSpace(args[0]) == "" {
+		return nil, errors.NotEnoughArgs("process name or pid")
 	}
 
 	process := args[0]
