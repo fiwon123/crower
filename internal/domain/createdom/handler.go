@@ -10,8 +10,6 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/internal/shell"
 
 	"github.com/fiwon123/crower/pkg/utils"
@@ -126,17 +124,12 @@ func (h *Handler) CreateProcess(name string, args []string) (*command.Data, erro
 
 // Create a new file on filepath
 func (h *Handler) CreateFile(filePath string) error {
-	var out string
-	var err error
-	switch runtime.GOOS {
-	case "windows":
-		out, err = h.shell.Exec("type nul > " + helper.QuoteFor(runtime.GOOS, filePath))
-	case "linux", "darwin":
-		out, err = h.shell.Exec("touch " + helper.QuoteFor(runtime.GOOS, filePath))
-	default:
-		return errors.ErrUnsupportedOS
+	commandLine, err := createFileCommand(runtime.GOOS, filePath)
+	if err != nil {
+		return err
 	}
 
+	out, err := h.shell.Exec(commandLine)
 	if err != nil {
 		return fmt.Errorf("create file %s: %w (output: %s)", filePath, err, strings.TrimSpace(out))
 	}
@@ -146,17 +139,12 @@ func (h *Handler) CreateFile(filePath string) error {
 
 // Create a new folder on folderpath
 func (h *Handler) CreateFolder(folderPath string) error {
-	var out string
-	var err error
-	switch runtime.GOOS {
-	case "windows":
-		out, err = h.shell.Exec("mkdir " + helper.QuoteFor(runtime.GOOS, folderPath))
-	case "linux", "darwin":
-		out, err = h.shell.Exec("mkdir -p " + helper.QuoteFor(runtime.GOOS, folderPath))
-	default:
-		return errors.ErrUnsupportedOS
+	commandLine, err := createFolderCommand(runtime.GOOS, folderPath)
+	if err != nil {
+		return err
 	}
 
+	out, err := h.shell.Exec(commandLine)
 	if err != nil {
 		return fmt.Errorf("create folder %s: %w (output: %s)", folderPath, err, strings.TrimSpace(out))
 	}
@@ -172,24 +160,16 @@ func (h *Handler) CreateScriptCommand(name string) (string, error) {
 		return "", err
 	}
 
-	switch runtime.GOOS {
-	case "windows":
-		scriptFilePath := filepath.Join(scriptFolderPath, name+".bat")
-
-		if err := utils.CreateFileIfNotExists(scriptFilePath); err != nil {
-			return "", err
-		}
-
-		return scriptFilePath, nil
-	case "linux", "darwin":
-		scriptFilePath := filepath.Join(scriptFolderPath, name+".sh")
-
-		if err := utils.CreateFileIfNotExists(scriptFilePath); err != nil {
-			return "", err
-		}
-
-		return scriptFilePath, nil
+	extension, err := scriptExtension(runtime.GOOS)
+	if err != nil {
+		return "", err
 	}
 
-	return "", fmt.Errorf("can't find specific OS to create script command")
+	scriptFilePath := filepath.Join(scriptFolderPath, name+extension)
+
+	if err := utils.CreateFileIfNotExists(scriptFilePath); err != nil {
+		return "", err
+	}
+
+	return scriptFilePath, nil
 }

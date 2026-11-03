@@ -1,21 +1,11 @@
 package searchdom
 
 import (
-	"fmt"
 	"runtime"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/shell"
-	"github.com/fiwon123/crower/pkg/utils"
 )
-
-// unsupportedOSError reports a search that has no implementation for the
-// running platform. It is an error rather than an empty result: a search that
-// matched nothing and a search that cannot run must not look the same.
-func unsupportedOSError(goos string) error {
-	return fmt.Errorf("%w: search %q", errors.ErrUnsupportedOS, goos)
-}
 
 type CommandRunner interface {
 	Start(ex string) error
@@ -43,59 +33,40 @@ func NewHandlerWithRunner(app *app.Config, runner CommandRunner) *Handler {
 
 // SearchBrowser opens a search in the default browser.
 func (h *Handler) SearchBrowser(content string) (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		if utils.IsURL(content) {
-			return "", h.runner.Start(fmt.Sprintf(`start ' ' '%s' `, content))
-		}
-		return "", h.runner.Start(fmt.Sprintf(`start ' ' 'https://duckduckgo.com/?q=%s' `, content))
-	case "linux":
-		if utils.IsURL(content) {
-			return "", h.runner.Start(fmt.Sprintf(`xdg-open "%s" `, content))
-		}
-		return "", h.runner.Start(fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" `, content))
-	case "darwin":
-		if utils.IsURL(content) {
-			return "", h.runner.Start(fmt.Sprintf(`open "%s"`, content))
-		}
-		return "", h.runner.Start(fmt.Sprintf(`open "https://duckduckgo.com/?q=%s"`, content))
+	commandLine, err := browserCommand(runtime.GOOS, content)
+	if err != nil {
+		return "", err
 	}
 
-	return "", unsupportedOSError(runtime.GOOS)
+	return "", h.runner.Start(commandLine)
 }
 
 // SearchFile searches files under currentPath.
 func (h *Handler) SearchFile(currentPath string, content string) (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return h.runner.Exec(fmt.Sprintf(`dir "%s" /s /b /a-d | findstr "%s"`, currentPath, content))
-	case "linux", "darwin":
-		return h.runner.Exec(fmt.Sprintf(`find "%s" -type f -name "%s"`, currentPath, content))
+	commandLine, err := searchFileCommand(runtime.GOOS, currentPath, content)
+	if err != nil {
+		return "", err
 	}
 
-	return "", unsupportedOSError(runtime.GOOS)
+	return h.runner.Exec(commandLine)
 }
 
 // SearchFolder searches folders under currentPath.
 func (h *Handler) SearchFolder(currentPath string, content string) (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return h.runner.Exec(fmt.Sprintf(`dir "%s" /s /b /ad | findstr "%s"`, currentPath, content))
-	case "linux", "darwin":
-		return h.runner.Exec(fmt.Sprintf(`find "%s" -type d -name "%s"`, currentPath, content))
+	commandLine, err := searchFolderCommand(runtime.GOOS, currentPath, content)
+	if err != nil {
+		return "", err
 	}
 
-	return "", unsupportedOSError(runtime.GOOS)
+	return h.runner.Exec(commandLine)
 }
 
 // SearchFileAndFolder searches files and folders under currentPath.
 func (h *Handler) SearchFileAndFolder(currentPath string, content string) (string, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return h.runner.Exec(fmt.Sprintf(`dir "%s" /s /b | findstr "%s"`, currentPath, content))
-	case "linux", "darwin":
-		return h.runner.Exec(fmt.Sprintf(`find "%s" -name "%s"`, currentPath, content))
+	commandLine, err := searchFileAndFolderCommand(runtime.GOOS, currentPath, content)
+	if err != nil {
+		return "", err
 	}
 
-	return "", unsupportedOSError(runtime.GOOS)
+	return h.runner.Exec(commandLine)
 }

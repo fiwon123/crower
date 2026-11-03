@@ -19,24 +19,16 @@ func NewHandler(app *app.Config) *Handler {
 }
 
 func (h *Handler) UpgradeApp(newVersion string) error {
-	var resp *http.Response
-	var err error
-	switch runtime.GOOS {
-	case "windows":
-		resp, err = http.Get(
-			"https://github.com/fiwon123/crower/releases/latest/download/crower_" + newVersion + "_windows.zip",
-		)
-	case "linux":
-		resp, err = http.Get(
-			"https://github.com/fiwon123/crower/releases/latest/download/crower_" + newVersion + "_linux.tar.gz",
-		)
+	asset, err := upgradeAsset(runtime.GOOS, newVersion)
+	if err != nil {
+		return err
 	}
 
+	resp, err := http.Get("https://github.com/fiwon123/crower/releases/latest/download/" + asset)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
 	return selfupdate.Apply(resp.Body, selfupdate.Options{})
-
 }

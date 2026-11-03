@@ -63,29 +63,10 @@ func (h *Handler) Extract(paths []string, output string) error {
 }
 
 func (h *Handler) performExtract(ext string, filePath string, outDir string) (string, error) {
-	switch ext {
-	case "tar":
-		return h.shell.Exec(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
-	case "gz":
-		return h.shell.Exec(fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir))
-	case "tgz":
-		return h.shell.Exec(fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir))
-	case "bz2":
-		return h.shell.Exec(fmt.Sprintf(`tar -xjf '%s' -C '%s'`, filePath, outDir))
-	case "xz":
-		return h.shell.Exec(fmt.Sprintf(`tar -xJf '%s' -C '%s'`, filePath, outDir))
-	case "zip":
-		switch runtime.GOOS {
-		case "windows":
-			return h.shell.Exec(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
-		case "linux":
-			return h.shell.Exec(fmt.Sprintf(`unzip '%s' -d  '%s'`, filePath, outDir))
-		}
-	case "7z":
-		return h.shell.Exec(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
-	case "rar":
-		return h.shell.Exec(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
+	commandLine, err := extractCommand(runtime.GOOS, ext, filePath, outDir)
+	if err != nil {
+		return "", err
 	}
 
-	return "", fmt.Errorf("no extractor for .%s archives", ext)
+	return h.shell.Exec(commandLine)
 }

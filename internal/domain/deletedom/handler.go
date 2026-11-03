@@ -10,8 +10,6 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/internal/shell"
 
 	"github.com/fiwon123/crower/pkg/utils"
@@ -61,23 +59,9 @@ func (h *Handler) DeleteFolder(folderPath string) error {
 
 // remove runs the platform's delete command.
 func (h *Handler) remove(path string, folder bool) error {
-	var commandLine string
-
-	switch runtime.GOOS {
-	case "windows":
-		if folder {
-			commandLine = "rmdir /s /q " + helper.QuoteFor(runtime.GOOS, path)
-		} else {
-			commandLine = "del " + helper.QuoteFor(runtime.GOOS, path)
-		}
-	case "linux", "darwin":
-		commandLine = "rm "
-		if folder {
-			commandLine = "rm -r "
-		}
-		commandLine += helper.QuoteFor(runtime.GOOS, path)
-	default:
-		return errors.ErrUnsupportedOS
+	commandLine, err := removeCommand(runtime.GOOS, path, folder)
+	if err != nil {
+		return err
 	}
 
 	out, err := h.shell.Exec(commandLine)
