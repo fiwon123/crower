@@ -1,13 +1,16 @@
 package updatedom
 
 import (
-	"fmt"
-	"slices"
-
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 )
 
+// Handler applies an update to the loaded command set.
+//
+// The rules themselves live in the catalog aggregate; this type is the
+// remaining bridge to the map-based configuration the operations still read. It
+// disappears when `update` becomes a use case.
 type Handler struct {
 	app *app.Config
 }
@@ -19,167 +22,48 @@ func NewHandler(app *app.Config) *Handler {
 	}
 }
 
-// Update command based on the key value.
-// Old values will be used if not specified in the data.Command structure.
+// UpdateCommand changes the name, aliases or exec of a managed command.
+//
+// It returns the command before and after the change so the caller can record
+// what happened in the history.
 func (h *Handler) UpdateCommand(key string, newName string, newAlias []string, newExec string) (*command.Data, *command.Data, error) {
 
-	newCommand := command.New(newName, newAlias, newExec)
-
-	oldCommand := findCommand(h.app, key)
-	if oldCommand == nil {
-		return nil, newCommand, fmt.Errorf("couldn't find command by name or alias")
+	result, err := h.app.Catalog().Update(key, catalog.Changes{
+		Name:    newName,
+		Aliases: newAlias,
+		Exec:    newExec,
+	})
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return oldCommand, newCommand, h.performUpdate(oldCommand, newCommand)
+	h.app.ReplaceCatalog(result.Catalog)
+
+	for _, warning := range result.Warnings {
+		h.app.Logger.Warning(warning)
+	}
+
+	return toData(result.Old), toData(result.New), nil
 }
 
 // findCommand resolves a key the way every lookup does: name first, then
 // alias. The input prompt and the handler share it, so the command shown for
 // confirmation is the command that gets updated.
 func findCommand(app *app.Config, key string) *command.Data {
-	if c := app.AllCommandsByName.Get(key); c != nil {
-		return c
+	resolved, ok := app.Catalog().Resolve(key)
+	if !ok {
+		return nil
 	}
 
-	return app.AllCommandsByAlias.Get(key)
+	return toData(resolved)
 }
 
-func (h *Handler) performUpdate(oldCommand *command.Data, newCommand *command.Data) error {
-
-	// An alias list the caller supplied replaces the old one; an omitted list
-	// is inherited from the old command. The distinction decides whether a
-	// legacy claim owned by another command is dropped (the user replaced the
-	// aliases) or left dormant in the record (the user changed another field).
-	aliasesSupplied := len(newCommand.AllAlias) > 0
-
-	countFieldsUpdate := 0
-	if newCommand.Name == "" {
-		newCommand.Name = oldCommand.Name
-	} else {
-		countFieldsUpdate += 1
+// toData converts an aggregate command to the persisted shape.
+func toData(c catalog.Command) *command.Data {
+	return &command.Data{
+		Name:     c.Name,
+		AllAlias: c.Aliases,
+		Exec:     c.Exec,
+		Steps:    c.Steps,
 	}
-
-	if len(newCommand.AllAlias) == 0 {
-		newCommand.AllAlias = oldCommand.AllAlias
-	} else {
-		countFieldsUpdate += 1
-	}
-
-	if newCommand.Exec == "" {
-		newCommand.Exec = oldCommand.Exec
-	} else {
-		countFieldsUpdate += 1
-	}
-
-	// A Steps command runs its steps instead of its exec. update has no flag
-	// for them, so the replacement built by New carries none: without this the
-	// update would replace a multi-line workflow with a single line and report
-	// success (#217).
-	if len(oldCommand.Steps) > 0 && len(newCommand.Steps) == 0 {
-		newCommand.Steps = slices.Clone(oldCommand.Steps)
-	}
-
-	if countFieldsUpdate == 0 {
-		return fmt.Errorf("already up-to-date")
-	}
-
-	// Validate after the defaults are filled: the map must see the name and
-	// aliases the update would actually leave behind, not the partial input.
-	if err := h.canUpdate(oldCommand, newCommand); err != nil {
-		return err
-	}
-
-	// Repoint the aliases this command owns and leave the ones another command
-	// owns alone: a legacy duplicate may already have assigned them there. A
-	// supplied alias list drops such a claim; an inherited one keeps it in the
-	// record (dormant) instead of deleting data the user did not touch.
-	kept := make([]string, 0, len(newCommand.AllAlias))
-	warned := map[string]bool{}
-
-	warn := func(warning string) {
-		if warned[warning] {
-			return
-		}
-
-		warned[warning] = true
-		h.app.Logger.Warning(warning)
-	}
-
-	for _, alias := range newCommand.AllAlias {
-		owner := h.app.AllCommandsByAlias.Get(alias)
-		foreignAlias := owner != nil && owner.Name != oldCommand.Name && owner.Name != newCommand.Name
-		foreignName := h.app.AllCommandsByName.Exists(alias) && alias != oldCommand.Name && alias != newCommand.Name
-
-		switch {
-		case foreignAlias && aliasesSupplied:
-			warn(fmt.Sprintf("alias %q belongs to %q; leaving it there", alias, owner.Name))
-			continue
-		case foreignName && aliasesSupplied:
-			warn(fmt.Sprintf("alias %q is the name of another command; leaving it there", alias))
-			continue
-		case foreignAlias || foreignName:
-			kept = append(kept, alias)
-		default:
-			kept = append(kept, alias)
-			h.app.AllCommandsByAlias.Add(alias, newCommand)
-		}
-	}
-
-	newCommand.AllAlias = kept
-
-	// Drop the old aliases no longer kept, but only entries this command owns.
-	for _, alias := range oldCommand.AllAlias {
-		if slices.Contains(kept, alias) {
-			continue
-		}
-
-		if owner := h.app.AllCommandsByAlias.Get(alias); owner != nil && owner.Name == oldCommand.Name {
-			h.app.AllCommandsByAlias.Remove(alias)
-		}
-	}
-
-	h.app.AllCommandsByName.Remove(oldCommand.Name)
-	h.app.AllCommandsByName.Add(newCommand.Name, newCommand)
-
-	return nil
-}
-
-// canUpdate checks the final name and aliases against every other command.
-//
-// Only what the update changes is validated. A name or alias the command
-// already holds cannot introduce a new shadow, and a config written before this
-// check (or edited by hand) may already carry a collision; an update of an
-// unrelated field must still work on it.
-//
-// The checks cover both directions, because lookups try the name map first: a
-// name that is another command's alias, or an alias that is another command's
-// name, would leave one of them unreachable.
-func (h *Handler) canUpdate(oldCommand *command.Data, newCommand *command.Data) error {
-	if newCommand.Name != oldCommand.Name {
-		if h.app.AllCommandsByName.Get(newCommand.Name) != nil {
-			return fmt.Errorf("command name already in use: %q", newCommand.Name)
-		}
-
-		// The owner may be this command itself when it is renamed to one of
-		// its own aliases; that is not a conflict.
-		if owner := h.app.AllCommandsByAlias.Get(newCommand.Name); owner != nil && owner.Name != oldCommand.Name {
-			return fmt.Errorf("%q is already an alias of %q", newCommand.Name, owner.Name)
-		}
-	}
-
-	for _, alias := range newCommand.AllAlias {
-		if slices.Contains(oldCommand.AllAlias, alias) {
-			continue
-		}
-
-		if owner := h.app.AllCommandsByAlias.Get(alias); owner != nil && owner.Name != oldCommand.Name {
-			return fmt.Errorf("alias already in use: %q", alias)
-		}
-
-		if owner := h.app.AllCommandsByName.Get(alias); owner != nil && owner.Name != oldCommand.Name {
-			return fmt.Errorf("%q is already a command name", alias)
-		}
-	}
-
-	return nil
 }

@@ -22,15 +22,14 @@ func (app *Config) Catalog() catalog.Catalog {
 // reset would see.
 func (app *Config) ReplaceCatalog(commands catalog.Catalog) {
 	app.AllCommandsByName = command.NewMapData()
-	app.AllCommandsByAlias = command.NewMapData()
 	app.OrderKeys = commands.Names()
 
 	for _, cmd := range commands.Commands() {
-		stored := toData(cmd)
-		app.AllCommandsByName.Add(cmd.Name, stored)
-
-		for _, alias := range cmd.Aliases {
-			app.AllCommandsByAlias.Add(alias, stored)
-		}
+		app.AllCommandsByName.Add(cmd.Name, toData(cmd))
 	}
+
+	// The alias index is rebuilt with the loader's rule -- names sorted, first
+	// claim wins -- rather than by iteration order, so a config that already
+	// holds a collision resolves the same way before and after a change.
+	app.AllCommandsByAlias = aliasMapFrom(commands)
 }
