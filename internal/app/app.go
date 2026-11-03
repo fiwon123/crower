@@ -28,6 +28,9 @@ type Config struct {
 	// NoInput reports that prompts must fail rather than read stdin.
 	NoInput bool
 
+	// Format is how an operation with a structured result renders it.
+	Format Format
+
 	in  *bufio.Reader
 	out io.Writer
 	err io.Writer
@@ -82,6 +85,7 @@ func NewApp(
 		AllCommandsByAlias: allAliases,
 		AllCommandsByName:  allCommands,
 		NoInput:            opts.NoInput,
+		Format:             opts.Format,
 		in:                 bufio.NewReader(opts.Streams.In),
 		out:                opts.Streams.Out,
 		err:                opts.Streams.Err,

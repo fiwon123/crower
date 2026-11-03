@@ -41,14 +41,6 @@ func NewHandler(app *app.Config) *Handler {
 	}
 }
 
-// ListCommands prints every managed command as a table.
-//
-// The table is built as one block and written once, so it is a single result on
-// the result stream rather than a row-by-row mix of table and status lines.
-func (h *Handler) ListCommands() {
-	h.app.Logger.Out(h.CommandsTable())
-}
-
 // CommandsTable renders the table `list` prints, header included.
 //
 // It returns text rather than printing it because the same table is also a
@@ -79,14 +71,15 @@ func (h *Handler) commandsTable(orderKeys []string, allCommands command.MapData)
 	return builder.String()
 }
 
-// ListProcess lists the processes running on the user operational system (OS).
-func (h *Handler) ListProcess(args []string) (string, error) {
+// ListProcess returns the processes running on the user operational system
+// (OS), filtered by a case-insensitive part of the name.
+func (h *Handler) ListProcess(args []string) ([]utils.ProcessInfo, error) {
 	partName := ""
 	if len(args) > 0 {
 		partName = args[0]
 	}
 
-	return utils.GetAllProcess(partName, true)
+	return utils.ListProcesses(partName, true)
 }
 
 // ListHistory returns the history table.

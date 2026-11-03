@@ -2,7 +2,10 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/json"
+	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -286,5 +289,226 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 				t.Errorf("%s does not inherit --%s", child.Name(), name)
 			}
 		}
+	}
+}
+
+// The JSON flag has to be part of the command that can honour it, not a global
+// switch a command silently ignores: an unsupported --json is a usage error.
+func TestJSONIsDeclaredOnlyWhereSupported(t *testing.T) {
+	supported := map[string]bool{"list": true, "search": true}
+	seen := 0
+
+	for _, child := range rootCmd.Commands() {
+		hasFlag := child.Flags().Lookup(flagJSON) != nil
+
+		if supported[child.Name()] {
+			seen++
+		}
+
+		if supported[child.Name()] != hasFlag {
+			t.Errorf("%s: supports json = %v, has --%s = %v", child.Name(), supported[child.Name()], flagJSON, hasFlag)
+		}
+	}
+
+	if seen != len(supported) {
+		t.Errorf("found %d of the %d commands that support --%s", seen, len(supported), flagJSON)
+	}
+}
+
+// One JSON object on stdout, nothing on stderr, and the command is still there.
+func TestListJSON(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	stdout, stderr, err := runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	if stderr != "" {
+		t.Errorf("list --json wrote diagnostics: %q", stderr)
+	}
+
+	if strings.Count(stdout, "\n") != 1 {
+		t.Fatalf("result is not one line: %q", stdout)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Row     int      `json:"row"`
+			Name    string   `json:"name"`
+			Aliases []string `json:"aliases"`
+			Exec    string   `json:"exec"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	if len(payload.Commands) != 1 {
+		t.Fatalf("commands = %+v, want the created command", payload.Commands)
+	}
+
+	command := payload.Commands[0]
+	if command.Name != "greet" || command.Exec != "echo hello" || command.Row != 0 {
+		t.Errorf("command = %+v", command)
+	}
+
+	if command.Aliases == nil {
+		t.Error("aliases encoded as null")
+	}
+}
+
+// An empty store still has to be a collection, not null.
+func TestListJSONEmptyStore(t *testing.T) {
+	stdout, _, err := run(t, "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	if strings.TrimSpace(stdout) != `{"commands":[]}` {
+		t.Errorf("empty store = %q", stdout)
+	}
+}
+
+func TestListHistoryJSON(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--history", "--json")
+	if err != nil {
+		t.Fatalf("list --history --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		History []struct {
+			Version   int    `json:"version"`
+			Timestamp string `json:"timestamp"`
+			Operation string `json:"operation"`
+			Note      string `json:"note"`
+		} `json:"history"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	if len(payload.History) == 0 {
+		t.Fatal("history is empty after a create")
+	}
+
+	// Newest first, and the create is the newest entry before this list.
+	if got := payload.History[0].Operation; got != "list" && got != "create" {
+		t.Errorf("newest operation = %q", got)
+	}
+}
+
+func TestListFolderJSON(t *testing.T) {
+	dir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("abc"), 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	stdout, _, err := run(t, "list", "--folder", dir, "--json")
+	if err != nil {
+		t.Fatalf("list --folder --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Folder  string `json:"folder"`
+		Entries []struct {
+			Name string `json:"name"`
+			Dir  bool   `json:"dir"`
+			Size int64  `json:"size"`
+		} `json:"entries"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	if payload.Folder != dir {
+		t.Errorf("folder = %q, want %q", payload.Folder, dir)
+	}
+
+	if len(payload.Entries) != 1 || payload.Entries[0].Name != "a.txt" || payload.Entries[0].Dir || payload.Entries[0].Size != 3 {
+		t.Errorf("entries = %+v", payload.Entries)
+	}
+}
+
+// A folder that does not exist is a failure in JSON too: a result must not be
+// an empty object that reads as "no files".
+func TestListFolderJSONMissingFolderFails(t *testing.T) {
+	stdout, _, err := run(t, "list", "--folder", filepath.Join(t.TempDir(), "nope"), "--json")
+	if err == nil {
+		t.Fatal("list --folder on a missing folder returned no error")
+	}
+
+	if stdout != "" {
+		t.Errorf("a failed listing wrote a result: %q", stdout)
+	}
+}
+
+func TestSearchJSON(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the search commands are shell-backed and this suite runs them on POSIX")
+	}
+
+	dir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(dir, "needle.txt"), nil, 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	stdout, _, err := run(t, "search", "--file", "needle.txt", dir, "--json")
+	if err != nil {
+		t.Fatalf("search --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Search struct {
+			Kind    string   `json:"kind"`
+			Query   string   `json:"query"`
+			Path    string   `json:"path"`
+			Results []string `json:"results"`
+		} `json:"search"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	if payload.Search.Kind != "file" || payload.Search.Query != "needle.txt" {
+		t.Errorf("search = %+v", payload.Search)
+	}
+
+	if len(payload.Search.Results) != 1 || !strings.HasSuffix(payload.Search.Results[0], "needle.txt") {
+		t.Errorf("results = %v", payload.Search.Results)
+	}
+}
+
+// A command without a JSON rendering must reject the flag: silently returning
+// the text would be the same class of failure as exiting 0 without doing the
+// work.
+func TestJSONOnARawCommandIsRejected(t *testing.T) {
+	stdout, _, err := run(t, "execute", "--json", "echo", "hello")
+	if err == nil {
+		t.Fatal("execute --json returned no error")
+	}
+
+	if !strings.Contains(err.Error(), "unknown flag") {
+		t.Errorf("error = %v, want an unknown flag", err)
+	}
+
+	if stdout != "" {
+		t.Errorf("the rejected run wrote a result: %q", stdout)
 	}
 }

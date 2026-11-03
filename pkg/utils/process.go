@@ -1,34 +1,42 @@
 package utils
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/shirou/gopsutil/v3/process"
 )
 
-func GetAllProcess(partName string, skipUnknown bool) (string, error) {
-	const (
-		unknow        = "Unknown"
-		titleLayout   = "%-8s %-30s %s\n"
-		contentLayout = "%-8d %-30s %s\n"
-	)
+// UnknownProcessField is what a row carries when the OS will not report the
+// name or the path of a running process.
+const UnknownProcessField = "Unknown"
 
+// ProcessInfo is one row of the process table: the data `list --process` shows,
+// and the data its JSON result carries.
+type ProcessInfo struct {
+	PID  int32  `json:"pid"`
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
+// ListProcesses returns the running processes, optionally filtered by a
+// case-insensitive part of the name.
+//
+// It returns rows rather than a rendered table because the table is only one
+// presentation of this data: a JSON result needs the data itself, and keeping
+// the layout here would have forced `list --process --json` to parse its own
+// output back into fields.
+func ListProcesses(partName string, skipUnknown bool) ([]ProcessInfo, error) {
 	processes, err := process.Processes()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var builder strings.Builder
-	fmt.Fprintf(&builder, titleLayout, "PID", "Name", "Path")
-	builder.WriteString("-------------------------------------------------------------\n")
+	rows := make([]ProcessInfo, 0, len(processes))
 
 	for _, p := range processes {
-		pid := p.Pid
-
 		name, err := p.Name()
 		if err != nil {
-			name = unknow
+			name = UnknownProcessField
 		}
 
 		// skip if its not the process
@@ -38,17 +46,17 @@ func GetAllProcess(partName string, skipUnknown bool) (string, error) {
 
 		exe, err := p.Exe()
 		if err != nil {
-			exe = unknow
+			exe = UnknownProcessField
 		}
 
-		if skipUnknown && (name == unknow || exe == unknow) {
+		if skipUnknown && (name == UnknownProcessField || exe == UnknownProcessField) {
 			continue
 		}
 
-		fmt.Fprintf(&builder, contentLayout, pid, name, exe)
+		rows = append(rows, ProcessInfo{PID: p.Pid, Name: name, Path: exe})
 	}
 
-	return builder.String(), nil
+	return rows, nil
 }
 
 func GetProcessNameByID(id int32) (string, error) {

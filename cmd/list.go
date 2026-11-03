@@ -55,4 +55,5 @@ func init() {
 	listCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "list folder files")
 	listCmd.Flags().BoolVar(&systemFlag, "system", false, "list all system variables")
 	listCmd.Flags().BoolVar(&sysPathFlag, "syspath", false, "list path system variable")
+	listCmd.Flags().Bool(flagJSON, false, "print the result as one JSON object")
 }

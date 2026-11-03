@@ -55,11 +55,19 @@ type Options struct {
 	// NoInput makes every prompt fail instead of reading stdin, so a
 	// non-interactive run can never block waiting for a person.
 	NoInput bool
+
+	// Format is how an operation with a structured result renders it.
+	Format Format
 }
 
 // withDefaults fills in the terminal a run would use by default.
 func (o Options) withDefaults() Options {
 	o.Streams = o.Streams.withDefaults()
+
+	if o.Format == "" {
+		o.Format = FormatText
+	}
+
 	return o
 }
 
