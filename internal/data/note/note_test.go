@@ -18,6 +18,7 @@ func TestNoteValuesRoundTrip(t *testing.T) {
 		AddCommandName("build;all").
 		AddCommandAlias([]string{"b;1", "b2"}).
 		AddCommandExec(exec).
+		AddCrowerExec("execute", []string{exec}).
 		Build()
 
 	if strings.Contains(built, "make; echo") {
@@ -35,6 +36,10 @@ func TestNoteValuesRoundTrip(t *testing.T) {
 	displayed := Display(built)
 	if !strings.Contains(displayed, "command_name=build;all") || !strings.Contains(displayed, "command_exec="+exec) {
 		t.Errorf("Display(%q) = %q, want the decoded values", built, displayed)
+	}
+
+	if !strings.Contains(displayed, "crower_exec=crower execute '"+exec+"'") {
+		t.Errorf("Display(%q) = %q, want the quoted crower_exec decoded", built, displayed)
 	}
 }
 
