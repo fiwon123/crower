@@ -286,6 +286,8 @@ uses `python scripts/dev-up.py dev-up`. Run `make help` for every target.
 | see real recipes | [Usage recipes](#-usage-recipes) |
 | look up a command or flag | [Commands](#-commands) |
 | script against crower | [Scripting](#-scripting) |
+| browse the wiki | [crower wiki](https://github.com/fiwon123/crower/wiki) |
+| see what is planned | [Roadmap board](https://github.com/users/fiwon123/projects/5) |
 | understand the internals | [AGENTS.md](AGENTS.md) · [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) |
 | help prove a claim | [Verifying claims](https://github.com/fiwon123/crower/wiki/Verifying-claims) |
 

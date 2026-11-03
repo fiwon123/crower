@@ -297,11 +297,26 @@ Verify them once after a transfer.
 
 ### Project board
 
-- Use GitHub Projects (classic or Projects v2) to visualize work across the board (Backlog → Todo → In Progress → Review → Done).
-- **Issues are the source of truth; the board is a view of them.**
-- Link issues and PRs to the project board; keep cards moving with the workflow steps above.
-- Use board fields/statuses to reflect `issue → branch → PR → merge` state rather than duplicating it in comments.
-- For automation, prefer built-in workflows or `gh project` commands — document any project-specific board in `PROJECT_CONTEXT.md`.
+- **This repository's board**: <https://github.com/users/fiwon123/projects/5>.
+- **Issues are the source of truth; the board is a view of them.** Every open
+  issue belongs on the board, with its milestone and its status.
+- Status values are **Todo**, **In Progress**, **Done** — the board's own
+  `Status` field. Add columns only if the workflow genuinely needs them; a board
+  that mirrors four states nothing updates is noise.
+- Keep cards moving with the steps above: issue created → Todo, branch opened →
+  In Progress, PR merged → Done. `gh project item-add 5 --owner fiwon123 --url <issue-url>`
+  adds an issue; `gh project item-list 5 --owner fiwon123` reads the board.
+- Do not duplicate the link graph in comments: the issue's branch, PR and
+  milestone are already on it, and the board renders them.
+
+### Wiki
+
+- The wiki is sourced from `docs/wiki/` in this repository — edit the page there,
+  not in the wiki UI, or the next sync overwrites it.
+- The sync is a **human step** (the wiki is a second git repository; CI cannot
+  push to it): see `docs/wiki/README.md` for the three commands.
+- A page that ships in `docs/wiki/` and is not synced is a page readers cannot
+  see. Run the sync in the same change that edits a page.
 
 ### Agents
 
