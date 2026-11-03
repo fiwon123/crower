@@ -20,9 +20,13 @@ func extractCommand(goos string, ext string, filePath string, outDir string) (st
 		return "", fmt.Errorf("%w: extract on %q", errors.ErrUnsupportedOS, goos)
 	}
 
-	// Quote for the platform that will run the line. Hand-written single
+	// Quote with the same helper every other domain uses. Hand-written single
 	// quotes are passed through literally by cmd.exe, and they stop protecting
-	// a path that itself contains one, so the shell would run the rest of it.
+	// a path that itself contains one, so the shell would run the rest.
+	//
+	// This is not a claim that QuoteFor is perfectly cmd-safe: its Windows form
+	// still mishandles an embedded double quote, a doubled percent and a
+	// trailing backslash (see the issue filed from the #154 review).
 	archive := helper.QuoteFor(goos, filePath)
 	output := helper.QuoteFor(goos, outDir)
 

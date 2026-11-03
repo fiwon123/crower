@@ -68,38 +68,67 @@ func TestExtractCommandUnknownExtension(t *testing.T) {
 }
 
 // Every argument is quoted for the platform that will run the line. A path
-// containing the quote character must not be able to close it: a hand-written
-// `'%s'` let the shell run the rest of the path.
+// containing the quote character must not be able to close it, and a folder
+// with a space must stay one argument, including after the 7z -o prefix.
 func TestExtractCommandQuotesForThePlatform(t *testing.T) {
 	tests := []struct {
-		name string
-		goos string
-		path string
-		want string
+		name   string
+		goos   string
+		ext    string
+		path   string
+		outDir string
+		want   string
 	}{
 		{
 			"a single quote on linux",
-			"linux",
-			`a'; rm -rf ~; '.tar`,
+			"linux", "tar", `a'; rm -rf ~; '.tar`, "out",
 			`tar -xf 'a'\''; rm -rf ~; '\''.tar' -C 'out'`,
 		},
 		{
 			"a single quote on darwin",
-			"darwin",
-			`a'; rm -rf ~; '.tar`,
+			"darwin", "tar", `a'; rm -rf ~; '.tar`, "out",
 			`tar -xf 'a'\''; rm -rf ~; '\''.tar' -C 'out'`,
 		},
 		{
-			"a space on windows",
-			"windows",
-			`a b.tar`,
+			"a space in the archive on windows",
+			"windows", "tar", `a b.tar`, "out",
 			`tar -xf "a b.tar" -C out`,
+		},
+		{
+			"a space in the folder on linux",
+			"linux", "tar", "a.tar", "out dir",
+			`tar -xf 'a.tar' -C 'out dir'`,
+		},
+		{
+			"a space in the folder on windows",
+			"windows", "tar", "a.tar", "out dir",
+			`tar -xf a.tar -C "out dir"`,
+		},
+		{
+			"a space in the archive on linux",
+			"linux", "zip", "a b.zip", "out",
+			`unzip 'a b.zip' -d  'out'`,
+		},
+		{
+			"a space in both on windows (zip uses tar)",
+			"windows", "zip", "a b.zip", "out dir",
+			`tar -xf "a b.zip" -C "out dir"`,
+		},
+		{
+			"a space in both after -o on linux",
+			"linux", "7z", "a b.7z", "out dir",
+			`7z x 'a b.7z' -o'out dir'`,
+		},
+		{
+			"a space in both after -o on windows",
+			"windows", "7z", "a b.7z", "out dir",
+			`7z x "a b.7z" -o"out dir"`,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := extractCommand(tt.goos, "tar", tt.path, "out")
+			got, err := extractCommand(tt.goos, tt.ext, tt.path, tt.outDir)
 			if err != nil {
 				t.Fatalf("error = %v", err)
 			}
