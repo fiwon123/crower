@@ -14,7 +14,6 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -100,7 +99,7 @@ func (c *Core) performCreateCommand(name string, allAlias []string, exec string)
 		return nil, fmt.Errorf("add command %q: %w", name, err)
 	}
 
-	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+	if err := c.app.SaveCommands(); err != nil {
 		return nil, err
 	}
 
@@ -116,7 +115,7 @@ func (c *Core) CreateProcess(name string, args []string) error {
 		return fmt.Errorf("add command by process: %w", err)
 	}
 
-	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+	if err := c.app.SaveCommands(); err != nil {
 		return err
 	}
 

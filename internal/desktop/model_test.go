@@ -2,33 +2,32 @@ package desktop
 
 import (
 	"io"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/pkg/logger"
 )
 
 func testApp(t *testing.T) *app.Config {
 	t.Helper()
-	a := &app.Config{}
-	a.AllCommandsByName = command.NewMapData()
-	a.AllCommandsByAlias = command.NewMapData()
-	a.OrderKeys = []string{}
-	a.History = history.New(t.TempDir() + "/hist")
 
-	lg, err := logger.New(t.TempDir()+"/log", io.Discard, io.Discard)
+	a, err := app.NewApp(
+		filepath.Join(t.TempDir(), "crower.yaml"),
+		[]string{},
+		command.NewMapData(),
+		command.NewMapData(),
+		app.Options{Streams: app.Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}},
+	)
 	if err != nil {
-		t.Fatalf("error creating the logger: %v", err)
+		t.Fatalf("NewApp: %v", err)
 	}
-	a.Logger = *lg
 
-	a.HistoryFilePath = t.TempDir() + "/hist.json"
-	a.HistoryFolderPath = t.TempDir() + "/hist"
 	c := command.New("hello", nil, "echo hello")
 	a.AllCommandsByName.Add("hello", c)
 	a.OrderKeys = append(a.OrderKeys, "hello")
+
 	return a
 }
 

@@ -102,9 +102,6 @@ func (h *Handler) Import(inPath string, overwrite bool) error {
 }
 
 func (h *Handler) getRegistryURL() string {
-	if h.app.CfgFilePath != "" {
-		// Try to read registry URL from config if stored
-	}
 	return "https://raw.githubusercontent.com/fiwon123/crower-resources/main"
 }
 

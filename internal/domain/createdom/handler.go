@@ -153,7 +153,7 @@ func (h *Handler) CreateFolder(folderPath string) error {
 }
 
 func (h *Handler) CreateScriptCommand(name string) (string, error) {
-	cfgFolderPath := filepath.Dir(h.app.CfgFilePath)
+	cfgFolderPath := h.app.ConfigFolder()
 	scriptFolderPath := filepath.Join(cfgFolderPath, "scripts")
 	err := utils.CreateFolderIfNotExists(scriptFolderPath)
 	if err != nil {

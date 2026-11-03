@@ -105,7 +105,7 @@ func TestCreateFile(t *testing.T) {
 	handler := createdom.NewHandler(app)
 
 	t.Run("Create file using single name", func(t *testing.T) {
-		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new.txt")
+		newFilePath := filepath.Join(app.ConfigFolder(), "new.txt")
 		err := handler.CreateFile(newFilePath)
 
 		if err != nil {
@@ -114,7 +114,7 @@ func TestCreateFile(t *testing.T) {
 	})
 
 	t.Run("Create file using name with space", func(t *testing.T) {
-		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file.txt")
+		newFilePath := filepath.Join(app.ConfigFolder(), "new file.txt")
 		err := handler.CreateFile(newFilePath)
 
 		if err != nil {
@@ -132,7 +132,7 @@ func TestCreateFolder(t *testing.T) {
 	handler := createdom.NewHandler(app)
 
 	t.Run("Create folder using single name", func(t *testing.T) {
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new")
 		err := handler.CreateFile(newFolderPath)
 
 		if err != nil {
@@ -141,7 +141,7 @@ func TestCreateFolder(t *testing.T) {
 	})
 
 	t.Run("Create folder using name with space", func(t *testing.T) {
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new folder")
 		err := handler.CreateFile(newFolderPath)
 
 		if err != nil {

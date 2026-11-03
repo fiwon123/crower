@@ -7,7 +7,6 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -70,7 +69,7 @@ func (c *Core) performDeleteCommand(key string) (*command.Data, error) {
 		return nil, errors.CommandNotFound(key)
 	}
 
-	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+	if err := c.app.SaveCommands(); err != nil {
 		return nil, err
 	}
 

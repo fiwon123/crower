@@ -16,14 +16,18 @@ import (
 // Config is everything one crower run needs: where its state lives, what it
 // reads, and where its output goes.
 type Config struct {
-	CfgFilePath        string
-	HistoryFilePath    string
-	HistoryFolderPath  string
 	History            history.Data
 	Logger             logger.Logger
 	OrderKeys          []string
 	AllCommandsByAlias command.MapData
 	AllCommandsByName  command.MapData
+
+	// Where the run's state lives. They are private because a domain should
+	// not know the storage layout: it records through Save/SaveCommands and
+	// reads the paths through ConfigFile/ConfigFolder.
+	cfgFilePath       string
+	historyFilePath   string
+	historyFolderPath string
 
 	// NoInput reports that prompts must fail rather than read stdin.
 	NoInput bool
@@ -34,6 +38,20 @@ type Config struct {
 	in  *bufio.Reader
 	out io.Writer
 	err io.Writer
+}
+
+// ConfigFile is the configuration file this run uses.
+//
+// It is read-only on purpose: writing it is SaveCommands' job, so a domain
+// does not have to know the format or the location.
+func (app *Config) ConfigFile() string {
+	return app.cfgFilePath
+}
+
+// ConfigFolder is the folder the configuration lives in, which is also where
+// `create --script` keeps its scripts.
+func (app *Config) ConfigFolder() string {
+	return filepath.Dir(app.cfgFilePath)
 }
 
 // NewApp builds the run from an already-read configuration.
@@ -76,10 +94,10 @@ func NewApp(
 	}
 
 	return &Config{
-		CfgFilePath:        cfgFilePath,
 		History:            history,
-		HistoryFilePath:    historyFilePath,
-		HistoryFolderPath:  historyFolderPath,
+		cfgFilePath:        cfgFilePath,
+		historyFilePath:    historyFilePath,
+		historyFolderPath:  historyFolderPath,
 		Logger:             *log,
 		OrderKeys:          orderKeys,
 		AllCommandsByAlias: allAliases,

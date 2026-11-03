@@ -13,7 +13,7 @@ import (
 
 func (app *Config) FindCommand(key string, content history.Content) (*command.Data, error) {
 	allCommands := command.NewMapData()
-	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
+	newDataPath := filepath.Join(app.historyFolderPath, content.File)
 
 	err := utils.ReadToml(newDataPath, &allCommands)
 	if err != nil {

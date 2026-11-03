@@ -13,14 +13,14 @@ import (
 func (app *Config) RevertTo(content *history.Content) error {
 
 	allCommands := command.NewMapData()
-	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
+	newDataPath := filepath.Join(app.historyFolderPath, content.File)
 
 	err := utils.ReadToml(newDataPath, &allCommands)
 	if err != nil {
 		return err
 	}
 
-	err = utils.WriteToml(allCommands, app.CfgFilePath)
+	err = utils.WriteToml(allCommands, app.cfgFilePath)
 	if err != nil {
 		return err
 	}
@@ -34,7 +34,7 @@ func (app *Config) removeUntilHistory(content *history.Content) {
 
 	lastHistory := app.History.GetLast()
 	for lastHistory.Version != content.Version {
-		path := filepath.Join(app.HistoryFolderPath, lastHistory.File)
+		path := filepath.Join(app.historyFolderPath, lastHistory.File)
 		if _, err := os.Stat(path); err == nil {
 			os.Remove(path)
 		}

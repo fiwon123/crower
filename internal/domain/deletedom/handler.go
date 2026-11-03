@@ -2,7 +2,6 @@ package deletedom
 
 import (
 	"fmt"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -11,8 +10,6 @@ import (
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/shell"
-
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Handler struct {
@@ -80,9 +77,8 @@ func (h *Handler) DeleteHistoryContent(content history.Content) (string, error) 
 		return "", fmt.Errorf("history entry %s not found", content.File)
 	}
 
-	newDataPath := filepath.Join(h.app.HistoryFolderPath, content.File)
-	if err := utils.DeleteFile(newDataPath); err != nil {
-		return "", fmt.Errorf("delete backup %s: %w", newDataPath, err)
+	if err := h.app.DeleteHistoryBackup(content.File); err != nil {
+		return "", fmt.Errorf("delete history backup %s: %w", content.File, err)
 	}
 
 	return "history entry deleted", nil
