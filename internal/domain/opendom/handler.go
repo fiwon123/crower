@@ -10,15 +10,14 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/executedom"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 type Handler struct {
-	app     *app.Config
-	execute *executedom.Handler
-	run     CommandRunner
-	edit    Editor
+	app   *app.Config
+	shell *shell.Runner
+	run   CommandRunner
+	edit  Editor
 }
 
 // Editor opens a file in the user's editor, which needs the terminal itself.
@@ -36,15 +35,13 @@ type CommandRunner func(command string) (string, error)
 
 func NewHandler(app *app.Config) *Handler {
 
-	execute := executedom.NewHandler(app)
-
 	h := &Handler{
-		app:     app,
-		execute: execute,
+		app:   app,
+		shell: shell.New(),
 	}
 
-	h.run = execute.PerformExecute
-	h.edit = defaultEditor(execute)
+	h.run = h.shell.Exec
+	h.edit = defaultEditor(h.shell)
 
 	return h
 }
@@ -76,19 +73,9 @@ func NewHandlerWithRunner(app *app.Config, run CommandRunner) *Handler {
 // opened only a.
 func (h *Handler) Open(paths []string) error {
 	for _, f := range paths {
-		commandString := ""
-
-		switch runtime.GOOS {
-		case "windows":
-			commandString = fmt.Sprintf(`start "" %s`, helper.QuoteFor(runtime.GOOS, f))
-		case "linux":
-			commandString = "xdg-open " + helper.QuoteFor(runtime.GOOS, f)
-		case "darwin":
-			commandString = "open " + helper.QuoteFor(runtime.GOOS, f)
-		}
-
-		if commandString == "" {
-			return fmt.Errorf("opening files is not supported on %s", runtime.GOOS)
+		commandString, err := openCommand(runtime.GOOS, f)
+		if err != nil {
+			return err
 		}
 
 		h.app.Logger.Info("opening: ", commandString)
@@ -110,7 +97,7 @@ func (h *Handler) Open(paths []string) error {
 func (h *Handler) OpenSystem() error {
 	switch runtime.GOOS {
 	case "windows":
-		return h.execute.PerformExecuteStart("sysdm.cpl")
+		return h.shell.Start("sysdm.cpl")
 	case "linux", "darwin":
 		home, err := os.UserHomeDir()
 		if err != nil {
@@ -134,14 +121,14 @@ func shellProfileFileName() string {
 
 // defaultEditor returns an Editor that runs $EDITOR, or one of the usual
 // editors, in the terminal.
-func defaultEditor(execute *executedom.Handler) Editor {
+func defaultEditor(runner *shell.Runner) Editor {
 	return func(file string) error {
 		name := editorName()
 		if name == "" {
 			return errors.New("no editor found: set $EDITOR or install nano or vi")
 		}
 
-		return execute.PerformInteractiveTerminal(name, file)
+		return runner.Interactive(name, file)
 	}
 }
 

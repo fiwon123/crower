@@ -53,4 +53,5 @@ func init() {
 	searchCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "search for file name")
 	searchCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "search for folder name")
 	searchCmd.Flags().BoolVarP(&browserFlag, "browser", "b", false, "search on default browser")
+	searchCmd.Flags().Bool(flagJSON, false, "print the result as one JSON object")
 }

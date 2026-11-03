@@ -17,10 +17,29 @@ import (
 // that did nothing must not look like one that succeeded.
 var ErrUnsupportedOS = stderrors.New("unsupported operating system")
 
+// ErrInvalidPackName reports a pack name that is not a registry slug. The name
+// is interpolated into a URL and used to derive a file, so a path or a URL
+// metacharacter must be rejected before either happens.
+var ErrInvalidPackName = stderrors.New("invalid pack name")
+
+// ErrChecksumMismatch reports a download whose bytes do not match the release's
+// checksums.txt.
+var ErrChecksumMismatch = stderrors.New("checksum mismatch")
+
+// ErrChecksumUnavailable reports that checksums.txt is missing, unreadable, or
+// has no usable entry for the asset.
+var ErrChecksumUnavailable = stderrors.New("checksum unavailable")
+
 // NotEnoughArgs reports a command that was run without the arguments it needs.
 // what names the missing input, so the message says what to add.
 func NotEnoughArgs(what string) error {
 	return fmt.Errorf("missing arguments: %s", what)
+}
+
+// TooManyArgs reports a command given more arguments than it accepts. what
+// describes what the command expects, so the message says what to remove.
+func TooManyArgs(what string) error {
+	return fmt.Errorf("too many arguments: expected %s", what)
 }
 
 // CommandNotFound reports a name or alias that matches no managed command.

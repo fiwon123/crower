@@ -2,14 +2,17 @@ package listdom
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/helper"
 
-	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/shell"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -20,8 +23,8 @@ func unsupportedOSError(goos string) error {
 }
 
 type Handler struct {
-	app     *app.Config
-	execute *executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 
 	// goos is the platform the shell command is built for. It is a field
 	// rather than a read of runtime.GOOS inside each method so the dispatch
@@ -31,22 +34,11 @@ type Handler struct {
 }
 
 func NewHandler(app *app.Config) *Handler {
-
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: execute,
-		goos:    runtime.GOOS,
+		app:   app,
+		shell: shell.New(),
+		goos:  runtime.GOOS,
 	}
-}
-
-// ListCommands prints every managed command as a table.
-//
-// The table is built as one block and written once, so it is a single result on
-// the result stream rather than a row-by-row mix of table and status lines.
-func (h *Handler) ListCommands() {
-	h.app.Logger.Out(h.CommandsTable())
 }
 
 // CommandsTable renders the table `list` prints, header included.
@@ -79,14 +71,57 @@ func (h *Handler) commandsTable(orderKeys []string, allCommands command.MapData)
 	return builder.String()
 }
 
-// ListProcess lists the processes running on the user operational system (OS).
-func (h *Handler) ListProcess(args []string) (string, error) {
+// FolderResult is the result of `list --folder --json`.
+type FolderResult struct {
+	Folder  string        `json:"folder"`
+	Entries []FolderEntry `json:"entries"`
+}
+
+// FolderResult reads folderPath for a JSON listing.
+//
+// The text rendering is `ls -la` (or `dir`), whose columns depend on platform
+// and locale, and parsing that back into fields would be guesswork. A directory
+// read gives the JSON result the same entries on every platform and needs no
+// shell arm at all. It is not a drop-in replacement for the text form: the path
+// is used literally (no shell expansion), a symlink is followed, and a path
+// that is not a directory is an error.
+func (h *Handler) FolderResult(folderPath string) (FolderResult, error) {
+	entries, err := os.ReadDir(folderPath)
+	if err != nil {
+		return FolderResult{}, fmt.Errorf("list folder %s: %w", folderPath, err)
+	}
+
+	payload := FolderResult{Folder: folderPath, Entries: make([]FolderEntry, 0, len(entries))}
+
+	for _, entry := range entries {
+		row := FolderEntry{Name: entry.Name(), Dir: entry.IsDir()}
+
+		info, err := entry.Info()
+		if err != nil {
+			// The entry vanished between the read and this call, or the OS
+			// refused its metadata; the name and type are still real.
+			row.Error = err.Error()
+		} else {
+			row.Size = info.Size()
+			row.Mode = info.Mode().String()
+			row.Modified = info.ModTime().Format(time.RFC3339)
+		}
+
+		payload.Entries = append(payload.Entries, row)
+	}
+
+	return payload, nil
+}
+
+// ListProcess returns the processes running on the user operational system
+// (OS), filtered by a case-insensitive part of the name.
+func (h *Handler) ListProcess(args []string) ([]utils.ProcessInfo, error) {
 	partName := ""
 	if len(args) > 0 {
 		partName = args[0]
 	}
 
-	return utils.GetAllProcess(partName, true)
+	return utils.ListProcesses(partName, true)
 }
 
 // ListHistory returns the history table.
@@ -101,7 +136,7 @@ func (h *Handler) ListFolder(folderPath string) (string, error) {
 		return "", err
 	}
 
-	return h.execute.PerformExecute(commandLine)
+	return h.shell.Exec(commandLine)
 }
 
 // ListSystem lists every system variable.
@@ -111,7 +146,7 @@ func (h *Handler) ListSystem() (string, error) {
 		return "", err
 	}
 
-	return h.execute.PerformExecute(commandLine)
+	return h.shell.Exec(commandLine)
 }
 
 // ListSysPath lists the system path variable.
@@ -121,7 +156,7 @@ func (h *Handler) ListSysPath() (string, error) {
 		return "", err
 	}
 
-	return h.execute.PerformExecute(commandLine)
+	return h.shell.Exec(commandLine)
 }
 
 // The listing commands are ordinary shell invocations that behave the same on
@@ -131,9 +166,10 @@ func (h *Handler) ListSysPath() (string, error) {
 func listFolderCommand(goos string, folderPath string) (string, error) {
 	switch goos {
 	case "windows":
-		return fmt.Sprintf(`dir "%s"`, folderPath), nil
+		return "dir " + helper.QuoteFor(goos, folderPath), nil
 	case "linux", "darwin":
-		return fmt.Sprintf(`ls -la "%s"`, folderPath), nil
+		// -- stops a folder named like an option from changing the listing.
+		return "ls -la -- " + helper.QuoteFor(goos, folderPath), nil
 	default:
 		return "", unsupportedOSError(goos)
 	}
@@ -153,7 +189,8 @@ func listSystemCommand(goos string) (string, error) {
 func listSysPathCommand(goos string) (string, error) {
 	switch goos {
 	case "windows":
-		return "echo %PATH%", nil
+		// Quotes keep an entry containing "&" from becoming a separator.
+		return `echo "%PATH%"`, nil
 	case "linux", "darwin":
 		return `echo "$PATH"`, nil
 	default:

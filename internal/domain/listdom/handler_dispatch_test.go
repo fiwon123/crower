@@ -19,9 +19,10 @@ func TestListFolderCommand(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"windows", "windows", "/tmp/example", `dir "/tmp/example"`, false},
-		{"linux", "linux", "/tmp/example", `ls -la "/tmp/example"`, false},
-		{"darwin", "darwin", "/tmp/example", `ls -la "/tmp/example"`, false},
+		{"windows", "windows", "/tmp/example", `dir /tmp/example`, false},
+		{"windows with a space", "windows", `C:\My Files`, `dir "C:\My Files"`, false},
+		{"linux", "linux", "/tmp/example", `ls -la -- '/tmp/example'`, false},
+		{"darwin", "darwin", "/tmp/example", `ls -la -- '/tmp/example'`, false},
 		{"unsupported freebsd", "freebsd", "/tmp/example", "", true},
 		{"unsupported empty", "", "/tmp/example", "", true},
 	}
@@ -79,7 +80,7 @@ func TestListSysPathCommand(t *testing.T) {
 		want    string
 		wantErr bool
 	}{
-		{"windows", "windows", "echo %PATH%", false},
+		{"windows", "windows", `echo "%PATH%"`, false},
 		{"linux", "linux", `echo "$PATH"`, false},
 		{"darwin", "darwin", `echo "$PATH"`, false},
 		{"unsupported freebsd", "freebsd", "", true},
@@ -103,9 +104,8 @@ func TestListSysPathCommand(t *testing.T) {
 }
 
 // An unsupported platform must fail every listing method with an error and no
-// output. execute is deliberately nil: the failure has to happen before
-// anything is executed, so a handler that reached the shell would panic here
-// instead of returning.
+// output. The handler has no shell runner: the platform check has to return
+// before anything is executed, and the error assertion is what proves it.
 func TestUnsupportedOSReturnsError(t *testing.T) {
 	handler := &Handler{goos: "plan9"}
 

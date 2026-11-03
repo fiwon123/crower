@@ -7,7 +7,6 @@ import (
 	"github.com/fiwon123/crower/internal/data/operations"
 
 	"github.com/fiwon123/crower/internal/interfaces"
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -51,7 +50,7 @@ func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec
 		return err
 	}
 
-	c.app.History.Add(operations.Update, newUpdateCommmandNote(args, oldCommand, newCommand))
+	c.app.History.Add(operations.Update, newCommand.Name, newUpdateCommmandNote(oldCommand, newCommand))
 
 	return c.app.Save()
 }
@@ -67,7 +66,7 @@ func (c *Core) performUpdateCommand(
 		return nil, nil, err
 	}
 
-	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+	if err := c.app.SaveCommands(); err != nil {
 		return nil, nil, err
 	}
 
@@ -92,7 +91,7 @@ func (c *Core) UpdateLast(op operations.MainOperationEnum, name string, allAlias
 		return err
 	}
 
-	c.app.History.Add(operations.Update, newUpdateLastNote(op, oldCommand, newCommand))
+	c.app.History.Add(operations.Update, newCommand.Name, newUpdateLastNote(op, oldCommand, newCommand))
 
 	return c.app.Save()
 }

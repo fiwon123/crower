@@ -25,6 +25,10 @@ create commands:
 	- Using 'crower create "COMAND_NAME" "COMMAND_EXEC"'
 	- Using flag --alias in 'crower create' to already put an alias
 
+create a command from a process:
+	- Use flag --process with the new command name, then the process name or pid
+	- Using 'crower create -p "COMMAND_NAME" "PROCESS"'
+
 create file:
 	- Using 'crower create "FILE_PATH"'
 	- Using flag --file for multiple paths 'crower create --file "FILE_PATH_1" "FILE_PATH_2" "FILE_PATH_3"'
@@ -36,6 +40,7 @@ create folder:
 Example:
 	crower create
 	crower create com1 "'echo com1'"
+	crower create -p editor "code"
 	crower create "C:\Users\Test\Desktop\Test\new_file.txt"
 	crower create --file "C:\Users\Test\Desktop\Test\new_file_1.txt" "C:\Users\Test\Desktop\Test\new_file_2.txt"
 	crower create "C:\Users\Test\Desktop\Test\new_folder"
@@ -51,7 +56,7 @@ Example:
 
 		switch {
 		case processName != "":
-			return core.CreateProcess(processName, args)
+			return core.CreateProcess(processName, allAlias, args)
 		case fileFlag:
 			return core.CreateFile(args)
 		case folderFlag:
@@ -61,9 +66,9 @@ Example:
 		case systemFlag:
 			return core.CreateSystemVariable(args)
 		case executeFlag:
-			return core.CreateLastCommand(operations.Execute, args)
+			return core.CreateLastCommand(operations.Execute, allAlias, args)
 		case scriptFlag:
-			return core.CreateScriptCommand(args)
+			return core.CreateScriptCommand(allAlias, args)
 		case len(args) == 0:
 			return core.CreateCommand(allAlias, args)
 		case utils.IsValidFilePath(args[0]):
@@ -79,7 +84,7 @@ Example:
 func init() {
 	AddAllAliasFlag(createCmd, &allAlias)
 
-	createCmd.Flags().StringVarP(&processName, "process", "p", "", "process name or pid")
+	createCmd.Flags().StringVarP(&processName, "process", "p", "", "new command name for a process; pass the process name or pid as an argument")
 	createCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
 	createCmd.Flags().BoolVarP(&folderFlag, "folder", "o", false, "ensure arguments are folder paths")
 	createCmd.Flags().BoolVar(&systemFlag, "system", false, "create system variable")

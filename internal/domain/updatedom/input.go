@@ -39,7 +39,10 @@ func (i *Input) CheckUpdateInput(key *string, name *string, allAlias *[]string, 
 		*key = value.(string)
 	}
 
-	updateCommand := i.app.AllCommandsByName.Get(*key)
+	// The help advertises a name or an alias. Resolving with the handler's own
+	// precedence is what lets an alias key through; looking only at the name
+	// map rejected every alias before the handler could run.
+	updateCommand := findCommand(i.app, *key)
 	if updateCommand == nil {
 		return false, errors.CommandNotFound(*key)
 	}

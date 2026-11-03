@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/deletedom"
 	"github.com/fiwon123/crower/internal/helper"
@@ -111,7 +112,7 @@ func TestDeleteFile(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		deleteHandler := deletedom.NewHandler(app)
 
-		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+		newFilePath := filepath.Join(app.ConfigFolder(), "new")
 
 		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
@@ -133,7 +134,7 @@ func TestDeleteFile(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		deleteHandler := deletedom.NewHandler(app)
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new file")
 
 		err = createHandler.CreateFile(newFolderPath)
 		if err != nil {
@@ -157,7 +158,7 @@ func TestDeleteFolder(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		deleteHandler := deletedom.NewHandler(app)
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new")
 
 		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
@@ -179,7 +180,7 @@ func TestDeleteFolder(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		deleteHandler := deletedom.NewHandler(app)
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new folder")
 
 		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
@@ -196,5 +197,44 @@ func TestDeleteFolder(t *testing.T) {
 func assertDeleteTest(want bool, got bool, t *testing.T) {
 	if got != want {
 		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+// A legacy duplicate alias may already belong to another command; deleting a
+// command that still lists it must not remove that other command's key.
+func TestDeleteLeavesAnAliasAnotherCommandOwns(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	a := command.New("a", []string{"x"}, "echo a")
+	app.AllCommandsByName.Add("a", a)
+	app.AllCommandsByAlias.Add("x", a)
+
+	b := command.New("b", []string{"x"}, "echo b")
+	app.AllCommandsByName.Add("b", b)
+
+	handler := deletedom.NewHandler(app)
+
+	if _, ok := handler.DeleteCommand("b"); !ok {
+		t.Fatal("DeleteCommand(b) returned false")
+	}
+
+	if owner := app.AllCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
+		t.Errorf("alias x = %+v, want it to stay on a", owner)
+	}
+
+	if app.AllCommandsByName.Get("b") != nil {
+		t.Error("b is still registered")
+	}
+
+	// Deleting the owner does remove it.
+	if _, ok := handler.DeleteCommand("a"); !ok {
+		t.Fatal("DeleteCommand(a) returned false")
+	}
+
+	if owner := app.AllCommandsByAlias.Get("x"); owner != nil {
+		t.Errorf("alias x = %+v, want it removed with its owner", owner)
 	}
 }

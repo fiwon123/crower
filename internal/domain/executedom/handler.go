@@ -3,7 +3,6 @@ package executedom
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -12,15 +11,18 @@ import (
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 type Handler struct {
-	app *app.Config
+	app   *app.Config
+	shell *shell.Runner
 }
 
 func NewHandler(app *app.Config) *Handler {
 	return &Handler{
-		app: app,
+		app:   app,
+		shell: shell.New(),
 	}
 }
 
@@ -41,14 +43,24 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 		return "", nil, errors.CommandNotFound(key)
 	}
 
-	execLine := applyParams(cmd.Exec, params)
-
-	h.app.Logger.Debug("exec: " + execLine)
-
 	// Get steps
 	steps := cmd.Steps
 	if len(steps) == 0 {
+		execLine, err := applyParams(cmd.Exec, params)
+		if err != nil {
+			return "", cmd, err
+		}
+
+		h.app.Logger.Debug("exec: " + execLine)
+
 		steps = []string{execLine}
+	} else {
+		substituted, err := applyParamsToSteps(steps, params)
+		if err != nil {
+			return "", cmd, err
+		}
+
+		steps = substituted
 	}
 
 	// Execute steps sequentially
@@ -60,8 +72,8 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 		}
 
 		// Check for nested crower invocation
-		if strings.HasPrefix(step, "crower ") || strings.HasPrefix(step, "cr ") {
-			out, err := h.executeNested(step)
+		if isNestedCrower(step) {
+			out, err := executeNested(h.shell, step)
 			allOut.WriteString(out)
 			if err != nil {
 				return allOut.String(), cmd, err
@@ -71,7 +83,7 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 
 		h.app.Logger.Debug(fmt.Sprintf("[%d/%d] %s", i+1, len(steps), step))
 
-		out, err := h.PerformExecute(step)
+		out, err := h.shell.Exec(step)
 		allOut.WriteString(out)
 		if err != nil {
 			return allOut.String(), cmd, err
@@ -81,28 +93,227 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 	return allOut.String(), cmd, nil
 }
 
-// applyParams fills the placeholders of an exec line, or appends the parameters
-// when it has none.
-func applyParams(execLine string, params []string) string {
-	if len(params) == 0 {
-		return execLine
+// paramToken is one brace token in a line, with the bounds of its text.
+type paramToken struct {
+	start int
+	end   int
+	token string
+}
+
+// paramTokens finds the brace tokens in a line. A "{" whose span contains
+// another "{" is literal (a shell snippet before a real placeholder), so it is
+// skipped rather than swallowing the placeholder that follows.
+func paramTokens(line string) []paramToken {
+	var tokens []paramToken
+
+	for i := 0; i < len(line); {
+		if line[i] != '{' {
+			i++
+			continue
+		}
+
+		relative := strings.IndexByte(line[i+1:], '}')
+		if relative < 0 {
+			break
+		}
+
+		end := i + 1 + relative
+		token := line[i+1 : end]
+		if strings.ContainsRune(token, '{') {
+			i++
+			continue
+		}
+
+		tokens = append(tokens, paramToken{start: i, end: end, token: token})
+		i = end + 1
 	}
 
+	return tokens
+}
+
+// applyParams fills the placeholders of an exec line, or appends the parameters
+// when the line has no braces at all.
+//
+// The line is scanned once: substituting sequentially re-scanned the text that
+// had already been inserted, so a parameter containing "{2}" was replaced again
+// by the second parameter. A brace that is not a placeholder (`{a,b}`, `{0}`,
+// an index past the parameters) is left as written, and a line with braces but
+// no usable placeholder is an error — the old code returned the line unchanged
+// and dropped the parameters without a word.
+//
+// `{}` takes the parameters no `{n}` consumed, as the docs say; with no `{n}`
+// that is every parameter. A `find … -exec … {}` template is only affected when
+// parameters are passed explicitly.
+func applyParams(execLine string, params []string) (string, error) {
+	if len(params) == 0 {
+		return execLine, nil
+	}
+
+	quoted := quoteParams(params)
+
+	if !strings.Contains(execLine, "{") {
+		return execLine + " " + strings.Join(quoted, " "), nil
+	}
+
+	out, found, outOfRange := substituteParams(execLine, quoted)
+	if found {
+		return out, nil
+	}
+
+	if outOfRange != "" {
+		return "", fmt.Errorf("parameter {%s} is out of range: %d given", outOfRange, len(params))
+	}
+
+	return "", fmt.Errorf("no parameter placeholder in %q", execLine)
+}
+
+// applyParamsToSteps fills the placeholders of every step. A step without
+// braces is left alone (appending to every step of a multi-step command would
+// repeat the arguments). A set of steps with no usable placeholder, or with an
+// index past the parameters, is an error: in a set of one-placeholder steps a
+// partial substitution would otherwise reach the shell as a literal {n}.
+func applyParamsToSteps(steps []string, params []string) ([]string, error) {
+	if len(params) == 0 {
+		return steps, nil
+	}
+
+	quoted := quoteParams(params)
+	out := append([]string(nil), steps...)
+	found := false
+	outOfRange := ""
+
+	for i, step := range out {
+		if !strings.Contains(step, "{") {
+			continue
+		}
+
+		substituted, ok, rangeError := substituteParams(step, quoted)
+		if rangeError != "" && outOfRange == "" {
+			outOfRange = rangeError
+		}
+
+		out[i] = substituted
+
+		if ok {
+			found = true
+		}
+	}
+
+	if outOfRange != "" {
+		return nil, fmt.Errorf("parameter {%s} is out of range: %d given", outOfRange, len(params))
+	}
+
+	if found {
+		return out, nil
+	}
+
+	return nil, fmt.Errorf("no parameter placeholder in this command's steps")
+}
+
+func quoteParams(params []string) []string {
 	quoted := make([]string, 0, len(params))
 	for _, param := range params {
 		quoted = append(quoted, helper.QuoteFor(runtime.GOOS, param))
 	}
 
-	if !strings.Contains(execLine, "{") {
-		return execLine + " " + strings.Join(quoted, " ")
+	return quoted
+}
+
+// substituteParams fills the placeholders of one line, reporting whether any
+// usable placeholder was found and the first out-of-range index (empty when
+// there is none). Leftovers stay as written.
+func substituteParams(line string, quoted []string) (string, bool, string) {
+	tokens := paramTokens(line)
+	used := make([]bool, len(quoted))
+	found := false
+	outOfRange := ""
+
+	for _, token := range tokens {
+		switch {
+		case token.token == "":
+			found = true
+		case !isParamIndex(token.token):
+		default:
+			n, err := strconv.Atoi(token.token)
+			if err != nil || n < 1 || n > len(quoted) {
+				if outOfRange == "" {
+					outOfRange = token.token
+				}
+				continue
+			}
+
+			used[n-1] = true
+			found = true
+		}
 	}
 
+	remaining := make([]string, 0, len(quoted))
 	for i, param := range quoted {
-		execLine = strings.ReplaceAll(execLine, fmt.Sprintf("{%d}", i+1), param)
+		if !used[i] {
+			remaining = append(remaining, param)
+		}
 	}
 
-	// {} is the first parameter.
-	return strings.ReplaceAll(execLine, "{}", quoted[0])
+	remainder := strings.Join(remaining, " ")
+
+	var out strings.Builder
+	cursor := 0
+
+	for _, token := range tokens {
+		out.WriteString(line[cursor:token.start])
+
+		switch {
+		case token.token == "":
+			out.WriteString(remainder)
+		case !isParamIndex(token.token):
+			out.WriteString(line[token.start : token.end+1])
+		default:
+			n, err := strconv.Atoi(token.token)
+			if err != nil || n < 1 || n > len(quoted) {
+				out.WriteString(line[token.start : token.end+1])
+			} else {
+				out.WriteString(quoted[n-1])
+			}
+		}
+
+		cursor = token.end + 1
+	}
+
+	out.WriteString(line[cursor:])
+
+	return out.String(), found, outOfRange
+}
+
+// isParamIndex reports whether token is a positive decimal index.
+func isParamIndex(token string) bool {
+	if token == "" {
+		return false
+	}
+
+	for _, r := range token {
+		if r < '0' || r > '9' {
+			return false
+		}
+	}
+
+	return true
+}
+
+// isNestedCrower reports whether a step invokes crower itself.
+//
+// The first word is compared after unquoting: parameters are shell-quoted
+// before substitution, so `{1} list` with the parameter "crower" becomes
+// `'crower' list`. A raw prefix check missed that and ran the child through
+// the plain shell, without the depth counter that limits recursion.
+func isNestedCrower(step string) bool {
+	fields := strings.Fields(step)
+	if len(fields) == 0 {
+		return false
+	}
+
+	first := strings.Trim(fields[0], `'"`)
+
+	return first == "crower" || first == "cr"
 }
 
 // executeNested runs a step that calls crower again.
@@ -112,13 +323,13 @@ func applyParams(execLine string, params []string) string {
 // command whose step calls itself would spawn processes until the machine ran
 // out of them. The counter is a limit on that, and the error names the limit
 // rather than claiming to have detected a cycle it cannot see.
-func (h *Handler) executeNested(step string) (string, error) {
+func executeNested(runner *shell.Runner, step string) (string, error) {
 	depth := nestedDepth()
 	if depth >= maxExecDepth {
 		return "", fmt.Errorf("nested crower call %q: maximum depth %d reached", step, maxExecDepth)
 	}
 
-	c, err := h.shellCommand(step)
+	c, err := runner.Command(step)
 	if err != nil {
 		return "", err
 	}
@@ -137,59 +348,6 @@ func nestedDepth() int {
 	}
 
 	return depth
-}
-
-// PerformExecute runs one shell command and returns its combined output.
-//
-// The whole command line is handed to the shell as a single argument. It used
-// to be split on whitespace and passed as separate argv entries after -c, which
-// makes the shell treat everything after the first word as positional
-// parameters: `echo hello` ran `echo` with no arguments, and `ls /nope` listed
-// the working directory instead of failing.
-func (h *Handler) PerformExecute(ex string) (string, error) {
-	c, err := h.shellCommand(ex)
-	if err != nil {
-		return "", err
-	}
-
-	out, err := c.CombinedOutput()
-	return string(out), err
-}
-
-// PerformExecuteStart starts a shell command without waiting for it.
-func (h *Handler) PerformExecuteStart(ex string) error {
-	c, err := h.shellCommand(ex)
-	if err != nil {
-		return err
-	}
-
-	return c.Start()
-}
-
-// PerformInteractiveTerminal runs a program that needs the terminal itself.
-func (h *Handler) PerformInteractiveTerminal(commandName string, ex string) error {
-	if runtime.GOOS == "windows" {
-		return fmt.Errorf("interactive terminal is not supported on windows")
-	}
-
-	c := exec.Command(commandName, ex)
-	c.Stdin = os.Stdin
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
-
-	return c.Run()
-}
-
-// shellCommand builds the platform's shell invocation for one command line.
-func (h *Handler) shellCommand(ex string) (*exec.Cmd, error) {
-	switch runtime.GOOS {
-	case "windows":
-		return exec.Command("cmd", "/c", ex), nil
-	case "linux", "darwin":
-		return exec.Command("sh", "-c", ex), nil
-	}
-
-	return nil, fmt.Errorf("%w: %q", errors.ErrUnsupportedOS, runtime.GOOS)
 }
 
 const (

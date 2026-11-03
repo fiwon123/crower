@@ -44,7 +44,7 @@ func (c *Core) UpgradeApp(currentVersion string) error {
 
 	c.app.Logger.Info("crower upgraded from ", currentVersion, " to ", newVersion)
 
-	c.app.History.Add(operations.Upgrade, newUpgradeNote())
+	c.app.History.Add(operations.Upgrade, "", newUpgradeNote())
 
 	return c.app.Save()
 }

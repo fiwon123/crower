@@ -286,6 +286,8 @@ uses `python scripts/dev-up.py dev-up`. Run `make help` for every target.
 | see real recipes | [Usage recipes](#-usage-recipes) |
 | look up a command or flag | [Commands](#-commands) |
 | script against crower | [Scripting](#-scripting) |
+| browse the wiki | [crower wiki](https://github.com/fiwon123/crower/wiki) |
+| see what is planned | [Roadmap board](https://github.com/users/fiwon123/projects/5) |
 | understand the internals | [AGENTS.md](AGENTS.md) · [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) |
 | help prove a claim | [Verifying claims](https://github.com/fiwon123/crower/wiki/Verifying-claims) |
 
@@ -317,4 +319,15 @@ to record, are on the wiki's
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**crower is MIT licensed** — see [LICENSE](LICENSE).
+
+The release archives also carry two files that are not crower's licence:
+
+- [NOTICE](NOTICE) — attribution for the Apache-2.0 dependencies compiled into
+  the binary (`spf13/cobra`, `minio/selfupdate`, `hajimehoshi/ebiten`);
+- [LICENSE-APACHE](LICENSE-APACHE) — the Apache License 2.0 text those
+  dependencies require to travel with a distribution.
+
+A dependency's licence does not change this project's: your MIT grant is the only
+one you need for crower's own code, and the Apache files exist so the bundled
+libraries arrive with the notices they are owed.

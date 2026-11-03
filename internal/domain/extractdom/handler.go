@@ -8,21 +8,19 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 type Handler struct {
-	app     *app.Config
-	execute *executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 }
 
 func NewHandler(app *app.Config) *Handler {
 
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: execute,
+		app:   app,
+		shell: shell.New(),
 	}
 }
 
@@ -35,9 +33,13 @@ func (h *Handler) Extract(paths []string, output string) error {
 	var failures []error
 
 	for _, f := range paths {
-
-		if output == "" {
-			output = filepath.Dir(f)
+		// The destination belongs to this archive: an omitted --out means
+		// "next to this archive", not "next to the first archive". Assigning
+		// it once outside the loop sent every later archive into the first
+		// one's directory.
+		outDir := output
+		if outDir == "" {
+			outDir = filepath.Dir(f)
 		}
 
 		base := filepath.Base(f)
@@ -49,10 +51,11 @@ func (h *Handler) Extract(paths []string, output string) error {
 		}
 
 		if ext == "" {
+			failures = append(failures, fmt.Errorf("%s: no file extension to choose an extractor", f))
 			continue
 		}
 
-		out, err := h.performExtract(ext, f, output)
+		out, err := h.performExtract(ext, f, outDir)
 		if err != nil {
 			failures = append(failures, fmt.Errorf("%s: %w", f, err))
 			continue
@@ -65,29 +68,10 @@ func (h *Handler) Extract(paths []string, output string) error {
 }
 
 func (h *Handler) performExtract(ext string, filePath string, outDir string) (string, error) {
-	switch ext {
-	case "tar":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
-	case "gz":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir))
-	case "tgz":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir))
-	case "bz2":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xjf '%s' -C '%s'`, filePath, outDir))
-	case "xz":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xJf '%s' -C '%s'`, filePath, outDir))
-	case "zip":
-		switch runtime.GOOS {
-		case "windows":
-			return h.execute.PerformExecute(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
-		case "linux":
-			return h.execute.PerformExecute(fmt.Sprintf(`unzip '%s' -d  '%s'`, filePath, outDir))
-		}
-	case "7z":
-		return h.execute.PerformExecute(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
-	case "rar":
-		return h.execute.PerformExecute(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
+	commandLine, err := extractCommand(runtime.GOOS, ext, filePath, outDir)
+	if err != nil {
+		return "", err
 	}
 
-	return "", fmt.Errorf("no extractor for .%s archives", ext)
+	return h.shell.Exec(commandLine)
 }

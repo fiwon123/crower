@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
@@ -78,8 +79,13 @@ func (h *Data) GetLastOperation(op operations.MainOperationEnum) *Content {
 	return &h.AllData[currentIndex]
 }
 
-// Add new content history registering current operation, command name and a note
-func (h *Data) Add(op operations.MainOperationEnum, note string) {
+// Add appends a history entry for one operation.
+//
+// commandName is the command the operation touched, or "" for an operation
+// that touches files or variables rather than a managed command. It used to be
+// left out entirely, so `execute --last`/`delete --create` resolved an empty
+// name and could never act.
+func (h *Data) Add(op operations.MainOperationEnum, commandName string, note string) {
 
 	version := 1
 	if len(h.AllData) != 0 {
@@ -88,11 +94,12 @@ func (h *Data) Add(op operations.MainOperationEnum, note string) {
 	}
 
 	data := Content{
-		Version:   version,
-		File:      fmt.Sprintf("%05d.yaml", version),
-		Timestemp: time.Now().Format(time.RFC3339),
-		Operation: op,
-		Note:      note,
+		Version:     version,
+		File:        fmt.Sprintf("%05d.yaml", version),
+		Timestemp:   time.Now().Format(time.RFC3339),
+		Operation:   op,
+		CommandName: commandName,
+		Note:        note,
 	}
 
 	h.AllData = append(h.AllData, data)
@@ -140,7 +147,7 @@ func (h *Data) GetListOperation(op operations.MainOperationEnum) string {
 			continue
 		}
 
-		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.CommandName, data.Note))
 		line += 1
 	}
 	return builder.String()
@@ -169,7 +176,7 @@ func (h *Data) GetListFirstHistory(steps int) string {
 	line := 0
 	for i := start; i >= 0; i-- {
 		data := h.AllData[i]
-		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.CommandName, data.Note))
 		line += 1
 	}
 	return builder.String()
@@ -184,7 +191,7 @@ func (h *Data) GetListLastHistory(steps int) string {
 	line := 0
 	for i := start; i >= stop; i-- {
 		data := h.AllData[i]
-		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.CommandName, data.Note))
 		line += 1
 	}
 	return builder.String()
@@ -197,20 +204,24 @@ func (h *Data) GetList() string {
 	line := 0
 	for i := len(h.AllData) - 1; i >= 0; i-- {
 		data := h.AllData[i]
-		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.CommandName, data.Note))
 		line += 1
 	}
 	return builder.String()
 }
 
-func getContent(line int, version int, file string, timestemp string, note string) string {
-	return fmt.Sprintf("%-4d %-8d %-16s %-32s %s\n", line, version, file, timestemp, note)
+func getContent(line int, version int, file string, timestemp string, command string, built string) string {
+	if command == "" {
+		command = "-"
+	}
+
+	return fmt.Sprintf("%-4d %-8d %-16s %-32s %-20s %s\n", line, version, file, timestemp, command, note.Display(built))
 }
 
 func getHeader() string {
 	var builder strings.Builder
 	builder.WriteString("----------------------------------------------------------------------------\n")
-	fmt.Fprintf(&builder, "%-4s %-8s %-16s %-32s %s\n", "line", "Version", "File", "Timestamp", "Note")
+	fmt.Fprintf(&builder, "%-4s %-8s %-16s %-32s %-20s %s\n", "line", "Version", "File", "Timestamp", "Command", "Note")
 	builder.WriteString("----------------------------------------------------------------------------\n")
 	return builder.String()
 }

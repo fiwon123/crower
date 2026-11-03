@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"maps"
 	"path/filepath"
 	"slices"
 
@@ -11,22 +12,31 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
+// FindCommand resolves a key inside a history snapshot. A name wins over an
+// alias, and both passes run in name order: ranging the map made a snapshot
+// with a collision restore a different command on different runs.
 func (app *Config) FindCommand(key string, content history.Content) (*command.Data, error) {
 	allCommands := command.NewMapData()
-	newDataPath := filepath.Join(app.HistoryFolderPath, content.File)
+	newDataPath := filepath.Join(app.historyFolderPath, content.File)
 
 	err := utils.ReadToml(newDataPath, &allCommands)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, command := range allCommands {
-		if command.Name == key {
-			return &command, nil
-		} else {
-			if slices.Contains(command.AllAlias, key) {
-				return &command, nil
-			}
+	names := slices.Sorted(maps.Keys(allCommands))
+
+	for _, name := range names {
+		if allCommands[name].Name == key {
+			c := allCommands[name]
+			return &c, nil
+		}
+	}
+
+	for _, name := range names {
+		if slices.Contains(allCommands[name].AllAlias, key) {
+			c := allCommands[name]
+			return &c, nil
 		}
 	}
 

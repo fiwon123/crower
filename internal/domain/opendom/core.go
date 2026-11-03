@@ -43,14 +43,14 @@ func (c *Core) Open(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Open, newOpenNote(args))
+	c.app.History.Add(operations.Open, "", newOpenNote(args))
 
 	return c.app.Save()
 }
 
 // OpenFile opens a file, defaulting to the configuration file.
 func (c *Core) OpenFile(args []string) error {
-	currentPath := c.app.CfgFilePath
+	currentPath := c.app.ConfigFile()
 	if len(args) == 0 {
 		args = append(args, currentPath)
 	}
@@ -59,14 +59,14 @@ func (c *Core) OpenFile(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Open, newOpenFolderNote(args))
+	c.app.History.Add(operations.Open, "", newOpenFolderNote(args))
 
 	return c.app.Save()
 }
 
 // OpenFolder opens a folder, defaulting to the configuration folder.
 func (c *Core) OpenFolder(args []string) error {
-	currentPath := c.app.CfgFilePath
+	currentPath := c.app.ConfigFile()
 	if len(args) == 0 {
 		args = append(args, filepath.Dir(currentPath))
 	}
@@ -75,7 +75,7 @@ func (c *Core) OpenFolder(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Open, newOpenFolderNote(args))
+	c.app.History.Add(operations.Open, "", newOpenFolderNote(args))
 
 	return c.app.Save()
 }
@@ -86,7 +86,7 @@ func (c *Core) OpenSystem() error {
 		return err
 	}
 
-	c.app.History.Add(operations.Open, newOpenSystemNote())
+	c.app.History.Add(operations.Open, "", newOpenSystemNote())
 
 	return c.app.Save()
 }

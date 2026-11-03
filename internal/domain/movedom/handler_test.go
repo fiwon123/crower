@@ -20,7 +20,7 @@ func TestMoveFile(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		moveHandler := movedom.NewHandler(app)
 
-		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new.txt")
+		newFilePath := filepath.Join(app.ConfigFolder(), "new.txt")
 
 		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
@@ -42,7 +42,7 @@ func TestMoveFile(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		moveHandler := movedom.NewHandler(app)
 
-		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file.txt")
+		newFilePath := filepath.Join(app.ConfigFolder(), "new file.txt")
 
 		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
@@ -68,7 +68,7 @@ func TestMoveFolder(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		moveHandler := movedom.NewHandler(app)
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new")
 
 		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
@@ -90,7 +90,7 @@ func TestMoveFolder(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		moveHandler := movedom.NewHandler(app)
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new folder")
 
 		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {

@@ -67,11 +67,11 @@ func (c *Core) Copy(args []string) error {
 	}
 
 	if isCopyFile && isCopyFolder {
-		c.app.History.Add(operations.Copy, newCopyNote(operations.FileAndFolder, args))
+		c.app.History.Add(operations.Copy, "", newCopyNote(operations.FileAndFolder, args))
 	} else if isCopyFile {
-		c.app.History.Add(operations.Copy, newCopyNote(operations.File, args))
+		c.app.History.Add(operations.Copy, "", newCopyNote(operations.File, args))
 	} else if isCopyFolder {
-		c.app.History.Add(operations.Copy, newCopyNote(operations.Folder, args))
+		c.app.History.Add(operations.Copy, "", newCopyNote(operations.Folder, args))
 	}
 
 	return c.app.Save()

@@ -2,7 +2,6 @@ package deletedom
 
 import (
 	"fmt"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -10,25 +9,19 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/domain/executedom"
-	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
-
-	"github.com/fiwon123/crower/pkg/utils"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 type Handler struct {
-	app     *app.Config
-	execute executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 }
 
 func NewHandler(app *app.Config) *Handler {
 
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: *execute,
+		app:   app,
+		shell: shell.New(),
 	}
 }
 
@@ -44,8 +37,12 @@ func (h *Handler) DeleteCommand(key string) (*command.Data, bool) {
 
 	h.app.AllCommandsByName.Remove(command.Name)
 
+	// Remove only the alias entries this command owns: a legacy duplicate may
+	// already have given one to another command.
 	for _, alias := range command.AllAlias {
-		h.app.AllCommandsByAlias.Remove(alias)
+		if owner := h.app.AllCommandsByAlias.Get(alias); owner != nil && (owner.Name == command.Name || owner.Name == "") {
+			h.app.AllCommandsByAlias.Remove(alias)
+		}
 	}
 
 	return command, true
@@ -63,26 +60,12 @@ func (h *Handler) DeleteFolder(folderPath string) error {
 
 // remove runs the platform's delete command.
 func (h *Handler) remove(path string, folder bool) error {
-	var commandLine string
-
-	switch runtime.GOOS {
-	case "windows":
-		if folder {
-			commandLine = "rmdir /s /q " + helper.QuoteFor(runtime.GOOS, path)
-		} else {
-			commandLine = "del " + helper.QuoteFor(runtime.GOOS, path)
-		}
-	case "linux", "darwin":
-		commandLine = "rm "
-		if folder {
-			commandLine = "rm -r "
-		}
-		commandLine += helper.QuoteFor(runtime.GOOS, path)
-	default:
-		return errors.ErrUnsupportedOS
+	commandLine, err := removeCommand(runtime.GOOS, path, folder)
+	if err != nil {
+		return err
 	}
 
-	out, err := h.execute.PerformExecute(commandLine)
+	out, err := h.shell.Exec(commandLine)
 	if err != nil {
 		return fmt.Errorf("delete %s: %w (output: %s)", path, err, strings.TrimSpace(out))
 	}
@@ -98,9 +81,8 @@ func (h *Handler) DeleteHistoryContent(content history.Content) (string, error) 
 		return "", fmt.Errorf("history entry %s not found", content.File)
 	}
 
-	newDataPath := filepath.Join(h.app.HistoryFolderPath, content.File)
-	if err := utils.DeleteFile(newDataPath); err != nil {
-		return "", fmt.Errorf("delete backup %s: %w", newDataPath, err)
+	if err := h.app.DeleteHistoryBackup(content.File); err != nil {
+		return "", fmt.Errorf("delete history backup %s: %w", content.File, err)
 	}
 
 	return "history entry deleted", nil

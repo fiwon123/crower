@@ -4,7 +4,6 @@ import (
 	stderrors "errors"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/opendom"
@@ -13,8 +12,8 @@ import (
 	"github.com/fiwon123/crower/internal/helper"
 
 	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -89,7 +88,7 @@ func (c *Core) CreateCommand(allAlias []string, args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, newCreateCommandNote(created, args))
+	c.app.History.Add(operations.Create, created.Name, newCreateCommandNote(created))
 
 	return c.app.Save()
 }
@@ -100,7 +99,7 @@ func (c *Core) performCreateCommand(name string, allAlias []string, exec string)
 		return nil, fmt.Errorf("add command %q: %w", name, err)
 	}
 
-	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+	if err := c.app.SaveCommands(); err != nil {
 		return nil, err
 	}
 
@@ -110,19 +109,19 @@ func (c *Core) performCreateCommand(name string, allAlias []string, exec string)
 }
 
 // CreateProcess adds a managed command built from a running process.
-func (c *Core) CreateProcess(name string, args []string) error {
-	created, err := c.handler.CreateProcess(name, args)
+func (c *Core) CreateProcess(name string, allAlias []string, args []string) error {
+	created, err := c.handler.CreateProcess(name, allAlias, args)
 	if err != nil {
 		return fmt.Errorf("add command by process: %w", err)
 	}
 
-	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+	if err := c.app.SaveCommands(); err != nil {
 		return err
 	}
 
 	c.app.Logger.Info("added new command by process: ", name)
 
-	c.app.History.Add(operations.Create, newCreateProcessNote(created, args))
+	c.app.History.Add(operations.Create, created.Name, newCreateProcessNote(created, args))
 
 	return c.app.Save()
 }
@@ -143,7 +142,7 @@ func (c *Core) CreateSystemVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Create, newCreateSystemVariableNote(args))
+	c.app.History.Add(operations.Create, "", newCreateSystemVariableNote(args))
 
 	return c.app.Save()
 }
@@ -161,7 +160,7 @@ func (c *Core) CreateSystemPathVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Create, newCreateSystemPathVariableNote(args))
+	c.app.History.Add(operations.Create, "", newCreateSystemPathVariableNote(args))
 
 	return c.app.Save()
 }
@@ -184,7 +183,7 @@ func (c *Core) CreateFile(args []string) error {
 		return stderrors.Join(failures...)
 	}
 
-	c.app.History.Add(operations.Create, generateCreateFile(args))
+	c.app.History.Add(operations.Create, "", generateCreateFile(args))
 
 	return c.app.Save()
 }
@@ -207,16 +206,25 @@ func (c *Core) CreateFolder(args []string) error {
 		return stderrors.Join(failures...)
 	}
 
-	c.app.History.Add(operations.Create, newCreateFolder(args))
+	c.app.History.Add(operations.Create, "", newCreateFolder(args))
 
 	return c.app.Save()
 }
 
 // CreateLastCommand re-creates the command touched by the last operation of the
 // given kind.
-func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string) error {
+//
+// It takes exactly one argument, the new name. Extra words used to be ignored,
+// so `create --execute name typo` succeeded and dropped the typo; and the
+// --alias flag was accepted but never reached the command, because the aliases
+// were hard-coded to an empty slice.
+func (c *Core) CreateLastCommand(op operations.MainOperationEnum, allAlias []string, args []string) error {
 	if len(args) == 0 {
 		return errors.NotEnoughArgs("name")
+	}
+
+	if len(args) > 1 {
+		return errors.TooManyArgs("one name")
 	}
 
 	name := args[0]
@@ -226,40 +234,44 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string)
 		return errors.CommandNotFound(string(op))
 	}
 
-	exec := execFromNote(content.Note)
+	// A command with steps never runs its exec, so reusing that value would
+	// rebuild a command that does something else. Say so instead.
+	steps, hasSteps := note.CommandSteps(content.Note)
+
+	// Notes written before command_steps existed do not carry it. The command
+	// may still be in the map, where its steps are visible.
+	if !hasSteps && content.CommandName != "" {
+		if cmd := c.app.AllCommandsByName.Get(content.CommandName); cmd != nil && len(cmd.Steps) > 0 {
+			steps, hasSteps = cmd.Steps, true
+		}
+	}
+
+	if hasSteps {
+		if len(steps) == 0 {
+			return fmt.Errorf("the last %q operation (%q) has steps that cannot be read; create --execute cannot rebuild them", op, content.CommandName)
+		}
+
+		return fmt.Errorf("the last %q operation (%q) ran %d step(s); create --execute cannot rebuild them", op, content.CommandName, len(steps))
+	}
+
+	exec := note.CommandExec(content.Note)
 	if exec == "" {
 		return fmt.Errorf("the last %q operation carries no exec to reuse", op)
 	}
 
-	created, err := c.performCreateCommand(name, []string{}, exec)
+	created, err := c.performCreateCommand(name, allAlias, exec)
 	if err != nil {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, newCreateCommandLastExecuteNote(created))
+	c.app.History.Add(operations.Create, created.Name, newCreateCommandLastExecuteNote(created))
 
 	return c.app.Save()
 }
 
-// execFromNote reads the exec field out of a history note such as
-// "exec=echo hi;name=hello".
-//
-// The field is checked for a separator first: the old code indexed the split
-// result without looking, so a note carrying a bare "exec" word panicked.
-func execFromNote(note string) string {
-	for keyValRaw := range strings.SplitSeq(note, ";") {
-		keyVal := strings.SplitN(keyValRaw, "=", 2)
-		if len(keyVal) == 2 && keyVal[0] == "exec" {
-			return keyVal[1]
-		}
-	}
-
-	return ""
-}
-
 // CreateScriptCommand creates a script file, registers it as a command, and
 // opens the folder that holds it.
-func (c *Core) CreateScriptCommand(args []string) error {
+func (c *Core) CreateScriptCommand(allAlias []string, args []string) error {
 	if len(args) == 0 {
 		return errors.NotEnoughArgs("name")
 	}
@@ -276,7 +288,7 @@ func (c *Core) CreateScriptCommand(args []string) error {
 	// repeated the same call for two systems and returned success on any
 	// other, which is how `create --script` could report success and create
 	// nothing.
-	created, err := c.performCreateCommand(name, []string{}, scriptFilePath)
+	created, err := c.performCreateCommand(name, allAlias, scriptFilePath)
 	if err != nil {
 		return err
 	}
@@ -285,7 +297,7 @@ func (c *Core) CreateScriptCommand(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, newCreateScriptCommandNote(created, args))
+	c.app.History.Add(operations.Create, created.Name, newCreateScriptCommandNote(created))
 
 	return c.app.Save()
 }

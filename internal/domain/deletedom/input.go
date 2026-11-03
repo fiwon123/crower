@@ -9,6 +9,7 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/note"
 )
 
 type listHandler interface {
@@ -116,7 +117,7 @@ func (i *Input) CheckDeleteHistoryContentInput() (history.Content, bool, error) 
 	i.app.Logger.Info("Content")
 	i.app.Logger.Info("Version:    ", content.Version)
 	i.app.Logger.Info("File:    ", content.File)
-	i.app.Logger.Info("Note:    ", content.Note)
+	i.app.Logger.Info("Note:    ", note.Display(content.Note))
 	i.app.Logger.Info("")
 
 	confirmed, err := helper.GetUserConfirmation("Continue to delete history content", i.app)

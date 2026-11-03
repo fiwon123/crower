@@ -10,25 +10,23 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/shell"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Handler struct {
-	app     *app.Config
-	execute executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 }
 
 func NewHandler(app *app.Config) *Handler {
 
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: *execute,
+		app:   app,
+		shell: shell.New(),
 	}
 }
 
@@ -49,6 +47,14 @@ func (h *Handler) CreateCommand(name string, alias []string, exec string) (*comm
 		return nil, fmt.Errorf("found name, command already added")
 	}
 
+	// A name that another command already answers to as an alias would shadow
+	// it: lookups try the name map first, so the command the alias pointed at
+	// becomes unreachable. The alias loop below cannot catch this one, because
+	// it checks the new command's aliases, not its name.
+	if owner := h.app.AllCommandsByAlias.Get(command.Name); owner != nil {
+		return nil, fmt.Errorf("%q is already an alias of %q", command.Name, owner.Name)
+	}
+
 	for _, alias := range command.AllAlias {
 		if h.app.AllCommandsByAlias.Get(alias) != nil || h.app.AllCommandsByName.Get(alias) != nil {
 			return nil, fmt.Errorf("found alias, command already added")
@@ -64,11 +70,19 @@ func (h *Handler) CreateCommand(name string, alias []string, exec string) (*comm
 	return command, nil
 }
 
-// Create command based on process name or id process
-func (h *Handler) CreateProcess(name string, args []string) (*command.Data, error) {
+// Create command based on process name or id process.
+//
+// name is the command to create; args[0] is the process name or pid. The
+// missing-process case used to index an empty slice and panic, so `crower
+// create -p <name>` crashed instead of saying what was missing.
+func (h *Handler) CreateProcess(name string, allAlias []string, args []string) (*command.Data, error) {
 	if len(args) > 0 && name == "" {
 		name = args[0]
 		args = args[1:]
+	}
+
+	if len(args) == 0 || strings.TrimSpace(args[0]) == "" {
+		return nil, errors.NotEnoughArgs("process name or pid")
 	}
 
 	process := args[0]
@@ -105,7 +119,7 @@ func (h *Handler) CreateProcess(name string, args []string) (*command.Data, erro
 		}
 
 		execCommand := fmt.Sprintf("flatpak run %s", appID)
-		command, err := h.CreateCommand(name, nil, execCommand)
+		command, err := h.CreateCommand(name, allAlias, execCommand)
 
 		if err != nil {
 			return nil, err
@@ -113,8 +127,11 @@ func (h *Handler) CreateProcess(name string, args []string) (*command.Data, erro
 
 		return command, nil
 	} else if pathStr != "" {
-		pathStr = fmt.Sprintf("'%s'", pathStr)
-		command, err := h.CreateCommand(name, nil, pathStr)
+		// The path becomes the stored exec and is later run by a shell, so it
+		// gets the same quoting every other domain uses. Hand-written single
+		// quotes are literal to cmd and break on a path containing one.
+		pathStr = helper.Quote(pathStr)
+		command, err := h.CreateCommand(name, allAlias, pathStr)
 
 		if err != nil {
 			return nil, err
@@ -128,17 +145,12 @@ func (h *Handler) CreateProcess(name string, args []string) (*command.Data, erro
 
 // Create a new file on filepath
 func (h *Handler) CreateFile(filePath string) error {
-	var out string
-	var err error
-	switch runtime.GOOS {
-	case "windows":
-		out, err = h.execute.PerformExecute("type nul > " + helper.QuoteFor(runtime.GOOS, filePath))
-	case "linux", "darwin":
-		out, err = h.execute.PerformExecute("touch " + helper.QuoteFor(runtime.GOOS, filePath))
-	default:
-		return errors.ErrUnsupportedOS
+	commandLine, err := createFileCommand(runtime.GOOS, filePath)
+	if err != nil {
+		return err
 	}
 
+	out, err := h.shell.Exec(commandLine)
 	if err != nil {
 		return fmt.Errorf("create file %s: %w (output: %s)", filePath, err, strings.TrimSpace(out))
 	}
@@ -148,17 +160,12 @@ func (h *Handler) CreateFile(filePath string) error {
 
 // Create a new folder on folderpath
 func (h *Handler) CreateFolder(folderPath string) error {
-	var out string
-	var err error
-	switch runtime.GOOS {
-	case "windows":
-		out, err = h.execute.PerformExecute("mkdir " + helper.QuoteFor(runtime.GOOS, folderPath))
-	case "linux", "darwin":
-		out, err = h.execute.PerformExecute("mkdir -p " + helper.QuoteFor(runtime.GOOS, folderPath))
-	default:
-		return errors.ErrUnsupportedOS
+	commandLine, err := createFolderCommand(runtime.GOOS, folderPath)
+	if err != nil {
+		return err
 	}
 
+	out, err := h.shell.Exec(commandLine)
 	if err != nil {
 		return fmt.Errorf("create folder %s: %w (output: %s)", folderPath, err, strings.TrimSpace(out))
 	}
@@ -167,31 +174,23 @@ func (h *Handler) CreateFolder(folderPath string) error {
 }
 
 func (h *Handler) CreateScriptCommand(name string) (string, error) {
-	cfgFolderPath := filepath.Dir(h.app.CfgFilePath)
+	cfgFolderPath := h.app.ConfigFolder()
 	scriptFolderPath := filepath.Join(cfgFolderPath, "scripts")
 	err := utils.CreateFolderIfNotExists(scriptFolderPath)
 	if err != nil {
 		return "", err
 	}
 
-	switch runtime.GOOS {
-	case "windows":
-		scriptFilePath := filepath.Join(scriptFolderPath, name+".bat")
-
-		if err := utils.CreateFileIfNotExists(scriptFilePath); err != nil {
-			return "", err
-		}
-
-		return scriptFilePath, nil
-	case "linux", "darwin":
-		scriptFilePath := filepath.Join(scriptFolderPath, name+".sh")
-
-		if err := utils.CreateFileIfNotExists(scriptFilePath); err != nil {
-			return "", err
-		}
-
-		return scriptFilePath, nil
+	extension, err := scriptExtension(runtime.GOOS)
+	if err != nil {
+		return "", err
 	}
 
-	return "", fmt.Errorf("can't find specific OS to create script command")
+	scriptFilePath := filepath.Join(scriptFolderPath, name+extension)
+
+	if err := utils.CreateFileIfNotExists(scriptFilePath); err != nil {
+		return "", err
+	}
+
+	return scriptFilePath, nil
 }

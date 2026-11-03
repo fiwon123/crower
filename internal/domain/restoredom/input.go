@@ -5,6 +5,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/helper"
 )
 
@@ -43,7 +44,7 @@ func (i *Input) CheckRestoreInput() (history.Content, bool, error) {
 	i.app.Logger.Info("Content")
 	i.app.Logger.Info("Version:    ", content.Version)
 	i.app.Logger.Info("File:    ", content.File)
-	i.app.Logger.Info("Note:    ", content.Note)
+	i.app.Logger.Info("Note:    ", note.Display(content.Note))
 	i.app.Logger.Info("")
 
 	ok, confirmErr := helper.GetUserConfirmation("Continue to restore", i.app)

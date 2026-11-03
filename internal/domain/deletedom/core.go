@@ -7,7 +7,6 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -51,7 +50,7 @@ func (c *Core) Delete(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Delete, newDeleteCommandNote(deleted, args))
+	c.app.History.Add(operations.Delete, deleted.Name, newDeleteCommandNote(deleted, args))
 
 	return c.app.Save()
 }
@@ -70,7 +69,7 @@ func (c *Core) performDeleteCommand(key string) (*command.Data, error) {
 		return nil, errors.CommandNotFound(key)
 	}
 
-	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+	if err := c.app.SaveCommands(); err != nil {
 		return nil, err
 	}
 
@@ -93,7 +92,7 @@ func (c *Core) DeleteLast(op operations.MainOperationEnum) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Delete, newDeleteLastNote(op, deleted))
+	c.app.History.Add(operations.Delete, deleted.Name, newDeleteLastNote(op, deleted))
 
 	return c.app.Save()
 }
@@ -111,7 +110,7 @@ func (c *Core) DeleteSystemVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Delete, newDeleteSystemVariable(args))
+	c.app.History.Add(operations.Delete, "", newDeleteSystemVariable(args))
 
 	return c.app.Save()
 }
@@ -129,7 +128,7 @@ func (c *Core) DeleteSystemPathVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Delete, newDeleteSystemPathVariable(args))
+	c.app.History.Add(operations.Delete, "", newDeleteSystemPathVariable(args))
 
 	return c.app.Save()
 }
@@ -144,7 +143,7 @@ func (c *Core) DeleteFile(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Delete, newDeleteFileNote(args))
+	c.app.History.Add(operations.Delete, "", newDeleteFileNote(args))
 
 	return c.app.Save()
 }
@@ -159,7 +158,7 @@ func (c *Core) DeleteFolder(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Delete, generateDeleteFolderNote(args))
+	c.app.History.Add(operations.Delete, "", generateDeleteFolderNote(args))
 
 	return c.app.Save()
 }

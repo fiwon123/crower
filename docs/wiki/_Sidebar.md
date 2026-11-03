@@ -1,17 +1,43 @@
-**🐦 crower**
+<a href="Home"><img src="https://img.shields.io/badge/🐦_crower-Home-4C8BF5?style=for-the-badge" alt="Home"></a>
 
-- 🏠 [Home](Home)
-- 🚀 [Install](https://github.com/fiwon123/crower#-installation)
-- 🍳 [Recipes](https://github.com/fiwon123/crower#-usage-recipes)
-- 📖 [Commands](https://github.com/fiwon123/crower#-commands)
-- 🧩 [Scripting](https://github.com/fiwon123/crower#-scripting)
-- 🛠️ [Development](https://github.com/fiwon123/crower#-development)
-- 🧪 [Verifying claims](Verifying-claims)
+### 🚀 Get going
+- [📦 Installation](How-to-Install)
+- [⚡ Quick start](Quick-Start)
+- [📖 Command reference](How-to-Use)
+
+### 🍳 Do things
+- [Recipes](Recipes)
+- [🧩 Scripting](Scripting)
+- [🤝 Sharing](Sharing)
+- [⚙️ Configuration](Configuration)
+
+### 📖 Commands
+- [create](create)
+- [update](update)
+- [delete](delete)
+- [list](list)
+- [execute](execute)
+- [open](open)
+- [copy](copy)
+- [move](move)
+- [search](search)
+- [extract](extract)
+- [revert](revert)
+- [restore](restore)
+- [reset](reset)
+- [share / export / import](share)
+- [gui / desktop](gui)
+
+### 🛠️ Project
+- [Development](Development)
+- [🚑 Troubleshooting](Troubleshooting)
+- [🧪 Verifying claims](Verifying-claims)
+- [🤝 Contributing](How-to-Contribute)
 
 ---
 
-- 📖 [README](https://github.com/fiwon123/crower#readme)
-- 🐛 [Issues](https://github.com/fiwon123/crower/issues)
-- 📦 [Releases](https://github.com/fiwon123/crower/releases)
-- 🎯 [Milestones](https://github.com/fiwon123/crower/milestones)
-- 🤝 [Contributing](https://github.com/fiwon123/crower/blob/dev/CONTRIBUTING.md)
+<sub>
+<a href="https://github.com/fiwon123/crower/releases">⬇️ Releases</a> ·
+<a href="https://github.com/fiwon123/crower/issues">🐛 Issues</a> ·
+<a href="https://github.com/users/fiwon123/projects/5">🎯 Roadmap</a>
+</sub>

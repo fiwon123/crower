@@ -1,0 +1,70 @@
+<div align="center">
+
+# 🚑 Troubleshooting
+
+**Start here; most of these have a one-line fix.**
+
+</div>
+
+## `crower: command not found`
+
+The archive was extracted but its folder is not on `PATH`. Either move both
+binaries to a directory that is (`/usr/local/bin`), or run the bundled
+`add_to_path.sh` / `add_to_path.bat` from the folder you extracted them into, and
+open a new terminal.
+
+## A shortcut runs the wrong thing
+
+A stored name that collides with a subcommand is not reachable as
+`crower <name>`. Use the explicit form:
+
+```bash
+crower execute list      # your command named "list", not the subcommand
+```
+
+## `error: …` on stderr and exit code 1
+
+That is the designed failure path: the work did not happen and the reason is the
+one line printed. Common causes: a path that does not exist, a name that
+conflicts, or a prompt declined under `--no-input`.
+
+## It hangs waiting for input
+
+Something needs an answer. If you are in a script, pass `--no-input` so it fails
+fast instead of waiting; interactively, just answer the prompt.
+
+## `revert` did nothing
+
+`revert` walks history backwards, one step per call:
+
+```bash
+crower list -i        # what is there, newest first
+crower revert 1       # undo the most recent entry
+crower revert 3       # or the last three
+```
+
+If history is empty, the operation never appended — check that you used the
+`crower`/`cr` binary and not a shell alias.
+
+## Restored the wrong thing
+
+```bash
+crower list -i                       # find the entry
+crower restore <name>                # bring back a deleted command
+crower revert 1                      # or undo the last operation
+```
+
+## The desktop window does not open
+
+`crower desktop` is a native window (cgo-free) and needs a graphical session.
+In a terminal-only environment use `crower gui`, which renders in the terminal
+itself.
+
+## Still stuck
+
+Open an [issue](https://github.com/fiwon123/crower/issues/new) with:
+
+- `crower --version`
+- your OS and architecture
+- the exact command and the exact output
+- whether it reproduces from a **release build**

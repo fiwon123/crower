@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/fiwon123/crower/internal/domain/upgradedom"
 )
 
 // The release workflow names a runner label for every row of its build matrix.
@@ -374,5 +376,32 @@ func TestWorkflowGuardsCatchTheReleaseNotesBug(t *testing.T) {
 	// `$GITHUB_OUTPUT`-style names contain an underscore but are unambiguous.
 	if found := ambiguousExpansions(`echo "commit=$MAIN_COMMIT" >> "$GITHUB_OUTPUT"`); len(found) > 0 {
 		t.Errorf("ambiguousExpansions() = %v, want none: an internal underscore is not a trailing one", found)
+	}
+}
+
+// The upgrade downloads one asset per release target. Its name has to carry the
+// platform and the architecture the build matrix actually produces, or the
+// request is a 404 (#143).
+func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
+	targets := releaseTargets(readRepositoryFile(t, releaseWorkflowPath))
+	if len(targets) != 6 {
+		t.Fatalf("found %d release targets, want 6", len(targets))
+	}
+
+	// The Downloads table names the archives the build emits. Substituting a
+	// sample tag lets the asset name be compared with both sides: the matrix
+	// and the filenames the release actually publishes.
+	downloads := strings.ReplaceAll(readRepositoryFile(t, releaseWorkflowPath), "${TAG}", "v1.2.3")
+
+	for _, target := range targets {
+		asset, err := upgradedom.AssetName(target.goos, target.goarch, "v1.2.3")
+		if err != nil {
+			t.Errorf("%s/%s: AssetName error = %v", target.goos, target.goarch, err)
+			continue
+		}
+
+		if !strings.Contains(downloads, asset) {
+			t.Errorf("%s/%s: the release does not publish %q", target.goos, target.goarch, asset)
+		}
 	}
 }

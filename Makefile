@@ -139,8 +139,12 @@ endif
 # runs are not racing over a shared fixture (#47) — a red run is a regression
 # until proven otherwise, not a baseline to discount.
 # ---------------------------------------------------------------------------
+# set -e matters: without it the recipe's status is the last command's (the
+# note), so a failing vet, test or build still exited 0 — a gate that could not
+# fail. The `|| true` keeps an empty untested-package list from tripping it.
 check: ## gofmt, vet, test, build — the local verification gate
-	@if ! command -v go >/dev/null 2>&1; then \
+	@set -e; \
+	if ! command -v go >/dev/null 2>&1; then \
 		echo "ERROR: go is not installed — the check cannot run, so nothing is verified" >&2; \
 		exit 1; \
 	fi; \
@@ -149,7 +153,7 @@ check: ## gofmt, vet, test, build — the local verification gate
 	go vet ./...; \
 	go test ./...; \
 	go build ./...; \
-	notested="$$(go list -f '{{if and (not .TestGoFiles) (not .XTestGoFiles)}}{{.ImportPath}}{{end}}' ./... | grep -v '^$$')"; \
+	notested="$$(go list -f '{{if and (not .TestGoFiles) (not .XTestGoFiles)}}{{.ImportPath}}{{end}}' ./... | grep -v '^$$' || true)"; \
 	if [ -n "$$notested" ]; then \
 		echo ""; \
 		echo "NOTE: these packages have no test files — this run does not cover them:"; \
