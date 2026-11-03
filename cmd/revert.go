@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/legacy/revertdom"
+	"github.com/fiwon123/crower/internal/application/reverthistory"
+	"github.com/fiwon123/crower/internal/legacy/listdom"
 
 	"github.com/spf13/cobra"
 )
@@ -25,10 +26,14 @@ The argument is how many history entries to roll back. "crower list
 			return err
 		}
 
+		// The usage text is part of the answer: a revert with no step count is
+		// a usage error, and the fix belongs next to the message.
 		if len(args) == 0 {
 			return missingArgs(cmd, "the number of steps to revert")
 		}
 
-		return revertdom.NewCore(cfg).Revert(args)
+		session := newLegacySession(cfg, listdom.NewHandler(cfg).CommandsTable)
+
+		return reverthistory.New(session, session, session, session).Run(args)
 	},
 }
