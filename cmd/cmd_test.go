@@ -1344,3 +1344,40 @@ func TestExtractDoesNotCountAsTheLastExecute(t *testing.T) {
 		t.Errorf("execute --last wrote %q, want the last executed command's output", stdout)
 	}
 }
+
+// A name beginning with "-" is creatable with the terminator; the recorded
+// crower_exec uses the same shape, so this is the line that has to work.
+func TestCreateNameBeginningWithADash(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "--", "-v", "echo x"); err != nil {
+		t.Fatalf("create -- -v returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Name string `json:"name"`
+			Exec string `json:"exec"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	found := false
+	for _, command := range payload.Commands {
+		if command.Name == "-v" && command.Exec == "echo x" {
+			found = true
+		}
+	}
+
+	if !found {
+		t.Errorf("create -- -v did not add the command: %q", stdout)
+	}
+}
