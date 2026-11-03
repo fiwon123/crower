@@ -7,6 +7,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -88,7 +89,7 @@ func historyPayload(rows []history.Content) HistoryResult {
 			Timestamp: row.Timestemp,
 			Operation: string(row.Operation),
 			Command:   row.CommandName,
-			Note:      row.Note,
+			Note:      note.Display(row.Note),
 		})
 	}
 

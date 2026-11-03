@@ -1,6 +1,64 @@
 package note
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/fiwon123/crower/internal/data/operations"
+)
+
+// A value the format cannot carry raw has to come back exactly as it went in:
+// the separator escape, the escape character itself, and both together.
+func TestNoteValuesRoundTrip(t *testing.T) {
+	exec := "make; echo done 100% %3B"
+
+	built := New().
+		AddMainOperation(operations.Execute).
+		AddSubOperation(operations.Command).
+		AddCommandName("build;all").
+		AddCommandAlias([]string{"b;1", "b2"}).
+		AddCommandExec(exec).
+		Build()
+
+	if strings.Contains(built, "make; echo") {
+		t.Errorf("the exec was written raw: %q", built)
+	}
+
+	if got := CommandName(built); got != "build;all" {
+		t.Errorf("CommandName(%q) = %q, want build;all", built, got)
+	}
+
+	if got := CommandExec(built); got != exec {
+		t.Errorf("CommandExec(%q) = %q, want %q", built, got, exec)
+	}
+
+	displayed := Display(built)
+	if !strings.Contains(displayed, "command_name=build;all") || !strings.Contains(displayed, "command_exec="+exec) {
+		t.Errorf("Display(%q) = %q, want the decoded values", built, displayed)
+	}
+}
+
+func TestDisplay(t *testing.T) {
+	tests := []struct {
+		name  string
+		built string
+		want  string
+	}{
+		{"a plain note is unchanged", "main_operation=copy;crower_exec=crower copy a b", "main_operation=copy;crower_exec=crower copy a b"},
+		{"separators are decoded", "command_exec=make%3B echo done", "command_exec=make; echo done"},
+		{"percent is decoded", "command_exec=echo 100%25", "command_exec=echo 100%"},
+		{"a field without a separator is kept", "bare", "bare"},
+		{"empty", "", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Display(tt.built); got != tt.want {
+				t.Errorf("Display(%q) = %q, want %q", tt.built, got, tt.want)
+			}
+		})
+	}
+}
 
 func TestCommandExec(t *testing.T) {
 	tests := []struct {
@@ -14,6 +72,8 @@ func TestCommandExec(t *testing.T) {
 		{"the old exec is not the current one", "main_operation=update;sub_operation=command;old_command_exec=old;command_exec=new", "new"},
 		{"only an old exec", "main_operation=update;sub_operation=command;old_command_exec=old", ""},
 		{"a file note carrying the text in a path", `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_exec=evil"`, ""},
+		{"an escaped separator", "main_operation=execute;sub_operation=command;command_exec=make%3B echo done", "make; echo done"},
+		{"an old value with a percent", "main_operation=execute;sub_operation=command;command_exec=echo 100%", "echo 100%"},
 		{"empty", "", ""},
 	}
 
@@ -39,6 +99,7 @@ func TestCommandName(t *testing.T) {
 		{"only an old name", "old_command_name=old", ""},
 		{"a command note without a name", "main_operation=execute;sub_operation=command", ""},
 		{"a file note carrying the text in a path", "main_operation=create;sub_operation=file;crower_exec=crower create --file \"x;command_name=greet\"", ""},
+		{"an escaped separator", "main_operation=create;sub_operation=command;command_name=build%3Ball", "build;all"},
 		{"empty", "", ""},
 	}
 
