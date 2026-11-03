@@ -79,9 +79,12 @@ func (h *Handler) Import(inPath string, overwrite bool) error {
 		return err
 	}
 
+	changed := false
+
 	for k, v := range commands {
-		existing := h.app.AllCommandsByName.Get(k)
-		if existing != nil && !overwrite {
+		key := k
+
+		if h.app.AllCommandsByName.Exists(k) && !overwrite {
 			// Ask to rename or skip
 			rename, err := helper.GetUserConfirmation(fmt.Sprintf("Command '%s' exists. Rename?", k), h.app)
 			if err != nil {
@@ -91,14 +94,29 @@ func (h *Handler) Import(inPath string, overwrite bool) error {
 			if !rename {
 				continue
 			}
-			v.Name = k + "_imported"
+
+			key = k + "_imported"
 		}
-		h.app.AllCommandsByName.Add(k, &v)
-		if err := h.app.Save(); err != nil {
-			return err
-		}
+
+		// The map is keyed by the command's name everywhere else; an imported
+		// file must not produce a key and a Name that disagree.
+		v.Name = key
+		h.app.AllCommandsByName.Add(key, &v)
+		changed = true
 	}
-	return nil
+
+	if !changed {
+		return nil
+	}
+
+	// Persist once, after the whole file is applied. Writing per command left
+	// a partial import behind when a later prompt failed, and never wrote the
+	// configuration file at all: Save writes a history snapshot and the index,
+	// not the command map, so the imported commands vanished on the next run.
+	//
+	// No history entry is recorded: import is a bulk setup, and one entry per
+	// imported command would describe states that never existed.
+	return h.app.SaveCommands()
 }
 
 func (h *Handler) getRegistryURL() string {
