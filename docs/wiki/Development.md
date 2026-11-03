@@ -37,6 +37,21 @@ make dev-down       # stop it
 On any OS with Docker and no `make`: `docker compose up`. On native Windows:
 `python scripts/dev-up.py dev-up`.
 
+## 🏛️ Layout
+
+Four rings, one dependency direction, and a gate in `architecture_test.go` that
+fails the build when an import points the wrong way:
+
+```text
+cmd/  ->  internal/application/  ->  internal/domain/
+                 ^
+        internal/adapters/
+```
+
+**[Architecture](Architecture)** explains the rule, what each ring may import,
+and where a new operation goes. `internal/legacy/` holds the operations that are
+still being ported, and shrinks one command per pull request.
+
 ## 🌿 Branches
 
 ```text

@@ -3,7 +3,7 @@
 ### 🚀 Get going
 - [📦 Installation](How-to-Install)
 - [⚡ Quick start](Quick-Start)
-- [📖 Command reference](How-to-Use)
+- [📖 Command reference](Command-Reference)
 
 ### 🍳 Do things
 - [Recipes](Recipes)
@@ -29,6 +29,7 @@
 - [gui / desktop](gui)
 
 ### 🛠️ Project
+- [🏛️ Architecture](Architecture)
 - [Development](Development)
 - [🚑 Troubleshooting](Troubleshooting)
 - [🧪 Verifying claims](Verifying-claims)
