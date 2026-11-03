@@ -1217,6 +1217,48 @@ func TestUpdateCannotShadowANameOrAlias(t *testing.T) {
 	}
 }
 
+// update takes a name or an alias, as its help says. The input path used to
+// check only the name map, so every alias key was rejected before the handler
+// could resolve it.
+func TestUpdateByAlias(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "holder", "-a", "g2", "echo two"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "y\n", "update", "g2", "--name", "holder", "-a", "g2", "--exec", "echo changed"); err != nil {
+		t.Fatalf("update by alias returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "execute", "g2")
+	if err != nil {
+		t.Fatalf("execute g2 returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "changed") {
+		t.Errorf("update by alias did not change the command: %q", stdout)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "execute", "holder")
+	if err != nil {
+		t.Fatalf("execute holder returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "changed") {
+		t.Errorf("the name stopped resolving after an alias-keyed update: %q", stdout)
+	}
+
+	_, _, err = runWith(t, cfgPath, "", "update", "no-such-command", "--name", "x", "-a", "y", "--exec", "z")
+	if err == nil {
+		t.Fatal("update of an unknown key returned no error")
+	}
+
+	if !strings.Contains(err.Error(), "command not found") {
+		t.Errorf("error = %v, want a command-not-found error", err)
+	}
+}
+
 // delete --create removes the command the last create added. With the empty
 // name it failed before touching anything.
 func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {

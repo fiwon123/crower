@@ -25,17 +25,23 @@ func (h *Handler) UpdateCommand(key string, newName string, newAlias []string, n
 
 	newCommand := command.New(newName, newAlias, newExec)
 
-	oldCommand := h.app.AllCommandsByName.Get(key)
-	if oldCommand != nil {
-		return oldCommand, newCommand, h.performUpdate(oldCommand, newCommand)
+	oldCommand := findCommand(h.app, key)
+	if oldCommand == nil {
+		return nil, newCommand, fmt.Errorf("couldn't find command by name or alias")
 	}
 
-	oldCommand = h.app.AllCommandsByAlias.Get(key)
-	if oldCommand != nil {
-		return oldCommand, newCommand, h.performUpdate(oldCommand, newCommand)
+	return oldCommand, newCommand, h.performUpdate(oldCommand, newCommand)
+}
+
+// findCommand resolves a key the way every lookup does: name first, then
+// alias. The input prompt and the handler share it, so the command shown for
+// confirmation is the command that gets updated.
+func findCommand(app *app.Config, key string) *command.Data {
+	if c := app.AllCommandsByName.Get(key); c != nil {
+		return c
 	}
 
-	return oldCommand, newCommand, fmt.Errorf("couldn't find command by name or alias")
+	return app.AllCommandsByAlias.Get(key)
 }
 
 func (h *Handler) performUpdate(oldCommand *command.Data, newCommand *command.Data) error {
