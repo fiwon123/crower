@@ -46,6 +46,14 @@ func (h *Handler) CreateCommand(name string, alias []string, exec string) (*comm
 		return nil, fmt.Errorf("found name, command already added")
 	}
 
+	// A name that another command already answers to as an alias would shadow
+	// it: lookups try the name map first, so the command the alias pointed at
+	// becomes unreachable. The alias loop below cannot catch this one, because
+	// it checks the new command's aliases, not its name.
+	if owner := h.app.AllCommandsByAlias.Get(command.Name); owner != nil {
+		return nil, fmt.Errorf("%q is already an alias of %q", command.Name, owner.Name)
+	}
+
 	for _, alias := range command.AllAlias {
 		if h.app.AllCommandsByAlias.Get(alias) != nil || h.app.AllCommandsByName.Get(alias) != nil {
 			return nil, fmt.Errorf("found alias, command already added")

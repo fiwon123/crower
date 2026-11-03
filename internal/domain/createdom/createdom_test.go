@@ -97,6 +97,33 @@ func TestCreate(t *testing.T) {
 		}
 
 	})
+
+	t.Run("Reject a name that is an existing alias", func(t *testing.T) {
+
+		app, _, err := helper.InitCrowerTests()
+		if err != nil {
+			t.Fatalf("error before test: %v", err)
+		}
+
+		handler := createdom.NewHandler(app)
+
+		if _, err := handler.CreateCommand("holder", []string{"taken"}, "exec"); err != nil {
+			t.Fatalf("creating the alias: %v", err)
+		}
+
+		_, err = handler.CreateCommand("taken", nil, "exec")
+		if err == nil {
+			t.Fatal("a name that is already an alias was accepted, shadowing it")
+		}
+
+		if !strings.Contains(err.Error(), `already an alias of "holder"`) {
+			t.Errorf("error = %v, want it to name the alias owner", err)
+		}
+
+		if byAlias := app.AllCommandsByAlias.Get("taken"); byAlias == nil || byAlias.Name != "holder" {
+			t.Errorf("alias resolves to %+v, want holder", byAlias)
+		}
+	})
 }
 
 // A process create without a process is a usage error, not a panic: both the

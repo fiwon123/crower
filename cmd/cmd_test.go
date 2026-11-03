@@ -1077,6 +1077,68 @@ func TestCreateScriptHonoursAlias(t *testing.T) {
 	}
 }
 
+// A new command may not take a name that is already an alias: lookups try the
+// name map first, so the command the alias pointed at would become unreachable.
+func TestCreateNameThatIsAnAliasFails(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "holder", "-a", "g2", "echo two"); err != nil {
+		t.Fatalf("create holder returned an error: %v", err)
+	}
+
+	_, _, err := runWith(t, cfgPath, "", "create", "g2", "echo shadow")
+	if err == nil {
+		t.Fatal("create accepted a name that is already an alias")
+	}
+
+	if !strings.Contains(err.Error(), `already an alias of "holder"`) {
+		t.Errorf("error = %v, want it to name the alias owner", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "execute", "g2")
+	if err != nil {
+		t.Fatalf("execute g2 returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "two") {
+		t.Errorf("alias g2 no longer resolves to holder: %q", stdout)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Name string `json:"name"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	if len(payload.Commands) == 0 {
+		t.Fatal("list --json returned no commands, so the check below proves nothing")
+	}
+
+	hasHolder := false
+	for _, command := range payload.Commands {
+		if command.Name == "g2" {
+			t.Errorf("the rejected name was still registered: %q", stdout)
+		}
+
+		if command.Name == "holder" {
+			hasHolder = true
+		}
+	}
+
+	if !hasHolder {
+		t.Errorf("holder is missing, so the rejection cannot be about the alias: %q", stdout)
+	}
+}
+
 // delete --create removes the command the last create added. With the empty
 // name it failed before touching anything.
 func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {
