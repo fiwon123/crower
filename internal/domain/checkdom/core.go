@@ -37,7 +37,7 @@ func (c *Core) CheckNewVersion(currentVersion string) error {
 	c.app.Logger.Info("New Version Found: ", newVersion)
 	c.app.Logger.Info("Check: https://github.com/fiwon123/crower/releases/latest")
 
-	c.app.History.Add(operations.Check, newCheckNote())
+	c.app.History.Add(operations.Check, "", newCheckNote())
 
 	return c.app.Save()
 }

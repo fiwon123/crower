@@ -52,7 +52,7 @@ func (c *Core) ExecuteCommand(args []string) error {
 
 	c.report(output)
 
-	c.app.History.Add(operations.Execute, newExecuteCommandNote(executed))
+	c.app.History.Add(operations.Execute, executed.Name, newExecuteCommandNote(executed))
 
 	return c.app.Save()
 }
@@ -72,7 +72,7 @@ func (c *Core) ExecuteLast(op operations.MainOperationEnum, args []string) error
 
 	c.report(output)
 
-	c.app.History.Add(operations.Execute, NewExecuteLastNote(op, executed))
+	c.app.History.Add(operations.Execute, executed.Name, NewExecuteLastNote(op, executed))
 
 	return c.app.Save()
 }

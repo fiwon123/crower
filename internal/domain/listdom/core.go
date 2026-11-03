@@ -137,6 +137,6 @@ func (c *Core) emit(text string, payload any, note string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.List, note)
+	c.app.History.Add(operations.List, "", note)
 	return c.app.Save()
 }

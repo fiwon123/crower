@@ -88,7 +88,7 @@ func (c *Core) CreateCommand(allAlias []string, args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, newCreateCommandNote(created, args))
+	c.app.History.Add(operations.Create, created.Name, newCreateCommandNote(created, args))
 
 	return c.app.Save()
 }
@@ -121,7 +121,7 @@ func (c *Core) CreateProcess(name string, args []string) error {
 
 	c.app.Logger.Info("added new command by process: ", name)
 
-	c.app.History.Add(operations.Create, newCreateProcessNote(created, args))
+	c.app.History.Add(operations.Create, created.Name, newCreateProcessNote(created, args))
 
 	return c.app.Save()
 }
@@ -142,7 +142,7 @@ func (c *Core) CreateSystemVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Create, newCreateSystemVariableNote(args))
+	c.app.History.Add(operations.Create, "", newCreateSystemVariableNote(args))
 
 	return c.app.Save()
 }
@@ -160,7 +160,7 @@ func (c *Core) CreateSystemPathVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Create, newCreateSystemPathVariableNote(args))
+	c.app.History.Add(operations.Create, "", newCreateSystemPathVariableNote(args))
 
 	return c.app.Save()
 }
@@ -183,7 +183,7 @@ func (c *Core) CreateFile(args []string) error {
 		return stderrors.Join(failures...)
 	}
 
-	c.app.History.Add(operations.Create, generateCreateFile(args))
+	c.app.History.Add(operations.Create, "", generateCreateFile(args))
 
 	return c.app.Save()
 }
@@ -206,7 +206,7 @@ func (c *Core) CreateFolder(args []string) error {
 		return stderrors.Join(failures...)
 	}
 
-	c.app.History.Add(operations.Create, newCreateFolder(args))
+	c.app.History.Add(operations.Create, "", newCreateFolder(args))
 
 	return c.app.Save()
 }
@@ -235,7 +235,7 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string)
 		return err
 	}
 
-	c.app.History.Add(operations.Create, newCreateCommandLastExecuteNote(created))
+	c.app.History.Add(operations.Create, created.Name, newCreateCommandLastExecuteNote(created))
 
 	return c.app.Save()
 }
@@ -284,7 +284,7 @@ func (c *Core) CreateScriptCommand(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, newCreateScriptCommandNote(created, args))
+	c.app.History.Add(operations.Create, created.Name, newCreateScriptCommandNote(created, args))
 
 	return c.app.Save()
 }

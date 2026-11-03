@@ -49,7 +49,7 @@ func (c *Core) Extract(args []string, outDir string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Execute, newExtractNote(outDir, args))
+	c.app.History.Add(operations.Execute, "", newExtractNote(outDir, args))
 
 	return c.app.Save()
 }

@@ -74,3 +74,18 @@ func (note *Note) Build() string {
 
 	return strings.Trim(note.builder.String(), ";")
 }
+
+// CommandName reads the command_name field out of a built note.
+//
+// A note is a ";"-separated list of key=value fields. History entries written
+// before the name was stored on the entry itself carry it only here, so a run
+// that loads an older history can still resolve it.
+func CommandName(built string) string {
+	for field := range strings.SplitSeq(built, ";") {
+		if name, ok := strings.CutPrefix(field, "command_name="); ok {
+			return name
+		}
+	}
+
+	return ""
+}

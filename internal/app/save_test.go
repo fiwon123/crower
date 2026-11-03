@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/data/operations"
 
 	"github.com/fiwon123/crower/pkg/utils"
@@ -80,7 +81,7 @@ func TestSaveCommandsWritesTheCommandMap(t *testing.T) {
 func TestDeleteHistoryBackup(t *testing.T) {
 	cfg := newTestConfig(t)
 
-	cfg.History.Add(operations.List, "note")
+	cfg.History.Add(operations.List, "", "note")
 	if err := cfg.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
@@ -108,5 +109,34 @@ func TestDeleteHistoryBackupRejectsAPath(t *testing.T) {
 		if err := cfg.DeleteHistoryBackup(name); err == nil {
 			t.Errorf("DeleteHistoryBackup(%q) returned no error", name)
 		}
+	}
+}
+
+// A history file written by an older build has no CommandName field: the name
+// lives only inside the note. Loading it must resolve the name, or `--last`
+// stays broken for every entry made before the fix.
+func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "crower.yaml")
+
+	legacy := history.New(filepath.Join(dir, "history"))
+	legacy.Add(operations.Create, "", "main_operation=create;command_name=greet;command_exec=echo hi")
+
+	if err := utils.WriteJson(legacy, filepath.Join(dir, "historyhelper.json")); err != nil {
+		t.Fatalf("write legacy history: %v", err)
+	}
+
+	cfg, err := InitApp(cfgPath, Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
+	if err != nil {
+		t.Fatalf("InitApp: %v", err)
+	}
+
+	last := cfg.GetLast(operations.Create)
+	if last == nil {
+		t.Fatal("the legacy entry did not survive the load")
+	}
+
+	if last.CommandName != "greet" {
+		t.Errorf("CommandName = %q, want it backfilled from the note", last.CommandName)
 	}
 }

@@ -680,3 +680,50 @@ func TestJSONOnARawCommandIsRejected(t *testing.T) {
 		t.Errorf("the rejected run wrote a result: %q", stdout)
 	}
 }
+
+// The "last operation" family acts on the command recorded with the operation.
+// It used to look up an empty name, so `execute --last` always failed with
+// `command not found: ""`.
+func TestExecuteLastRunsTheLastExecutedCommand(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "execute", "greet"); err != nil {
+		t.Fatalf("execute returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "execute", "--last")
+	if err != nil {
+		t.Fatalf("execute --last returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "hello") {
+		t.Errorf("execute --last wrote %q, want the command's output", stdout)
+	}
+}
+
+// delete --create removes the command the last create added. With the empty
+// name it failed before touching anything.
+func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "delete", "--create"); err != nil {
+		t.Fatalf("delete --create returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list")
+	if err != nil {
+		t.Fatalf("list returned an error: %v", err)
+	}
+
+	if strings.Contains(stdout, "greet") {
+		t.Errorf("delete --create left the command behind: %q", stdout)
+	}
+}

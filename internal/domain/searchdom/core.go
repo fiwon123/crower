@@ -84,7 +84,7 @@ func (c *Core) finishSearch(out string, err error, payload any, note string) err
 		return err
 	}
 
-	c.app.History.Add(operations.Search, note)
+	c.app.History.Add(operations.Search, "", note)
 
 	return c.app.Save()
 }

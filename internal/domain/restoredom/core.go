@@ -47,7 +47,7 @@ func (c *Core) Restore(args []string) error {
 
 	c.app.Logger.Info("restored command: ", out)
 
-	c.app.History.Add(operations.Restore, newRestoreNote(out))
+	c.app.History.Add(operations.Restore, "", newRestoreNote(out))
 
 	return c.app.Save()
 }

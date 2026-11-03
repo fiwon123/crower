@@ -78,8 +78,13 @@ func (h *Data) GetLastOperation(op operations.MainOperationEnum) *Content {
 	return &h.AllData[currentIndex]
 }
 
-// Add new content history registering current operation, command name and a note
-func (h *Data) Add(op operations.MainOperationEnum, note string) {
+// Add appends a history entry for one operation.
+//
+// commandName is the command the operation touched, or "" for an operation
+// that touches files or variables rather than a managed command. It used to be
+// left out entirely, so `execute --last`/`delete --create` resolved an empty
+// name and could never act.
+func (h *Data) Add(op operations.MainOperationEnum, commandName string, note string) {
 
 	version := 1
 	if len(h.AllData) != 0 {
@@ -88,11 +93,12 @@ func (h *Data) Add(op operations.MainOperationEnum, note string) {
 	}
 
 	data := Content{
-		Version:   version,
-		File:      fmt.Sprintf("%05d.yaml", version),
-		Timestemp: time.Now().Format(time.RFC3339),
-		Operation: op,
-		Note:      note,
+		Version:     version,
+		File:        fmt.Sprintf("%05d.yaml", version),
+		Timestemp:   time.Now().Format(time.RFC3339),
+		Operation:   op,
+		CommandName: commandName,
+		Note:        note,
 	}
 
 	h.AllData = append(h.AllData, data)

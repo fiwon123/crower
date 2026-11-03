@@ -8,6 +8,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/data/note"
 
 	"github.com/fiwon123/crower/pkg/logger"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -86,6 +87,15 @@ func NewApp(
 	var history history.Data
 	if err := utils.ReadJson(historyFilePath, &history); err != nil {
 		return nil, fmt.Errorf("read history %s: %w", historyFilePath, err)
+	}
+
+	// Entries written before the name was stored on the entry itself carry it
+	// only inside the note. Resolve it on load so `--last` and the history view
+	// work on a file from an older build.
+	for i := range history.AllData {
+		if history.AllData[i].CommandName == "" {
+			history.AllData[i].CommandName = note.CommandName(history.AllData[i].Note)
+		}
 	}
 
 	log, err := logger.New(logPath, opts.Streams.Out, opts.Streams.Err)
