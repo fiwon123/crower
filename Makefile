@@ -135,6 +135,13 @@ endif
 #     prints "[no test files]" for those and still exits 0, so a green run
 #     would otherwise look like coverage that does not exist.
 #
+# The two cross builds exist because several packages choose their behaviour
+# with build tags (`handler_windows.go`, `handler_darwin.go`, ...). A host build
+# on Linux never compiles those files, so a Windows-only break would reach a
+# release: CI builds Linux on every pull request, and the release matrix is the
+# first job that compiles the other five targets. These builds are cheap and
+# they can fail.
+#
 # Tests use isolated temp directories (internal/helper/tests.go), so parallel
 # runs are not racing over a shared fixture (#47) — a red run is a regression
 # until proven otherwise, not a baseline to discount.
@@ -153,6 +160,8 @@ check: ## gofmt, vet, test, build — the local verification gate
 	go vet ./...; \
 	go test ./...; \
 	go build ./...; \
+	GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build ./...; \
+	GOOS=darwin GOARCH=arm64 CGO_ENABLED=0 go build ./...; \
 	notested="$$(go list -f '{{if and (not .TestGoFiles) (not .XTestGoFiles)}}{{.ImportPath}}{{end}}' ./... | grep -v '^$$' || true)"; \
 	if [ -n "$$notested" ]; then \
 		echo ""; \

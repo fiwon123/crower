@@ -9,7 +9,7 @@
 ## ⚙️ Commands
 
 ```bash
-make check          # gofmt, vet, go test ./..., go build ./...
+make check          # gofmt, vet, go test ./..., go build ./..., windows/darwin build
 go test ./...       # tests only
 make release        # cross-build the release archives into build/dist/
 make help           # every target, one line each
@@ -19,6 +19,11 @@ make help           # every target, one line each
 nothing, and reporting nothing must not look like success. It also lists the
 packages that have **no test file**: `go test` prints `[no test files]` for them
 and exits 0, so a green run is green for the packages that ran.
+
+It builds for `windows/amd64` and `darwin/arm64` as well as the host. Several
+packages pick their behaviour with build tags (`handler_windows.go`,
+`handler_darwin.go`, …), and a host build on Linux never compiles those files, so
+without the cross builds a Windows-only break would first surface in a release.
 
 ## 🐳 Dev sandbox
 
