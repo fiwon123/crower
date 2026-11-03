@@ -1,6 +1,7 @@
 package note
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -141,5 +142,48 @@ func TestAddCrowerExecTerminator(t *testing.T) {
 				t.Errorf("note = %q, want it to contain %q", built, want)
 			}
 		})
+	}
+}
+
+func TestCommandSteps(t *testing.T) {
+	steps := []string{"echo a; b", "echo 100%"}
+
+	built := New().
+		AddMainOperation(operations.Execute).
+		AddSubOperation(operations.Command).
+		AddCommandSteps(steps).
+		Build()
+
+	got, present := CommandSteps(built)
+	if !present || !slices.Equal(got, steps) {
+		t.Errorf("CommandSteps(%q) = %v, %v, want %v, true", built, got, present, steps)
+	}
+
+	if _, present := CommandSteps("main_operation=execute;sub_operation=command"); present {
+		t.Error("CommandSteps reported a field that is not there")
+	}
+
+	// A file note can carry the text inside a quoted path.
+	fileNote := `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_steps=[\"a\"]"`
+	if _, present := CommandSteps(fileNote); present {
+		t.Error("CommandSteps read a field out of a file note")
+	}
+
+	// A corrupt field is present, not absent: a caller must not fall back.
+	if steps, present := CommandSteps("main_operation=execute;sub_operation=command;command_steps=not-json"); !present || steps != nil {
+		t.Errorf("CommandSteps(corrupt) = %v, %v, want nil, true", steps, present)
+	}
+}
+
+// A step with && must read as written, not HTML-escaped.
+func TestDisplayKeepsStepsReadable(t *testing.T) {
+	built := New().
+		AddMainOperation(operations.Execute).
+		AddSubOperation(operations.Command).
+		AddCommandSteps([]string{"echo a && echo b"}).
+		Build()
+
+	if !strings.Contains(Display(built), `["echo a && echo b"]`) {
+		t.Errorf("Display(%q) = %q, want the step as written", built, Display(built))
 	}
 }

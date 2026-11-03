@@ -12,12 +12,19 @@ import (
 func newExecuteCommandNote(command *command.Data, params []string) string {
 	noteBuilder := note.New()
 
-	return noteBuilder.
+	noteBuilder.
 		AddMainOperation(operations.Execute).
 		AddSubOperation(operations.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
-		AddCommandExec(command.Exec).
+		AddCommandExec(command.Exec)
+
+	// A command with steps never runs Exec; name the steps that did run.
+	if len(command.Steps) > 0 {
+		noteBuilder.AddCommandSteps(command.Steps)
+	}
+
+	return noteBuilder.
 		AddCrowerExec("execute", append([]string{command.Name}, params...)).
 		Build()
 }
@@ -31,6 +38,10 @@ func NewExecuteLastNote(op operations.MainOperationEnum, command *command.Data, 
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec)
+
+	if len(command.Steps) > 0 {
+		noteBuilder.AddCommandSteps(command.Steps)
+	}
 
 	switch op {
 	case operations.Execute:

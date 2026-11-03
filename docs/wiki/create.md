@@ -48,6 +48,11 @@ crower create -p editor code -a ed
 > Quote the command as one argument. `crower create greet "echo hi"` stores
 > `echo hi`; without quotes it sees three words.
 
+> [!NOTE]
+> `create --execute` cannot rebuild a command that uses `Steps`: that command
+> never runs its `--exec`, and a list of steps is not one command line. It
+> fails with an error instead of creating something different.
+
 ## 🔗 Related
 
 [`update`](update) · [`execute`](execute) · [`delete`](delete) · **[📖 Commands](How-to-Use)**
