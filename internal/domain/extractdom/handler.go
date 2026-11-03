@@ -8,21 +8,19 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 type Handler struct {
-	app     *app.Config
-	execute *executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 }
 
 func NewHandler(app *app.Config) *Handler {
 
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: execute,
+		app:   app,
+		shell: shell.New(),
 	}
 }
 
@@ -67,26 +65,26 @@ func (h *Handler) Extract(paths []string, output string) error {
 func (h *Handler) performExtract(ext string, filePath string, outDir string) (string, error) {
 	switch ext {
 	case "tar":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
+		return h.shell.Exec(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
 	case "gz":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir))
+		return h.shell.Exec(fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir))
 	case "tgz":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir))
+		return h.shell.Exec(fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir))
 	case "bz2":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xjf '%s' -C '%s'`, filePath, outDir))
+		return h.shell.Exec(fmt.Sprintf(`tar -xjf '%s' -C '%s'`, filePath, outDir))
 	case "xz":
-		return h.execute.PerformExecute(fmt.Sprintf(`tar -xJf '%s' -C '%s'`, filePath, outDir))
+		return h.shell.Exec(fmt.Sprintf(`tar -xJf '%s' -C '%s'`, filePath, outDir))
 	case "zip":
 		switch runtime.GOOS {
 		case "windows":
-			return h.execute.PerformExecute(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
+			return h.shell.Exec(fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir))
 		case "linux":
-			return h.execute.PerformExecute(fmt.Sprintf(`unzip '%s' -d  '%s'`, filePath, outDir))
+			return h.shell.Exec(fmt.Sprintf(`unzip '%s' -d  '%s'`, filePath, outDir))
 		}
 	case "7z":
-		return h.execute.PerformExecute(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
+		return h.shell.Exec(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
 	case "rar":
-		return h.execute.PerformExecute(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
+		return h.shell.Exec(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
 	}
 
 	return "", fmt.Errorf("no extractor for .%s archives", ext)

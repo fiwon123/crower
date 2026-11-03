@@ -51,8 +51,11 @@ internal/app/                 configuration and application wiring
 ```
 
 Each `internal/domain/<op>dom` package follows the same shape: `core.go` does
-the work, `handler.go` validates and orchestrates it, and `notes.go` carries the
-per-item documentation.
+the work, `handler.go` validates and orchestrates it, `input.go` holds the
+prompts, and `notes.go` carries the per-item documentation.
+
+`internal/shell` is the shared floor: the platform's shell invocation. A domain
+depends on it to run `ls`, `cp` or `xdg-open`, never on another operation.
 
 ## Design Decisions
 
@@ -61,6 +64,7 @@ per-item documentation.
 - **Cobra with a flat command set** — `crower <operation>`, no nested verb groups, so every operation is discoverable from `--help`. (2026-02)
 - **The `cr` short alias ships next to the `crower` binary** — a name typed many times a day should be short. (2026-02)
 - **The release archive carries the README and the licenses** — a download has to be usable and lawful without the repository. (2026-02)
+- **The shell runner is infrastructure, not an operation** — `internal/shell` owns `sh -c`/`cmd /c`, so `list`, `copy` or `open` do not import the `execute` operation to run a command. (2026-11)
 
 ## Topology
 
@@ -78,6 +82,7 @@ internal/data/       history, notes, operations, command map, state
 internal/app/        configuration and application wiring
 internal/errors/     error types shared across layers
 internal/helper/     shared helpers
+internal/shell/      the platform's shell invocation, shared by every domain
 pkg/logger/          logging
 pkg/utils/           filesystem and process helpers
 scripts/             add_to_path installers

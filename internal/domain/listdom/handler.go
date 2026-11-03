@@ -11,7 +11,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/errors"
 
-	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/shell"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -22,8 +22,8 @@ func unsupportedOSError(goos string) error {
 }
 
 type Handler struct {
-	app     *app.Config
-	execute *executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 
 	// goos is the platform the shell command is built for. It is a field
 	// rather than a read of runtime.GOOS inside each method so the dispatch
@@ -33,13 +33,10 @@ type Handler struct {
 }
 
 func NewHandler(app *app.Config) *Handler {
-
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: execute,
-		goos:    runtime.GOOS,
+		app:   app,
+		shell: shell.New(),
+		goos:  runtime.GOOS,
 	}
 }
 
@@ -138,7 +135,7 @@ func (h *Handler) ListFolder(folderPath string) (string, error) {
 		return "", err
 	}
 
-	return h.execute.PerformExecute(commandLine)
+	return h.shell.Exec(commandLine)
 }
 
 // ListSystem lists every system variable.
@@ -148,7 +145,7 @@ func (h *Handler) ListSystem() (string, error) {
 		return "", err
 	}
 
-	return h.execute.PerformExecute(commandLine)
+	return h.shell.Exec(commandLine)
 }
 
 // ListSysPath lists the system path variable.
@@ -158,7 +155,7 @@ func (h *Handler) ListSysPath() (string, error) {
 		return "", err
 	}
 
-	return h.execute.PerformExecute(commandLine)
+	return h.shell.Exec(commandLine)
 }
 
 // The listing commands are ordinary shell invocations that behave the same on
