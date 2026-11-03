@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/note"
+	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
 	"github.com/fiwon123/crower/internal/helper"
@@ -250,5 +252,71 @@ func TestCreateFolder(t *testing.T) {
 func assertCreateTest(command *command.Data, want bool, got bool, err error, t *testing.T) {
 	if got != want {
 		t.Errorf("error %v, command %+v got %v, want %v", err, *command, got, want)
+	}
+}
+
+// A Steps command never runs its exec, so create --execute must refuse it
+// rather than rebuild a command that does something else.
+func TestCreateExecuteRefusesAStepsCommand(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	built := note.New().
+		AddMainOperation(operations.Execute).
+		AddSubOperation(operations.Command).
+		AddCommandName("multi").
+		AddCommandExec("unused").
+		AddCommandSteps([]string{"echo a"}).
+		Build()
+
+	app.History.Add(operations.Execute, "multi", built)
+
+	core := createdom.NewCore(app, *opendom.NewHandler(app))
+
+	err = core.CreateLastCommand(operations.Execute, nil, []string{"copy"})
+	if err == nil {
+		t.Fatal("CreateLastCommand rebuilt a command that ran steps")
+	}
+
+	if !strings.Contains(err.Error(), "step") {
+		t.Errorf("error = %v, want it to name the steps", err)
+	}
+
+	if app.AllCommandsByName.Exists("copy") {
+		t.Error("a refused create --execute still created the command")
+	}
+
+	if len(app.History.AllData) != 1 {
+		t.Errorf("history has %d entries, want only the recorded execute", len(app.History.AllData))
+	}
+}
+
+// A note written before command_steps existed carries none; the command may
+// still be in the map, where its steps are visible.
+func TestCreateExecuteRefusesAStepsCommandFromAnOldNote(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	multi := command.New("multi", nil, "unused")
+	multi.Steps = []string{"echo a"}
+	app.AllCommandsByName.Add("multi", multi)
+
+	built := note.New().
+		AddMainOperation(operations.Execute).
+		AddSubOperation(operations.Command).
+		AddCommandName("multi").
+		AddCommandExec("unused").
+		Build()
+
+	app.History.Add(operations.Execute, "multi", built)
+
+	core := createdom.NewCore(app, *opendom.NewHandler(app))
+
+	if err := core.CreateLastCommand(operations.Execute, nil, []string{"copy"}); err == nil {
+		t.Fatal("CreateLastCommand rebuilt a steps command from an old note")
 	}
 }

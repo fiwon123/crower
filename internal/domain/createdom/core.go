@@ -234,6 +234,26 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, allAlias []str
 		return errors.CommandNotFound(string(op))
 	}
 
+	// A command with steps never runs its exec, so reusing that value would
+	// rebuild a command that does something else. Say so instead.
+	steps, hasSteps := note.CommandSteps(content.Note)
+
+	// Notes written before command_steps existed do not carry it. The command
+	// may still be in the map, where its steps are visible.
+	if !hasSteps && content.CommandName != "" {
+		if cmd := c.app.AllCommandsByName.Get(content.CommandName); cmd != nil && len(cmd.Steps) > 0 {
+			steps, hasSteps = cmd.Steps, true
+		}
+	}
+
+	if hasSteps {
+		if len(steps) == 0 {
+			return fmt.Errorf("the last %q operation (%q) has steps that cannot be read; create --execute cannot rebuild them", op, content.CommandName)
+		}
+
+		return fmt.Errorf("the last %q operation (%q) ran %d step(s); create --execute cannot rebuild them", op, content.CommandName, len(steps))
+	}
+
 	exec := note.CommandExec(content.Note)
 	if exec == "" {
 		return fmt.Errorf("the last %q operation carries no exec to reuse", op)

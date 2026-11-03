@@ -1,6 +1,8 @@
 package note
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -30,6 +32,27 @@ func (note *Note) AddCommandAlias(aliases []string) *Note {
 
 func (note *Note) AddCommandExec(exec string) *Note {
 	fmt.Fprintf(&note.builder, ";command_exec=%s", escapeValue(exec))
+	return note
+}
+
+// AddCommandSteps records the steps a command is built from (before parameter
+// substitution). A command with steps never runs its Exec, so the history has
+// to name them for the entry to describe what happened.
+//
+// The list is JSON so a step can contain the note separator. HTML escaping is
+// off: a step with "&&" must read as the user wrote it in `list --history`.
+func (note *Note) AddCommandSteps(steps []string) *Note {
+	var encoded bytes.Buffer
+
+	writer := json.NewEncoder(&encoded)
+	writer.SetEscapeHTML(false)
+
+	if err := writer.Encode(steps); err != nil {
+		// []string cannot fail to marshal; keep the note valid if it ever does.
+		return note
+	}
+
+	fmt.Fprintf(&note.builder, ";command_steps=%s", escapeValue(strings.TrimSuffix(encoded.String(), "\n")))
 	return note
 }
 
@@ -164,6 +187,32 @@ func CommandExec(built string) string {
 	}
 
 	return ""
+}
+
+// CommandSteps reads the command_steps field out of a built note. present is
+// true when the field exists, even if it cannot be parsed: a corrupt field must
+// not look like "no steps", or a caller would fall back to the Exec the command
+// never ran.
+func CommandSteps(built string) (steps []string, present bool) {
+	if !namesACommand(built) {
+		return nil, false
+	}
+
+	for field := range strings.SplitSeq(built, ";") {
+		encoded, ok := strings.CutPrefix(field, "command_steps=")
+		if !ok {
+			continue
+		}
+
+		var decoded []string
+		if err := json.Unmarshal([]byte(unescapeValue(encoded)), &decoded); err != nil {
+			return nil, true
+		}
+
+		return decoded, true
+	}
+
+	return nil, false
 }
 
 // CommandName reads the command_name field out of a built note.
