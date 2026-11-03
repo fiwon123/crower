@@ -1,15 +1,13 @@
-package revertdom
+package notes
 
 import (
 	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
-// Create a new revert note
-func newRevertNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// Revert renders the history note for a revert.
+func Revert(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Revert).
 		AddCrowerExec("revert", args).
 		Build()

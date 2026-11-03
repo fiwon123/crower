@@ -120,6 +120,41 @@ func (s legacySession) Record(op operation.Operation, commandName, note string) 
 	return s.cfg.Save()
 }
 
+// Pending renders the history entries a revert would drop and the ones that
+// would remain.
+func (s legacySession) Pending(steps int) (string, string, error) {
+	if steps < 0 {
+		return "", "", fmt.Errorf("steps is negative number")
+	}
+
+	stopIndex := s.cfg.History.GetIndexFromLastTo(steps)
+	if stopIndex < 0 {
+		return "", "", fmt.Errorf("can't revert: steps is greater than quantity of history registry")
+	}
+
+	return s.cfg.History.GetListLastHistory(steps), s.cfg.History.GetListFirstHistory(stopIndex), nil
+}
+
+// RevertTo restores the command set steps entries back and reports the version
+// it landed on.
+func (s legacySession) RevertTo(steps int) (int, error) {
+	entry, err := s.cfg.History.GetBeforeLast(steps)
+	if err != nil {
+		return 0, err
+	}
+
+	if err := s.cfg.RevertTo(entry); err != nil {
+		return 0, err
+	}
+
+	return entry.Version, nil
+}
+
+// Revert is the history note for a revert.
+func (s legacySession) Revert(args []string) string {
+	return notes.Revert(args)
+}
+
 // Check is the history note for --check.
 func (s legacySession) Check() string {
 	return notes.Check()
