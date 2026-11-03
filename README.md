@@ -319,4 +319,15 @@ to record, are on the wiki's
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+**crower is MIT licensed** — see [LICENSE](LICENSE).
+
+The release archives also carry two files that are not crower's licence:
+
+- [NOTICE](NOTICE) — attribution for the Apache-2.0 dependencies compiled into
+  the binary (`spf13/cobra`, `minio/selfupdate`, `hajimehoshi/ebiten`);
+- [LICENSE-APACHE](LICENSE-APACHE) — the Apache License 2.0 text those
+  dependencies require to travel with a distribution.
+
+A dependency's licence does not change this project's: your MIT grant is the only
+one you need for crower's own code, and the Apache files exist so the bundled
+libraries arrive with the notices they are owed.
