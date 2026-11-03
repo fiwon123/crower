@@ -86,7 +86,7 @@ func TestDeleteHistoryBackup(t *testing.T) {
 		t.Fatalf("Save: %v", err)
 	}
 
-	snapshot := filepath.Join(cfg.historyFolderPath, cfg.History.GetLast().File)
+	snapshot := filepath.Join(cfg.historyFiles.Folder(), cfg.History.GetLast().File)
 	if _, err := os.Stat(snapshot); err != nil {
 		t.Fatalf("Save did not write the snapshot: %v", err)
 	}
