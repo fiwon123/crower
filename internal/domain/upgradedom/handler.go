@@ -5,6 +5,8 @@ import (
 	"archive/zip"
 	"bytes"
 	"compress/gzip"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -26,6 +28,7 @@ const defaultReleaseBase = "https://github.com/fiwon123/crower/releases/download
 const (
 	maxDownloadBytes = 128 << 20
 	maxBinaryBytes   = 512 << 20
+	maxChecksumBytes = 1 << 20
 )
 
 // The release workflow accepts only this tag shape.
@@ -101,16 +104,46 @@ func (h *Handler) UpgradeApp(newVersion string) error {
 	return applyUpdate(bytes.NewReader(binary), selfupdate.Options{})
 }
 
-// fetchBinary downloads the asset and returns the executable inside it. The
-// status is checked before the body is read: a 404 is a response, not an error,
-// and used to be handed to selfupdate as if it were a binary.
+// fetchBinary downloads the asset, verifies it against the release's
+// checksums.txt, and returns the executable inside it. The status is checked
+// before the body is read: a 404 is a response, not an error, and used to be
+// handed to selfupdate as if it were a binary.
 func (h *Handler) fetchBinary(version string, asset string) ([]byte, error) {
-	if !strings.HasPrefix(h.baseURL, "https://") {
-		return nil, fmt.Errorf("only HTTPS allowed for security")
+	url, err := h.releaseURL(version, asset)
+	if err != nil {
+		return nil, err
 	}
 
-	url := h.baseURL + "/" + version + "/" + asset
+	// Fetch the small checksum first: a release without one fails before the
+	// archive is downloaded.
+	expected, err := h.fetchChecksum(version, asset)
+	if err != nil {
+		return nil, err
+	}
 
+	body, err := h.download(url, maxDownloadBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	actual := sha256.Sum256(body)
+	if !bytes.Equal(actual[:], expected) {
+		return nil, fmt.Errorf("%w for %s", errors.ErrChecksumMismatch, asset)
+	}
+
+	return binaryFromArchive(asset, body)
+}
+
+// releaseURL builds a release download URL, refusing anything but HTTPS.
+func (h *Handler) releaseURL(version string, file string) (string, error) {
+	if !strings.HasPrefix(h.baseURL, "https://") {
+		return "", fmt.Errorf("only HTTPS allowed for security")
+	}
+
+	return h.baseURL + "/" + version + "/" + file, nil
+}
+
+func (h *Handler) download(url string, limit int64) ([]byte, error) {
 	resp, err := h.client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("download %s: %w", url, err)
@@ -121,12 +154,57 @@ func (h *Handler) fetchBinary(version string, asset string) ([]byte, error) {
 		return nil, fmt.Errorf("download %s: %s", url, resp.Status)
 	}
 
-	body, err := io.ReadAll(io.LimitReader(resp.Body, maxDownloadBytes))
+	body, err := io.ReadAll(io.LimitReader(resp.Body, limit+1))
 	if err != nil {
 		return nil, fmt.Errorf("read %s: %w", url, err)
 	}
 
-	return binaryFromArchive(asset, body)
+	if int64(len(body)) > limit {
+		return nil, fmt.Errorf("read %s: larger than %d bytes", url, limit)
+	}
+
+	return body, nil
+}
+
+// fetchChecksum reads the SHA-256 of one asset from checksums.txt. A missing or
+// malformed entry is an error: skipping the check would silently accept a
+// tampered archive.
+func (h *Handler) fetchChecksum(version string, asset string) ([]byte, error) {
+	url, err := h.releaseURL(version, "checksums.txt")
+	if err != nil {
+		return nil, err
+	}
+
+	body, err := h.download(url, maxChecksumBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseChecksum(body, asset)
+}
+
+// parseChecksum reads one `sha256sum` line. The name may carry the "*" that
+// sha256sum writes in binary mode.
+func parseChecksum(body []byte, asset string) ([]byte, error) {
+	for _, line := range strings.Split(string(body), "\n") {
+		fields := strings.Fields(line)
+		if len(fields) != 2 {
+			continue
+		}
+
+		if strings.TrimPrefix(fields[1], "*") != asset {
+			continue
+		}
+
+		sum, err := hex.DecodeString(fields[0])
+		if err != nil || len(sum) != sha256.Size {
+			return nil, fmt.Errorf("%w: checksums.txt has a malformed hash for %s", errors.ErrChecksumUnavailable, asset)
+		}
+
+		return sum, nil
+	}
+
+	return nil, fmt.Errorf("%w: checksums.txt has no entry for %s", errors.ErrChecksumUnavailable, asset)
 }
 
 // binaryFromArchive extracts the crower executable from a release archive.

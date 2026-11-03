@@ -22,6 +22,14 @@ var ErrUnsupportedOS = stderrors.New("unsupported operating system")
 // metacharacter must be rejected before either happens.
 var ErrInvalidPackName = stderrors.New("invalid pack name")
 
+// ErrChecksumMismatch reports a download whose bytes do not match the release's
+// checksums.txt.
+var ErrChecksumMismatch = stderrors.New("checksum mismatch")
+
+// ErrChecksumUnavailable reports that checksums.txt is missing, unreadable, or
+// has no usable entry for the asset.
+var ErrChecksumUnavailable = stderrors.New("checksum unavailable")
+
 // NotEnoughArgs reports a command that was run without the arguments it needs.
 // what names the missing input, so the message says what to add.
 func NotEnoughArgs(what string) error {
