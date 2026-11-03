@@ -4,7 +4,6 @@ import (
 	stderrors "errors"
 	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/opendom"
@@ -13,6 +12,7 @@ import (
 	"github.com/fiwon123/crower/internal/helper"
 
 	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
@@ -225,7 +225,7 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string)
 		return errors.CommandNotFound(string(op))
 	}
 
-	exec := execFromNote(content.Note)
+	exec := note.CommandExec(content.Note)
 	if exec == "" {
 		return fmt.Errorf("the last %q operation carries no exec to reuse", op)
 	}
@@ -238,22 +238,6 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string)
 	c.app.History.Add(operations.Create, created.Name, newCreateCommandLastExecuteNote(created))
 
 	return c.app.Save()
-}
-
-// execFromNote reads the exec field out of a history note such as
-// "exec=echo hi;name=hello".
-//
-// The field is checked for a separator first: the old code indexed the split
-// result without looking, so a note carrying a bare "exec" word panicked.
-func execFromNote(note string) string {
-	for keyValRaw := range strings.SplitSeq(note, ";") {
-		keyVal := strings.SplitN(keyValRaw, "=", 2)
-		if len(keyVal) == 2 && keyVal[0] == "exec" {
-			return keyVal[1]
-		}
-	}
-
-	return ""
 }
 
 // CreateScriptCommand creates a script file, registers it as a command, and

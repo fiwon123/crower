@@ -2,6 +2,30 @@ package note
 
 import "testing"
 
+func TestCommandExec(t *testing.T) {
+	tests := []struct {
+		name  string
+		built string
+		want  string
+	}{
+		{"an execute note", "main_operation=execute;sub_operation=command;command_name=greet;command_exec=echo hi", "echo hi"},
+		{"no exec field", "main_operation=execute;sub_operation=command;command_name=greet", ""},
+		{"a bare exec key is not the field", "main_operation=execute;sub_operation=command;exec=echo hi", ""},
+		{"the old exec is not the current one", "main_operation=update;sub_operation=command;old_command_exec=old;command_exec=new", "new"},
+		{"only an old exec", "main_operation=update;sub_operation=command;old_command_exec=old", ""},
+		{"a file note carrying the text in a path", `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_exec=evil"`, ""},
+		{"empty", "", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CommandExec(tt.built); got != tt.want {
+				t.Errorf("CommandExec(%q) = %q, want %q", tt.built, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestCommandName(t *testing.T) {
 	tests := []struct {
 		name  string
