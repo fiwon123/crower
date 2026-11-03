@@ -79,6 +79,14 @@ No orphaned branches, PRs, or issues. Every piece of work is linked.
 - When creating issues, assign to the current active milestone
 - Track milestone progress on the GitHub Milestones page
 
+### Project board conventions
+
+- Use GitHub Projects (classic or Projects v2) to visualize work across the board (Backlog → Todo → In Progress → Review → Done).
+- **Issues are the source of truth; the board is a view of them.**
+- Link issues and PRs to the project board; keep cards moving with the workflow steps above.
+- Use board fields/statuses to reflect `issue → branch → PR → merge` state rather than duplicating it in comments.
+- For automation, prefer built-in workflows or `gh project` commands — document any project-specific board in `PROJECT_CONTEXT.md`.
+
 ### Comment milestones
 
 Post these comments automatically — no user prompting required:
@@ -266,6 +274,12 @@ gh pr create \
     jobs were all gated out, leaves the tag with no assets — confirm the
     release page shows the archives before telling anyone to download them.
   - A project that ships no binary skips this step entirely.
+- **The changelog is built from pull requests, not from `--generate-notes`.**
+  `scripts/release-notes.sh` lists the PRs merged into `dev` between the
+  previous release and this commit, grouped by label. `generate-notes` walks the
+  commit graph instead, and a squash merge leaves the feature commits on `dev`
+  where the release commit cannot see them — the generated notes list the
+  release PR and nothing else. If you add a release workflow, call the script.
 - **Merge `main` back into `dev`** — a squash merge leaves `dev` and `main`
   diverged at the old merge-base, so the *next* release PR would re-list every
   file from this one:

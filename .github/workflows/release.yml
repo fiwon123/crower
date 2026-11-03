@@ -14,7 +14,13 @@ on:
         default: false
 
 permissions:
+  # `contents: write` publishes the tag and the release. `pull-requests: read` is
+  # what lets `gh pr list` build the changelog: a workflow that declares a
+  # top-level `permissions:` block turns every other scope off, so without this
+  # line the notes step would fail with a 403 and the release would publish an
+  # empty changelog.
   contents: write
+  pull-requests: read
 
 # Two dispatches for the same version would race on the same tag and the same
 # draft release.
@@ -250,10 +256,12 @@ jobs:
         # failed with nothing in the log to say why (#124).
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+          COMMIT: ${{ needs.prepare.outputs.commit }}
+          PREV: ${{ needs.prepare.outputs.previous_tag }}
         run: |
           set -euo pipefail
-          TAG="${{ needs.prepare.outputs.tag }}"
-          PREV="${{ needs.prepare.outputs.previous_tag }}"
           {
             echo "## Crower $TAG"
             echo ""
@@ -281,26 +289,23 @@ jobs:
             echo "### Changelog"
           } > notes.md
 
+          # `releases/generate-notes` walks the commit graph, and every feature
+          # PR here is squash-merged into `dev` — so the generated notes see the
+          # release merge and list none of the shipped work. The changelog is
+          # built from the PRs merged into `dev` instead, bounded by the
+          # previous release and this commit.
+          #
           # The changelog is the least important part of the notes: an API
           # hiccup must not cost the whole dispatch, but it must not be silent
           # either. Writing to a separate file keeps a truncated body out of
-          # notes.md, and the failure branch appends a usable line: v0.5.0 died
-          # here because the fallback followed $PREV with an underscore instead
-          # of braces, so bash read the underscore as part of the variable name
-          # and died on an unset variable under `set -u` (#124).
-          if [ -n "$PREV" ]; then
-            if gh api repos/${{ github.repository }}/releases/generate-notes \
-              -f tag_name="$TAG" \
-              -f target_commitish="$TAG" \
-              -f previous_tag_name="$PREV" \
-              --jq .body > changelog.md; then
-              cat changelog.md >> notes.md
-            else
-              echo "::warning::could not generate release notes from $PREV; linking the comparison instead" >&2
-              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV}...${TAG}" >> notes.md
-            fi
-          else
+          # notes.md, and the failure branch appends a usable line.
+          if [ -z "$PREV" ]; then
             echo "_Initial release or first tagged version._" >> notes.md
+          elif ./scripts/release-notes.sh "$REPO" "$TAG" "$COMMIT" "$PREV" > changelog.md; then
+            cat changelog.md >> notes.md
+          else
+            echo "::warning::could not build the changelog from $PREV; linking the comparison instead" >&2
+            echo "**Full changelog**: https://github.com/${REPO}/compare/${PREV}...${TAG}" >> notes.md
           fi
 
       # A draft is the default so the artifacts can be inspected — and rebuilt by

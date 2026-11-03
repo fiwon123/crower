@@ -58,7 +58,10 @@ internal/errors/     error types shared across layers
 internal/helper/     shared helpers
 pkg/logger/          logging
 pkg/utils/           filesystem and process helpers
-scripts/             add_to_path installers + the dev sandbox runtime
+scripts/             add_to_path installers, the dev sandbox runtime, release-notes.sh
+docs/wiki/           wiki source — synced by hand to the GitHub wiki
+.github/             CI, release, branch gate, dependabot, PR and issue templates
+CONTRIBUTING.md      the contributor contract (issue first, make check, evidence)
 ```
 
 ## Development Commands
@@ -272,7 +275,10 @@ Verify them once after a transfer.
 - `dev`: require a pull request, and require the **Branch gate** check. Do
   *not* require the CI check here — CI runs on release pull requests only, so a
   required check that never runs leaves every pull request waiting forever.
-- `main`: require a pull request, and require both **CI** and **Branch gate**.
+- `main`: require a pull request, and require both **CI (Go)** and **Branch
+  gate**. The name must match the job's `name:` exactly — a required check that
+  names a job id (`go`) instead of the job's name never matches, and every
+  release pull request waits forever with no failing check to show for it.
   Do not allow deletions: `dev` is the head of the release pull request, so
   deleting it breaks every future pull request's base.
 
@@ -288,6 +294,14 @@ Verify them once after a transfer.
 - Milestones represent releases or sprint iterations
 - Use `gh issue edit <issue-number> --milestone "<milestone-name>"`
 - Track milestone progress on the GitHub Milestones page
+
+### Project board
+
+- Use GitHub Projects (classic or Projects v2) to visualize work across the board (Backlog → Todo → In Progress → Review → Done).
+- **Issues are the source of truth; the board is a view of them.**
+- Link issues and PRs to the project board; keep cards moving with the workflow steps above.
+- Use board fields/statuses to reflect `issue → branch → PR → merge` state rather than duplicating it in comments.
+- For automation, prefer built-in workflows or `gh project` commands — document any project-specific board in `PROJECT_CONTEXT.md`.
 
 ### Agents
 
@@ -355,4 +369,30 @@ passed" unless a run actually executed the job that covers it; if it did not,
 say the change is unverified and test it locally.
 
 The same rule applies locally: `go test` reporting `[no test files]` for a
-package is not a pass for that package.
+package is not a pass for that package. `make check` prints those packages at
+the end of every run; a green run that names them is green for the packages that
+ran, not for those.
+
+### Release workflow (read this before dispatching)
+
+`.github/workflows/release.yml` is manual-dispatch and `main`-only. It tags
+`main`, builds the six platform archives on `ubuntu-latest`, verifies each
+binary's embedded `vcs.revision`, writes `checksums.txt`, and creates a
+**draft** release — or publishes it when the `publish` input is set.
+
+```bash
+gh workflow run release.yml --ref main -f version=v0.6.0
+```
+
+- It refuses to build when `dev` holds commits `main` does not: a release ships
+  what `main` contains, so merge `dev` into `main` first.
+- **The changelog is built from the PRs merged into `dev`, not from
+  `releases/generate-notes`.** Every feature PR is squash-merged, so its commits
+  never become ancestors of the release commit and the generated notes see only
+  the release merge. `scripts/release-notes.sh` bounds the list by the previous
+  release and this commit, and groups by label.
+- A published release is never rewritten; re-running the same version refreshes
+  the draft. Bump the version instead of moving a published tag.
+- The workflow itself is not covered by CI. Its first real proof is a run, and a
+  run whose jobs never executed proves nothing — which is also why a build job
+  stuck on a retired runner label used to leave no draft at all (#121).
