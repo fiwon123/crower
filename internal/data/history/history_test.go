@@ -1,6 +1,7 @@
 package history
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -82,5 +83,47 @@ func TestGetListShowsTheCommand(t *testing.T) {
 
 	if !strings.Contains(list, "-") {
 		t.Errorf("GetList() = %q, want a dash for the command-less entry", list)
+	}
+}
+
+// One entry is dropped and the rest keep their order.
+func TestRemoveContentDropsOneEntry(t *testing.T) {
+	data := New(t.TempDir())
+	data.Add(operations.Create, "first", "one")
+	data.Add(operations.Update, "second", "two")
+	data.Add(operations.Delete, "third", "three")
+
+	target := data.AllData[1]
+
+	if ok := data.RemoveContent(target); !ok {
+		t.Fatal("RemoveContent of a present entry returned false")
+	}
+
+	remaining := []string{}
+
+	for _, entry := range data.AllData {
+		remaining = append(remaining, entry.CommandName)
+	}
+
+	if want := []string{"first", "third"}; !slices.Equal(remaining, want) {
+		t.Errorf("history = %v, want %v", remaining, want)
+	}
+}
+
+// A stale entry that is not in the history is not a reason to discard the
+// history. The call reports the miss and changes nothing (#218).
+func TestRemoveContentLeavesTheHistoryOnAMiss(t *testing.T) {
+	data := New(t.TempDir())
+	data.Add(operations.Create, "first", "one")
+	data.Add(operations.Update, "second", "two")
+
+	before := slices.Clone(data.AllData)
+
+	if ok := data.RemoveContent(Content{Version: 99}); ok {
+		t.Fatal("RemoveContent of a missing entry returned true")
+	}
+
+	if !slices.Equal(data.AllData, before) {
+		t.Errorf("history changed on a miss: %v, want %v", data.AllData, before)
 	}
 }

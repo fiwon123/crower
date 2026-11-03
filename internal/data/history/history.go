@@ -115,21 +115,22 @@ func (h *Data) RemoveLast() {
 }
 
 // Remove Content
+//
+// It reports whether the entry was found, and a miss leaves the history
+// untouched. It used to assign an accumulator that only a match filled, so a
+// stale content replaced the whole history with nil and still returned true
+// (#218).
 func (h *Data) RemoveContent(content Content) bool {
-	if len(h.AllData) == 0 {
-		return false
-	}
-
-	var newContents []Content
 	for i, c := range h.AllData {
-		if c.Version == content.Version {
-			newContents = append(h.AllData[:i], h.AllData[i+1:]...)
-			break
+		if c.Version != content.Version {
+			continue
 		}
+
+		h.AllData = append(h.AllData[:i], h.AllData[i+1:]...)
+		return true
 	}
 
-	h.AllData = newContents
-	return true
+	return false
 }
 
 // Get Index from last index - steps
