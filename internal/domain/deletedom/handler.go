@@ -37,8 +37,12 @@ func (h *Handler) DeleteCommand(key string) (*command.Data, bool) {
 
 	h.app.AllCommandsByName.Remove(command.Name)
 
+	// Remove only the alias entries this command owns: a legacy duplicate may
+	// already have given one to another command.
 	for _, alias := range command.AllAlias {
-		h.app.AllCommandsByAlias.Remove(alias)
+		if owner := h.app.AllCommandsByAlias.Get(alias); owner != nil && (owner.Name == command.Name || owner.Name == "") {
+			h.app.AllCommandsByAlias.Remove(alias)
+		}
 	}
 
 	return command, true

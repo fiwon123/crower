@@ -46,6 +46,12 @@ func findCommand(app *app.Config, key string) *command.Data {
 
 func (h *Handler) performUpdate(oldCommand *command.Data, newCommand *command.Data) error {
 
+	// An alias list the caller supplied replaces the old one; an omitted list
+	// is inherited from the old command. The distinction decides whether a
+	// legacy claim owned by another command is dropped (the user replaced the
+	// aliases) or left dormant in the record (the user changed another field).
+	aliasesSupplied := len(newCommand.AllAlias) > 0
+
 	countFieldsUpdate := 0
 	if newCommand.Name == "" {
 		newCommand.Name = oldCommand.Name
@@ -75,16 +81,57 @@ func (h *Handler) performUpdate(oldCommand *command.Data, newCommand *command.Da
 		return err
 	}
 
-	h.app.AllCommandsByName.Remove(oldCommand.Name)
-	h.app.AllCommandsByName.Add(newCommand.Name, newCommand)
+	// Repoint the aliases this command owns and leave the ones another command
+	// owns alone: a legacy duplicate may already have assigned them there. A
+	// supplied alias list drops such a claim; an inherited one keeps it in the
+	// record (dormant) instead of deleting data the user did not touch.
+	kept := make([]string, 0, len(newCommand.AllAlias))
+	warned := map[string]bool{}
 
-	for _, alias := range oldCommand.AllAlias {
-		h.app.AllCommandsByAlias.Remove(alias)
+	warn := func(warning string) {
+		if warned[warning] {
+			return
+		}
+
+		warned[warning] = true
+		h.app.Logger.Warning(warning)
 	}
 
 	for _, alias := range newCommand.AllAlias {
-		h.app.AllCommandsByAlias.Add(alias, newCommand)
+		owner := h.app.AllCommandsByAlias.Get(alias)
+		foreignAlias := owner != nil && owner.Name != oldCommand.Name && owner.Name != newCommand.Name
+		foreignName := h.app.AllCommandsByName.Exists(alias) && alias != oldCommand.Name && alias != newCommand.Name
+
+		switch {
+		case foreignAlias && aliasesSupplied:
+			warn(fmt.Sprintf("alias %q belongs to %q; leaving it there", alias, owner.Name))
+			continue
+		case foreignName && aliasesSupplied:
+			warn(fmt.Sprintf("alias %q is the name of another command; leaving it there", alias))
+			continue
+		case foreignAlias || foreignName:
+			kept = append(kept, alias)
+		default:
+			kept = append(kept, alias)
+			h.app.AllCommandsByAlias.Add(alias, newCommand)
+		}
 	}
+
+	newCommand.AllAlias = kept
+
+	// Drop the old aliases no longer kept, but only entries this command owns.
+	for _, alias := range oldCommand.AllAlias {
+		if slices.Contains(kept, alias) {
+			continue
+		}
+
+		if owner := h.app.AllCommandsByAlias.Get(alias); owner != nil && owner.Name == oldCommand.Name {
+			h.app.AllCommandsByAlias.Remove(alias)
+		}
+	}
+
+	h.app.AllCommandsByName.Remove(oldCommand.Name)
+	h.app.AllCommandsByName.Add(newCommand.Name, newCommand)
 
 	return nil
 }
