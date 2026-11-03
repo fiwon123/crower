@@ -33,7 +33,7 @@ crower list --folder ~/projects --json | jq -r '.entries[].name'
 | Command | Object |
 | --- | --- |
 | `list` | `{"commands":[{"row":0,"name":"gs","aliases":["g"],"exec":"git status"}]}` |
-| `list --history` | `{"history":[{"version":1,"file":"00001.yaml","timestamp":"2026-01-02T15:04:05Z","operation":"create","command":"gs","note":"…"}]}` |
+| `list --history` | `{"history":[{"version":1,"file":"00001.yaml","timestamp":"2026-01-02T15:04:05Z","operation":"create","note":"…"}]}` |
 | `list --process` | `{"processes":[{"pid":1,"name":"init","path":"/sbin/init"}]}` |
 | `list --folder DIR` | `{"folder":"DIR","entries":[{"name":"a.txt","dir":false,"size":3,"mode":"-rw-r--r--","modified":"2026-01-02T15:04:05Z"}]}` |
 | `list --system` | `{"variables":[{"name":"PATH","values":["/usr/local/bin","/usr/bin"]}]}` |
@@ -46,9 +46,11 @@ crower list --folder ~/projects --json | jq -r '.entries[].name'
 - `--json` exists only on `list` and `search`. Any other command **rejects** it
   as an unknown flag instead of ignoring it — a flag that quietly does nothing
   is worse than a flag that is missing.
-- `list --folder --json` reads the directory itself rather than parsing
-  `ls -la`, so it reports the same entries on every platform. The text output is
-  still `ls -la`/`dir`.
+- `list --folder --json` reads the directory with Go instead of parsing
+  `ls -la`, so it needs no shell arm. It is a real directory read, not a
+  translation of the text output: the path is used literally (no `$VAR`
+  expansion, no globbing), a symlink is followed, and a path that is not a
+  directory is an error where `ls` would print the file.
 - `search --json` splits the shell's output into lines: a filename containing a
   newline cannot come back as one result.
 - `execute`, `extract` and `open` keep their output byte-for-byte; wrapping a

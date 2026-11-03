@@ -9,6 +9,7 @@ import (
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -45,7 +46,7 @@ func TestCommandsPayload(t *testing.T) {
 func TestHistoryPayloadIsNewestFirst(t *testing.T) {
 	rows := []history.Content{
 		{Version: 1, File: "00001.yaml", Timestemp: "2026-01-01T00:00:00Z", Operation: operations.List, Note: "first"},
-		{Version: 2, File: "00002.yaml", Timestemp: "2026-01-02T00:00:00Z", Operation: operations.Create, CommandName: "greet", Note: "second"},
+		{Version: 2, File: "00002.yaml", Timestemp: "2026-01-02T00:00:00Z", Operation: operations.Create, Note: "second"},
 	}
 
 	payload := historyPayload(rows)
@@ -64,10 +65,6 @@ func TestHistoryPayloadIsNewestFirst(t *testing.T) {
 
 	if payload.History[0].Operation != string(operations.Create) {
 		t.Errorf("operation = %q", payload.History[0].Operation)
-	}
-
-	if payload.History[0].Command != "greet" {
-		t.Errorf("command = %q", payload.History[0].Command)
 	}
 }
 
@@ -127,7 +124,13 @@ func TestVariablePayloadTrimsCarriageReturn(t *testing.T) {
 	}
 }
 
-func TestFolderPayload(t *testing.T) {
+func TestFolderResult(t *testing.T) {
+	cfg, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("InitCrowerTests: %v", err)
+	}
+
+	handler := NewHandler(cfg)
 	dir := t.TempDir()
 
 	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("abc"), 0o644); err != nil {
@@ -137,9 +140,9 @@ func TestFolderPayload(t *testing.T) {
 		t.Fatalf("mkdir: %v", err)
 	}
 
-	payload, err := folderPayload(dir)
+	payload, err := handler.FolderResult(dir)
 	if err != nil {
-		t.Fatalf("folderPayload: %v", err)
+		t.Fatalf("FolderResult: %v", err)
 	}
 
 	if payload.Folder != dir {
@@ -161,8 +164,13 @@ func TestFolderPayload(t *testing.T) {
 	}
 }
 
-func TestFolderPayloadMissingFolderIsAnError(t *testing.T) {
-	if _, err := folderPayload(filepath.Join(t.TempDir(), "nope")); err == nil {
-		t.Fatal("folderPayload accepted a folder that does not exist")
+func TestFolderResultMissingFolderIsAnError(t *testing.T) {
+	cfg, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("InitCrowerTests: %v", err)
+	}
+
+	if _, err := NewHandler(cfg).FolderResult(filepath.Join(t.TempDir(), "nope")); err == nil {
+		t.Fatal("FolderResult accepted a folder that does not exist")
 	}
 }

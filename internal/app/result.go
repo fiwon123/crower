@@ -31,11 +31,21 @@ const (
 // through here: those bytes belong to the command that produced them, and
 // wrapping them in an envelope would break `crower execute ... | grep`.
 func (a *Config) Result(text string, payload any) error {
-	if a.Format != FormatJSON {
+	switch a.Format {
+	case FormatJSON:
+		return a.writeJSON(payload)
+	case FormatText, "":
 		a.Logger.Out(text)
 		return nil
+	default:
+		// A format nobody implements must not fall through to text: the
+		// caller asked for something specific and would read the wrong result.
+		return fmt.Errorf("unknown result format %q", a.Format)
 	}
+}
 
+// writeJSON encodes payload as one line on the result stream.
+func (a *Config) writeJSON(payload any) error {
 	var buffer bytes.Buffer
 
 	encoder := json.NewEncoder(&buffer)

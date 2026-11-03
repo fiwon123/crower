@@ -59,7 +59,7 @@ func (c *Core) ListFolder(args []string) error {
 	// not go through the shell and cannot fail on a platform whose listing
 	// command is unsupported.
 	if c.app.Format == app.FormatJSON {
-		payload, err := folderPayload(currentPath)
+		payload, err := c.handler.FolderResult(currentPath)
 		if err != nil {
 			return err
 		}

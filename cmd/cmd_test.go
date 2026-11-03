@@ -404,9 +404,177 @@ func TestListHistoryJSON(t *testing.T) {
 		t.Fatal("history is empty after a create")
 	}
 
-	// Newest first, and the create is the newest entry before this list.
-	if got := payload.History[0].Operation; got != "list" && got != "create" {
-		t.Errorf("newest operation = %q", got)
+	// Newest first: the create is the only entry when this list is rendered,
+	// so it must be first. Accepting "list" here would hide an off-by-one.
+	newest := payload.History[0]
+	if newest.Operation != "create" {
+		t.Errorf("newest operation = %q, want create", newest.Operation)
+	}
+
+	if newest.Timestamp == "" || newest.Note == "" {
+		t.Errorf("newest entry = %+v, want a timestamp and a note", newest)
+	}
+}
+
+func TestListSysPathJSON(t *testing.T) {
+	stdout, _, err := run(t, "list", "--syspath", "--json")
+	if err != nil {
+		t.Fatalf("list --syspath --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Variable struct {
+			Name   string   `json:"name"`
+			Values []string `json:"values"`
+		} `json:"variable"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+
+	if payload.Variable.Name != "PATH" {
+		t.Errorf("variable name = %q, want PATH", payload.Variable.Name)
+	}
+
+	if len(payload.Variable.Values) == 0 {
+		t.Error("PATH has no entries")
+	}
+}
+
+// The system listing is environment values, so this only asserts the shape --
+// never print the payload, and never copy the values into a fixture.
+func TestListSystemJSON(t *testing.T) {
+	stdout, _, err := run(t, "list", "--system", "--json")
+	if err != nil {
+		t.Fatalf("list --system --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Variables []struct {
+			Name   string   `json:"name"`
+			Values []string `json:"values"`
+		} `json:"variables"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+
+	if len(payload.Variables) == 0 {
+		t.Fatal("the system listing carried no variables")
+	}
+
+	foundPath := false
+	for _, variable := range payload.Variables {
+		if variable.Name == "PATH" {
+			foundPath = true
+		}
+	}
+
+	if !foundPath {
+		t.Error("the system listing has no PATH entry")
+	}
+}
+
+func TestListProcessJSON(t *testing.T) {
+	stdout, _, err := run(t, "list", "--process", "--json")
+	if err != nil {
+		t.Fatalf("list --process --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Processes []struct {
+			PID  int32  `json:"pid"`
+			Name string `json:"name"`
+			Path string `json:"path"`
+		} `json:"processes"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v", err)
+	}
+
+	if len(payload.Processes) == 0 {
+		t.Fatal("the process listing is empty")
+	}
+
+	for _, process := range payload.Processes {
+		if process.PID <= 0 || process.Name == "" {
+			t.Errorf("process row = %+v", process)
+		}
+	}
+}
+
+func TestSearchFolderJSON(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the search commands are shell-backed and this suite runs them on POSIX")
+	}
+
+	dir := t.TempDir()
+
+	if err := os.Mkdir(filepath.Join(dir, "needle-dir"), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	stdout, _, err := run(t, "search", "--folder", "needle-dir", dir, "--json")
+	if err != nil {
+		t.Fatalf("search --folder --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Search struct {
+			Kind    string   `json:"kind"`
+			Results []string `json:"results"`
+		} `json:"search"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	if payload.Search.Kind != "folder" {
+		t.Errorf("kind = %q, want folder", payload.Search.Kind)
+	}
+
+	if len(payload.Search.Results) != 1 || !strings.HasSuffix(payload.Search.Results[0], "needle-dir") {
+		t.Errorf("results = %v", payload.Search.Results)
+	}
+}
+
+func TestSearchDefaultJSON(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the search commands are shell-backed and this suite runs them on POSIX")
+	}
+
+	dir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(dir, "needle.txt"), nil, 0o644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	stdout, _, err := run(t, "search", "needle.txt", dir, "--json")
+	if err != nil {
+		t.Fatalf("search --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Search struct {
+			Kind    string   `json:"kind"`
+			Results []string `json:"results"`
+		} `json:"search"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	if payload.Search.Kind != "file_and_folder" {
+		t.Errorf("kind = %q, want file_and_folder", payload.Search.Kind)
+	}
+
+	if len(payload.Search.Results) != 1 {
+		t.Errorf("results = %v", payload.Search.Results)
 	}
 }
 

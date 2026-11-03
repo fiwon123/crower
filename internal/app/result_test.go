@@ -118,6 +118,18 @@ func TestResultJSONEmptyCollection(t *testing.T) {
 	}
 }
 
+func TestResultUnknownFormatIsAnError(t *testing.T) {
+	cfg, out := newConfig(t, app.Format("yaml"))
+
+	if err := cfg.Result("table", map[string]string{"a": "b"}); err == nil {
+		t.Fatal("Result accepted a format it cannot render")
+	}
+
+	if out.String() != "" {
+		t.Errorf("unknown format wrote a result anyway: %q", out.String())
+	}
+}
+
 func TestResultJSONEncodeFailureIsAnError(t *testing.T) {
 	cfg, _ := newConfig(t, app.FormatJSON)
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
@@ -60,12 +59,16 @@ func commandsPayload(orderKeys []string, all command.MapData) CommandsResult {
 }
 
 // HistoryRow is one recorded operation.
+//
+// There is deliberately no `command` field: history.Content has a CommandName
+// field that nothing ever writes -- the name lives inside the note -- so a
+// field here could only ever be "". It gets added when the stored history
+// actually carries the name (see the --last fix).
 type HistoryRow struct {
 	Version   int    `json:"version"`
 	File      string `json:"file"`
 	Timestamp string `json:"timestamp"`
 	Operation string `json:"operation"`
-	Command   string `json:"command"`
 	Note      string `json:"note"`
 }
 
@@ -85,7 +88,6 @@ func historyPayload(rows []history.Content) HistoryResult {
 			File:      row.File,
 			Timestamp: row.Timestemp,
 			Operation: string(row.Operation),
-			Command:   row.CommandName,
 			Note:      row.Note,
 		})
 	}
@@ -136,44 +138,6 @@ type FolderEntry struct {
 	Error string `json:"error,omitempty"`
 }
 
-// FolderResult is the result of `list --folder --json`.
-type FolderResult struct {
-	Folder  string        `json:"folder"`
-	Entries []FolderEntry `json:"entries"`
-}
-
-// folderPayload reads folderPath with Go rather than through the shell.
-//
-// The text rendering is `ls -la` (or `dir`), whose columns depend on platform
-// and locale, and parsing that back into fields would be guesswork. A directory
-// read gives the JSON result the same entries on every platform and needs no
-// shell arm at all.
-func folderPayload(folderPath string) (FolderResult, error) {
-	entries, err := os.ReadDir(folderPath)
-	if err != nil {
-		return FolderResult{}, fmt.Errorf("list folder %s: %w", folderPath, err)
-	}
-
-	payload := FolderResult{Folder: folderPath, Entries: make([]FolderEntry, 0, len(entries))}
-
-	for _, entry := range entries {
-		row := FolderEntry{Name: entry.Name(), Dir: entry.IsDir()}
-
-		info, err := entry.Info()
-		if err != nil {
-			row.Error = err.Error()
-		} else {
-			row.Size = info.Size()
-			row.Mode = info.Mode().String()
-			row.Modified = info.ModTime().Format(time.RFC3339)
-		}
-
-		payload.Entries = append(payload.Entries, row)
-	}
-
-	return payload, nil
-}
-
 // Variable is one system variable and its OS path-list entries.
 type Variable struct {
 	Name   string   `json:"name"`
@@ -215,6 +179,12 @@ func newVariable(name string, value string) Variable {
 	// `echo` ends the value with the platform's line terminator; a carriage
 	// return belongs to the line, not to the last path entry.
 	value = strings.TrimRight(value, "\r\n")
+
+	if value == "" {
+		// strings.Split("", sep) is [""]: a phantom empty entry for a variable
+		// that has no value at all.
+		return Variable{Name: name, Values: []string{}}
+	}
 
 	return Variable{
 		Name:   name,

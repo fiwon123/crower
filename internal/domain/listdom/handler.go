@@ -2,8 +2,10 @@ package listdom
 
 import (
 	"fmt"
+	"os"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/command"
@@ -69,6 +71,48 @@ func (h *Handler) commandsTable(orderKeys []string, allCommands command.MapData)
 	}
 
 	return builder.String()
+}
+
+// FolderResult is the result of `list --folder --json`.
+type FolderResult struct {
+	Folder  string        `json:"folder"`
+	Entries []FolderEntry `json:"entries"`
+}
+
+// FolderResult reads folderPath for a JSON listing.
+//
+// The text rendering is `ls -la` (or `dir`), whose columns depend on platform
+// and locale, and parsing that back into fields would be guesswork. A directory
+// read gives the JSON result the same entries on every platform and needs no
+// shell arm at all. It is not a drop-in replacement for the text form: the path
+// is used literally (no shell expansion), a symlink is followed, and a path
+// that is not a directory is an error.
+func (h *Handler) FolderResult(folderPath string) (FolderResult, error) {
+	entries, err := os.ReadDir(folderPath)
+	if err != nil {
+		return FolderResult{}, fmt.Errorf("list folder %s: %w", folderPath, err)
+	}
+
+	payload := FolderResult{Folder: folderPath, Entries: make([]FolderEntry, 0, len(entries))}
+
+	for _, entry := range entries {
+		row := FolderEntry{Name: entry.Name(), Dir: entry.IsDir()}
+
+		info, err := entry.Info()
+		if err != nil {
+			// The entry vanished between the read and this call, or the OS
+			// refused its metadata; the name and type are still real.
+			row.Error = err.Error()
+		} else {
+			row.Size = info.Size()
+			row.Mode = info.Mode().String()
+			row.Modified = info.ModTime().Format(time.RFC3339)
+		}
+
+		payload.Entries = append(payload.Entries, row)
+	}
+
+	return payload, nil
 }
 
 // ListProcess returns the processes running on the user operational system

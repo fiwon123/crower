@@ -32,6 +32,10 @@ func TestListProcessesFiltersByName(t *testing.T) {
 		t.Fatalf("ListProcesses: %v", err)
 	}
 
+	if len(all) == 0 {
+		t.Skip("this host reports no processes, so there is nothing to filter")
+	}
+
 	// Filter by a name the listing actually contains, so the test does not
 	// depend on which processes the machine happens to run.
 	name := all[0].Name
