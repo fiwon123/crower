@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -74,19 +73,9 @@ func NewHandlerWithRunner(app *app.Config, run CommandRunner) *Handler {
 // opened only a.
 func (h *Handler) Open(paths []string) error {
 	for _, f := range paths {
-		commandString := ""
-
-		switch runtime.GOOS {
-		case "windows":
-			commandString = fmt.Sprintf(`start "" %s`, helper.QuoteFor(runtime.GOOS, f))
-		case "linux":
-			commandString = "xdg-open " + helper.QuoteFor(runtime.GOOS, f)
-		case "darwin":
-			commandString = "open " + helper.QuoteFor(runtime.GOOS, f)
-		}
-
-		if commandString == "" {
-			return fmt.Errorf("opening files is not supported on %s", runtime.GOOS)
+		commandString, err := openCommand(runtime.GOOS, f)
+		if err != nil {
+			return err
 		}
 
 		h.app.Logger.Info("opening: ", commandString)

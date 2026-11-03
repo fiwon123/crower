@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -39,15 +37,9 @@ func (h *Handler) MoveFolder(folderPath string, destFolder string) error {
 // The POSIX command line used to be wrapped in double quotes, which the shell
 // read as one very long command name.
 func (h *Handler) move(source string, destFolder string) error {
-	var commandLine string
-
-	switch runtime.GOOS {
-	case "windows":
-		commandLine = "move " + helper.QuoteFor(runtime.GOOS, source) + " " + helper.QuoteFor(runtime.GOOS, destFolder)
-	case "linux", "darwin":
-		commandLine = "mv " + helper.QuoteFor(runtime.GOOS, source) + " " + helper.QuoteFor(runtime.GOOS, destFolder)
-	default:
-		return errors.ErrUnsupportedOS
+	commandLine, err := moveCommand(runtime.GOOS, source, destFolder)
+	if err != nil {
+		return err
 	}
 
 	out, err := h.shell.Exec(commandLine)
