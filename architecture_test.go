@@ -133,12 +133,16 @@ var rules = []importRule{
 	},
 	{
 		// Ring 3. Adapters implement ports; they do not drive the CLI.
+		//
+		// internal/data is deliberately absent: the storage adapter is exactly
+		// the code that knows the persisted shapes (command.MapData,
+		// history.Data), and those types are transitional -- they move into
+		// the adapters when the legacy core is dissolved.
 		name: "internal/adapters",
 		dir:  "internal/adapters",
 		forbid: []string{
 			"internal/app",
-			"internal/data",
-			"internal/gui",
+			"internal/tui",
 			"internal/desktop",
 			"internal/legacy",
 			"cmd",
