@@ -10,6 +10,7 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/fiwon123/crower/internal/shell"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -165,9 +166,10 @@ func (h *Handler) ListSysPath() (string, error) {
 func listFolderCommand(goos string, folderPath string) (string, error) {
 	switch goos {
 	case "windows":
-		return fmt.Sprintf(`dir "%s"`, folderPath), nil
+		return "dir " + helper.QuoteFor(goos, folderPath), nil
 	case "linux", "darwin":
-		return fmt.Sprintf(`ls -la "%s"`, folderPath), nil
+		// -- stops a folder named like an option from changing the listing.
+		return "ls -la -- " + helper.QuoteFor(goos, folderPath), nil
 	default:
 		return "", unsupportedOSError(goos)
 	}
@@ -187,7 +189,8 @@ func listSystemCommand(goos string) (string, error) {
 func listSysPathCommand(goos string) (string, error) {
 	switch goos {
 	case "windows":
-		return "echo %PATH%", nil
+		// Quotes keep an entry containing "&" from becoming a separator.
+		return `echo "%PATH%"`, nil
 	case "linux", "darwin":
 		return `echo "$PATH"`, nil
 	default:

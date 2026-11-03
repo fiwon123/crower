@@ -2,8 +2,10 @@ package searchdom
 
 import (
 	"fmt"
+	"net/url"
 
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
@@ -18,32 +20,30 @@ func unsupportedOSError(goos string) error {
 // every platform the release ships: runtime.GOOS cannot be overridden at run
 // time, and an arm no test exercises is how macOS spent a release reporting
 // nothing found instead of searching (#129).
+//
+// Every user-supplied value goes through helper.QuoteFor: hand-written double
+// quotes let a value containing `"` close the quoted region, after which `&`
+// runs as a command separator on Windows.
 
 func browserCommand(goos string, content string) (string, error) {
+	target := content
+	if !utils.IsURL(content) {
+		// A search term is not a URL fragment: encode it, or `&` and `#`
+		// change the query instead of being searched for.
+		target = "https://duckduckgo.com/?q=" + url.QueryEscape(content)
+	}
+
 	switch goos {
 	case "windows":
-		// cmd.exe has no single-quote quoting: `start ' ' 'url'` makes the
-		// first quote the window title and launches nothing. The empty ""
-		// is the title; the URL is a real quoted argument, as opendom does.
-		if utils.IsURL(content) {
-			return fmt.Sprintf(`start "" "%s"`, content), nil
-		}
-
-		return fmt.Sprintf(`start "" "https://duckduckgo.com/?q=%s"`, content), nil
+		// cmd.exe has no single-quote quoting, so the empty "" is the window
+		// title and the target is a real (quoted when needed) argument.
+		return "start \"\" " + helper.QuoteFor(goos, target), nil
 
 	case "linux":
-		if utils.IsURL(content) {
-			return fmt.Sprintf(`xdg-open "%s" `, content), nil
-		}
-
-		return fmt.Sprintf(`xdg-open "https://duckduckgo.com/?q=%s" `, content), nil
+		return "xdg-open " + helper.QuoteFor(goos, target), nil
 
 	case "darwin":
-		if utils.IsURL(content) {
-			return fmt.Sprintf(`open "%s"`, content), nil
-		}
-
-		return fmt.Sprintf(`open "https://duckduckgo.com/?q=%s"`, content), nil
+		return "open " + helper.QuoteFor(goos, target), nil
 
 	default:
 		return "", unsupportedOSError(goos)
@@ -53,9 +53,11 @@ func browserCommand(goos string, content string) (string, error) {
 func searchFileCommand(goos string, currentPath string, content string) (string, error) {
 	switch goos {
 	case "windows":
-		return fmt.Sprintf(`dir "%s" /s /b /a-d | findstr "%s"`, currentPath, content), nil
+		return fmt.Sprintf("dir %s /s /b /a-d | findstr %s",
+			helper.QuoteFor(goos, currentPath), helper.QuoteFor(goos, content)), nil
 	case "linux", "darwin":
-		return fmt.Sprintf(`find "%s" -type f -name "%s"`, currentPath, content), nil
+		return fmt.Sprintf("find %s -type f -name %s",
+			helper.QuoteFor(goos, currentPath), helper.QuoteFor(goos, content)), nil
 	default:
 		return "", unsupportedOSError(goos)
 	}
@@ -64,9 +66,11 @@ func searchFileCommand(goos string, currentPath string, content string) (string,
 func searchFolderCommand(goos string, currentPath string, content string) (string, error) {
 	switch goos {
 	case "windows":
-		return fmt.Sprintf(`dir "%s" /s /b /ad | findstr "%s"`, currentPath, content), nil
+		return fmt.Sprintf("dir %s /s /b /ad | findstr %s",
+			helper.QuoteFor(goos, currentPath), helper.QuoteFor(goos, content)), nil
 	case "linux", "darwin":
-		return fmt.Sprintf(`find "%s" -type d -name "%s"`, currentPath, content), nil
+		return fmt.Sprintf("find %s -type d -name %s",
+			helper.QuoteFor(goos, currentPath), helper.QuoteFor(goos, content)), nil
 	default:
 		return "", unsupportedOSError(goos)
 	}
@@ -75,9 +79,11 @@ func searchFolderCommand(goos string, currentPath string, content string) (strin
 func searchFileAndFolderCommand(goos string, currentPath string, content string) (string, error) {
 	switch goos {
 	case "windows":
-		return fmt.Sprintf(`dir "%s" /s /b | findstr "%s"`, currentPath, content), nil
+		return fmt.Sprintf("dir %s /s /b | findstr %s",
+			helper.QuoteFor(goos, currentPath), helper.QuoteFor(goos, content)), nil
 	case "linux", "darwin":
-		return fmt.Sprintf(`find "%s" -name "%s"`, currentPath, content), nil
+		return fmt.Sprintf("find %s -name %s",
+			helper.QuoteFor(goos, currentPath), helper.QuoteFor(goos, content)), nil
 	default:
 		return "", unsupportedOSError(goos)
 	}
