@@ -56,7 +56,7 @@ func TestOpenFile(t *testing.T) {
 		var commands []string
 		openHandler := opendom.NewHandlerWithRunner(app, recordingOpener(t, &commands))
 
-		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new.txt")
+		newFilePath := filepath.Join(app.ConfigFolder(), "new.txt")
 
 		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
@@ -82,7 +82,7 @@ func TestOpenFile(t *testing.T) {
 		var commands []string
 		openHandler := opendom.NewHandlerWithRunner(app, recordingOpener(t, &commands))
 
-		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file.txt")
+		newFilePath := filepath.Join(app.ConfigFolder(), "new file.txt")
 
 		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
@@ -110,7 +110,7 @@ func TestOpenFolder(t *testing.T) {
 		var commands []string
 		openHandler := opendom.NewHandlerWithRunner(app, recordingOpener(t, &commands))
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new")
 
 		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
@@ -136,7 +136,7 @@ func TestOpenFolder(t *testing.T) {
 		var commands []string
 		openHandler := opendom.NewHandlerWithRunner(app, recordingOpener(t, &commands))
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new folder")
 
 		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {

@@ -7,7 +7,6 @@ import (
 	"github.com/fiwon123/crower/internal/data/operations"
 
 	"github.com/fiwon123/crower/internal/interfaces"
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Core struct {
@@ -67,7 +66,7 @@ func (c *Core) performUpdateCommand(
 		return nil, nil, err
 	}
 
-	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+	if err := c.app.SaveCommands(); err != nil {
 		return nil, nil, err
 	}
 

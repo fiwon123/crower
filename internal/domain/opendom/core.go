@@ -50,7 +50,7 @@ func (c *Core) Open(args []string) error {
 
 // OpenFile opens a file, defaulting to the configuration file.
 func (c *Core) OpenFile(args []string) error {
-	currentPath := c.app.CfgFilePath
+	currentPath := c.app.ConfigFile()
 	if len(args) == 0 {
 		args = append(args, currentPath)
 	}
@@ -66,7 +66,7 @@ func (c *Core) OpenFile(args []string) error {
 
 // OpenFolder opens a folder, defaulting to the configuration folder.
 func (c *Core) OpenFolder(args []string) error {
-	currentPath := c.app.CfgFilePath
+	currentPath := c.app.ConfigFile()
 	if len(args) == 0 {
 		args = append(args, filepath.Dir(currentPath))
 	}

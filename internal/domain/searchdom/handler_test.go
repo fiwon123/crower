@@ -1,7 +1,6 @@
 package searchdom_test
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/domain/searchdom"
@@ -47,7 +46,7 @@ func TestSearchFile(t *testing.T) {
 
 		handler := searchdom.NewHandler(app)
 
-		output, err := handler.SearchFile(filepath.Dir(app.CfgFilePath), "test")
+		output, err := handler.SearchFile(app.ConfigFolder(), "test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -61,7 +60,7 @@ func TestSearchFile(t *testing.T) {
 
 		handler := searchdom.NewHandler(app)
 
-		output, err := handler.SearchFile(filepath.Dir(app.CfgFilePath), "test test")
+		output, err := handler.SearchFile(app.ConfigFolder(), "test test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -77,7 +76,7 @@ func TestSearchFolder(t *testing.T) {
 
 		handler := searchdom.NewHandler(app)
 
-		output, err := handler.SearchFolder(filepath.Dir(app.CfgFilePath), "test")
+		output, err := handler.SearchFolder(app.ConfigFolder(), "test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -91,7 +90,7 @@ func TestSearchFolder(t *testing.T) {
 
 		handler := searchdom.NewHandler(app)
 
-		output, err := handler.SearchFolder(filepath.Dir(app.CfgFilePath), "test test")
+		output, err := handler.SearchFolder(app.ConfigFolder(), "test test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -107,7 +106,7 @@ func TestSearchFileAndFolder(t *testing.T) {
 
 		handler := searchdom.NewHandler(app)
 
-		output, err := handler.SearchFileAndFolder(filepath.Dir(app.CfgFilePath), "test")
+		output, err := handler.SearchFileAndFolder(app.ConfigFolder(), "test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}
@@ -121,7 +120,7 @@ func TestSearchFileAndFolder(t *testing.T) {
 
 		handler := searchdom.NewHandler(app)
 
-		output, err := handler.SearchFileAndFolder(filepath.Dir(app.CfgFilePath), "test test")
+		output, err := handler.SearchFileAndFolder(app.ConfigFolder(), "test test")
 		if err != nil {
 			t.Fatalf("error: %v output: %s", err, string(output))
 		}

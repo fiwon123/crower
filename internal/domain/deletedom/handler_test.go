@@ -111,7 +111,7 @@ func TestDeleteFile(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		deleteHandler := deletedom.NewHandler(app)
 
-		newFilePath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+		newFilePath := filepath.Join(app.ConfigFolder(), "new")
 
 		err = createHandler.CreateFile(newFilePath)
 		if err != nil {
@@ -133,7 +133,7 @@ func TestDeleteFile(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		deleteHandler := deletedom.NewHandler(app)
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new file")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new file")
 
 		err = createHandler.CreateFile(newFolderPath)
 		if err != nil {
@@ -157,7 +157,7 @@ func TestDeleteFolder(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		deleteHandler := deletedom.NewHandler(app)
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new")
 
 		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {
@@ -179,7 +179,7 @@ func TestDeleteFolder(t *testing.T) {
 		createHandler := createdom.NewHandler(app)
 		deleteHandler := deletedom.NewHandler(app)
 
-		newFolderPath := filepath.Join(filepath.Dir(app.CfgFilePath), "new folder")
+		newFolderPath := filepath.Join(app.ConfigFolder(), "new folder")
 
 		err = createHandler.CreateFolder(newFolderPath)
 		if err != nil {

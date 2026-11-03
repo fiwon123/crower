@@ -1,7 +1,6 @@
 package listdom_test
 
 import (
-	"path/filepath"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/domain/listdom"
@@ -17,7 +16,7 @@ func TestList(t *testing.T) {
 	handler := listdom.NewHandler(app)
 
 	t.Run("List Folder", func(t *testing.T) {
-		output, err := handler.ListFolder(filepath.Dir(app.CfgFilePath))
+		output, err := handler.ListFolder(app.ConfigFolder())
 		if err != nil {
 			t.Errorf("list Folder error: %v , out: %s", err, string(output))
 		}
