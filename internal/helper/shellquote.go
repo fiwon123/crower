@@ -31,22 +31,69 @@ func quotePosix(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", "'\\''") + "'"
 }
 
+// quoteWindows quotes one argument in a line handed to cmd /c.
+//
+// cmd has no backslash escape. An embedded quote is written as "" — cmd
+// toggles its quoting twice, so the state around it does not change, and the
+// program's argument parser reads the pair as one literal quote. Percent signs
+// are left alone: "%%" is a batch-file escape that a command line does not
+// collapse, so doubling corrupts every path containing "%". A "%VAR%" still
+// expands, which no command-line quoting can prevent.
+//
+// A trailing run of backslashes is doubled when the value is quoted: a single
+// "\" before the closing quote escapes it, and the argument swallows whatever
+// follows. A backslash immediately before an embedded quote cannot be carried:
+// the backslash is kept and the quote is dropped, because an odd backslash run
+// would flip cmd's quoting state.
 func quoteWindows(s string) string {
 	if s == "" {
 		return `""`
 	}
-	// For cmd.exe, wrap in double quotes and escape internal double quotes
-	// Also escape percent signs to avoid variable expansion
-	if strings.ContainsAny(s, `"%^&|<>`) {
-		s = strings.ReplaceAll(s, "%", "%%")
-		s = strings.ReplaceAll(s, `"`, `\"`)
-		return `"` + s + `"`
+
+	if !needsWindowsQuote(s) {
+		return s
 	}
-	// Simple case - still quote if contains spaces or special chars
-	if strings.ContainsAny(s, " \t\n\r(),;=") {
-		s = strings.ReplaceAll(s, "%", "%%")
-		s = strings.ReplaceAll(s, `"`, `\"`)
-		return `"` + s + `"`
+
+	var quoted strings.Builder
+	quoted.WriteByte('"')
+
+	for i := 0; i < len(s); i++ {
+		switch s[i] {
+		case '"':
+			quoted.WriteString(`""`)
+
+		case '\\':
+			end := i
+			for end < len(s) && s[end] == '\\' {
+				end++
+			}
+
+			run := s[i:end]
+			quoted.WriteString(run)
+
+			// Both a trailing run and a run before an embedded quote must be
+			// even: an odd count turns the next quote into a literal escape
+			// and leaves the quoting state flipped, so a later "&" would run.
+			// The cost is that a backslash directly before a literal quote is
+			// not preserved; no cmd line can carry both.
+			if end == len(s) || s[end] == '"' {
+				quoted.WriteString(run)
+			}
+
+			i = end - 1
+
+		default:
+			quoted.WriteByte(s[i])
+		}
 	}
-	return s
+
+	quoted.WriteByte('"')
+
+	return quoted.String()
+}
+
+// needsWindowsQuote reports whether cmd would read s as more than one word, or
+// as a command separator, unless it is quoted.
+func needsWindowsQuote(s string) bool {
+	return strings.ContainsAny(s, "\" \t\n\r&|<>^(),;=")
 }

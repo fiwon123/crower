@@ -33,8 +33,16 @@ func TestQuoteForWindows(t *testing.T) {
 		{"empty", "", `""`},
 		{"simple no special", "hello", "hello"},
 		{"with space", "hello world", `"hello world"`},
-		{"with quote", `he said "hi"`, `"he said \"hi\""`},
-		{"with percent", "%PATH%", `"%%PATH%%"`},
+		{"with quote", `he said "hi"`, `"he said ""hi"""`},
+		{"only a quote", `"`, `""""`},
+		{"quote before a separator", `a" & calc`, `"a"" & calc"`},
+		{"backslash before a quote", `x\"y`, `"x\\""y"`},
+		{"with percent", "%PATH%", "%PATH%"},
+		{"percent inside a quoted value", "%PATH% x", `"%PATH% x"`},
+		{"with ampersand", "a & calc", `"a & calc"`},
+		{"trailing backslash when quoted", `C:\My Files\`, `"C:\My Files\\"`},
+		{"two trailing backslashes when quoted", `a b\\`, `"a b\\\\"`},
+		{"trailing backslash unquoted", `C:\out\`, `C:\out\`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
