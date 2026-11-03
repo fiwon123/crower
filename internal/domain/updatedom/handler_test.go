@@ -1,9 +1,14 @@
 package updatedom_test
 
 import (
+	"bytes"
+	"io"
+	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
@@ -231,4 +236,111 @@ func assertUpdateTest(want bool, got bool, key string, newCommand command.Data, 
 	if want != got {
 		t.Errorf("error %v, key %v, command %v, got %v, want %v", err, key, newCommand, got, want)
 	}
+}
+
+// A supplied alias list drops a claim another command owns, and the warning
+// says where the alias stayed. The record stops claiming it.
+func TestUpdateLeavesAnAliasAnotherCommandOwns(t *testing.T) {
+	cfg, stderr := newConfigWithStderr(t)
+
+	a := command.New("a", []string{"x"}, "echo a")
+	cfg.AllCommandsByName.Add("a", a)
+	cfg.AllCommandsByAlias.Add("x", a)
+
+	b := command.New("b", []string{"x"}, "echo b")
+	cfg.AllCommandsByName.Add("b", b)
+
+	handler := updatedom.NewHandler(cfg)
+
+	if _, _, err := handler.UpdateCommand("b", "", []string{"x"}, "echo changed"); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if owner := cfg.AllCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
+		t.Errorf("alias x = %+v, want it to stay on a", owner)
+	}
+
+	if got := cfg.AllCommandsByName.Get("b"); got == nil || slices.Contains(got.AllAlias, "x") {
+		t.Errorf("b = %+v, want it to stop claiming x", got)
+	}
+
+	if !strings.Contains(stderr.String(), `alias "x" belongs to "a"`) {
+		t.Errorf("the dropped alias was not reported: %q", stderr.String())
+	}
+}
+
+// An update of another field must not delete the dormant claim: the record is
+// only normalised when the user replaces the alias list.
+func TestUpdateKeepsADormantAliasOnAnUnrelatedField(t *testing.T) {
+	cfg, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	a := command.New("a", []string{"x"}, "echo a")
+	cfg.AllCommandsByName.Add("a", a)
+	cfg.AllCommandsByAlias.Add("x", a)
+
+	b := command.New("b", []string{"x"}, "echo b")
+	cfg.AllCommandsByName.Add("b", b)
+
+	handler := updatedom.NewHandler(cfg)
+
+	if _, _, err := handler.UpdateCommand("b", "", nil, "echo changed"); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if owner := cfg.AllCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
+		t.Errorf("alias x = %+v, want it to stay on a", owner)
+	}
+
+	if got := cfg.AllCommandsByName.Get("b"); got == nil || !slices.Contains(got.AllAlias, "x") {
+		t.Errorf("b = %+v, want it to keep the dormant claim", got)
+	}
+}
+
+// The same for an alias that is another command's name: name-first lookup
+// makes it unreachable, so a supplied list drops the claim.
+func TestUpdateLeavesAnAliasThatIsAnotherName(t *testing.T) {
+	cfg, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	b := command.New("b", nil, "echo b")
+	cfg.AllCommandsByName.Add("b", b)
+
+	a := command.New("a", []string{"b"}, "echo a")
+	cfg.AllCommandsByName.Add("a", a)
+	cfg.AllCommandsByAlias.Add("b", a)
+
+	handler := updatedom.NewHandler(cfg)
+
+	if _, _, err := handler.UpdateCommand("a", "", []string{"b"}, "echo changed"); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if got := cfg.AllCommandsByName.Get("a"); got == nil || slices.Contains(got.AllAlias, "b") {
+		t.Errorf("a = %+v, want it to stop claiming b as an alias", got)
+	}
+
+	if cfg.AllCommandsByAlias.Get("b") != nil {
+		t.Errorf("alias b = %+v, want it removed", cfg.AllCommandsByAlias.Get("b"))
+	}
+}
+
+func newConfigWithStderr(t *testing.T) (*app.Config, *bytes.Buffer) {
+	t.Helper()
+
+	var stderr bytes.Buffer
+
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+	cfg, err := app.InitApp(cfgPath, app.Options{
+		Streams: app.Streams{In: strings.NewReader(""), Out: io.Discard, Err: &stderr},
+	})
+	if err != nil {
+		t.Fatalf("InitApp: %v", err)
+	}
+
+	return cfg, &stderr
 }
