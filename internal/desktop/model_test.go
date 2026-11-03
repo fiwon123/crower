@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"io"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/app"
@@ -16,7 +17,13 @@ func testApp(t *testing.T) *app.Config {
 	a.AllCommandsByAlias = command.NewMapData()
 	a.OrderKeys = []string{}
 	a.History = history.New(t.TempDir() + "/hist")
-	a.Logger = *logger.New(t.TempDir() + "/log")
+
+	lg, err := logger.New(t.TempDir()+"/log", io.Discard, io.Discard)
+	if err != nil {
+		t.Fatalf("error creating the logger: %v", err)
+	}
+	a.Logger = *lg
+
 	a.HistoryFilePath = t.TempDir() + "/hist.json"
 	a.HistoryFolderPath = t.TempDir() + "/hist"
 	c := command.New("hello", nil, "echo hello")

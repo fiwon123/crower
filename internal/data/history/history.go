@@ -204,13 +204,13 @@ func (h *Data) GetList() string {
 }
 
 func getContent(line int, version int, file string, timestemp string, note string) string {
-	return fmt.Sprintf("%-4d %-8d %-16s %-32s %-3s \n", line, version, file, timestemp, note)
+	return fmt.Sprintf("%-4d %-8d %-16s %-32s %s\n", line, version, file, timestemp, note)
 }
 
 func getHeader() string {
 	var builder strings.Builder
 	builder.WriteString("----------------------------------------------------------------------------\n")
-	fmt.Fprintf(&builder, "%-4s %-8s %-16s %-32s %-3s \n", "line", "Version", "File", "Timestemp", "Note")
+	fmt.Fprintf(&builder, "%-4s %-8s %-16s %-32s %s\n", "line", "Version", "File", "Timestamp", "Note")
 	builder.WriteString("----------------------------------------------------------------------------\n")
 	return builder.String()
 }

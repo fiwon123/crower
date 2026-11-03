@@ -18,13 +18,13 @@ func NewInput(app *app.Config, list interfaces.ListHandler) *Input {
 	}
 }
 
-// Verify parameters to process reset operation
-func (i *Input) CheckResetInput() bool {
+// CheckResetInput shows what will be erased and asks for confirmation.
+func (i *Input) CheckResetInput() (bool, error) {
 	i.app.Logger.Info("-----------------------------------------")
-	i.list.ListCommands()
+	i.app.Logger.Info(i.list.CommandsTable())
 
 	i.app.Logger.Info("")
 	i.app.Logger.Info("All commands will be erased...")
-	ok := helper.GetUserConfirmation("Continue to reset", i.app)
-	return ok
+
+	return helper.GetUserConfirmation("Continue to reset", i.app)
 }

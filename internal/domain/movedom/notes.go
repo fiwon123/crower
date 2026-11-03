@@ -12,6 +12,6 @@ func newMoveNote(subOp operations.SubOperationEnum, args []string) string {
 	return noteBuilder.
 		AddMainOperation(operations.Move).
 		AddSubOperation(subOp).
-		AddCrowerExec("crower move", args).
+		AddCrowerExec("move", args).
 		Build()
 }

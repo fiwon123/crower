@@ -1,13 +1,13 @@
 package listdom
 
 import (
-	"errors"
 	"fmt"
 	"runtime"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -15,7 +15,9 @@ import (
 
 // ErrUnsupportedOS is returned when a listing command has no shell invocation
 // for the running platform.
-var ErrUnsupportedOS = errors.New("unsupported operating system")
+func unsupportedOSError(goos string) error {
+	return fmt.Errorf("%w: %q", errors.ErrUnsupportedOS, goos)
+}
 
 type Handler struct {
 	app     *app.Config
@@ -39,51 +41,60 @@ func NewHandler(app *app.Config) *Handler {
 	}
 }
 
-// List all commands in order
+// ListCommands prints every managed command as a table.
+//
+// The table is built as one block and written once, so it is a single result on
+// the result stream rather than a row-by-row mix of table and status lines.
 func (h *Handler) ListCommands() {
-	h.app.Logger.Info("------------------------------------------------")
-	h.print(h.app.OrderKeys, h.app.AllCommandsByName)
+	h.app.Logger.Out(h.CommandsTable())
 }
 
-func (h *Handler) print(orderKeys []string, allCommands command.MapData) {
-	h.app.Logger.Info(fmt.Sprintf("%-3s %-12s %-16s %-8s \n", "Row", "Name", "Aliases", "Exec"))
-	h.app.Logger.Info("------------------------------------------------")
+// CommandsTable renders the table `list` prints, header included.
+//
+// It returns text rather than printing it because the same table is also a
+// prompt: delete, execute, update and reset show it before asking which row to
+// use, and there it is a diagnostic. A prompt that wrote to the result stream
+// put a table on stdout during a failed run, where a caller piping the results
+// read it as data.
+func (h *Handler) CommandsTable() string {
+	return h.commandsTable(h.app.OrderKeys, h.app.AllCommandsByName)
+}
+
+func (h *Handler) commandsTable(orderKeys []string, allCommands command.MapData) string {
+	var builder strings.Builder
+
+	builder.WriteString("------------------------------------------------\n")
+	fmt.Fprintf(&builder, "%-3s %-12s %-16s %s\n", "Row", "Name", "Aliases", "Exec")
+	builder.WriteString("------------------------------------------------\n")
 
 	for i, key := range orderKeys {
-		command := allCommands.Get(key)
-		h.app.Logger.Info(fmt.Sprintf("%-3d %-12s %-16v %-8s \n", i, command.Name, strings.Join(command.AllAlias, ","), command.Exec))
+		single := allCommands.Get(key)
+		if single == nil {
+			continue
+		}
+
+		fmt.Fprintf(&builder, "%-3d %-12s %-16s %s\n", i, single.Name, strings.Join(single.AllAlias, ","), single.Exec)
 	}
+
+	return builder.String()
 }
 
-// List all ListProcess running on user operational system (OS).
-func (h *Handler) ListProcess(args []string) error {
-
+// ListProcess lists the processes running on the user operational system (OS).
+func (h *Handler) ListProcess(args []string) (string, error) {
 	partName := ""
 	if len(args) > 0 {
 		partName = args[0]
 	}
 
-	out, err := utils.GetAllProcess(partName, true)
-	if err != nil {
-		h.app.Logger.Error("Error getting processes:", err)
-		return err
-	}
-
-	h.app.Logger.Info(out)
-
-	return nil
-
+	return utils.GetAllProcess(partName, true)
 }
 
-// List all history
-func (h *Handler) ListHistory() error {
-
-	h.app.Logger.Info(h.app.History.GetList())
-
-	return nil
+// ListHistory returns the history table.
+func (h *Handler) ListHistory() string {
+	return h.app.History.GetList()
 }
 
-// List all files and folder from a folderpath
+// ListFolder lists the files and folders under folderPath.
 func (h *Handler) ListFolder(folderPath string) (string, error) {
 	commandLine, err := listFolderCommand(h.goos, folderPath)
 	if err != nil {
@@ -93,7 +104,7 @@ func (h *Handler) ListFolder(folderPath string) (string, error) {
 	return h.execute.PerformExecute(commandLine)
 }
 
-// List all system variable
+// ListSystem lists every system variable.
 func (h *Handler) ListSystem() (string, error) {
 	commandLine, err := listSystemCommand(h.goos)
 	if err != nil {
@@ -103,7 +114,7 @@ func (h *Handler) ListSystem() (string, error) {
 	return h.execute.PerformExecute(commandLine)
 }
 
-// List system path variable
+// ListSysPath lists the system path variable.
 func (h *Handler) ListSysPath() (string, error) {
 	commandLine, err := listSysPathCommand(h.goos)
 	if err != nil {
@@ -120,9 +131,9 @@ func (h *Handler) ListSysPath() (string, error) {
 func listFolderCommand(goos string, folderPath string) (string, error) {
 	switch goos {
 	case "windows":
-		return fmt.Sprintf("dir '%s'", folderPath), nil
+		return fmt.Sprintf(`dir "%s"`, folderPath), nil
 	case "linux", "darwin":
-		return fmt.Sprintf("\"ls '%s'\"", folderPath), nil
+		return fmt.Sprintf(`ls -la "%s"`, folderPath), nil
 	default:
 		return "", unsupportedOSError(goos)
 	}
@@ -131,9 +142,9 @@ func listFolderCommand(goos string, folderPath string) (string, error) {
 func listSystemCommand(goos string) (string, error) {
 	switch goos {
 	case "windows":
-		return "'set'", nil
+		return "set", nil
 	case "linux", "darwin":
-		return "'printenv'", nil
+		return "printenv", nil
 	default:
 		return "", unsupportedOSError(goos)
 	}
@@ -142,14 +153,10 @@ func listSystemCommand(goos string) (string, error) {
 func listSysPathCommand(goos string) (string, error) {
 	switch goos {
 	case "windows":
-		return "'echo %PATH%'", nil
+		return "echo %PATH%", nil
 	case "linux", "darwin":
-		return "'echo $PATH'", nil
+		return `echo "$PATH"`, nil
 	default:
 		return "", unsupportedOSError(goos)
 	}
-}
-
-func unsupportedOSError(goos string) error {
-	return fmt.Errorf("%w: %q", ErrUnsupportedOS, goos)
 }

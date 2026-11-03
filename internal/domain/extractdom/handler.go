@@ -1,6 +1,7 @@
 package extractdom
 
 import (
+	stderrors "errors"
 	"fmt"
 	"path/filepath"
 	"runtime"
@@ -25,8 +26,13 @@ func NewHandler(app *app.Config) *Handler {
 	}
 }
 
-// Extract compressed files in output folder path
-func (h *Handler) Extract(paths []string, output string) {
+// Extract expands every archive in paths.
+//
+// Every archive is attempted; if any fails, the failures are returned together
+// so the command exits non-zero. The previous version logged a failure and
+// carried on, which a script read as success.
+func (h *Handler) Extract(paths []string, output string) error {
+	var failures []error
 
 	for _, f := range paths {
 
@@ -48,13 +54,14 @@ func (h *Handler) Extract(paths []string, output string) {
 
 		out, err := h.performExtract(ext, f, output)
 		if err != nil {
-			h.app.Logger.Error("failed", "out", string(out), "err", err)
+			failures = append(failures, fmt.Errorf("%s: %w", f, err))
 			continue
 		}
 
-		h.app.Logger.Info("output: ", "out", string(out))
+		h.app.Logger.Out(strings.TrimRight(string(out), "\n"))
 	}
 
+	return stderrors.Join(failures...)
 }
 
 func (h *Handler) performExtract(ext string, filePath string, outDir string) (string, error) {
@@ -82,5 +89,5 @@ func (h *Handler) performExtract(ext string, filePath string, outDir string) (st
 		return h.execute.PerformExecute(fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir))
 	}
 
-	return "", fmt.Errorf("failed to extract \n")
+	return "", fmt.Errorf("no extractor for .%s archives", ext)
 }

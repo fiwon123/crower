@@ -1,29 +1,22 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/restoredom"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/spf13/cobra"
 )
 
 // restoreCmd represents the restore command
 var restoreCmd = &cobra.Command{
-	Use:   "restore",
+	Use:   "restore <command>",
 	Short: "restore specific command",
 	Long:  `restore specific command`,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
+		}
 
-		app := app.InitApp(cfgFilePath)
-
-		core := restoredom.NewCore(app)
-
-		core.Restore(args)
+		return restoredom.NewCore(cfg).Restore(args)
 	},
-}
-
-func init() {
-
 }

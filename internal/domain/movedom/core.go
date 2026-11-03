@@ -1,6 +1,8 @@
 package movedom
 
 import (
+	stderrors "errors"
+
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/errors"
@@ -23,19 +25,28 @@ func NewCore(app *app.Config) *Core {
 	}
 }
 
-func (c *Core) Move(args []string) {
+// Move moves every path to the last argument, the output folder.
+//
+// Like copy, every path is attempted and the failures are returned together.
+func (c *Core) Move(args []string) error {
 	if len(args) == 0 {
-		errors.PrintNotArgs("1 or more filepath/folderpath to move and output folder as last argument", c.app)
-		return
+		return errors.NotEnoughArgs("1 or more filepath/folderpath to move and output folder as last argument")
 	}
 
 	isMoveFile := false
 	isMoveFolder := false
 	lastIndex := len(args) - 1
 	output := args[lastIndex]
-	args = args[:lastIndex]
-	for _, path := range args {
+	paths := args[:lastIndex]
+
+	var failures []error
+
+	// The note records the whole argument list, destination included: a
+	// history entry that omits where the files went cannot describe what
+	// happened.
+	for _, path := range paths {
 		var err error
+
 		if utils.FilePathExists(path) {
 			err = c.handler.MoveFile(path, output)
 			isMoveFile = true
@@ -45,9 +56,12 @@ func (c *Core) Move(args []string) {
 		}
 
 		if err != nil {
-			c.app.Logger.Error(err.Error())
-			return
+			failures = append(failures, err)
 		}
+	}
+
+	if len(failures) > 0 {
+		return stderrors.Join(failures...)
 	}
 
 	if isMoveFile && isMoveFolder {
@@ -58,5 +72,5 @@ func (c *Core) Move(args []string) {
 		c.app.History.Add(operations.Move, newMoveNote(operations.Folder, args))
 	}
 
-	c.app.Save()
+	return c.app.Save()
 }

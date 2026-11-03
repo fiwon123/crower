@@ -1,11 +1,9 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/domain/listdom"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/spf13/cobra"
 )
@@ -14,27 +12,28 @@ var last bool
 
 // executeCmd represents the execute command
 var executeCmd = &cobra.Command{
-	Use:   "execute",
+	Use:   "execute <command> [params...]",
 	Short: "execute command",
 	Long:  `execute command`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
-
-		app := app.InitApp(cfgFilePath)
-
-		listHandler := listdom.NewHandler(app)
-		core := executedom.NewCore(app, listHandler)
-
-		if last {
-			core.ExecuteLast(operations.Execute, args)
-		} else if createFlag {
-			core.ExecuteLast(operations.Create, args)
-		} else if updateFlag {
-			core.ExecuteLast(operations.Update, args)
-		} else {
-			core.ExecuteCommand(args)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
+
+		listHandler := listdom.NewHandler(cfg)
+		core := executedom.NewCore(cfg, listHandler)
+
+		switch {
+		case last:
+			return core.ExecuteLast(operations.Execute, args)
+		case createFlag:
+			return core.ExecuteLast(operations.Create, args)
+		case updateFlag:
+			return core.ExecuteLast(operations.Update, args)
+		}
+
+		return core.ExecuteCommand(args)
 	},
 }
 

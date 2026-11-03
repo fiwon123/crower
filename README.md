@@ -19,17 +19,21 @@
 
 ## Table of Contents
 
-- [Why crower?](#why-crower)
-- [Quick Start](#quick-start)
-- [Installation](#installation)
-- [Usage Recipes](#usage-recipes)
-- [Commands](#commands)
-- [Sharing Crower Files](#sharing-crower-files)
-- [Configuration](#configuration)
-- [Development](#development)
-- [License](#license)
+- [🔖 Why crower?](#-why-crower)
+- [🚀 Quick start](#-quick-start)
+- [📦 Installation](#-installation)
+- [🍳 Usage recipes](#-usage-recipes)
+- [📖 Commands](#-commands)
+- [🧩 Scripting](#-scripting)
+- [🤝 Sharing crower files](#-sharing-crower-files)
+- [⚙️ Configuration](#-configuration)
+- [🛠️ Development](#-development)
+- [📚 Documentation](#-documentation)
+- [💬 Contributing](#-contributing)
+- [⚠️ What is not proven](#-what-is-not-proven)
+- [📄 License](#-license)
 
-## Why crower?
+## 🔖 Why crower?
 
 Tired of retyping long, complex commands? Need to remember obscure CLI incantations? **crower** lets you:
 
@@ -43,7 +47,7 @@ Tired of retyping long, complex commands? Need to remember obscure CLI incantati
 - **📦 Share workflows** - Export and import crower files, or download from a registry
 - **🧠 Smart execution** - Proper parameter quoting, placeholders (`{1}`, `{2}`, `{}`), multi-step chains, and safe execution
 
-## Quick Start
+## 🚀 Quick start
 
 ```bash
 # Create a shortcut for a complex command
@@ -63,9 +67,9 @@ crower create greet "echo Hello {1}, welcome to {2}!"
 cr greet John Developer
 ```
 
-## Installation
+## 📦 Installation
 
-### Download Release (Recommended)
+### Download a release (recommended)
 
 Download the latest release for your platform from the [releases page](https://github.com/fiwon123/crower/releases).
 
@@ -95,7 +99,7 @@ containing `crower.exe` and `cr.exe` to your PATH.
 
 Verify either install with `crower --version`.
 
-### Build from Source
+### Build from source
 
 ```bash
 git clone https://github.com/fiwon123/crower.git
@@ -114,9 +118,9 @@ vet, test and build.
 
 **Requirements:** Go 1.25.4 or later
 
-## Usage Recipes
+## 🍳 Usage recipes
 
-### Development Workflow
+### 🛠️ Development workflow
 ```bash
 # Create shortcuts for common dev tasks
 crower create test "go test ./..."
@@ -128,14 +132,14 @@ crower create deploy "git push && ssh prod 'cd app && git pull && systemctl rest
 cr test && cr build
 ```
 
-### Multi-step Automation
+### Multi-step automation
 ```bash
 # Create a command with multiple steps (separated by newlines in exec)
 crower create release "echo 'Building...'\ngo build -o app .\necho 'Testing...'\ngo test ./...\necho 'Done!'"
 cr release
 ```
 
-### File Management Made Easy
+### File management made easy
 ```bash
 # Create files and folders
 crower create project -f  # creates file
@@ -150,7 +154,7 @@ crower open -f README.md
 crower open -o ./src
 ```
 
-### History & Undo
+### History and undo
 ```bash
 # View history
 cr list -i
@@ -162,7 +166,7 @@ cr revert 2
 cr restore <key>
 ```
 
-## Commands
+## 📖 Commands
 
 | Command | Description | Example |
 |---------|-------------|---------|
@@ -172,7 +176,7 @@ cr restore <key>
 | `update` | Update existing commands or last operation | `crower update -n oldname -n newname` |
 | `delete` | Delete commands, files, folders, or history | `crower delete name` |
 | `list` | List commands, history, processes, or files | `crower list` or `cr list -i` |
-| `execute`/`run` | Execute stored commands | `crower execute name` or just `cr name` |
+| `execute` | Execute stored commands | `crower execute name` or just `cr name` |
 | `open` | Open files, folders, or system settings | `crower open -f file.txt` |
 | `copy`/`move` | Copy or move files and folders | `crower copy src dst` |
 | `search` | Search files or web | `crower search -f pattern` |
@@ -186,11 +190,35 @@ cr restore <key>
 
 Use `crower <command> --help` for detailed options.
 
-## Sharing Crower Files
+## 🧩 Scripting
+
+crower is meant to be called from a script as well as typed by hand.
+
+- **Results go to stdout, diagnostics to stderr.** `crower list` writes the
+  table and nothing else to stdout; prompts, status lines, warnings and errors
+  go to stderr, so piping the results never picks them up.
+- **The exit status says whether the work happened.** `0` means it did — or that
+  you answered *no* to a confirmation, because declining is a choice. `1` means
+  it did not, and the reason is one line on stderr: `error: ...`.
+- **A prompt never waits forever.** With `--no-input`, or with stdin closed, a
+  command that needs an answer fails with a message instead of asking again.
+
+```bash
+# Take the result and leave the status lines behind
+greeting="$(crower execute greet)"
+
+# Fail the script when the delete did not happen, without a prompt to block it
+crower --no-input delete old-command || exit 1
+```
+
+`--config <path>` points a run at another configuration file, which is how a
+script uses its own set of commands without touching your personal one.
+
+## 🤝 Sharing crower files
 
 **Build once, share everywhere.** Perfect for onboarding, CI setups, or sharing workflows with your team.
 
-### Export Your Workflows
+### Export your workflows
 ```bash
 # Export all commands
 crower export -o my-workflows.toml
@@ -199,7 +227,7 @@ crower export -o my-workflows.toml
 crower export deploy -o deploy.toml
 ```
 
-### Import Workflows
+### Import workflows
 ```bash
 # Import from a file
 crower import my-workflows.toml
@@ -208,7 +236,7 @@ crower import my-workflows.toml
 crower import my-workflows.toml --overwrite
 ```
 
-### Pull from a Registry
+### Pull from a registry
 ```bash
 # Browse available packs
 crower share list
@@ -219,7 +247,7 @@ crower share pull docker-setup
 
 **Registry Protocol:** Any HTTP server can host crower packs using the simple manifest protocol (`index.json` + `packs/<name>.toml`). Check the [crower-resources](https://github.com/fiwon123/crower-resources) repo for examples.
 
-## Configuration
+## ⚙️ Configuration
 
 Crower stores data in `~/crower/` by default:
 - `crower.yaml` - Your stored commands (TOML format)
@@ -229,11 +257,14 @@ Crower stores data in `~/crower/` by default:
 
 Override with `--config /path/to/config.yaml`
 
-## Development
+## 🛠️ Development
 
 ```bash
-# Run tests
+# The local gate: gofmt, vet, go test, go build
 make check
+
+# Run tests only
+go test ./...
 
 # Build for all platforms
 make release
@@ -244,6 +275,46 @@ go run ./ --help
 
 See [AGENTS.md](AGENTS.md) and [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) for architecture details.
 
-## License
+The dev sandbox runs the same pinned Go toolchain on every machine:
+`make dev-up` (or `docker compose up` on any OS with Docker). Native Windows
+uses `python scripts/dev-up.py dev-up`. Run `make help` for every target.
+
+## 📚 Documentation
+
+| I want to… | Read |
+|---|---|
+| see real recipes | [Usage recipes](#-usage-recipes) |
+| look up a command or flag | [Commands](#-commands) |
+| script against crower | [Scripting](#-scripting) |
+| understand the internals | [AGENTS.md](AGENTS.md) · [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) |
+| help prove a claim | [Verifying claims](https://github.com/fiwon123/crower/wiki/Verifying-claims) |
+
+## 💬 Contributing
+
+Issues, ideas, questions and pull requests are welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md). One feature per pull request. Say what ran
+and what did not, and do not describe a skipped check as a pass.
+
+The most useful contribution right now is **running the unproven parts on real
+hardware** — see [What is not proven](#-what-is-not-proven).
+
+## ⚠️ What is not proven
+
+This project says what it verified. CI formats, vets, tests and builds on
+Linux/amd64, then cross-compiles six archives on the same runner — no gate
+executes what it built.
+
+- **The macOS build runs** — the darwin archives are never executed, and shell-backed operations are reported broken ([#129](https://github.com/fiwon123/crower/issues/129)).
+- **The Windows build runs** — cross-compiled on Linux, never started.
+- **The arm64 builds run** — built, never executed on ARM hardware.
+- **The TUI and desktop surfaces render** — no gate draws a window; the tests assert the model, not pixels.
+- **History and revert across a real session** — the suite uses isolated temp directories, not a day of real use.
+
+Running the program and reporting exactly what happened — including "it worked"
+— is the most useful contribution right now. The steps for each claim, and what
+to record, are on the wiki's
+[Verifying claims](https://github.com/fiwon123/crower/wiki/Verifying-claims) page.
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

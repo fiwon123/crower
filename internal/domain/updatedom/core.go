@@ -5,7 +5,6 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/internal/interfaces"
 	"github.com/fiwon123/crower/pkg/utils"
@@ -29,56 +28,71 @@ func NewCore(app *app.Config, listHandler interfaces.ListHandler) *Core {
 	}
 }
 
-func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec string) {
+// UpdateCommand changes the name, aliases or exec of a managed command.
+func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec string) error {
 
 	key := ""
 	if len(args) != 0 {
 		key = args[0]
 	}
 
-	ok := c.input.CheckUpdateInput(&key, &name, &allAlias, &exec)
-	if !ok {
-		c.app.Logger.Info("Cancelling update...")
-		return
+	ok, err := c.input.CheckUpdateInput(&key, &name, &allAlias, &exec)
+	if err != nil {
+		return err
 	}
 
-	oldCommand, newCommand := c.performUpdateCommand(key, name, allAlias, exec)
-	if oldCommand == nil || newCommand == nil {
-		return
+	if !ok {
+		c.app.Logger.Info("Cancelling update...")
+		return nil
+	}
+
+	oldCommand, newCommand, err := c.performUpdateCommand(key, name, allAlias, exec)
+	if err != nil {
+		return err
 	}
 
 	c.app.History.Add(operations.Update, newUpdateCommmandNote(args, oldCommand, newCommand))
-	c.app.Save()
+
+	return c.app.Save()
 }
 
-func (c *Core) performUpdateCommand(key string, name string, allAlias []string, exec string) (*command.Data, *command.Data) {
+func (c *Core) performUpdateCommand(
+	key string,
+	name string,
+	allAlias []string,
+	exec string,
+) (*command.Data, *command.Data, error) {
 	oldCommand, newCommand, err := c.handler.UpdateCommand(key, name, allAlias, exec)
 	if err != nil {
-		c.app.Logger.Error("Error update command: ", "error", err, "key", key, "name", name, "alias", allAlias, "exec", exec)
-		return nil, nil
+		return nil, nil, err
 	}
 
-	c.app.Logger.Info("updated command: ", c.app.AllCommandsByName)
-	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
+	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+		return nil, nil, err
+	}
 
-	return oldCommand, newCommand
+	c.app.Logger.Info("updated command: ", key)
+
+	return oldCommand, newCommand, nil
 }
 
-func (c *Core) UpdateLast(op operations.MainOperationEnum, name string, allAlias []string, exec string) {
+// UpdateLast updates the command touched by the last operation of the given
+// kind.
+func (c *Core) UpdateLast(op operations.MainOperationEnum, name string, allAlias []string, exec string) error {
 	content := c.app.GetLast(op)
 
 	if content == nil {
-		errors.PrintCommandNotFoundError(c.app)
-		return
+		return commandNotFound(op)
 	}
 
 	key := content.CommandName
 
-	oldCommand, newCommand := c.performUpdateCommand(key, name, allAlias, exec)
-	if oldCommand == nil || newCommand == nil {
-		return
+	oldCommand, newCommand, err := c.performUpdateCommand(key, name, allAlias, exec)
+	if err != nil {
+		return err
 	}
 
 	c.app.History.Add(operations.Update, newUpdateLastNote(op, oldCommand, newCommand))
-	c.app.Save()
+
+	return c.app.Save()
 }

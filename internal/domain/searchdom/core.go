@@ -20,46 +20,43 @@ func NewCore(app *app.Config) *Core {
 	}
 }
 
-func (c *Core) SearchBrowser(args []string) {
+// SearchBrowser opens a search in the default browser.
+func (c *Core) SearchBrowser(args []string) error {
 	content := ""
 	if len(args) > 0 {
 		content = args[0]
 	}
 
-	c.handler.SearchBrowser(content)
+	out, err := c.handler.SearchBrowser(content)
 
-	c.app.History.Add(operations.Revert, newSearchBrowserNote(args))
-	c.app.Save()
+	return c.finishSearch(out, err, newSearchBrowserNote(args))
 }
 
-func (c *Core) SearchFile(args []string) {
+// SearchFile searches files under a path.
+func (c *Core) SearchFile(args []string) error {
 	content, currentPath := assertArgs(args)
 
 	out, err := c.handler.SearchFile(currentPath, content)
-	c.assertSearchResult(out, err)
 
-	c.app.History.Add(operations.Revert, newSearchFileNote(args))
-	c.app.Save()
+	return c.finishSearch(out, err, newSearchFileNote(args))
 }
 
-func (c *Core) SearchFolder(args []string) {
+// SearchFolder searches folders under a path.
+func (c *Core) SearchFolder(args []string) error {
 	content, currentPath := assertArgs(args)
 
 	out, err := c.handler.SearchFolder(currentPath, content)
-	c.assertSearchResult(out, err)
 
-	c.app.History.Add(operations.Revert, newSearchFolderNote(args))
-	c.app.Save()
+	return c.finishSearch(out, err, newSearchFolderNote(args))
 }
 
-func (c *Core) SearchFileAndFolder(args []string) {
+// SearchFileAndFolder searches files and folders under a path.
+func (c *Core) SearchFileAndFolder(args []string) error {
 	content, currentPath := assertArgs(args)
 
 	out, err := c.handler.SearchFileAndFolder(currentPath, content)
-	c.assertSearchResult(out, err)
 
-	c.app.History.Add(operations.Revert, newSearchFileAndFolderNote(args))
-	c.app.Save()
+	return c.finishSearch(out, err, newSearchFileAndFolderNote(args))
 }
 
 func assertArgs(args []string) (string, string) {
@@ -74,10 +71,18 @@ func assertArgs(args []string) (string, string) {
 	return content, currentPath
 }
 
-func (c *Core) assertSearchResult(out string, err error) {
+// finishSearch reports a search and records it.
+//
+// The operation recorded is Search. It was Revert for every search, which
+// mislabelled the history and made `revert`/`restore` address the wrong entry.
+func (c *Core) finishSearch(out string, err error, note string) error {
 	if err != nil {
-		c.app.Logger.Error("Error trying to search: ", out, err)
+		return err
 	}
 
-	c.app.Logger.Info(out)
+	c.app.Logger.Out(out)
+
+	c.app.History.Add(operations.Search, note)
+
+	return c.app.Save()
 }

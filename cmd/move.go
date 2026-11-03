@@ -1,17 +1,14 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/movedom"
-	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/spf13/cobra"
 )
 
 // Cmd represents the move command
 var moveCmd = &cobra.Command{
-	Use:   "move",
+	Use:   "move <source...> <destination>",
 	Short: "move file or folder to other location",
 	Long: `move file or folder to other location
 
@@ -21,20 +18,16 @@ Examples:
 	crower move "C:\Users\Test\Desktop\Test\Folder" "C:\Users\Test\Desktop\Test\Out"
 	crower move "C:\Users\Test\Desktop\Test\Folder_1" "C:\Users\Test\Desktop\Test\Folder_2" "C:\Users\Test\Desktop\Test\Out"
 `,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
-
-		app := app.InitApp(cfgFilePath)
-
-		core := movedom.NewCore(app)
-
-		if len(args) > 0 {
-			core.Move(args)
-		} else {
-			errors.PrintCmdHelp("move", app)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
-	},
-}
 
-func init() {
+		if len(args) == 0 {
+			return missingArgs(cmd, "source paths and a destination")
+		}
+
+		return movedom.NewCore(cfg).Move(args)
+	},
 }

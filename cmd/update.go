@@ -1,12 +1,9 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/internal/domain/updatedom"
-	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/spf13/cobra"
 )
@@ -19,7 +16,7 @@ var execute bool
 
 // Cmd represents the update command
 var updateCmd = &cobra.Command{
-	Use:   "update",
+	Use:   "update [command]",
 	Short: "update commands",
 	Long: `update commands
 
@@ -37,33 +34,34 @@ Examples:
 	crower update --execute
 	crower update com_name --name "test" --exec "echo t"
 `,
-	Run: func(cmd *cobra.Command, args []string) {
-		cfgFilePath, _ := helper.GetPersistentConfigFlag(cmd)
-
-		app := app.InitApp(cfgFilePath)
-
-		listHandler := listdom.NewHandler(app)
-		core := updatedom.NewCore(app, listHandler)
-
-		if last {
-			core.UpdateLast(operations.Update, name, allAlias, exec)
-		} else if create {
-			core.UpdateLast(operations.Create, name, allAlias, exec)
-		} else if execute {
-			core.UpdateLast(operations.Execute, name, allAlias, exec)
-		} else if len(args) > 0 {
-			core.UpdateCommand(args, name, allAlias, exec)
-		} else {
-			errors.PrintCmdHelp("update", app)
+	RunE: func(cmd *cobra.Command, args []string) error {
+		cfg, err := newApp(cmd)
+		if err != nil {
+			return err
 		}
 
+		listHandler := listdom.NewHandler(cfg)
+		core := updatedom.NewCore(cfg, listHandler)
+
+		switch {
+		case last:
+			return core.UpdateLast(operations.Update, name, allAlias, exec)
+		case create:
+			return core.UpdateLast(operations.Create, name, allAlias, exec)
+		case execute:
+			return core.UpdateLast(operations.Execute, name, allAlias, exec)
+		case len(args) > 0:
+			return core.UpdateCommand(args, name, allAlias, exec)
+		}
+
+		return missingArgs(cmd, "a command name or alias")
 	},
 }
 
 func init() {
-	helper.AddNameFlag(updateCmd, &name)
-	helper.AddAllAliasFlag(updateCmd, &allAlias)
-	helper.AddExecFlag(updateCmd, &exec)
+	AddNameFlag(updateCmd, &name)
+	AddAllAliasFlag(updateCmd, &allAlias)
+	AddExecFlag(updateCmd, &exec)
 
 	updateCmd.Flags().BoolVarP(&last, "last", "l", false, "update recent updated command")
 	updateCmd.Flags().BoolVarP(&create, "create", "c", false, "update recent created command")

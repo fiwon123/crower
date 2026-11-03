@@ -1,8 +1,6 @@
 package upgradedom
 
 import (
-	"fmt"
-
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/checkdom"
@@ -26,27 +24,27 @@ func NewCore(app *app.Config) *Core {
 	}
 }
 
-func (c *Core) UpgradeApp(currentVersion string) {
+// UpgradeApp replaces the running binary with the newest release.
+func (c *Core) UpgradeApp(currentVersion string) error {
 	newVersion, err := c.checkHandler.CheckNewVersion(currentVersion)
 	if err != nil {
-		c.app.Logger.Error(err.Error())
-		return
+		return err
 	}
+
+	c.app.Logger.Info("Current Version: ", currentVersion)
 
 	if newVersion == currentVersion {
-		c.app.Logger.Info("Current Version: ", "currentVersion", currentVersion)
 		c.app.Logger.Info("already up-to-date")
-		return
+		return nil
 	}
 
-	err = c.handler.UpgradeApp(newVersion)
-	if err != nil {
-		c.app.Logger.Error(err.Error())
-		return
+	if err := c.handler.UpgradeApp(newVersion); err != nil {
+		return err
 	}
 
-	c.app.Logger.Info(fmt.Sprintf("crower upgraded from %s to %s \n", currentVersion, newVersion))
+	c.app.Logger.Info("crower upgraded from ", currentVersion, " to ", newVersion)
 
 	c.app.History.Add(operations.Upgrade, newUpgradeNote())
-	c.app.Save()
+
+	return c.app.Save()
 }

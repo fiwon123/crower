@@ -1,8 +1,9 @@
 package createdom
 
 import (
+	stderrors "errors"
+	"fmt"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
@@ -33,207 +34,258 @@ func NewCore(app *app.Config, openHandler opendom.Handler) *Core {
 	}
 }
 
-// Verify parameters to process create operation
-func (c *Core) CheckCreateInput(name *string, alias *[]string, exec *string) {
+// CheckCreateInput asks for the fields a create command was not given.
+func (c *Core) CheckCreateInput(name *string, alias *[]string, exec *string) error {
 	if *name == "" {
-		*name = helper.GetUserInput("New Name ", helper.IsValidInput, c.app).(string)
+		value, err := helper.GetUserInput("New Name ", helper.IsValidInput, c.app)
+		if err != nil {
+			return err
+		}
+
+		*name = value.(string)
 	}
 
 	if len(*alias) == 0 {
-		ok := helper.GetUserConfirmation("Do you want to add alias", c.app)
+		ok, err := helper.GetUserConfirmation("Do you want to add alias", c.app)
+		if err != nil {
+			return err
+		}
 
 		if ok {
-			*alias = helper.InputAlias(c.app)
+			*alias, err = helper.InputAlias(c.app)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
 	if *exec == "" {
-		*exec = helper.GetUserInput("New Exec ", helper.IsValidInput, c.app).(string)
+		value, err := helper.GetUserInput("New Exec ", helper.IsValidInput, c.app)
+		if err != nil {
+			return err
+		}
+
+		*exec = value.(string)
 	}
 
+	return nil
 }
 
-func (c *Core) CreateCommand(allAlias []string, args []string) {
+// CreateCommand adds a managed command.
+func (c *Core) CreateCommand(allAlias []string, args []string) error {
 	name := ""
 	exec := ""
 	if len(args) == 2 {
 		name = args[0]
 		exec = args[1]
 	} else {
-		c.CheckCreateInput(&name, &allAlias, &exec)
+		if err := c.CheckCreateInput(&name, &allAlias, &exec); err != nil {
+			return err
+		}
 	}
 
-	command := c.performCreateCommand(name, allAlias, exec)
-	if command == nil {
-		return
-	}
-
-	c.app.History.Add(operations.Create, newCreateCommandNote(command, args))
-	c.app.Save()
-}
-
-func (c *Core) performCreateCommand(name string, allAlias []string, exec string) *command.Data {
-	command, err := c.handler.CreateCommand(name, allAlias, exec)
-
+	created, err := c.performCreateCommand(name, allAlias, exec)
 	if err != nil {
-		c.app.Logger.Error("Error add command: ", "error", err, "name", name, "alias", allAlias, "exec", exec)
-		return nil
+		return err
 	}
 
-	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
-	c.app.Logger.Info("added new command: ", "allCommands", c.app.AllCommandsByName)
+	c.app.History.Add(operations.Create, newCreateCommandNote(created, args))
 
-	return command
+	return c.app.Save()
 }
 
-func (c *Core) CreateProcess(name string, args []string) {
-	command, err := c.handler.CreateProcess(name, args)
+func (c *Core) performCreateCommand(name string, allAlias []string, exec string) (*command.Data, error) {
+	created, err := c.handler.CreateCommand(name, allAlias, exec)
 	if err != nil {
-		c.app.Logger.Error("Error add command by process: ", "error", err, "name", name, "args", args)
-		return
+		return nil, fmt.Errorf("add command %q: %w", name, err)
 	}
 
-	utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath)
-	c.app.Logger.Info("added new command by process: ", "allCommands", c.app.AllCommandsByName)
+	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+		return nil, err
+	}
 
-	c.app.History.Add(operations.Create, newCreateProcessNote(command, args))
-	c.app.Save()
+	c.app.Logger.Info("added new command: ", name)
+
+	return created, nil
 }
 
-func (c *Core) CreateSystemVariable(args []string) {
-	newVar := ""
-	value := ""
-	if len(args) >= 2 {
-		newVar = args[0]
-		value = args[1]
-	} else {
-		errors.PrintNotArgs("var name and var value", c.app)
-		return
+// CreateProcess adds a managed command built from a running process.
+func (c *Core) CreateProcess(name string, args []string) error {
+	created, err := c.handler.CreateProcess(name, args)
+	if err != nil {
+		return fmt.Errorf("add command by process: %w", err)
 	}
+
+	if err := utils.WriteToml(c.app.AllCommandsByName, c.app.CfgFilePath); err != nil {
+		return err
+	}
+
+	c.app.Logger.Info("added new command by process: ", name)
+
+	c.app.History.Add(operations.Create, newCreateProcessNote(created, args))
+
+	return c.app.Save()
+}
+
+// CreateSystemVariable adds a system variable.
+func (c *Core) CreateSystemVariable(args []string) error {
+	if len(args) < 2 {
+		return errors.NotEnoughArgs("var name and var value")
+	}
+
+	newVar := args[0]
+	value := args[1]
 
 	out, err := c.handler.CreateSystemVariable(newVar, value)
 	if err != nil {
-		c.app.Logger.Error(err.Error())
-		return
+		return err
 	}
 
 	c.app.Logger.Info(out)
 
 	c.app.History.Add(operations.Create, newCreateSystemVariableNote(args))
-	c.app.Save()
+
+	return c.app.Save()
 }
 
-func (c *Core) CreateSystemPathVariable(args []string) {
-	newPath := ""
-	if len(args) > 0 {
-		newPath = args[0]
-	} else {
-		errors.PrintNotArgs("path", c.app)
-		return
+// CreateSystemPathVariable adds a folder to the system path variable.
+func (c *Core) CreateSystemPathVariable(args []string) error {
+	if len(args) == 0 {
+		return errors.NotEnoughArgs("path")
 	}
 
-	out, err := c.handler.CreateSystemPathVariable(newPath)
+	out, err := c.handler.CreateSystemPathVariable(args[0])
 	if err != nil {
-		c.app.Logger.Error(err.Error())
-		return
+		return err
 	}
 
 	c.app.Logger.Info(out)
 
 	c.app.History.Add(operations.Create, newCreateSystemPathVariableNote(args))
-	c.app.Save()
+
+	return c.app.Save()
 }
 
-func (c *Core) CreateFile(args []string) {
+// CreateFile creates every path, reporting all failures together.
+func (c *Core) CreateFile(args []string) error {
+	if len(args) == 0 {
+		return errors.NotEnoughArgs("file path")
+	}
+
+	var failures []error
+
 	for _, path := range args {
-		err := c.handler.CreateFile(path)
-		if err != nil {
-			c.app.Logger.Error(err.Error())
+		if err := c.handler.CreateFile(path); err != nil {
+			failures = append(failures, err)
 		}
+	}
+
+	if len(failures) > 0 {
+		return stderrors.Join(failures...)
 	}
 
 	c.app.History.Add(operations.Create, generateCreateFile(args))
-	c.app.Save()
+
+	return c.app.Save()
 }
 
-func (c *Core) CreateFolder(args []string) {
+// CreateFolder creates every path, reporting all failures together.
+func (c *Core) CreateFolder(args []string) error {
+	if len(args) == 0 {
+		return errors.NotEnoughArgs("folder path")
+	}
+
+	var failures []error
+
 	for _, path := range args {
-		err := c.handler.CreateFolder(path)
-		if err != nil {
-			c.app.Logger.Error(err.Error())
+		if err := c.handler.CreateFolder(path); err != nil {
+			failures = append(failures, err)
 		}
+	}
+
+	if len(failures) > 0 {
+		return stderrors.Join(failures...)
 	}
 
 	c.app.History.Add(operations.Create, newCreateFolder(args))
-	c.app.Save()
+
+	return c.app.Save()
 }
 
-func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string) {
-	name := ""
-	if len(args) > 0 {
-		name = args[0]
-	} else {
-		errors.PrintNotArgs("name", c.app)
-		return
+// CreateLastCommand re-creates the command touched by the last operation of the
+// given kind.
+func (c *Core) CreateLastCommand(op operations.MainOperationEnum, args []string) error {
+	if len(args) == 0 {
+		return errors.NotEnoughArgs("name")
 	}
+
+	name := args[0]
 
 	content := c.app.GetLast(op)
-
 	if content == nil {
-		errors.PrintCommandNotFoundError(c.app)
-		return
+		return errors.CommandNotFound(string(op))
 	}
 
-	exec := ""
-	key := content.CommandName
-	if key == "" {
-		splitted := strings.SplitSeq(content.Note, ";")
-		for keyValRaw := range splitted {
-			keyVal := strings.Split(keyValRaw, "=")
-			if keyVal[0] == "exec" {
-				exec = keyVal[1]
-				break
-			}
+	exec := execFromNote(content.Note)
+	if exec == "" {
+		return fmt.Errorf("the last %q operation carries no exec to reuse", op)
+	}
+
+	created, err := c.performCreateCommand(name, []string{}, exec)
+	if err != nil {
+		return err
+	}
+
+	c.app.History.Add(operations.Create, newCreateCommandLastExecuteNote(created))
+
+	return c.app.Save()
+}
+
+// execFromNote reads the exec field out of a history note such as
+// "exec=echo hi;name=hello".
+//
+// The field is checked for a separator first: the old code indexed the split
+// result without looking, so a note carrying a bare "exec" word panicked.
+func execFromNote(note string) string {
+	for keyValRaw := range strings.SplitSeq(note, ";") {
+		keyVal := strings.SplitN(keyValRaw, "=", 2)
+		if len(keyVal) == 2 && keyVal[0] == "exec" {
+			return keyVal[1]
 		}
 	}
 
-	command := c.performCreateCommand(name, []string{}, exec)
-	if command == nil {
-		return
-	}
-
-	c.app.History.Add(operations.Create, newCreateCommandLastExecuteNote(command))
-	c.app.Save()
+	return ""
 }
 
-func (c *Core) CreateScriptCommand(args []string) {
-	name := ""
-	if len(args) > 0 {
-		name = args[0]
-	} else {
-		errors.PrintNotArgs("name", c.app)
+// CreateScriptCommand creates a script file, registers it as a command, and
+// opens the folder that holds it.
+func (c *Core) CreateScriptCommand(args []string) error {
+	if len(args) == 0 {
+		return errors.NotEnoughArgs("name")
 	}
+
+	name := args[0]
 
 	scriptFilePath, err := c.handler.CreateScriptCommand(name)
 	if err != nil {
-		c.app.Logger.Error(err.Error())
-		return
+		return err
 	}
 
-	var command *command.Data
-	switch runtime.GOOS {
-	case "windows":
-		command = c.performCreateCommand(name, []string{}, scriptFilePath)
-	case "linux":
-		command = c.performCreateCommand(name, []string{}, scriptFilePath)
+	// The handler only returns a path on a platform it can build one for, so
+	// there is no per-platform choice left to make here. The old switch
+	// repeated the same call for two systems and returned success on any
+	// other, which is how `create --script` could report success and create
+	// nothing.
+	created, err := c.performCreateCommand(name, []string{}, scriptFilePath)
+	if err != nil {
+		return err
 	}
 
-	if command == nil {
-		return
+	if err := c.openHandler.Open([]string{filepath.Dir(scriptFilePath)}); err != nil {
+		return err
 	}
 
-	c.openHandler.Open([]string{filepath.Dir(scriptFilePath)})
+	c.app.History.Add(operations.Create, newCreateScriptCommandNote(created, args))
 
-	c.app.History.Add(operations.Create, newCreateScriptCommandNote(command, args))
-	c.app.Save()
+	return c.app.Save()
 }

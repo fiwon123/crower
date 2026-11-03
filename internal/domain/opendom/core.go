@@ -22,7 +22,8 @@ func NewCore(app *app.Config) *Core {
 	}
 }
 
-func (c *Core) Open(args []string) {
+// Open opens every path with the platform's default application.
+func (c *Core) Open(args []string) error {
 
 	paths := []string{}
 	for _, arg := range args {
@@ -38,43 +39,54 @@ func (c *Core) Open(args []string) {
 		}
 	}
 
-	c.handler.Open(paths)
+	if err := c.handler.Open(paths); err != nil {
+		return err
+	}
 
 	c.app.History.Add(operations.Open, newOpenNote(args))
-	c.app.Save()
+
+	return c.app.Save()
 }
 
-func (c *Core) OpenFile(args []string) {
+// OpenFile opens a file, defaulting to the configuration file.
+func (c *Core) OpenFile(args []string) error {
 	currentPath := c.app.CfgFilePath
 	if len(args) == 0 {
 		args = append(args, currentPath)
 	}
 
-	c.handler.Open(args)
+	if err := c.handler.Open(args); err != nil {
+		return err
+	}
 
 	c.app.History.Add(operations.Open, newOpenFolderNote(args))
-	c.app.Save()
+
+	return c.app.Save()
 }
 
-func (c *Core) OpenFolder(args []string) {
+// OpenFolder opens a folder, defaulting to the configuration folder.
+func (c *Core) OpenFolder(args []string) error {
 	currentPath := c.app.CfgFilePath
 	if len(args) == 0 {
 		args = append(args, filepath.Dir(currentPath))
 	}
 
-	c.handler.Open(args)
+	if err := c.handler.Open(args); err != nil {
+		return err
+	}
 
 	c.app.History.Add(operations.Open, newOpenFolderNote(args))
-	c.app.Save()
+
+	return c.app.Save()
 }
 
-func (c *Core) OpenSystem() {
-	err := c.handler.OpenSystem()
-	if err != nil {
-		c.app.Logger.Error("failed to open system variable: ", "error", err)
-		return
+// OpenSystem opens the platform's system variable editor.
+func (c *Core) OpenSystem() error {
+	if err := c.handler.OpenSystem(); err != nil {
+		return err
 	}
 
 	c.app.History.Add(operations.Open, newOpenSystemNote())
-	c.app.Save()
+
+	return c.app.Save()
 }

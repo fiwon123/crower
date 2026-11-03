@@ -23,26 +23,31 @@ func NewCore(app *app.Config) *Core {
 	}
 }
 
-func (c *Core) Restore(args []string) {
+// Restore brings back the command stored in a history entry.
+func (c *Core) Restore(args []string) error {
 	key := ""
 	if len(args) > 0 {
 		key = args[0]
 	}
 
-	content, ok := c.input.CheckRestoreInput()
+	content, ok, err := c.input.CheckRestoreInput()
+	if err != nil {
+		return err
+	}
+
 	if !ok {
-		c.app.Logger.Info("Cancelling Restore...")
-		return
+		c.app.Logger.Info("Cancelling restore...")
+		return nil
 	}
 
 	out, err := c.handler.RestoreHistory(key, content)
 	if err != nil {
-		c.app.Logger.Error(err.Error())
-		return
+		return err
 	}
 
-	c.app.Logger.Info("restored command: ", "out", out)
+	c.app.Logger.Info("restored command: ", out)
 
 	c.app.History.Add(operations.Restore, newRestoreNote(out))
-	c.app.Save()
+
+	return c.app.Save()
 }
