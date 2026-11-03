@@ -29,10 +29,8 @@ func writeTar(t *testing.T, archivePath string, name string, content string) {
 	if err != nil {
 		t.Fatalf("create %s: %v", archivePath, err)
 	}
-	defer file.Close()
 
 	writer := tar.NewWriter(file)
-	defer writer.Close()
 
 	header := &tar.Header{Name: name, Mode: 0o644, Size: int64(len(content))}
 	if err := writer.WriteHeader(header); err != nil {
@@ -41,6 +39,17 @@ func writeTar(t *testing.T, archivePath string, name string, content string) {
 
 	if _, err := writer.Write([]byte(content)); err != nil {
 		t.Fatalf("write %s: %v", name, err)
+	}
+
+	// The trailer is only written on Close, and the file must be closed after
+	// it: a deferred Close would hide both failures behind a confusing error
+	// from Extract.
+	if err := writer.Close(); err != nil {
+		t.Fatalf("close tar %s: %v", archivePath, err)
+	}
+
+	if err := file.Close(); err != nil {
+		t.Fatalf("close %s: %v", archivePath, err)
 	}
 }
 
@@ -148,5 +157,48 @@ func TestExtractUnknownFormatFails(t *testing.T) {
 
 	if err := handler.Extract([]string{archive}, ""); err == nil {
 		t.Fatal("Extract accepted a format it cannot extract")
+	}
+}
+
+// Every archive is attempted: one bad path must not stop the rest, and the
+// failures are returned together.
+func TestExtractKeepsGoingAfterAFailure(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("see TestExtractFailsOnWindows: the command quotes with single quotes, which cmd does not read")
+	}
+
+	aDir, _, aTar, _ := prepare(t)
+	bad := filepath.Join(t.TempDir(), "bad.lz4")
+
+	if err := newHandler(t).Extract([]string{bad, aTar}, ""); err == nil {
+		t.Fatal("Extract returned no error for a format it cannot extract")
+	}
+
+	if _, err := os.Stat(filepath.Join(aDir, "a.txt")); err != nil {
+		t.Errorf("the good archive was not extracted after a bad one: %v", err)
+	}
+}
+
+// A bare archive name has no directory component, so the default destination
+// is the working directory.
+func TestExtractWithoutOutInTheWorkingDirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("see TestExtractFailsOnWindows: the command quotes with single quotes, which cmd does not read")
+	}
+
+	dir := t.TempDir()
+	writeTar(t, filepath.Join(dir, "a.tar"), "a.txt", "from a")
+	writeTar(t, filepath.Join(dir, "b.tar"), "b.txt", "from b")
+
+	t.Chdir(dir)
+
+	if err := newHandler(t).Extract([]string{"a.tar", "b.tar"}, ""); err != nil {
+		t.Fatalf("Extract: %v", err)
+	}
+
+	for _, name := range []string{"a.txt", "b.txt"} {
+		if _, err := os.Stat(filepath.Join(dir, name)); err != nil {
+			t.Errorf("%s is not in the working directory: %v", name, err)
+		}
 	}
 }
