@@ -11,7 +11,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/domain/sharedom"
+	"github.com/fiwon123/crower/internal/legacy/sharedom"
 )
 
 const greetPack = `[greet]

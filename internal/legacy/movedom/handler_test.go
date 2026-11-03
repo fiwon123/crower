@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/domain/createdom"
-	"github.com/fiwon123/crower/internal/domain/movedom"
+	"github.com/fiwon123/crower/internal/legacy/createdom"
+	"github.com/fiwon123/crower/internal/legacy/movedom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
 

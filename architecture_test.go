@@ -51,19 +51,6 @@ type importRule struct {
 	// noExternal forbids third-party imports (any path whose first element
 	// contains a dot), so a ring cannot quietly take a dependency.
 	noExternal bool
-
-	// skip exempts a package from the rule. It exists so the legacy
-	// `internal/domain/<op>dom` packages can stay where they are during the
-	// migration without switching the rule off for the ring that replaces
-	// them; #215 Phase 5 deletes them and the exemption goes with them.
-	skip func(relativeDir string) bool
-}
-
-// legacyOperationPackage recognises the `<op>dom` packages the refactor
-// replaces. They predate the rings, so they are exempt from the ring rules
-// until they are deleted rather than moved.
-func legacyOperationPackage(relativeDir string) bool {
-	return strings.HasSuffix(filepath.Base(relativeDir), "dom")
 }
 
 var rules = []importRule{
@@ -128,7 +115,6 @@ var rules = []importRule{
 		dir:                "internal/domain",
 		noModuleOutsideOwn: true,
 		noExternal:         true,
-		skip:               legacyOperationPackage,
 	},
 	{
 		// Ring 2. Use cases may reach the domain and their ports, never an
@@ -141,6 +127,7 @@ var rules = []importRule{
 			"internal/data",
 			"internal/gui",
 			"internal/desktop",
+			"internal/legacy",
 			"cmd",
 		},
 	},
@@ -153,6 +140,7 @@ var rules = []importRule{
 			"internal/data",
 			"internal/gui",
 			"internal/desktop",
+			"internal/legacy",
 			"cmd",
 		},
 	},
@@ -251,15 +239,7 @@ func TestLayerDependencies(t *testing.T) {
 	for _, rule := range rules {
 		packages := packagesUnder(t, rule.dir)
 
-		applicable := 0
-
-		for _, pkg := range packages {
-			if rule.skip != nil && rule.skip(pkg.path) {
-				continue
-			}
-
-			applicable++
-		}
+		applicable := len(packages)
 
 		if applicable == 0 {
 			if rule.required {
@@ -275,10 +255,6 @@ func TestLayerDependencies(t *testing.T) {
 		t.Logf("%s: %d package(s)", rule.name, applicable)
 
 		for _, pkg := range packages {
-			if rule.skip != nil && rule.skip(pkg.path) {
-				continue
-			}
-
 			for _, imported := range pkg.imports {
 				if violation := rule.violation(pkg.path, imported); violation != "" {
 					t.Errorf("%s (in %s) imports %s: %s", rule.name, pkg.path, imported, violation)

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/fiwon123/crower/internal/domain/checkdom"
-	"github.com/fiwon123/crower/internal/domain/executedom"
-	"github.com/fiwon123/crower/internal/domain/listdom"
-	"github.com/fiwon123/crower/internal/domain/upgradedom"
+	"github.com/fiwon123/crower/internal/legacy/checkdom"
+	"github.com/fiwon123/crower/internal/legacy/executedom"
+	"github.com/fiwon123/crower/internal/legacy/listdom"
+	"github.com/fiwon123/crower/internal/legacy/upgradedom"
 
 	"github.com/spf13/cobra"
 )

@@ -5,9 +5,9 @@ import (
 	"github.com/fiwon123/crower/internal/application/resetcommands"
 	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
-	"github.com/fiwon123/crower/internal/domain/listdom"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/legacy/listdom"
 
 	"github.com/spf13/cobra"
 )

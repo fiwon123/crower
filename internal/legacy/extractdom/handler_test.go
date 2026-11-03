@@ -7,7 +7,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/domain/extractdom"
+	"github.com/fiwon123/crower/internal/legacy/extractdom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
 

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/domain/extractdom"
+	"github.com/fiwon123/crower/internal/legacy/extractdom"
 
 	"github.com/spf13/cobra"
 )

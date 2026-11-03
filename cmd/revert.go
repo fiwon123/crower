@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/domain/revertdom"
+	"github.com/fiwon123/crower/internal/legacy/revertdom"
 
 	"github.com/spf13/cobra"
 )

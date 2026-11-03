@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/domain/createdom"
-	"github.com/fiwon123/crower/internal/domain/opendom"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/legacy/createdom"
+	"github.com/fiwon123/crower/internal/legacy/opendom"
 
 	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"

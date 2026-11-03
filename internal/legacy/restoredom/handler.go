@@ -5,8 +5,8 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/domain/createdom"
-	"github.com/fiwon123/crower/internal/domain/updatedom"
+	"github.com/fiwon123/crower/internal/legacy/createdom"
+	"github.com/fiwon123/crower/internal/legacy/updatedom"
 )
 
 type Handler struct {

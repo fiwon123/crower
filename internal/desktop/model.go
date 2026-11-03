@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/legacy/executedom"
 )
 
 type ViewState int

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/domain/upgradedom"
+	"github.com/fiwon123/crower/internal/legacy/upgradedom"
 )
 
 // The release workflow names a runner label for every row of its build matrix.

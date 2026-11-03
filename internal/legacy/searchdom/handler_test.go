@@ -3,7 +3,7 @@ package searchdom_test
 import (
 	"testing"
 
-	"github.com/fiwon123/crower/internal/domain/searchdom"
+	"github.com/fiwon123/crower/internal/legacy/searchdom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
 
