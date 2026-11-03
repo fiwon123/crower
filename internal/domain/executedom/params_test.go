@@ -2,6 +2,7 @@ package executedom
 
 import (
 	"runtime"
+	"slices"
 	"strings"
 	"testing"
 
@@ -111,15 +112,144 @@ func TestExecuteWithStepsDoesNotValidateExec(t *testing.T) {
 	}
 
 	multi := command.New("multi", nil, "mkdir {a,b}")
-	multi.Steps = []string{"echo a"}
+	multi.Steps = []string{"echo {1}"}
 	app.AllCommandsByName.Add("multi", multi)
 
-	out, _, err := NewHandler(app).Execute("multi", []string{"x"})
+	out, _, err := NewHandler(app).Execute("multi", []string{"a"})
 	if err != nil {
 		t.Fatalf("Execute with steps returned an error: %v", err)
 	}
 
 	if !strings.Contains(out, "a") {
 		t.Errorf("output = %q, want the step's output", out)
+	}
+}
+
+func TestExecuteAppliesParamsToSteps(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	multi := command.New("multi", nil, "unused")
+	multi.Steps = []string{"echo {1}", "echo {2}"}
+	app.AllCommandsByName.Add("multi", multi)
+
+	out, _, err := NewHandler(app).Execute("multi", []string{"a", "b"})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+
+	for _, want := range []string{"a", "b"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output = %q, want %q from a step", out, want)
+		}
+	}
+}
+
+// A steps set with no placeholder is an error, not a silent drop.
+func TestExecuteRejectsParametersWhenNoStepHasAPlaceholder(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	multi := command.New("multi", nil, "unused")
+	multi.Steps = []string{"echo a"}
+	app.AllCommandsByName.Add("multi", multi)
+
+	_, _, err = NewHandler(app).Execute("multi", []string{"x"})
+	if err == nil {
+		t.Fatal("Execute with parameters and no step placeholder returned no error")
+	}
+
+	if !strings.Contains(err.Error(), "no parameter placeholder") {
+		t.Errorf("error = %v, want it to name the missing placeholder", err)
+	}
+}
+
+// A step with a literal brace is left alone while another step substitutes.
+// {x} is literal in every shell; {a,b} would be brace-expanded by bash.
+func TestExecuteKeepsALiteralBraceInAStep(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	multi := command.New("multi", nil, "unused")
+	multi.Steps = []string{"echo {x}", "echo {1}"}
+	app.AllCommandsByName.Add("multi", multi)
+
+	out, _, err := NewHandler(app).Execute("multi", []string{"param"})
+	if err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+
+	if !strings.Contains(out, "{x}") || !strings.Contains(out, "param") {
+		t.Errorf("output = %q, want the literal step and the substituted one", out)
+	}
+}
+
+// Executing a Steps command must not rewrite the steps stored on the map.
+func TestExecuteDoesNotRewriteStoredSteps(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	multi := command.New("multi", nil, "unused")
+	multi.Steps = []string{"echo {1}"}
+	app.AllCommandsByName.Add("multi", multi)
+
+	if _, _, err := NewHandler(app).Execute("multi", []string{"a"}); err != nil {
+		t.Fatalf("Execute: %v", err)
+	}
+
+	if stored := app.AllCommandsByName.Get("multi"); stored == nil || stored.Steps[0] != "echo {1}" {
+		t.Errorf("stored steps = %+v, want them unchanged", stored)
+	}
+}
+
+func TestApplyParamsToSteps(t *testing.T) {
+	tests := []struct {
+		name    string
+		steps   []string
+		params  []string
+		want    []string
+		wantErr bool
+	}{
+		{"no params leaves the steps", []string{"echo {1}"}, nil, []string{"echo {1}"}, false},
+		{"each step substitutes", []string{"echo {1}", "echo {2}"}, []string{"a", "b"}, []string{"echo " + quoted("a"), "echo " + quoted("b")}, false},
+		{"a step without braces is untouched", []string{"echo {1}", "echo a"}, []string{"a"}, []string{"echo " + quoted("a"), "echo a"}, false},
+		{
+			"one pass per step",
+			[]string{"echo {1} {2}"},
+			[]string{"{2}", "b"},
+			[]string{"echo " + quoted("{2}") + " " + quoted("b")},
+			false,
+		},
+		{"an out-of-range index is an error even when another step matches", []string{"echo {1}", "echo {2}"}, []string{"a"}, nil, true},
+		{"no placeholder anywhere is an error", []string{"echo a"}, []string{"x"}, nil, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := applyParamsToSteps(tt.steps, tt.params)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("applyParamsToSteps(%v, %v) returned no error", tt.steps, tt.params)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("applyParamsToSteps(%v, %v) error = %v", tt.steps, tt.params, err)
+			}
+
+			if !slices.Equal(got, tt.want) {
+				t.Errorf("applyParamsToSteps(%v, %v) = %v, want %v", tt.steps, tt.params, got, tt.want)
+			}
+		})
 	}
 }

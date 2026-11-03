@@ -54,6 +54,13 @@ func (h *Handler) Execute(key string, params []string) (string, *command.Data, e
 		h.app.Logger.Debug("exec: " + execLine)
 
 		steps = []string{execLine}
+	} else {
+		substituted, err := applyParamsToSteps(steps, params)
+		if err != nil {
+			return "", cmd, err
+		}
+
+		steps = substituted
 	}
 
 	// Execute steps sequentially
@@ -142,16 +149,81 @@ func applyParams(execLine string, params []string) (string, error) {
 		return execLine, nil
 	}
 
-	quoted := make([]string, 0, len(params))
-	for _, param := range params {
-		quoted = append(quoted, helper.QuoteFor(runtime.GOOS, param))
-	}
+	quoted := quoteParams(params)
 
 	if !strings.Contains(execLine, "{") {
 		return execLine + " " + strings.Join(quoted, " "), nil
 	}
 
-	tokens := paramTokens(execLine)
+	out, found, outOfRange := substituteParams(execLine, quoted)
+	if found {
+		return out, nil
+	}
+
+	if outOfRange != "" {
+		return "", fmt.Errorf("parameter {%s} is out of range: %d given", outOfRange, len(params))
+	}
+
+	return "", fmt.Errorf("no parameter placeholder in %q", execLine)
+}
+
+// applyParamsToSteps fills the placeholders of every step. A step without
+// braces is left alone (appending to every step of a multi-step command would
+// repeat the arguments). A set of steps with no usable placeholder, or with an
+// index past the parameters, is an error: in a set of one-placeholder steps a
+// partial substitution would otherwise reach the shell as a literal {n}.
+func applyParamsToSteps(steps []string, params []string) ([]string, error) {
+	if len(params) == 0 {
+		return steps, nil
+	}
+
+	quoted := quoteParams(params)
+	out := append([]string(nil), steps...)
+	found := false
+	outOfRange := ""
+
+	for i, step := range out {
+		if !strings.Contains(step, "{") {
+			continue
+		}
+
+		substituted, ok, rangeError := substituteParams(step, quoted)
+		if rangeError != "" && outOfRange == "" {
+			outOfRange = rangeError
+		}
+
+		out[i] = substituted
+
+		if ok {
+			found = true
+		}
+	}
+
+	if outOfRange != "" {
+		return nil, fmt.Errorf("parameter {%s} is out of range: %d given", outOfRange, len(params))
+	}
+
+	if found {
+		return out, nil
+	}
+
+	return nil, fmt.Errorf("no parameter placeholder in this command's steps")
+}
+
+func quoteParams(params []string) []string {
+	quoted := make([]string, 0, len(params))
+	for _, param := range params {
+		quoted = append(quoted, helper.QuoteFor(runtime.GOOS, param))
+	}
+
+	return quoted
+}
+
+// substituteParams fills the placeholders of one line, reporting whether any
+// usable placeholder was found and the first out-of-range index (empty when
+// there is none). Leftovers stay as written.
+func substituteParams(line string, quoted []string) (string, bool, string) {
+	tokens := paramTokens(line)
 	used := make([]bool, len(quoted))
 	found := false
 	outOfRange := ""
@@ -175,14 +247,6 @@ func applyParams(execLine string, params []string) (string, error) {
 		}
 	}
 
-	if !found {
-		if outOfRange != "" {
-			return "", fmt.Errorf("parameter {%s} is out of range: %d given", outOfRange, len(params))
-		}
-
-		return "", fmt.Errorf("no parameter placeholder in %q", execLine)
-	}
-
 	remaining := make([]string, 0, len(quoted))
 	for i, param := range quoted {
 		if !used[i] {
@@ -196,17 +260,17 @@ func applyParams(execLine string, params []string) (string, error) {
 	cursor := 0
 
 	for _, token := range tokens {
-		out.WriteString(execLine[cursor:token.start])
+		out.WriteString(line[cursor:token.start])
 
 		switch {
 		case token.token == "":
 			out.WriteString(remainder)
 		case !isParamIndex(token.token):
-			out.WriteString(execLine[token.start : token.end+1])
+			out.WriteString(line[token.start : token.end+1])
 		default:
 			n, err := strconv.Atoi(token.token)
 			if err != nil || n < 1 || n > len(quoted) {
-				out.WriteString(execLine[token.start : token.end+1])
+				out.WriteString(line[token.start : token.end+1])
 			} else {
 				out.WriteString(quoted[n-1])
 			}
@@ -215,9 +279,9 @@ func applyParams(execLine string, params []string) (string, error) {
 		cursor = token.end + 1
 	}
 
-	out.WriteString(execLine[cursor:])
+	out.WriteString(line[cursor:])
 
-	return out.String(), nil
+	return out.String(), found, outOfRange
 }
 
 // isParamIndex reports whether token is a positive decimal index.

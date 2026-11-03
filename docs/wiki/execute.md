@@ -30,7 +30,11 @@ crower execute --last           # re-run what you just ran
 
 `{1}`, `{2}`, … are positional placeholders; `{}` takes the remaining arguments.
 Every value is **quoted** before it reaches the shell, so a value with a space or
-`;` stays one value:
+`;` stays one value.
+
+A command with `Steps` gets the same substitution in every step. A step with no
+placeholder is left as written, and passing parameters when no step has one is
+an error rather than a silent drop.
 
 ```bash
 crower create find "grep -rn {1} {2}"
