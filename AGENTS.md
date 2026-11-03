@@ -47,6 +47,10 @@ Each `internal/domain/<op>dom` package owns its own operation, its own history,
 and its own notes. A new operation is a new package, not a new branch in a
 shared handler.
 
+`internal/shell` is the one thing the domains share below that line: the
+platform's shell invocation (`sh -c` / `cmd /c`). A domain that needs to run a
+shell line depends on it, never on another operation.
+
 ## Project Structure
 
 ```text
@@ -56,6 +60,7 @@ internal/data/       history, notes, operations, command map, state
 internal/app/        configuration and application wiring
 internal/errors/     error types shared across layers
 internal/helper/     shared helpers
+internal/shell/      the platform's shell invocation, shared by every domain
 pkg/logger/          logging
 pkg/utils/           filesystem and process helpers
 scripts/             add_to_path installers, the dev sandbox runtime, release-notes.sh

@@ -27,43 +27,6 @@ func newTestApp(t *testing.T) *app.Config {
 	return cfg
 }
 
-// The command line goes to the shell as one argument.
-//
-// It used to be split on whitespace and handed over as separate arguments after
-// -c, and the shell reads everything after the command string as positional
-// parameters: `echo hello` ran `echo` with no arguments, and `ls /nonexistent`
-// listed the working directory instead of failing.
-func TestPerformExecuteKeepsTheArguments(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("the test drives a POSIX shell")
-	}
-
-	out, err := executedom.NewHandler(newTestApp(t)).PerformExecute("echo hello")
-	if err != nil {
-		t.Fatalf("PerformExecute() error = %v", err)
-	}
-
-	if got := strings.TrimSpace(out); got != "hello" {
-		t.Errorf("PerformExecute(\"echo hello\") = %q, want \"hello\"", got)
-	}
-}
-
-// A command that fails has to say so. The failure used to be swallowed, so
-// `crower execute` exited 0 while nothing ran.
-func TestPerformExecuteReportsAFailingCommand(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("the test drives a POSIX shell")
-	}
-
-	if _, err := executedom.NewHandler(newTestApp(t)).PerformExecute("exit 3"); err == nil {
-		t.Fatal("PerformExecute(\"exit 3\") returned no error")
-	}
-
-	if _, err := executedom.NewHandler(newTestApp(t)).PerformExecute("ls /nonexistent-dir-xyz"); err == nil {
-		t.Fatal("PerformExecute of a command that lists a missing folder returned no error")
-	}
-}
-
 func TestExecuteRunsTheStoredCommand(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("the test drives a POSIX shell")

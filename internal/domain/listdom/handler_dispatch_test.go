@@ -103,9 +103,8 @@ func TestListSysPathCommand(t *testing.T) {
 }
 
 // An unsupported platform must fail every listing method with an error and no
-// output. execute is deliberately nil: the failure has to happen before
-// anything is executed, so a handler that reached the shell would panic here
-// instead of returning.
+// output. The handler has no shell runner: the platform check has to return
+// before anything is executed, and the error assertion is what proves it.
 func TestUnsupportedOSReturnsError(t *testing.T) {
 	handler := &Handler{goos: "plan9"}
 

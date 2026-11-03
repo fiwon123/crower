@@ -6,23 +6,21 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 type Handler struct {
-	app     *app.Config
-	execute *executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 }
 
 func NewHandler(app *app.Config) *Handler {
 
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: execute,
+		app:   app,
+		shell: shell.New(),
 	}
 }
 
@@ -61,7 +59,7 @@ func (h *Handler) copy(source string, destFolder string, folder bool) error {
 		return errors.ErrUnsupportedOS
 	}
 
-	out, err := h.execute.PerformExecute(commandLine)
+	out, err := h.shell.Exec(commandLine)
 	if err != nil {
 		return fmt.Errorf("copy %s: %w (output: %s)", source, err, strings.TrimSpace(out))
 	}

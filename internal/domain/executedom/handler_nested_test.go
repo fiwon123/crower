@@ -4,6 +4,8 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 // The nesting level comes from the environment, because the recursive call is a
@@ -30,7 +32,7 @@ func TestNestedDepthIsZeroWithoutTheVariable(t *testing.T) {
 func TestExecuteNestedRefusesToGoTooDeep(t *testing.T) {
 	t.Setenv(nestedDepthEnv, strconv.Itoa(maxExecDepth))
 
-	_, err := (&Handler{}).executeNested("crower list")
+	_, err := executeNested(shell.New(), "crower list")
 	if err == nil {
 		t.Fatal("executeNested() at the maximum depth returned no error")
 	}

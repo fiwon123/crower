@@ -10,25 +10,23 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/shell"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Handler struct {
-	app     *app.Config
-	execute executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 }
 
 func NewHandler(app *app.Config) *Handler {
 
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: *execute,
+		app:   app,
+		shell: shell.New(),
 	}
 }
 
@@ -132,9 +130,9 @@ func (h *Handler) CreateFile(filePath string) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = h.execute.PerformExecute("type nul > " + helper.QuoteFor(runtime.GOOS, filePath))
+		out, err = h.shell.Exec("type nul > " + helper.QuoteFor(runtime.GOOS, filePath))
 	case "linux", "darwin":
-		out, err = h.execute.PerformExecute("touch " + helper.QuoteFor(runtime.GOOS, filePath))
+		out, err = h.shell.Exec("touch " + helper.QuoteFor(runtime.GOOS, filePath))
 	default:
 		return errors.ErrUnsupportedOS
 	}
@@ -152,9 +150,9 @@ func (h *Handler) CreateFolder(folderPath string) error {
 	var err error
 	switch runtime.GOOS {
 	case "windows":
-		out, err = h.execute.PerformExecute("mkdir " + helper.QuoteFor(runtime.GOOS, folderPath))
+		out, err = h.shell.Exec("mkdir " + helper.QuoteFor(runtime.GOOS, folderPath))
 	case "linux", "darwin":
-		out, err = h.execute.PerformExecute("mkdir -p " + helper.QuoteFor(runtime.GOOS, folderPath))
+		out, err = h.shell.Exec("mkdir -p " + helper.QuoteFor(runtime.GOOS, folderPath))
 	default:
 		return errors.ErrUnsupportedOS
 	}

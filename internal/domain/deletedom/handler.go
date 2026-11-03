@@ -10,25 +10,23 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/domain/executedom"
 	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/shell"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
 type Handler struct {
-	app     *app.Config
-	execute executedom.Handler
+	app   *app.Config
+	shell *shell.Runner
 }
 
 func NewHandler(app *app.Config) *Handler {
 
-	execute := executedom.NewHandler(app)
-
 	return &Handler{
-		app:     app,
-		execute: *execute,
+		app:   app,
+		shell: shell.New(),
 	}
 }
 
@@ -82,7 +80,7 @@ func (h *Handler) remove(path string, folder bool) error {
 		return errors.ErrUnsupportedOS
 	}
 
-	out, err := h.execute.PerformExecute(commandLine)
+	out, err := h.shell.Exec(commandLine)
 	if err != nil {
 		return fmt.Errorf("delete %s: %w (output: %s)", path, err, strings.TrimSpace(out))
 	}
