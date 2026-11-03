@@ -50,7 +50,7 @@ func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec
 		return err
 	}
 
-	c.app.History.Add(operations.Update, newCommand.Name, newUpdateCommmandNote(args, oldCommand, newCommand))
+	c.app.History.Add(operations.Update, newCommand.Name, newUpdateCommmandNote(oldCommand, newCommand))
 
 	return c.app.Save()
 }
