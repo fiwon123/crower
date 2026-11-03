@@ -50,7 +50,7 @@ func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec
 		return err
 	}
 
-	c.app.History.Add(operations.Update, newUpdateCommmandNote(args, oldCommand, newCommand))
+	c.app.History.Add(operations.Update, newCommand.Name, newUpdateCommmandNote(args, oldCommand, newCommand))
 
 	return c.app.Save()
 }
@@ -91,7 +91,7 @@ func (c *Core) UpdateLast(op operations.MainOperationEnum, name string, allAlias
 		return err
 	}
 
-	c.app.History.Add(operations.Update, newUpdateLastNote(op, oldCommand, newCommand))
+	c.app.History.Add(operations.Update, newCommand.Name, newUpdateLastNote(op, oldCommand, newCommand))
 
 	return c.app.Save()
 }

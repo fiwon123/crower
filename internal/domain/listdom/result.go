@@ -60,15 +60,14 @@ func commandsPayload(orderKeys []string, all command.MapData) CommandsResult {
 
 // HistoryRow is one recorded operation.
 //
-// There is deliberately no `command` field: history.Content has a CommandName
-// field that nothing ever writes -- the name lives inside the note -- so a
-// field here could only ever be "". It gets added when the stored history
-// actually carries the name (see the --last fix).
+// Command is empty for an operation that does not touch a managed command
+// (copy, move, open, list, ...).
 type HistoryRow struct {
 	Version   int    `json:"version"`
 	File      string `json:"file"`
 	Timestamp string `json:"timestamp"`
 	Operation string `json:"operation"`
+	Command   string `json:"command"`
 	Note      string `json:"note"`
 }
 
@@ -88,6 +87,7 @@ func historyPayload(rows []history.Content) HistoryResult {
 			File:      row.File,
 			Timestamp: row.Timestemp,
 			Operation: string(row.Operation),
+			Command:   row.CommandName,
 			Note:      row.Note,
 		})
 	}

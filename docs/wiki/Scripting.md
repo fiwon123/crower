@@ -33,7 +33,7 @@ crower list --folder ~/projects --json | jq -r '.entries[].name'
 | Command | Object |
 | --- | --- |
 | `list` | `{"commands":[{"row":0,"name":"gs","aliases":["g"],"exec":"git status"}]}` |
-| `list --history` | `{"history":[{"version":1,"file":"00001.yaml","timestamp":"2026-01-02T15:04:05Z","operation":"create","note":"…"}]}` |
+| `list --history` | `{"history":[{"version":1,"file":"00001.yaml","timestamp":"2026-01-02T15:04:05Z","operation":"create","command":"gs","note":"…"}]}` |
 | `list --process` | `{"processes":[{"pid":1,"name":"init","path":"/sbin/init"}]}` |
 | `list --folder DIR` | `{"folder":"DIR","entries":[{"name":"a.txt","dir":false,"size":3,"mode":"-rw-r--r--","modified":"2026-01-02T15:04:05Z"}]}` |
 | `list --system` | `{"variables":[{"name":"PATH","values":["/usr/local/bin","/usr/bin"]}]}` |

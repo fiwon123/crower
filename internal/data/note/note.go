@@ -74,3 +74,39 @@ func (note *Note) Build() string {
 
 	return strings.Trim(note.builder.String(), ";")
 }
+
+// CommandName reads the command_name field out of a built note.
+//
+// A note is a ";"-separated list of key=value fields. History entries written
+// before the name was stored on the entry itself carry it only here, so a run
+// that loads an older history can still resolve it.
+//
+// Only a note for an operation that touches a managed command answers. A file
+// or variable note can contain the same text inside a path, and resolving that
+// would point a `--last` operation at a command the operation never touched.
+func CommandName(built string) string {
+	if !namesACommand(built) {
+		return ""
+	}
+
+	for field := range strings.SplitSeq(built, ";") {
+		if name, ok := strings.CutPrefix(field, "command_name="); ok {
+			return name
+		}
+	}
+
+	return ""
+}
+
+// namesACommand reports whether the note's sub-operation acts on a managed
+// command, as opposed to a file, folder, variable or the history itself.
+func namesACommand(built string) bool {
+	for field := range strings.SplitSeq(built, ";") {
+		switch field {
+		case "sub_operation=command", "sub_operation=last", "sub_operation=script", "sub_operation=process":
+			return true
+		}
+	}
+
+	return false
+}

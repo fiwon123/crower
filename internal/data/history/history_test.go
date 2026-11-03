@@ -13,7 +13,7 @@ import (
 // comparison.
 func TestGetListHasNoTrailingSpace(t *testing.T) {
 	data := New(t.TempDir())
-	data.Add(operations.Copy, "main_operation=copy;crower_exec=crower copy a b")
+	data.Add(operations.Copy, "", "main_operation=copy;crower_exec=crower copy a b")
 
 	list := data.GetList()
 
@@ -36,12 +36,28 @@ func TestGetListHasNoTrailingSpace(t *testing.T) {
 // reader expects.
 func TestGetListPutsTheNewestEntryFirst(t *testing.T) {
 	data := New(t.TempDir())
-	data.Add(operations.Create, "first")
-	data.Add(operations.Delete, "second")
+	data.Add(operations.Create, "first-command", "first")
+	data.Add(operations.Delete, "second-command", "second")
 
 	list := data.GetList()
 
 	if strings.Index(list, "second") > strings.Index(list, "first") {
 		t.Errorf("GetList() = %q, want the newest entry first", list)
+	}
+}
+
+// The entry records which command the operation touched. Without it, the
+// `--last` family resolved an empty name and could never act.
+func TestAddRecordsTheCommandName(t *testing.T) {
+	data := New(t.TempDir())
+	data.Add(operations.Execute, "greet", "main_operation=execute;command_name=greet")
+
+	last := data.GetLast()
+	if last == nil {
+		t.Fatal("Add did not append an entry")
+	}
+
+	if last.CommandName != "greet" {
+		t.Errorf("CommandName = %q, want greet", last.CommandName)
 	}
 }

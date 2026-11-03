@@ -44,7 +44,7 @@ func (c *Core) Reset() error {
 		return err
 	}
 
-	c.app.History.Add(operations.Reset, newResetNote())
+	c.app.History.Add(operations.Reset, "", newResetNote())
 
 	return c.app.Save()
 }

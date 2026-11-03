@@ -46,7 +46,7 @@ func TestCommandsPayload(t *testing.T) {
 func TestHistoryPayloadIsNewestFirst(t *testing.T) {
 	rows := []history.Content{
 		{Version: 1, File: "00001.yaml", Timestemp: "2026-01-01T00:00:00Z", Operation: operations.List, Note: "first"},
-		{Version: 2, File: "00002.yaml", Timestemp: "2026-01-02T00:00:00Z", Operation: operations.Create, Note: "second"},
+		{Version: 2, File: "00002.yaml", Timestemp: "2026-01-02T00:00:00Z", Operation: operations.Create, CommandName: "greet", Note: "second"},
 	}
 
 	payload := historyPayload(rows)
@@ -65,6 +65,10 @@ func TestHistoryPayloadIsNewestFirst(t *testing.T) {
 
 	if payload.History[0].Operation != string(operations.Create) {
 		t.Errorf("operation = %q", payload.History[0].Operation)
+	}
+
+	if payload.History[0].Command != "greet" {
+		t.Errorf("command = %q, want greet", payload.History[0].Command)
 	}
 }
 

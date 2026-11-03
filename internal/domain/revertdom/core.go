@@ -56,7 +56,7 @@ func (c *Core) Revert(args []string) error {
 
 	c.app.Logger.Info("reverted to history version ", backHistory.Version)
 
-	c.app.History.Add(operations.Revert, newRevertNote(args))
+	c.app.History.Add(operations.Revert, "", newRevertNote(args))
 
 	return c.app.Save()
 }
