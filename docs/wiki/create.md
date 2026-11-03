@@ -41,7 +41,7 @@ crower create --execute greet2 -a g2
 
 # Create a shortcut for a running process:
 # -p is the new command name, the process comes last
-crower create -p editor code
+crower create -p editor code -a ed
 ```
 
 > [!TIP]

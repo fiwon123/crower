@@ -56,7 +56,7 @@ Example:
 
 		switch {
 		case processName != "":
-			return core.CreateProcess(processName, args)
+			return core.CreateProcess(processName, allAlias, args)
 		case fileFlag:
 			return core.CreateFile(args)
 		case folderFlag:
@@ -68,7 +68,7 @@ Example:
 		case executeFlag:
 			return core.CreateLastCommand(operations.Execute, allAlias, args)
 		case scriptFlag:
-			return core.CreateScriptCommand(args)
+			return core.CreateScriptCommand(allAlias, args)
 		case len(args) == 0:
 			return core.CreateCommand(allAlias, args)
 		case utils.IsValidFilePath(args[0]):

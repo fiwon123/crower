@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -976,6 +977,103 @@ func TestCreateProcessWithoutAProcessFails(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "process name or pid") {
 		t.Errorf("error = %v, want it to name the missing process", err)
+	}
+}
+
+// The process form takes --alias like every other create form. It used to
+// register the command with no aliases while accepting the flag.
+func TestCreateProcessHonoursAlias(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	// A pid that is certainly running: this test process.
+	pid := strconv.Itoa(os.Getpid())
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "-p", "probe", pid, "-a", "p1"); err != nil {
+		t.Fatalf("create -p returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Name    string   `json:"name"`
+			Aliases []string `json:"aliases"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	hasAlias := false
+	for _, command := range payload.Commands {
+		if command.Name == "probe" {
+			for _, alias := range command.Aliases {
+				if alias == "p1" {
+					hasAlias = true
+				}
+			}
+		}
+	}
+
+	if !hasAlias {
+		t.Errorf("create -p dropped the alias: %q", stdout)
+	}
+}
+
+// The script form takes --alias too. The opener is stubbed in PATH so the test
+// never launches a desktop application, but the whole command path runs.
+func TestCreateScriptHonoursAlias(t *testing.T) {
+	opener := map[string]string{"linux": "xdg-open", "darwin": "open"}[runtime.GOOS]
+	if opener == "" {
+		t.Skip("the script form's opener has no stub on this platform")
+	}
+
+	binDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(binDir, opener), []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
+		t.Fatalf("write opener stub: %v", err)
+	}
+
+	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
+
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "--script", "probe-script", "-a", "s1"); err != nil {
+		t.Fatalf("create --script returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Name    string   `json:"name"`
+			Aliases []string `json:"aliases"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	hasAlias := false
+	for _, command := range payload.Commands {
+		if command.Name == "probe-script" {
+			for _, alias := range command.Aliases {
+				if alias == "s1" {
+					hasAlias = true
+				}
+			}
+		}
+	}
+
+	if !hasAlias {
+		t.Errorf("create --script dropped the alias: %q", stdout)
 	}
 }
 

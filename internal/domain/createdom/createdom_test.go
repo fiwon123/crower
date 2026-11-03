@@ -2,11 +2,13 @@ package createdom_test
 
 import (
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/domain/createdom"
+	"github.com/fiwon123/crower/internal/domain/opendom"
 	"github.com/fiwon123/crower/internal/helper"
 )
 
@@ -121,7 +123,7 @@ func TestCreateProcessRequiresAProcess(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := handler.CreateProcess(tt.commandName, tt.args)
+			_, err := handler.CreateProcess(tt.commandName, nil, tt.args)
 			if err == nil {
 				t.Fatal("CreateProcess with no process returned no error")
 			}
@@ -130,6 +132,36 @@ func TestCreateProcessRequiresAProcess(t *testing.T) {
 				t.Errorf("error = %v, want it to name the missing process", err)
 			}
 		})
+	}
+}
+
+// The script form takes the same --alias flag as plain create. It used to pass
+// an empty slice, so the flag was accepted and dropped; the fake runner keeps
+// the folder-open step out of the test.
+func TestCreateScriptCommandRegistersAlias(t *testing.T) {
+	app, _, err := helper.InitCrowerTests()
+	if err != nil {
+		t.Fatalf("error before test: %v", err)
+	}
+
+	openHandler := opendom.NewHandlerWithRunner(app, func(string) (string, error) { return "", nil })
+	core := createdom.NewCore(app, *openHandler)
+
+	if err := core.CreateScriptCommand([]string{"s1"}, []string{"probe-script"}); err != nil {
+		t.Fatalf("CreateScriptCommand: %v", err)
+	}
+
+	created := app.AllCommandsByName.Get("probe-script")
+	if created == nil {
+		t.Fatal("the script command was not registered under its name")
+	}
+
+	if !slices.Contains(created.AllAlias, "s1") {
+		t.Errorf("aliases = %v, want the alias on the script command", created.AllAlias)
+	}
+
+	if byAlias := app.AllCommandsByAlias.Get("s1"); byAlias == nil || byAlias.Name != "probe-script" {
+		t.Errorf("alias resolves to %+v, want the script command", byAlias)
 	}
 }
 
