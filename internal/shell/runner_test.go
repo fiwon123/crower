@@ -96,3 +96,15 @@ func TestExecReportsAFailingCommand(t *testing.T) {
 		t.Fatal("Exec of a command that lists a missing folder returned no error")
 	}
 }
+
+// Start has to build the same command Exec does, and must not wait for it: a
+// browser or a file manager outlives the command that opened it.
+func TestStartDoesNotWait(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("the test drives a POSIX shell")
+	}
+
+	if err := New().Start("true"); err != nil {
+		t.Fatalf("Start() error = %v", err)
+	}
+}
