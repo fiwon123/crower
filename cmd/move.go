@@ -9,15 +9,15 @@ import (
 // Cmd represents the move command
 var moveCmd = &cobra.Command{
 	Use:   "move <source...> <destination>",
-	Short: "move file or folder to other location",
-	Long: `move file or folder to other location
+	Short: "Move files or folders to a destination.",
+	Long: `Move files or folders to a destination.
 
-Examples:
-	crower move "C:\Users\Test\Desktop\Test\file.txt" "C:\Users\Test\Desktop\Test\Out"
-	crower move "C:\Users\Test\Desktop\Test\file_1.txt" "C:\Users\Test\Desktop\Test\file_2.txt" "C:\Users\Test\Desktop\Test\Out"
-	crower move "C:\Users\Test\Desktop\Test\Folder" "C:\Users\Test\Desktop\Test\Out"
-	crower move "C:\Users\Test\Desktop\Test\Folder_1" "C:\Users\Test\Desktop\Test\Folder_2" "C:\Users\Test\Desktop\Test\Out"
-`,
+	crower move notes.txt ~/archive
+	crower move a.txt b.txt ~/archive
+	crower move ./reports ~/archive`,
+	Example: `	crower move notes.txt ~/archive
+	crower move a.txt b.txt ~/archive
+	crower move ./reports ~/archive`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

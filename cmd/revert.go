@@ -9,8 +9,16 @@ import (
 // Cmd represents the revert command
 var revertCmd = &cobra.Command{
 	Use:   "revert <steps>",
-	Short: "revert history by one",
-	Long:  `revert history by one`,
+	Short: "Undo operations, newest first.",
+	Long: `Undo operations, newest first.
+
+The argument is how many history entries to roll back. "crower list
+--history" shows what is there.
+
+	crower revert 1
+	crower revert 3`,
+	Example: `	crower revert 1
+	crower revert 3`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

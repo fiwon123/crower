@@ -9,15 +9,15 @@ import (
 // Cmd represents the copy command
 var copyCmd = &cobra.Command{
 	Use:   "copy <source...> <destination>",
-	Short: "copy file or folder to other location",
-	Long: `copy file or folder to other location
+	Short: "Copy files or folders to a destination.",
+	Long: `Copy files or folders to a destination.
 
-Examples:
-	crower copy "C:\Users\Test\Desktop\Test\file.txt" "C:\Users\Test\Desktop\Test\Out"
-	crower copy "C:\Users\Test\Desktop\Test\file_1.txt" "C:\Users\Test\Desktop\Test\file_2.txt" "C:\Users\Test\Desktop\Test\Out"
-	crower copy "C:\Users\Test\Desktop\Test\Folder" "C:\Users\Test\Desktop\Test\Out"
-	crower copy "C:\Users\Test\Desktop\Test\Folder_1" "C:\Users\Test\Desktop\Test\Folder_2" "C:\Users\Test\Desktop\Test\Out"
-`,
+	crower copy notes.txt ~/backup
+	crower copy a.txt b.txt ~/backup
+	crower copy ./reports ~/backup`,
+	Example: `	crower copy notes.txt ~/backup
+	crower copy a.txt b.txt ~/backup
+	crower copy ./reports ~/backup`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

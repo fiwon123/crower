@@ -15,30 +15,29 @@ var historyFlagDelete bool
 // Cmd represents the delete command
 var deleteCmd = &cobra.Command{
 	Use:   "delete [command]",
-	Short: "delete command, file or folder",
-	Long: `delete command, file or folder
+	Short: "Delete a command, a file or a folder.",
+	Long: `Delete a command, a file or a folder.
 
-delete commands:
-	- Use interactive input just typing 'crower delete' without arguments
-	- Using either 'crower delete "COMMAND_NAME"' or 'crower delete "COMMAND_ALIAS"'
-	- using flags --create, --update or --execute to delete last operation flag
+A command is found by name or by alias:
+	crower delete greet
+	crower delete hi
 
-delete file:
-	- Using 'crower delete "FILE_PATH"'
-	- Using flag --file for multiple paths 'crower delete --file "FILE_PATH_1" "FILE_PATH_2" "FILE_PATH_3"'
+The last operation can be undone instead:
+	crower delete --create
+	crower delete --update
+	crower delete --execute
+	crower delete --history
 
-delete folder:
-	- Using 'crower delete "FOLDER_PATH"'
-	- Using flag --folder for multiple paths 'crower delete --folder "FOLDER_PATH_1" "FOLDER_PATH_2" "FOLDER_PATH_3"'
+A file or a folder is deleted at the path you give:
+	crower delete --file notes.txt
+	crower delete --folder reports
 
-Example:
-	crower delete
-	crower delete com_name
-	crower delete com_alias
-	crower delete --file "C:\Users\Test\Desktop\Test\new_file.txt"
-	crower delete --file "C:\Users\Test\Desktop\Test\new_file_1.txt" "C:\Users\Test\Desktop\Test\new_file_2.txt"
-	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder"
-	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder_1" "C:\Users\Test\Desktop\Test\new_folder_2"`,
+With no arguments crower asks which command to delete.`,
+	Example: `	crower delete
+	crower delete greet
+	crower delete --file notes.txt
+	crower delete --folder reports
+	crower delete --create`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

@@ -10,8 +10,15 @@ import (
 // Cmd represents the reset command
 var resetCmd = &cobra.Command{
 	Use:   "reset",
-	Short: "reset all commands",
-	Long:  `reset all commands`,
+	Short: "Delete every managed command.",
+	Long: `Delete every managed command.
+
+The command table is shown first, and nothing happens unless you confirm.
+History snapshots are left alone, so "crower list --history" still works
+and "crower revert" can bring the commands back.
+
+	crower reset`,
+	Example: `	crower reset`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

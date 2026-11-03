@@ -8,9 +8,10 @@ import (
 )
 
 var desktopCmd = &cobra.Command{
-	Use:   "desktop",
-	Short: "Launch native desktop window UI",
-	Long:  "Launch a native window UI for crower (cgo-free)",
+	Use:     "desktop",
+	Short:   "Open the native desktop window.",
+	Long:    `Open a native window UI (cgo-free).`,
+	Example: `	crower desktop`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
@@ -22,9 +23,10 @@ var desktopCmd = &cobra.Command{
 }
 
 var guiCmd = &cobra.Command{
-	Use:   "gui",
-	Short: "Launch interactive TUI GUI",
-	Long:  "Launch an interactive terminal-based GUI for crower",
+	Use:     "gui",
+	Short:   "Open the terminal UI.",
+	Long:    `Open an interactive terminal UI.`,
+	Example: `	crower gui`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

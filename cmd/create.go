@@ -17,34 +17,30 @@ var processName string
 // Cmd represents the create command
 var createCmd = &cobra.Command{
 	Use:   "create [name] [exec]",
-	Short: "create a command, file or folder",
-	Long: `create a command, file or folder
+	Short: "Create a command, a file or a folder.",
+	Long: `Create a command, a file or a folder.
 
-create commands:
-	- Use interactive input just typing 'crower create' without arguments
-	- Using 'crower create "COMAND_NAME" "COMMAND_EXEC"'
-	- Using flag --alias in 'crower create' to already put an alias
+A command has a name, optional aliases, and the line it runs:
+	crower create greet "echo hello"
+	crower create greet "echo hello" --alias hi
 
-create a command from a process:
-	- Use flag --process with the new command name, then the process name or pid
-	- Using 'crower create -p "COMMAND_NAME" "PROCESS"'
+It can come from a running process, or be a script:
+	crower create -p server nginx
+	crower create --script deploy
 
-create file:
-	- Using 'crower create "FILE_PATH"'
-	- Using flag --file for multiple paths 'crower create --file "FILE_PATH_1" "FILE_PATH_2" "FILE_PATH_3"'
+A file or a folder is created at the path you give:
+	crower create --file notes.txt
+	crower create --folder reports
 
-create folder:
-	- Using 'crower create "FOLDER_PATH"'
-	- Using flag --folder for multiple paths 'crower create --folder "FOLDER_PATH_1" "FOLDER_PATH_2" "FOLDER_PATH_3"'
-
-Example:
-	crower create
-	crower create com1 "'echo com1'"
-	crower create -p editor "code"
-	crower create "C:\Users\Test\Desktop\Test\new_file.txt"
-	crower create --file "C:\Users\Test\Desktop\Test\new_file_1.txt" "C:\Users\Test\Desktop\Test\new_file_2.txt"
-	crower create "C:\Users\Test\Desktop\Test\new_folder"
-	crower create --folder "C:\Users\Test\Desktop\Test\new_folder_1" "C:\Users\Test\Desktop\Test\new_folder_2"`,
+With no arguments crower asks for each field. --execute makes a command from
+the last command you ran.`,
+	Example: `	crower create
+	crower create greet "echo hello"
+	crower create greet "echo hello" --alias hi
+	crower create --file notes.txt
+	crower create --folder reports
+	crower create -p server nginx
+	crower create --script deploy`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {

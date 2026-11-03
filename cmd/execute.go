@@ -13,8 +13,21 @@ var last bool
 // executeCmd represents the execute command
 var executeCmd = &cobra.Command{
 	Use:   "execute <command> [params...]",
-	Short: "execute command",
-	Long:  `execute command`,
+	Short: "Run a managed command.",
+	Long: `Run a managed command, by name or by alias.
+
+	crower execute greet
+	crower greet
+
+The last touched command can be run instead:
+	crower execute --last
+	crower execute --create
+	crower execute --update
+
+Arguments after the command are applied to its steps.`,
+	Example: `	crower execute greet
+	crower execute greet --help
+	crower execute --last`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
