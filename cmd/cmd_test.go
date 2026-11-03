@@ -1399,3 +1399,74 @@ func TestListHistoryShowsTheCommandColumn(t *testing.T) {
 		t.Errorf("history has no Command column: %q", stdout)
 	}
 }
+
+// reset shows what it will erase, asks, and on a yes leaves no command behind.
+func TestResetErasesEveryCommand(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	for _, name := range []string{"greet", "build"} {
+		if _, _, err := runWith(t, cfgPath, "", "create", name, "echo "+name); err != nil {
+			t.Fatalf("create %s: %v", name, err)
+		}
+	}
+
+	stdout, stderr, err := runWith(t, cfgPath, "y\n", "reset")
+	if err != nil {
+		t.Fatalf("reset returned an error: %v", err)
+	}
+
+	if stdout != "" {
+		t.Errorf("reset wrote a result: %q", stdout)
+	}
+
+	for _, want := range []string{"Name", "greet", "All commands will be erased...", "[Y]es/[N]o", "reset all commands"} {
+		if !strings.Contains(stderr, want) {
+			t.Errorf("the diagnostics stream does not contain %q: %q", want, stderr)
+		}
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "list")
+	if err != nil {
+		t.Fatalf("list returned an error: %v", err)
+	}
+
+	for _, name := range []string{"greet", "build"} {
+		if strings.Contains(stdout, name) {
+			t.Errorf("list still shows %q after a reset:\n%s", name, stdout)
+		}
+	}
+}
+
+// Declining keeps every command and is not a failure.
+func TestDecliningResetKeepsTheCommands(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	_, stderr, err := runWith(t, cfgPath, "n\n", "reset")
+	if err != nil {
+		t.Fatalf("a declined reset returned an error: %v", err)
+	}
+
+	if !strings.Contains(stderr, "Cancelling reset...") {
+		t.Errorf("the decline was not reported: %q", stderr)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list")
+	if err != nil {
+		t.Fatalf("list returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "greet") {
+		t.Errorf("the command was erased by a decline:\n%s", stdout)
+	}
+}
+
+// --no-input must fail the question rather than wait for an answer.
+func TestResetNoInputFails(t *testing.T) {
+	if _, _, err := run(t, "reset", "--no-input"); err == nil {
+		t.Fatal("reset --no-input returned no error, so it would wait")
+	}
+}
