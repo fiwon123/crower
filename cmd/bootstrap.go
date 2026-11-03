@@ -14,6 +14,7 @@ import (
 const (
 	flagConfig  = "config"
 	flagNoInput = "no-input"
+	flagJSON    = "json"
 )
 
 // streams is the terminal this run reads and writes. It is a variable so a test
@@ -65,7 +66,29 @@ func newApp(cmd *cobra.Command) (*app.Config, error) {
 	return app.InitApp(cfgPath, app.Options{
 		Streams: streams,
 		NoInput: noInput,
+		Format:  requestedFormat(cmd),
 	})
+}
+
+// requestedFormat reads the --json flag the running command declared, if it
+// declared one.
+//
+// --json is registered per command, on the ones whose result has a structured
+// shape. A command that never declared it cannot be asked for JSON, so an
+// unsupported `--json` is an unknown-flag error rather than a silent fall back
+// to text -- exactly the "reported success without doing the work" failure the
+// exit-status contract was added to prevent.
+func requestedFormat(cmd *cobra.Command) app.Format {
+	if cmd.Flags().Lookup(flagJSON) == nil {
+		return app.FormatText
+	}
+
+	asJSON, err := cmd.Flags().GetBool(flagJSON)
+	if err != nil || !asJSON {
+		return app.FormatText
+	}
+
+	return app.FormatJSON
 }
 
 // missingArgs reports a command run without the arguments it needs.

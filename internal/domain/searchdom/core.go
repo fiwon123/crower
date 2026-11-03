@@ -29,7 +29,7 @@ func (c *Core) SearchBrowser(args []string) error {
 
 	out, err := c.handler.SearchBrowser(content)
 
-	return c.finishSearch(out, err, newSearchBrowserNote(args))
+	return c.finishSearch(out, err, searchPayload(operations.Browser, content, "", out), newSearchBrowserNote(args))
 }
 
 // SearchFile searches files under a path.
@@ -38,7 +38,7 @@ func (c *Core) SearchFile(args []string) error {
 
 	out, err := c.handler.SearchFile(currentPath, content)
 
-	return c.finishSearch(out, err, newSearchFileNote(args))
+	return c.finishSearch(out, err, searchPayload(operations.File, content, currentPath, out), newSearchFileNote(args))
 }
 
 // SearchFolder searches folders under a path.
@@ -47,7 +47,7 @@ func (c *Core) SearchFolder(args []string) error {
 
 	out, err := c.handler.SearchFolder(currentPath, content)
 
-	return c.finishSearch(out, err, newSearchFolderNote(args))
+	return c.finishSearch(out, err, searchPayload(operations.Folder, content, currentPath, out), newSearchFolderNote(args))
 }
 
 // SearchFileAndFolder searches files and folders under a path.
@@ -56,7 +56,7 @@ func (c *Core) SearchFileAndFolder(args []string) error {
 
 	out, err := c.handler.SearchFileAndFolder(currentPath, content)
 
-	return c.finishSearch(out, err, newSearchFileAndFolderNote(args))
+	return c.finishSearch(out, err, searchPayload(operations.FileAndFolder, content, currentPath, out), newSearchFileAndFolderNote(args))
 }
 
 func assertArgs(args []string) (string, string) {
@@ -75,12 +75,14 @@ func assertArgs(args []string) (string, string) {
 //
 // The operation recorded is Search. It was Revert for every search, which
 // mislabelled the history and made `revert`/`restore` address the wrong entry.
-func (c *Core) finishSearch(out string, err error, note string) error {
+func (c *Core) finishSearch(out string, err error, payload any, note string) error {
 	if err != nil {
 		return err
 	}
 
-	c.app.Logger.Out(out)
+	if err := c.app.Result(out, payload); err != nil {
+		return err
+	}
 
 	c.app.History.Add(operations.Search, note)
 

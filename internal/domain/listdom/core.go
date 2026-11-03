@@ -26,22 +26,26 @@ func NewCore(app *app.Config) *Core {
 
 // ListCommands prints the command table and records the operation.
 func (c *Core) ListCommands() error {
-	c.handler.ListCommands()
+	payload := commandsPayload(c.app.OrderKeys, c.app.AllCommandsByName)
 
-	c.app.History.Add(operations.List, newListCommandsNote())
-	return c.app.Save()
+	return c.emit(c.handler.CommandsTable(), payload, newListCommandsNote())
 }
 
 // ListProcess prints the running processes and records the operation.
 func (c *Core) ListProcess(args []string) error {
-	out, err := c.handler.ListProcess(args)
+	rows, err := c.handler.ListProcess(args)
+	if err != nil {
+		return err
+	}
 
-	return c.finishList(out, err, newListProcessNote(args))
+	return c.emit(processTable(rows), processesPayload(rows), newListProcessNote(args))
 }
 
 // ListHistory prints the history table and records the operation.
 func (c *Core) ListHistory() error {
-	return c.finishList(c.handler.ListHistory(), nil, newListHistoriesNote())
+	payload := historyPayload(c.app.History.AllData)
+
+	return c.emit(c.handler.ListHistory(), payload, newListHistoriesNote())
 }
 
 // ListFolder prints the files and folders under the requested path.
@@ -51,29 +55,44 @@ func (c *Core) ListFolder(args []string) error {
 		currentPath = args[0]
 	}
 
-	out, err := c.handler.ListFolder(currentPath)
+	// The JSON result is a directory read, not a parse of `ls -la`, so it does
+	// not go through the shell and cannot fail on a platform whose listing
+	// command is unsupported.
+	if c.app.Format == app.FormatJSON {
+		payload, err := c.handler.FolderResult(currentPath)
+		if err != nil {
+			return err
+		}
 
-	return c.finishList(out, err, newListFolderNote(args))
+		return c.emit("", payload, newListFolderNote(args))
+	}
+
+	out, err := c.handler.ListFolder(currentPath)
+	if err != nil {
+		return err
+	}
+
+	return c.emit(out, nil, newListFolderNote(args))
 }
 
 // ListSystem prints every system variable, one per line.
 func (c *Core) ListSystem() error {
 	out, err := c.handler.ListSystem()
-	if err == nil {
-		out = formatVariables(out)
+	if err != nil {
+		return err
 	}
 
-	return c.finishList(out, err, newListSystemNote())
+	return c.emit(formatVariables(out), variablesPayload(out), newListSystemNote())
 }
 
 // ListSysPath prints the system path variable, one entry per line.
 func (c *Core) ListSysPath() error {
 	out, err := c.handler.ListSysPath()
-	if err == nil {
-		out = formatVariable("PATH", out)
+	if err != nil {
+		return err
 	}
 
-	return c.finishList(out, err, newListSystemPathNote())
+	return c.emit(formatVariable("PATH", out), variablePayload("PATH", out), newListSystemPathNote())
 }
 
 // formatVariables renders every KEY=VALUE line as a named block.
@@ -109,15 +128,14 @@ func formatVariable(name string, paths string) string {
 	return outBuilder.String()
 }
 
-// finishList reports a listing: the result goes to the result stream on
-// success, and a failure is returned instead of printed so the command exits
-// non-zero.
-func (c *Core) finishList(out string, err error, note string) error {
-	if err != nil {
+// emit writes the result in the configured format and records the operation.
+//
+// A failure is returned instead of printed, so the command exits non-zero; a
+// result is written only once the operation succeeded.
+func (c *Core) emit(text string, payload any, note string) error {
+	if err := c.app.Result(text, payload); err != nil {
 		return err
 	}
-
-	c.app.Logger.Out(out)
 
 	c.app.History.Add(operations.List, note)
 	return c.app.Save()
