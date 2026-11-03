@@ -8,6 +8,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/data/operations"
 )
 
 func testApp(t *testing.T) *app.Config {
@@ -66,5 +67,24 @@ func TestFilter(t *testing.T) {
 	keys := m.FilteredKeys()
 	if len(keys) != 1 || keys[0] != "build" {
 		t.Fatalf("bad filter")
+	}
+}
+
+// The history screen names the command an entry touched, and shows a dash for
+// an operation that touched no command.
+func TestHistoryTextShowsTheCommand(t *testing.T) {
+	a := testApp(t)
+	a.History.Add(operations.Create, "greet", "note")
+	a.History.Add(operations.Copy, "", "note")
+
+	m := NewModel(a)
+	text := m.historyText()
+
+	if !strings.Contains(text, "[create] greet") {
+		t.Errorf("history = %q, want the command on the create row", text)
+	}
+
+	if !strings.Contains(text, "[copy] -") {
+		t.Errorf("history = %q, want a dash on the command-less row", text)
 	}
 }

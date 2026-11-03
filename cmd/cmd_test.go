@@ -1381,3 +1381,21 @@ func TestCreateNameBeginningWithADash(t *testing.T) {
 		t.Errorf("create -- -v did not add the command: %q", stdout)
 	}
 }
+
+// The history table names the command column; the JSON already carried it.
+func TestListHistoryShowsTheCommandColumn(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--history")
+	if err != nil {
+		t.Fatalf("list --history returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "Command") {
+		t.Errorf("history has no Command column: %q", stdout)
+	}
+}

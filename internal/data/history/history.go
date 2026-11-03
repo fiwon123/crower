@@ -147,7 +147,7 @@ func (h *Data) GetListOperation(op operations.MainOperationEnum) string {
 			continue
 		}
 
-		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.CommandName, data.Note))
 		line += 1
 	}
 	return builder.String()
@@ -176,7 +176,7 @@ func (h *Data) GetListFirstHistory(steps int) string {
 	line := 0
 	for i := start; i >= 0; i-- {
 		data := h.AllData[i]
-		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.CommandName, data.Note))
 		line += 1
 	}
 	return builder.String()
@@ -191,7 +191,7 @@ func (h *Data) GetListLastHistory(steps int) string {
 	line := 0
 	for i := start; i >= stop; i-- {
 		data := h.AllData[i]
-		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.CommandName, data.Note))
 		line += 1
 	}
 	return builder.String()
@@ -204,20 +204,24 @@ func (h *Data) GetList() string {
 	line := 0
 	for i := len(h.AllData) - 1; i >= 0; i-- {
 		data := h.AllData[i]
-		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.Note))
+		builder.WriteString(getContent(line, data.Version, data.File, data.Timestemp, data.CommandName, data.Note))
 		line += 1
 	}
 	return builder.String()
 }
 
-func getContent(line int, version int, file string, timestemp string, built string) string {
-	return fmt.Sprintf("%-4d %-8d %-16s %-32s %s\n", line, version, file, timestemp, note.Display(built))
+func getContent(line int, version int, file string, timestemp string, command string, built string) string {
+	if command == "" {
+		command = "-"
+	}
+
+	return fmt.Sprintf("%-4d %-8d %-16s %-32s %-20s %s\n", line, version, file, timestemp, command, note.Display(built))
 }
 
 func getHeader() string {
 	var builder strings.Builder
 	builder.WriteString("----------------------------------------------------------------------------\n")
-	fmt.Fprintf(&builder, "%-4s %-8s %-16s %-32s %s\n", "line", "Version", "File", "Timestamp", "Note")
+	fmt.Fprintf(&builder, "%-4s %-8s %-16s %-32s %-20s %s\n", "line", "Version", "File", "Timestamp", "Command", "Note")
 	builder.WriteString("----------------------------------------------------------------------------\n")
 	return builder.String()
 }
