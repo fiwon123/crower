@@ -38,6 +38,12 @@ crower --check      # is there a newer release?
 crower --upgrade    # self-update
 ```
 
+`--upgrade` downloads the archive built for this OS and architecture, extracts
+the `crower` binary and replaces the running one. If the release has no build
+for this platform, it fails with the URL and the reason instead of applying
+something else. Only the running binary is replaced: a separate `cr` copy keeps
+the old version until it runs `--upgrade` itself.
+
 > [!NOTE]
 > Reverting an operation restores the *configuration snapshot* taken before it.
 > History is append-only; `revert` walks it backwards, one step per call.
