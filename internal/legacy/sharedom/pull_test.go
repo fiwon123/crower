@@ -12,8 +12,8 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/sharedom"
 	crowererrors "github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/legacy/sharedom"
 )
 
 // newConfigWithInput is newConfig with a reader the test controls, so a helper

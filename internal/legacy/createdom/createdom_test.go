@@ -8,9 +8,9 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
-	"github.com/fiwon123/crower/internal/domain/createdom"
-	"github.com/fiwon123/crower/internal/domain/opendom"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/legacy/createdom"
+	"github.com/fiwon123/crower/internal/legacy/opendom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
 

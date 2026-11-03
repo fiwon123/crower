@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/domain/copydom"
+	"github.com/fiwon123/crower/internal/legacy/copydom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
 

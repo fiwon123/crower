@@ -9,7 +9,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/legacy/executedom"
 )
 
 // newTestApp builds an application whose streams are discarded, so a test does

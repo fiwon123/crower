@@ -2,8 +2,8 @@ package upgradedom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/checkdom"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/legacy/checkdom"
 )
 
 type Core struct {

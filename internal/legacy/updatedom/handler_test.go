@@ -10,8 +10,8 @@ import (
 
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/domain/createdom"
-	"github.com/fiwon123/crower/internal/domain/updatedom"
+	"github.com/fiwon123/crower/internal/legacy/createdom"
+	"github.com/fiwon123/crower/internal/legacy/updatedom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
 

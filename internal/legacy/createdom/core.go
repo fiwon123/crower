@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/opendom"
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/legacy/opendom"
 
 	"github.com/fiwon123/crower/internal/helper"
 

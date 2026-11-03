@@ -3,7 +3,7 @@ package listdom_test
 import (
 	"testing"
 
-	"github.com/fiwon123/crower/internal/domain/listdom"
+	"github.com/fiwon123/crower/internal/legacy/listdom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
 

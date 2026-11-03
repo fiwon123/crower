@@ -43,16 +43,20 @@ package rather than a new branch in a shared handler.
 ```text
 cmd/<operation>.go            cobra command: flags and argument parsing
   ↓
-internal/domain/<op>dom/      core.go (the operation) + handler.go (the rules) + notes.go
+internal/application/<verb>/  use cases: the flow, with ports it declares itself
   ↓
-internal/data/                history, notes, operations, command map, state
+internal/domain/              the model: catalog aggregate, operation enum
   ↓
-internal/app/                 configuration and application wiring
+internal/adapters/            storage, output, shell, prompt (the technology)
+
+internal/legacy/<op>dom/      the operations not ported yet (temporary)
+internal/data/ + internal/app/  storage shapes and wiring (to be dissolved)
 ```
 
-Each `internal/domain/<op>dom` package follows the same shape: `core.go` does
-the work, `handler.go` validates and orchestrates it, `input.go` holds the
-prompts, and `notes.go` carries the per-item documentation.
+A use case is a package under `internal/application/`, and it declares the
+interfaces it needs (consumer-owned ports). The model under `internal/domain/`
+depends on the standard library only. `internal/legacy/` holds the operations
+still waiting to be ported; it shrinks one command per pull request (#215).
 
 `internal/shell` is the shared floor: the platform's shell invocation. A domain
 depends on it to run `ls`, `cp` or `xdg-open`, never on another operation.
@@ -77,7 +81,10 @@ There is one component: the repository root *is* the Go module.
 
 ```text
 cmd/                 cobra commands, one file per operation
-internal/domain/     one package per operation (core, handler, notes)
+internal/domain/     the model: catalog aggregate, operation enum (stdlib only)
+internal/application/ use cases, one package per verb, with their own ports
+internal/adapters/   storage, output, shell, prompt — the technology side
+internal/legacy/     operation packages not ported yet (temporary, #215)
 internal/data/       history, notes, operations, command map, state
 internal/app/        configuration and application wiring
 internal/errors/     error types shared across layers
