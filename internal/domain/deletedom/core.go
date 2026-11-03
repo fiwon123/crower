@@ -6,7 +6,7 @@ import (
 	"github.com/fiwon123/crower/internal/errors"
 
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 type Core struct {
@@ -50,7 +50,7 @@ func (c *Core) Delete(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Delete, deleted.Name, newDeleteCommandNote(deleted, args))
+	c.app.History.Add(operation.Delete, deleted.Name, newDeleteCommandNote(deleted, args))
 
 	return c.app.Save()
 }
@@ -80,7 +80,7 @@ func (c *Core) performDeleteCommand(key string) (*command.Data, error) {
 
 // DeleteLast deletes the command touched by the last operation of the given
 // kind.
-func (c *Core) DeleteLast(op operations.MainOperationEnum) error {
+func (c *Core) DeleteLast(op operation.Operation) error {
 	content := c.app.GetLast(op)
 
 	if content == nil {
@@ -92,7 +92,7 @@ func (c *Core) DeleteLast(op operations.MainOperationEnum) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Delete, deleted.Name, newDeleteLastNote(op, deleted))
+	c.app.History.Add(operation.Delete, deleted.Name, newDeleteLastNote(op, deleted))
 
 	return c.app.Save()
 }
@@ -110,7 +110,7 @@ func (c *Core) DeleteSystemVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Delete, "", newDeleteSystemVariable(args))
+	c.app.History.Add(operation.Delete, "", newDeleteSystemVariable(args))
 
 	return c.app.Save()
 }
@@ -128,7 +128,7 @@ func (c *Core) DeleteSystemPathVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Delete, "", newDeleteSystemPathVariable(args))
+	c.app.History.Add(operation.Delete, "", newDeleteSystemPathVariable(args))
 
 	return c.app.Save()
 }
@@ -143,7 +143,7 @@ func (c *Core) DeleteFile(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Delete, "", newDeleteFileNote(args))
+	c.app.History.Add(operation.Delete, "", newDeleteFileNote(args))
 
 	return c.app.Save()
 }
@@ -158,7 +158,7 @@ func (c *Core) DeleteFolder(args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Delete, "", generateDeleteFolderNote(args))
+	c.app.History.Add(operation.Delete, "", generateDeleteFolderNote(args))
 
 	return c.app.Save()
 }

@@ -13,7 +13,7 @@ import (
 
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 type Core struct {
@@ -88,7 +88,7 @@ func (c *Core) CreateCommand(allAlias []string, args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, created.Name, newCreateCommandNote(created))
+	c.app.History.Add(operation.Create, created.Name, newCreateCommandNote(created))
 
 	return c.app.Save()
 }
@@ -121,7 +121,7 @@ func (c *Core) CreateProcess(name string, allAlias []string, args []string) erro
 
 	c.app.Logger.Info("added new command by process: ", name)
 
-	c.app.History.Add(operations.Create, created.Name, newCreateProcessNote(created, args))
+	c.app.History.Add(operation.Create, created.Name, newCreateProcessNote(created, args))
 
 	return c.app.Save()
 }
@@ -142,7 +142,7 @@ func (c *Core) CreateSystemVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Create, "", newCreateSystemVariableNote(args))
+	c.app.History.Add(operation.Create, "", newCreateSystemVariableNote(args))
 
 	return c.app.Save()
 }
@@ -160,7 +160,7 @@ func (c *Core) CreateSystemPathVariable(args []string) error {
 
 	c.app.Logger.Info(out)
 
-	c.app.History.Add(operations.Create, "", newCreateSystemPathVariableNote(args))
+	c.app.History.Add(operation.Create, "", newCreateSystemPathVariableNote(args))
 
 	return c.app.Save()
 }
@@ -183,7 +183,7 @@ func (c *Core) CreateFile(args []string) error {
 		return stderrors.Join(failures...)
 	}
 
-	c.app.History.Add(operations.Create, "", generateCreateFile(args))
+	c.app.History.Add(operation.Create, "", generateCreateFile(args))
 
 	return c.app.Save()
 }
@@ -206,7 +206,7 @@ func (c *Core) CreateFolder(args []string) error {
 		return stderrors.Join(failures...)
 	}
 
-	c.app.History.Add(operations.Create, "", newCreateFolder(args))
+	c.app.History.Add(operation.Create, "", newCreateFolder(args))
 
 	return c.app.Save()
 }
@@ -218,7 +218,7 @@ func (c *Core) CreateFolder(args []string) error {
 // so `create --execute name typo` succeeded and dropped the typo; and the
 // --alias flag was accepted but never reached the command, because the aliases
 // were hard-coded to an empty slice.
-func (c *Core) CreateLastCommand(op operations.MainOperationEnum, allAlias []string, args []string) error {
+func (c *Core) CreateLastCommand(op operation.Operation, allAlias []string, args []string) error {
 	if len(args) == 0 {
 		return errors.NotEnoughArgs("name")
 	}
@@ -264,7 +264,7 @@ func (c *Core) CreateLastCommand(op operations.MainOperationEnum, allAlias []str
 		return err
 	}
 
-	c.app.History.Add(operations.Create, created.Name, newCreateCommandLastExecuteNote(created))
+	c.app.History.Add(operation.Create, created.Name, newCreateCommandLastExecuteNote(created))
 
 	return c.app.Save()
 }
@@ -297,7 +297,7 @@ func (c *Core) CreateScriptCommand(allAlias []string, args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, created.Name, newCreateScriptCommandNote(created))
+	c.app.History.Add(operation.Create, created.Name, newCreateScriptCommandNote(created))
 
 	return c.app.Save()
 }

@@ -2,7 +2,7 @@ package searchdom
 
 import (
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 type Core struct {
@@ -29,7 +29,7 @@ func (c *Core) SearchBrowser(args []string) error {
 
 	out, err := c.handler.SearchBrowser(content)
 
-	return c.finishSearch(out, err, searchPayload(operations.Browser, content, "", out), newSearchBrowserNote(args))
+	return c.finishSearch(out, err, searchPayload(operation.Browser, content, "", out), newSearchBrowserNote(args))
 }
 
 // SearchFile searches files under a path.
@@ -38,7 +38,7 @@ func (c *Core) SearchFile(args []string) error {
 
 	out, err := c.handler.SearchFile(currentPath, content)
 
-	return c.finishSearch(out, err, searchPayload(operations.File, content, currentPath, out), newSearchFileNote(args))
+	return c.finishSearch(out, err, searchPayload(operation.File, content, currentPath, out), newSearchFileNote(args))
 }
 
 // SearchFolder searches folders under a path.
@@ -47,7 +47,7 @@ func (c *Core) SearchFolder(args []string) error {
 
 	out, err := c.handler.SearchFolder(currentPath, content)
 
-	return c.finishSearch(out, err, searchPayload(operations.Folder, content, currentPath, out), newSearchFolderNote(args))
+	return c.finishSearch(out, err, searchPayload(operation.Folder, content, currentPath, out), newSearchFolderNote(args))
 }
 
 // SearchFileAndFolder searches files and folders under a path.
@@ -56,7 +56,7 @@ func (c *Core) SearchFileAndFolder(args []string) error {
 
 	out, err := c.handler.SearchFileAndFolder(currentPath, content)
 
-	return c.finishSearch(out, err, searchPayload(operations.FileAndFolder, content, currentPath, out), newSearchFileAndFolderNote(args))
+	return c.finishSearch(out, err, searchPayload(operation.FileAndFolder, content, currentPath, out), newSearchFileAndFolderNote(args))
 }
 
 func assertArgs(args []string) (string, string) {
@@ -84,7 +84,7 @@ func (c *Core) finishSearch(out string, err error, payload any, note string) err
 		return err
 	}
 
-	c.app.History.Add(operations.Search, "", note)
+	c.app.History.Add(operation.Search, "", note)
 
 	return c.app.Save()
 }

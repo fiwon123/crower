@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 type Core struct {
@@ -137,6 +137,6 @@ func (c *Core) emit(text string, payload any, note string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.List, "", note)
+	c.app.History.Add(operation.List, "", note)
 	return c.app.Save()
 }

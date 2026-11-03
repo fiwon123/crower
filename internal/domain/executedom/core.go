@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/errors"
 )
 
@@ -52,13 +52,13 @@ func (c *Core) ExecuteCommand(args []string) error {
 
 	c.report(output)
 
-	c.app.History.Add(operations.Execute, executed.Name, newExecuteCommandNote(executed, params))
+	c.app.History.Add(operation.Execute, executed.Name, newExecuteCommandNote(executed, params))
 
 	return c.app.Save()
 }
 
 // ExecuteLast runs the command touched by the last operation of the given kind.
-func (c *Core) ExecuteLast(op operations.MainOperationEnum, args []string) error {
+func (c *Core) ExecuteLast(op operation.Operation, args []string) error {
 	content := c.app.GetLast(op)
 
 	if content == nil {
@@ -72,7 +72,7 @@ func (c *Core) ExecuteLast(op operations.MainOperationEnum, args []string) error
 
 	c.report(output)
 
-	c.app.History.Add(operations.Execute, executed.Name, NewExecuteLastNote(op, executed, args))
+	c.app.History.Add(operation.Execute, executed.Name, NewExecuteLastNote(op, executed, args))
 
 	return c.app.Save()
 }

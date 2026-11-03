@@ -4,7 +4,7 @@ import (
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
 
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 // Create a new execute note. params are the arguments the command ran with;
@@ -13,8 +13,8 @@ func newExecuteCommandNote(command *command.Data, params []string) string {
 	noteBuilder := note.New()
 
 	noteBuilder.
-		AddMainOperation(operations.Execute).
-		AddSubOperation(operations.Command).
+		AddMainOperation(operation.Execute).
+		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec)
@@ -29,12 +29,12 @@ func newExecuteCommandNote(command *command.Data, params []string) string {
 		Build()
 }
 
-func NewExecuteLastNote(op operations.MainOperationEnum, command *command.Data, params []string) string {
+func NewExecuteLastNote(op operation.Operation, command *command.Data, params []string) string {
 	noteBuilder := note.New()
 
 	noteBuilder.
-		AddMainOperation(operations.Execute).
-		AddSubOperation(operations.Command).
+		AddMainOperation(operation.Execute).
+		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec)
@@ -44,11 +44,11 @@ func NewExecuteLastNote(op operations.MainOperationEnum, command *command.Data, 
 	}
 
 	switch op {
-	case operations.Execute:
+	case operation.Execute:
 		noteBuilder.AddCrowerExec("execute --last", params)
-	case operations.Create:
+	case operation.Create:
 		noteBuilder.AddCrowerExec("execute --create", params)
-	case operations.Update:
+	case operation.Update:
 		noteBuilder.AddCrowerExec("execute --update", params)
 	}
 

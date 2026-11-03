@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/fiwon123/crower/internal/data/note"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 type Data struct {
@@ -18,7 +18,7 @@ type Content struct {
 	Version     int
 	File        string
 	Timestemp   string
-	Operation   operations.MainOperationEnum
+	Operation   operation.Operation
 	CommandName string
 	Note        string
 }
@@ -55,7 +55,7 @@ func (h *Data) GetLast() *Content {
 }
 
 // Get last content based on the last operation using crower
-func (h *Data) GetLastOperation(op operations.MainOperationEnum) *Content {
+func (h *Data) GetLastOperation(op operation.Operation) *Content {
 	lenAllData := len(h.AllData)
 
 	if lenAllData == 0 {
@@ -85,7 +85,7 @@ func (h *Data) GetLastOperation(op operations.MainOperationEnum) *Content {
 // that touches files or variables rather than a managed command. It used to be
 // left out entirely, so `execute --last`/`delete --create` resolved an empty
 // name and could never act.
-func (h *Data) Add(op operations.MainOperationEnum, commandName string, note string) {
+func (h *Data) Add(op operation.Operation, commandName string, note string) {
 
 	version := 1
 	if len(h.AllData) != 0 {
@@ -138,7 +138,7 @@ func (h *Data) GetIndexFromLastTo(steps int) int {
 	return len(h.AllData) - steps
 }
 
-func (h *Data) GetListOperation(op operations.MainOperationEnum) string {
+func (h *Data) GetListOperation(op operation.Operation) string {
 	var builder strings.Builder
 	builder.WriteString(getHeader())
 	line := 0
@@ -154,7 +154,7 @@ func (h *Data) GetListOperation(op operations.MainOperationEnum) string {
 	return builder.String()
 }
 
-func (h *Data) GetOperationContents(op operations.MainOperationEnum) []Content {
+func (h *Data) GetOperationContents(op operation.Operation) []Content {
 	contents := []Content{}
 	for i := len(h.AllData) - 1; i >= 0; i-- {
 		data := h.AllData[i]

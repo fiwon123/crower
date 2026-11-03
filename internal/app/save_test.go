@@ -9,7 +9,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -81,7 +81,7 @@ func TestSaveCommandsWritesTheCommandMap(t *testing.T) {
 func TestDeleteHistoryBackup(t *testing.T) {
 	cfg := newTestConfig(t)
 
-	cfg.History.Add(operations.List, "", "note")
+	cfg.History.Add(operation.List, "", "note")
 	if err := cfg.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
@@ -120,7 +120,7 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 	cfgPath := filepath.Join(dir, "crower.yaml")
 
 	legacy := history.New(filepath.Join(dir, "history"))
-	legacy.Add(operations.Create, "", "main_operation=create;sub_operation=command;command_name=greet;command_exec=echo hi")
+	legacy.Add(operation.Create, "", "main_operation=create;sub_operation=command;command_name=greet;command_exec=echo hi")
 
 	if err := utils.WriteJson(legacy, filepath.Join(dir, "historyhelper.json")); err != nil {
 		t.Fatalf("write legacy history: %v", err)
@@ -131,7 +131,7 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 		t.Fatalf("InitApp: %v", err)
 	}
 
-	last := cfg.GetLast(operations.Create)
+	last := cfg.GetLast(operation.Create)
 	if last == nil {
 		t.Fatal("the legacy entry did not survive the load")
 	}
@@ -147,8 +147,8 @@ func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
 	dir := t.TempDir()
 
 	legacy := history.New(filepath.Join(dir, "history"))
-	legacy.Add(operations.Create, "", `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_name=greet"`)
-	legacy.Add(operations.Execute, "real", "main_operation=execute;sub_operation=command;command_name=other")
+	legacy.Add(operation.Create, "", `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_name=greet"`)
+	legacy.Add(operation.Execute, "real", "main_operation=execute;sub_operation=command;command_name=other")
 
 	if err := utils.WriteJson(legacy, filepath.Join(dir, "historyhelper.json")); err != nil {
 		t.Fatalf("write legacy history: %v", err)

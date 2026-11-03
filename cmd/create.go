@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/data/operations"
 	"github.com/fiwon123/crower/internal/domain/createdom"
 	"github.com/fiwon123/crower/internal/domain/opendom"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
@@ -66,7 +66,7 @@ Example:
 		case systemFlag:
 			return core.CreateSystemVariable(args)
 		case executeFlag:
-			return core.CreateLastCommand(operations.Execute, allAlias, args)
+			return core.CreateLastCommand(operation.Execute, allAlias, args)
 		case scriptFlag:
 			return core.CreateScriptCommand(allAlias, args)
 		case len(args) == 0:

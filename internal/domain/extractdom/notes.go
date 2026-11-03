@@ -2,7 +2,7 @@ package extractdom
 
 import (
 	"github.com/fiwon123/crower/internal/data/note"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -10,7 +10,7 @@ import (
 func newExtractNote(out string, args []string) string {
 	noteBuilder := note.New()
 
-	noteBuilder.AddMainOperation(operations.Extract)
+	noteBuilder.AddMainOperation(operation.Extract)
 
 	if out != "" {
 		// The --out value is quoted for the recording OS like any other value;

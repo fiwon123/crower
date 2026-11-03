@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -65,7 +65,7 @@ func TestUpdateLastNoteRecordsTheFlags(t *testing.T) {
 	oldCommand := command.New("greet", nil, "echo old")
 	newCommand := command.New("greet", nil, "echo new")
 
-	built := newUpdateLastNote(operations.Create, oldCommand, newCommand)
+	built := newUpdateLastNote(operation.Create, oldCommand, newCommand)
 
 	want := "crower_exec=crower update --create --name " + shell.Quote("greet") +
 		" --exec " + shell.Quote("echo new")

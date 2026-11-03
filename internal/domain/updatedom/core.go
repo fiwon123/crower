@@ -4,7 +4,7 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 
 	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/fiwon123/crower/internal/interfaces"
 )
@@ -50,7 +50,7 @@ func (c *Core) UpdateCommand(args []string, name string, allAlias []string, exec
 		return err
 	}
 
-	c.app.History.Add(operations.Update, newCommand.Name, newUpdateCommmandNote(oldCommand, newCommand))
+	c.app.History.Add(operation.Update, newCommand.Name, newUpdateCommmandNote(oldCommand, newCommand))
 
 	return c.app.Save()
 }
@@ -77,7 +77,7 @@ func (c *Core) performUpdateCommand(
 
 // UpdateLast updates the command touched by the last operation of the given
 // kind.
-func (c *Core) UpdateLast(op operations.MainOperationEnum, name string, allAlias []string, exec string) error {
+func (c *Core) UpdateLast(op operation.Operation, name string, allAlias []string, exec string) error {
 	content := c.app.GetLast(op)
 
 	if content == nil {
@@ -91,7 +91,7 @@ func (c *Core) UpdateLast(op operations.MainOperationEnum, name string, allAlias
 		return err
 	}
 
-	c.app.History.Add(operations.Update, newCommand.Name, newUpdateLastNote(op, oldCommand, newCommand))
+	c.app.History.Add(operation.Update, newCommand.Name, newUpdateLastNote(op, oldCommand, newCommand))
 
 	return c.app.Save()
 }

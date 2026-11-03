@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/errors"
 	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/internal/interfaces"
@@ -111,6 +111,6 @@ func (i *Input) CheckUpdateInput(key *string, name *string, allAlias *[]string, 
 }
 
 // commandNotFound reports a last-operation lookup that found nothing.
-func commandNotFound(op operations.MainOperationEnum) error {
+func commandNotFound(op operation.Operation) error {
 	return fmt.Errorf("no %q command in history", op)
 }
