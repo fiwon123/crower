@@ -33,9 +33,13 @@ func (h *Handler) Extract(paths []string, output string) error {
 	var failures []error
 
 	for _, f := range paths {
-
-		if output == "" {
-			output = filepath.Dir(f)
+		// The destination belongs to this archive: an omitted --out means
+		// "next to this archive", not "next to the first archive". Assigning
+		// it once outside the loop sent every later archive into the first
+		// one's directory.
+		outDir := output
+		if outDir == "" {
+			outDir = filepath.Dir(f)
 		}
 
 		base := filepath.Base(f)
@@ -51,7 +55,7 @@ func (h *Handler) Extract(paths []string, output string) error {
 			continue
 		}
 
-		out, err := h.performExtract(ext, f, output)
+		out, err := h.performExtract(ext, f, outDir)
 		if err != nil {
 			failures = append(failures, fmt.Errorf("%s: %w", f, err))
 			continue
