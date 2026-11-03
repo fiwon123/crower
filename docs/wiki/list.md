@@ -15,6 +15,7 @@ crower list [flags]
 | `-o`, `--folder` | Files in a folder (pass the path) |
 | `--system` | System variables |
 | `--syspath` | `PATH` entries |
+| `--json` | One JSON object instead of the table ([shape](Scripting#-machine-readable-results---json)) |
 
 ## 💡 Examples
 
@@ -24,6 +25,8 @@ crower list -i                       # what ran, and when
 crower list -p                       # processes
 crower list --folder ~/projects
 crower list --system
+crower list --json                     # the same list, as one JSON object
+crower list -i --json | jq '.history[0]'
 ```
 
 > [!NOTE]
