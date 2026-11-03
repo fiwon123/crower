@@ -88,7 +88,7 @@ func (c *Core) CreateCommand(allAlias []string, args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, created.Name, newCreateCommandNote(created, args))
+	c.app.History.Add(operations.Create, created.Name, newCreateCommandNote(created))
 
 	return c.app.Save()
 }
@@ -277,7 +277,7 @@ func (c *Core) CreateScriptCommand(allAlias []string, args []string) error {
 		return err
 	}
 
-	c.app.History.Add(operations.Create, created.Name, newCreateScriptCommandNote(created, args))
+	c.app.History.Add(operations.Create, created.Name, newCreateScriptCommandNote(created))
 
 	return c.app.Save()
 }

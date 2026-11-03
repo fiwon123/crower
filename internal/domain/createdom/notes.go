@@ -1,14 +1,41 @@
 package createdom
 
 import (
+	"encoding/csv"
+	"strings"
+
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
 
 	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
+// aliasArg records the --alias flag, so the line can be replayed with the
+// command it created rather than one that lost its aliases.
+//
+// The flag is a pflag StringSlice, which reads CSV: a comma or a quote inside
+// one alias has to go through csv.Writer, or replay splits it into two.
+func aliasArg(aliases []string) string {
+	if len(aliases) == 0 {
+		return ""
+	}
+
+	var list strings.Builder
+	writer := csv.NewWriter(&list)
+
+	if err := writer.Write(aliases); err != nil {
+		// csv.Writer only fails on a bad *Reader, never on Write.
+		return ""
+	}
+
+	writer.Flush()
+
+	return " --alias " + shell.Quote(strings.TrimSuffix(list.String(), "\n"))
+}
+
 // Create a new add note
-func newCreateCommandNote(command *command.Data, args []string) string {
+func newCreateCommandNote(command *command.Data) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -17,11 +44,11 @@ func newCreateCommandNote(command *command.Data, args []string) string {
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
-		AddCrowerExec("create", args).
+		AddCrowerExec("create"+aliasArg(command.AllAlias), []string{command.Name, command.Exec}).
 		Build()
 }
 
-func newCreateScriptCommandNote(command *command.Data, args []string) string {
+func newCreateScriptCommandNote(command *command.Data) string {
 	noteBuilder := note.New()
 
 	return noteBuilder.
@@ -30,7 +57,7 @@ func newCreateScriptCommandNote(command *command.Data, args []string) string {
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
-		AddCrowerExec("create", args).
+		AddCrowerExec("create --script"+aliasArg(command.AllAlias), []string{command.Name}).
 		Build()
 }
 
@@ -43,7 +70,7 @@ func newCreateCommandLastExecuteNote(command *command.Data) string {
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
-		AddCrowerExec("create --execute", nil).
+		AddCrowerExec("create --execute"+aliasArg(command.AllAlias), []string{command.Name}).
 		Build()
 }
 
@@ -57,7 +84,7 @@ func newCreateProcessNote(command *command.Data, args []string) string {
 		AddCommandName(command.Name).
 		AddCommandAlias(command.AllAlias).
 		AddCommandExec(command.Exec).
-		AddCrowerExec("create", args).
+		AddCrowerExec("create --process "+shell.Quote(command.Name)+aliasArg(command.AllAlias), args).
 		Build()
 }
 
@@ -87,7 +114,7 @@ func generateCreateFile(args []string) string {
 	return noteBuilder.
 		AddMainOperation(operations.Create).
 		AddSubOperation(operations.File).
-		AddCrowerExec("create", args).
+		AddCrowerExec("create --file", args).
 		Build()
 }
 
@@ -97,6 +124,6 @@ func newCreateFolder(args []string) string {
 	return noteBuilder.
 		AddMainOperation(operations.Create).
 		AddSubOperation(operations.Folder).
-		AddCrowerExec("create", args).
+		AddCrowerExec("create --folder", args).
 		Build()
 }

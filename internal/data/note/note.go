@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 type Note struct {
@@ -51,10 +52,15 @@ func (note *Note) AddCrowerExec(command string, args []string) *Note {
 	var execBuilder strings.Builder
 	// command is the operation and its flags without the program name, so the
 	// recorded line reads "crower copy a b". A caller that included the name
-	// produced "crower crower copy a b".
+	// produced "crower crower copy a b". It is written raw; args are quoted
+	// for the OS that records the line, so a history moved to another platform
+	// can still be read but its crower_exec is best-effort to replay.
 	fmt.Fprintf(&execBuilder, "crower %s", command)
 	for _, arg := range args {
-		fmt.Fprintf(&execBuilder, " %s", arg)
+		// Quote each argument the way the current shell would receive it, so
+		// the recorded line can be replayed: an argument with a space used to
+		// be recorded as two.
+		fmt.Fprintf(&execBuilder, " %s", shell.Quote(arg))
 	}
 	fmt.Fprintf(&note.builder, ";crower_exec=%s", escapeValue(execBuilder.String()))
 	return note

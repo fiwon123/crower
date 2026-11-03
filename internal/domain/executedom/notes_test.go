@@ -1,6 +1,7 @@
 package executedom
 
 import (
+	"strings"
 	"testing"
 
 	command "github.com/fiwon123/crower/internal/data/command"
@@ -14,7 +15,7 @@ import (
 func TestExecuteCommandNoteCarriesTheExecCreateReuses(t *testing.T) {
 	cmd := command.New("greet", []string{"g"}, "echo hello")
 
-	built := newExecuteCommandNote(cmd)
+	built := newExecuteCommandNote(cmd, []string{"a b"})
 
 	if got := note.CommandExec(built); got != "echo hello" {
 		t.Errorf("CommandExec(%q) = %q, want %q", built, got, "echo hello")
@@ -22,5 +23,9 @@ func TestExecuteCommandNoteCarriesTheExecCreateReuses(t *testing.T) {
 
 	if got := note.CommandName(built); got != "greet" {
 		t.Errorf("CommandName(%q) = %q, want greet", built, got)
+	}
+
+	if want := `crower_exec=crower execute 'greet' 'a b'`; !strings.Contains(built, want) {
+		t.Errorf("note = %q, want it to contain %q", built, want)
 	}
 }
