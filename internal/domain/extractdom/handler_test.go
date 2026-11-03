@@ -83,7 +83,7 @@ func prepare(t *testing.T) (aDir string, bDir string, aTar string, bTar string) 
 // first archive's directory.
 func TestExtractWithoutOutGoesNextToEachArchive(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("the extractor is the platform's tar")
+		t.Skip("no gate runs a Windows shell: extraction there is unverified, and QuoteFor's Windows form has known gaps")
 	}
 
 	aDir, bDir, aTar, bTar := prepare(t)
@@ -108,7 +108,7 @@ func TestExtractWithoutOutGoesNextToEachArchive(t *testing.T) {
 // An explicit --out still sends every archive to that one directory.
 func TestExtractWithOutUsesThatFolder(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("the extractor is the platform's tar")
+		t.Skip("no gate runs a Windows shell: extraction there is unverified, and QuoteFor's Windows form has known gaps")
 	}
 
 	aDir, bDir, aTar, bTar := prepare(t)
@@ -164,7 +164,7 @@ func TestExtractUnknownFormatFails(t *testing.T) {
 // failures are returned together.
 func TestExtractKeepsGoingAfterAFailure(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("see TestExtractFailsOnWindows: the command quotes with single quotes, which cmd does not read")
+		t.Skip("no gate runs a Windows shell: extraction there is unverified, and QuoteFor's Windows form has known gaps")
 	}
 
 	aDir, _, aTar, _ := prepare(t)
@@ -183,7 +183,7 @@ func TestExtractKeepsGoingAfterAFailure(t *testing.T) {
 // is the working directory.
 func TestExtractWithoutOutInTheWorkingDirectory(t *testing.T) {
 	if runtime.GOOS == "windows" {
-		t.Skip("see TestExtractFailsOnWindows: the command quotes with single quotes, which cmd does not read")
+		t.Skip("no gate runs a Windows shell: extraction there is unverified, and QuoteFor's Windows form has known gaps")
 	}
 
 	dir := t.TempDir()

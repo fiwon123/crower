@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/helper"
 )
 
 // extractCommand builds the platform's invocation for one archive.
@@ -19,28 +20,40 @@ func extractCommand(goos string, ext string, filePath string, outDir string) (st
 		return "", fmt.Errorf("%w: extract on %q", errors.ErrUnsupportedOS, goos)
 	}
 
+	// Quote with the same helper every other domain uses. Hand-written single
+	// quotes are passed through literally by cmd.exe, and they stop protecting
+	// a path that itself contains one, so the shell would run the rest.
+	//
+	// This is not a claim that QuoteFor is perfectly cmd-safe: its Windows form
+	// still mishandles an embedded double quote, a doubled percent and a
+	// trailing backslash (see the issue filed from the #154 review).
+	archive := helper.QuoteFor(goos, filePath)
+	output := helper.QuoteFor(goos, outDir)
+
 	switch ext {
 	case "tar":
-		return fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir), nil
+		return fmt.Sprintf("tar -xf %s -C %s", archive, output), nil
 	case "gz":
-		return fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir), nil
+		return fmt.Sprintf("tar -xzf %s -C %s", archive, output), nil
 	case "tgz":
-		return fmt.Sprintf(`tar -xzf '%s' -C '%s'`, filePath, outDir), nil
+		return fmt.Sprintf("tar -xzf %s -C %s", archive, output), nil
 	case "bz2":
-		return fmt.Sprintf(`tar -xjf '%s' -C '%s'`, filePath, outDir), nil
+		return fmt.Sprintf("tar -xjf %s -C %s", archive, output), nil
 	case "xz":
-		return fmt.Sprintf(`tar -xJf '%s' -C '%s'`, filePath, outDir), nil
+		return fmt.Sprintf("tar -xJf %s -C %s", archive, output), nil
 	case "zip":
 		switch goos {
 		case "windows":
 			// Windows' tar reads zip archives; unzip is not part of the OS.
-			return fmt.Sprintf(`tar -xf '%s' -C '%s'`, filePath, outDir), nil
+			return fmt.Sprintf("tar -xf %s -C %s", archive, output), nil
 		default:
 			// linux and darwin both ship unzip.
-			return fmt.Sprintf(`unzip '%s' -d  '%s'`, filePath, outDir), nil
+			return fmt.Sprintf("unzip %s -d  %s", archive, output), nil
 		}
 	case "7z", "rar":
-		return fmt.Sprintf(`7z x '%s' '-o%s'`, filePath, outDir), nil
+		// -o takes the folder with no separator; quoting the folder keeps a
+		// path with spaces a single argument on every platform.
+		return fmt.Sprintf("7z x %s -o%s", archive, output), nil
 	default:
 		return "", fmt.Errorf("no extractor for .%s archives", ext)
 	}
