@@ -71,6 +71,14 @@ func (h *Handler) performUpdate(oldCommand *command.Data, newCommand *command.Da
 		countFieldsUpdate += 1
 	}
 
+	// A Steps command runs its steps instead of its exec. update has no flag
+	// for them, so the replacement built by New carries none: without this the
+	// update would replace a multi-line workflow with a single line and report
+	// success (#217).
+	if len(oldCommand.Steps) > 0 && len(newCommand.Steps) == 0 {
+		newCommand.Steps = slices.Clone(oldCommand.Steps)
+	}
+
 	if countFieldsUpdate == 0 {
 		return fmt.Errorf("already up-to-date")
 	}

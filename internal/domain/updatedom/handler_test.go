@@ -344,3 +344,59 @@ func newConfigWithStderr(t *testing.T) (*app.Config, *bytes.Buffer) {
 
 	return cfg, &stderr
 }
+
+// A Steps command runs its steps instead of its exec. update has no flag for
+// them, so an update that rebuilt the command without them replaced a
+// multi-line workflow with a single line and reported success (#217).
+func TestUpdateKeepsSteps(t *testing.T) {
+	tests := []struct {
+		name     string
+		newName  string
+		newAlias []string
+		newExec  string
+	}{
+		{name: "an exec change", newExec: "echo new"},
+		{name: "a rename", newName: "renamed"},
+		{name: "an alias change", newAlias: []string{"m2"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cfg, _, err := helper.InitCrowerTests()
+			if err != nil {
+				t.Fatalf("error before test: %v", err)
+			}
+
+			steps := []string{"echo one", "echo two"}
+			stored := &command.Data{
+				Name:     "multi",
+				AllAlias: []string{"m"},
+				Exec:     "echo last",
+				Steps:    steps,
+			}
+
+			cfg.AllCommandsByName.Add("multi", stored)
+			cfg.AllCommandsByAlias.Add("m", stored)
+
+			handler := updatedom.NewHandler(cfg)
+
+			if _, _, err := handler.UpdateCommand("multi", tt.newName, tt.newAlias, tt.newExec); err != nil {
+				t.Fatalf("UpdateCommand: %v", err)
+			}
+
+			key := "multi"
+			if tt.newName != "" {
+				key = tt.newName
+			}
+
+			updated := cfg.AllCommandsByName.Get(key)
+			if updated == nil {
+				t.Fatalf("command %q is missing after the update", key)
+			}
+
+			if !slices.Equal(updated.Steps, steps) {
+				t.Errorf("Steps = %v, want %v", updated.Steps, steps)
+			}
+		})
+	}
+}
