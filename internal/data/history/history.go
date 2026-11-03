@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/data/operations"
 )
 
@@ -209,8 +210,8 @@ func (h *Data) GetList() string {
 	return builder.String()
 }
 
-func getContent(line int, version int, file string, timestemp string, note string) string {
-	return fmt.Sprintf("%-4d %-8d %-16s %-32s %s\n", line, version, file, timestemp, note)
+func getContent(line int, version int, file string, timestemp string, built string) string {
+	return fmt.Sprintf("%-4d %-8d %-16s %-32s %s\n", line, version, file, timestemp, note.Display(built))
 }
 
 func getHeader() string {

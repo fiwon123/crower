@@ -18,32 +18,32 @@ func New() *Note {
 }
 
 func (note *Note) AddCommandName(name string) *Note {
-	fmt.Fprintf(&note.builder, ";command_name=%s", name)
+	fmt.Fprintf(&note.builder, ";command_name=%s", escapeValue(name))
 	return note
 }
 
 func (note *Note) AddCommandAlias(aliases []string) *Note {
-	fmt.Fprintf(&note.builder, ";command_alias=%v", aliases)
+	fmt.Fprintf(&note.builder, ";command_alias=%s", escapeValue(fmt.Sprintf("%v", aliases)))
 	return note
 }
 
 func (note *Note) AddCommandExec(exec string) *Note {
-	fmt.Fprintf(&note.builder, ";command_exec=%s", exec)
+	fmt.Fprintf(&note.builder, ";command_exec=%s", escapeValue(exec))
 	return note
 }
 
 func (note *Note) AddOldCommandName(name string) *Note {
-	fmt.Fprintf(&note.builder, ";old_command_name=%s", name)
+	fmt.Fprintf(&note.builder, ";old_command_name=%s", escapeValue(name))
 	return note
 }
 
 func (note *Note) AddOldCommandAlias(aliases []string) *Note {
-	fmt.Fprintf(&note.builder, ";old_command_alias=%v", aliases)
+	fmt.Fprintf(&note.builder, ";old_command_alias=%s", escapeValue(fmt.Sprintf("%v", aliases)))
 	return note
 }
 
 func (note *Note) AddOldCommandExec(exec string) *Note {
-	fmt.Fprintf(&note.builder, ";old_command_exec=%s", exec)
+	fmt.Fprintf(&note.builder, ";old_command_exec=%s", escapeValue(exec))
 	return note
 }
 
@@ -56,7 +56,7 @@ func (note *Note) AddCrowerExec(command string, args []string) *Note {
 	for _, arg := range args {
 		fmt.Fprintf(&execBuilder, " %s", arg)
 	}
-	fmt.Fprintf(&note.builder, ";crower_exec=%s", execBuilder.String())
+	fmt.Fprintf(&note.builder, ";crower_exec=%s", escapeValue(execBuilder.String()))
 	return note
 }
 
@@ -75,6 +75,54 @@ func (note *Note) Build() string {
 	return strings.Trim(note.builder.String(), ";")
 }
 
+// escapeValue encodes the two characters a note value cannot carry raw: the ";"
+// that separates fields, and the "%" that introduces an escape. Every value a
+// caller supplies goes through here, so an exec like "make; echo done" survives
+// the round trip instead of being cut at the semicolon.
+//
+// A note written before this encoding still reads: a raw value produces neither
+// "%25" nor "%3B" by accident, except for a literal "%3B" (or "%25") that a user
+// typed on purpose. Those rare sequences decode to ";" (or "%"); the alternative
+// -- a new note format -- would need a migration for every stored history.
+func escapeValue(value string) string {
+	value = strings.ReplaceAll(value, "%", "%25")
+	return strings.ReplaceAll(value, ";", "%3B")
+}
+
+// unescapeValue reverses escapeValue. Decoding "%3B" before "%25" is what keeps
+// a literal "%3B" (written as "%253B") from turning into ";" on the way back.
+func unescapeValue(value string) string {
+	value = strings.ReplaceAll(value, "%3B", ";")
+	return strings.ReplaceAll(value, "%25", "%")
+}
+
+// Display renders a built note for a human, decoding each value so the escaped
+// ";" and "%" read as they were written. It is for output only: read a field
+// with CommandName or CommandExec, never by splitting Display's result.
+func Display(built string) string {
+	var out strings.Builder
+	first := true
+
+	for field := range strings.SplitSeq(built, ";") {
+		if !first {
+			out.WriteString(";")
+		}
+		first = false
+
+		key, value, ok := strings.Cut(field, "=")
+		if !ok {
+			out.WriteString(field)
+			continue
+		}
+
+		out.WriteString(key)
+		out.WriteString("=")
+		out.WriteString(unescapeValue(value))
+	}
+
+	return out.String()
+}
+
 // CommandExec reads the command_exec field out of a built note.
 //
 // The execute note that `create --execute` reuses records the command's exec
@@ -91,7 +139,7 @@ func CommandExec(built string) string {
 
 	for field := range strings.SplitSeq(built, ";") {
 		if exec, ok := strings.CutPrefix(field, "command_exec="); ok {
-			return exec
+			return unescapeValue(exec)
 		}
 	}
 
@@ -114,7 +162,7 @@ func CommandName(built string) string {
 
 	for field := range strings.SplitSeq(built, ";") {
 		if name, ok := strings.CutPrefix(field, "command_name="); ok {
-			return name
+			return unescapeValue(name)
 		}
 	}
 

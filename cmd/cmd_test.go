@@ -873,6 +873,98 @@ func TestCreateExecuteHonoursAliasAndRejectsExtraArguments(t *testing.T) {
 	}
 }
 
+// An exec may contain the note separator. It is escaped on write, decoded on
+// read, so create --execute copies the whole line instead of the part before
+// the first ";".
+func TestCreateExecuteKeepsASemicolonInTheExec(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+	exec := "echo one; echo two"
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "work", exec); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "execute", "work"); err != nil {
+		t.Fatalf("execute returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "--execute", "work2"); err != nil {
+		t.Fatalf("create --execute returned an error: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list --json returned an error: %v", err)
+	}
+
+	var payload struct {
+		Commands []struct {
+			Name string `json:"name"`
+			Exec string `json:"exec"`
+		} `json:"commands"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &payload); err != nil {
+		t.Fatalf("result is not valid json: %v (%q)", err, stdout)
+	}
+
+	found := false
+	for _, command := range payload.Commands {
+		if command.Name == "work2" {
+			found = true
+			if command.Exec != exec {
+				t.Errorf("work2 exec = %q, want %q", command.Exec, exec)
+			}
+		}
+	}
+
+	if !found {
+		t.Fatalf("create --execute did not add work2: %q", stdout)
+	}
+
+	// The stored note is escaped, but the history listing shows the text the
+	// user wrote, not the escape sequences.
+	stdout, _, err = runWith(t, cfgPath, "", "list", "--history", "--json")
+	if err != nil {
+		t.Fatalf("list --history --json returned an error: %v", err)
+	}
+
+	var history struct {
+		History []struct {
+			Command string `json:"command"`
+			Note    string `json:"note"`
+		} `json:"history"`
+	}
+
+	if err := json.Unmarshal([]byte(stdout), &history); err != nil {
+		t.Fatalf("history is not valid json: %v (%q)", err, stdout)
+	}
+
+	shown := false
+	for _, entry := range history.History {
+		if entry.Command == "work2" && strings.Contains(entry.Note, "command_exec="+exec) {
+			shown = true
+		}
+	}
+
+	if !shown {
+		t.Errorf("history does not show the decoded exec: %q", stdout)
+	}
+
+	if runtime.GOOS == "windows" {
+		return
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "execute", "work2")
+	if err != nil {
+		t.Fatalf("execute work2 returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "two") {
+		t.Errorf("execute work2 wrote %q, want both commands to run", stdout)
+	}
+}
+
 // delete --create removes the command the last create added. With the empty
 // name it failed before touching anything.
 func TestDeleteCreatedLastDeletesTheCreatedCommand(t *testing.T) {
