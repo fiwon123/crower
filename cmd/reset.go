@@ -28,6 +28,6 @@ and "crower revert" can bring the commands back.
 		table := listdom.NewHandler(cfg).CommandsTable
 		session := newLegacySession(cfg, table)
 
-		return resetcommands.New(session, session, session).Run()
+		return resetcommands.New(session, session, session, session).Run()
 	},
 }

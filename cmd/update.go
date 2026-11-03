@@ -1,9 +1,10 @@
 package cmd
 
 import (
+	"github.com/fiwon123/crower/internal/application/updatecommand"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/legacy/listdom"
-	"github.com/fiwon123/crower/internal/legacy/updatedom"
 
 	"github.com/spf13/cobra"
 )
@@ -40,21 +41,30 @@ With no field given, crower asks for each one.`,
 			return err
 		}
 
-		listHandler := listdom.NewHandler(cfg)
-		core := updatedom.NewCore(cfg, listHandler)
+		session := newLegacySession(cfg, listdom.NewHandler(cfg).CommandsTable)
+
+		request := updatecommand.Request{
+			Changes: catalog.Changes{
+				Name:    name,
+				Aliases: allAlias,
+				Exec:    exec,
+			},
+		}
+
+		if len(args) != 0 {
+			request.Key = args[0]
+		}
 
 		switch {
 		case last:
-			return core.UpdateLast(operation.Update, name, allAlias, exec)
+			request.Last = operation.Update
 		case create:
-			return core.UpdateLast(operation.Create, name, allAlias, exec)
+			request.Last = operation.Create
 		case execute:
-			return core.UpdateLast(operation.Execute, name, allAlias, exec)
-		case len(args) > 0:
-			return core.UpdateCommand(args, name, allAlias, exec)
+			request.Last = operation.Execute
 		}
 
-		return missingArgs(cmd, "a command name or alias")
+		return updatecommand.New(session, session, session, session).Run(request)
 	},
 }
 

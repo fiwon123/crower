@@ -21,19 +21,18 @@ type State interface {
 	// Commands returns the current command set.
 	Commands() catalog.Catalog
 
-	// Commit replaces the stored command set and records the operation that
-	// explains it.
+	// Commit replaces the stored command set and records the operation with
+	// the note that explains it.
 	//
-	// The use case describes what happened -- the operation and the crower
-	// subcommand that reproduces it -- rather than how it is written: the
-	// storage format is the adapter's business.
-	Commit(commands catalog.Catalog, op operation.Operation, replay string) error
+	// The note is rendered by the Notes port: the format is a storage detail,
+	// and a use case that built it would own a second copy of it.
+	Commit(commands catalog.Catalog, op operation.Operation, commandName, note string) error
 }
 
 // Output is the diagnostics stream. Nothing here is a result: `reset` prints no
 // data a script would pipe.
 type Output interface {
-	Info(message string)
+	Info(message string, data ...any)
 	Table(commands catalog.Catalog) string
 }
 
@@ -42,16 +41,22 @@ type Prompter interface {
 	Confirm(question string) (bool, error)
 }
 
+// Notes renders the history note for the operation.
+type Notes interface {
+	Reset() string
+}
+
 // UseCase erases every managed command, after showing what will go.
 type UseCase struct {
 	state  State
 	output Output
 	prompt Prompter
+	notes  Notes
 }
 
-// New builds the use case from its three dependencies.
-func New(state State, output Output, prompt Prompter) *UseCase {
-	return &UseCase{state: state, output: output, prompt: prompt}
+// New builds the use case from its four dependencies.
+func New(state State, output Output, prompt Prompter, notes Notes) *UseCase {
+	return &UseCase{state: state, output: output, prompt: prompt, notes: notes}
 }
 
 // Run shows the command table, asks for confirmation and, on a yes, empties the
@@ -77,5 +82,5 @@ func (u *UseCase) Run() error {
 
 	u.output.Info("reset all commands")
 
-	return u.state.Commit(catalog.New(nil, nil), operation.Reset, "reset")
+	return u.state.Commit(catalog.New(nil, nil), operation.Reset, "", u.notes.Reset())
 }

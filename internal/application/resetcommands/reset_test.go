@@ -18,21 +18,22 @@ type fakeState struct {
 }
 
 type commit struct {
-	commands catalog.Catalog
-	op       operation.Operation
-	replay   string
+	commands    catalog.Catalog
+	op          operation.Operation
+	commandName string
+	note        string
 }
 
 func (s *fakeState) Commands() catalog.Catalog {
 	return s.commands
 }
 
-func (s *fakeState) Commit(commands catalog.Catalog, op operation.Operation, replay string) error {
+func (s *fakeState) Commit(commands catalog.Catalog, op operation.Operation, commandName, note string) error {
 	if s.commitErr != nil {
 		return s.commitErr
 	}
 
-	s.committed = &commit{commands: commands, op: op, replay: replay}
+	s.committed = &commit{commands: commands, op: op, commandName: commandName, note: note}
 	return nil
 }
 
@@ -43,7 +44,7 @@ type fakeOutput struct {
 	rows  int
 }
 
-func (o *fakeOutput) Info(message string) {
+func (o *fakeOutput) Info(message string, data ...any) {
 	o.lines = append(o.lines, message)
 }
 
@@ -67,8 +68,16 @@ func (p *fakePrompt) Confirm(question string) (bool, error) {
 	return p.answer, p.err
 }
 
+type fakeNotes struct {
+	reset string
+}
+
+func (n *fakeNotes) Reset() string {
+	return n.reset
+}
+
 func newUseCase(state *fakeState, output *fakeOutput, prompt *fakePrompt) *resetcommands.UseCase {
-	return resetcommands.New(state, output, prompt)
+	return resetcommands.New(state, output, prompt, &fakeNotes{reset: "main_operation=reset"})
 }
 
 func withCommands(names ...string) catalog.Catalog {
@@ -104,8 +113,12 @@ func TestRunConfirms(t *testing.T) {
 		t.Errorf("committed operation %q, want reset", state.committed.op)
 	}
 
-	if state.committed.replay != "reset" {
-		t.Errorf("committed replay %q, want reset", state.committed.replay)
+	if state.committed.note != "main_operation=reset" {
+		t.Errorf("committed note %q, want the one the Notes port returned", state.committed.note)
+	}
+
+	if state.committed.commandName != "" {
+		t.Errorf("committed command name %q, want empty for a reset", state.committed.commandName)
 	}
 
 	if got := prompt.asked; len(got) != 1 || got[0] != "Continue to reset" {

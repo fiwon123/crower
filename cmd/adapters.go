@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+
+	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
@@ -16,8 +18,10 @@ import (
 // hold it -- it would have to import internal/app and the legacy list
 // renderer, which the layer gate forbids for reasons that still hold.
 //
-// The type disappears in Phase 5, when app.Config becomes a session constructed
-// here and the real storage and output adapters are supplied instead.
+// One type implements every port because every port reads the same session; a
+// type per port would only repeat the constructor. It disappears in Phase 5,
+// when app.Config becomes a session constructed here and the real storage and
+// output adapters are supplied instead.
 type legacySession struct {
 	cfg   *app.Config
 	table func() string
@@ -34,29 +38,36 @@ func (s legacySession) Commands() catalog.Catalog {
 	return s.cfg.Catalog()
 }
 
-// Commit replaces the command set and records the operation that explains it.
+// LastCommand is the command the last operation of a kind touched.
+func (s legacySession) LastCommand(op operation.Operation) (string, bool) {
+	entry := s.cfg.GetLast(op)
+	if entry == nil || entry.CommandName == "" {
+		return "", false
+	}
+
+	return entry.CommandName, true
+}
+
+// Commit replaces the command set and records the operation with its note.
 //
 // It is still two writes -- the command file, then the history -- because it
 // wraps the legacy core; making that one unit of work belongs to the storage
 // adapter in Phase 2.
-func (s legacySession) Commit(commands catalog.Catalog, op operation.Operation, replay string) error {
+func (s legacySession) Commit(commands catalog.Catalog, op operation.Operation, commandName, note string) error {
 	s.cfg.ReplaceCatalog(commands)
 
 	if err := s.cfg.SaveCommands(); err != nil {
 		return err
 	}
 
-	s.cfg.History.Add(op, "", note.New().
-		AddMainOperation(op).
-		AddCrowerExec(replay, nil).
-		Build())
+	s.cfg.History.Add(op, commandName, note)
 
 	return s.cfg.Save()
 }
 
 // Info writes a diagnostic line.
-func (s legacySession) Info(message string) {
-	s.cfg.Logger.Info(message)
+func (s legacySession) Info(message string, data ...any) {
+	s.cfg.Logger.Info(message, data...)
 }
 
 // Table renders the current command table.
@@ -67,4 +78,44 @@ func (s legacySession) Table(catalog.Catalog) string {
 // Confirm asks a yes/no question on the terminal.
 func (s legacySession) Confirm(question string) (bool, error) {
 	return helper.GetUserConfirmation(question, s.cfg)
+}
+
+// ChooseCommand asks which command to act on, by row key.
+func (s legacySession) ChooseCommand() (string, error) {
+	value, err := helper.GetUserInput("Select Row", helper.IsValidInputKey, s.cfg)
+	if err != nil {
+		return "", err
+	}
+
+	key, ok := value.(string)
+	if !ok {
+		return "", fmt.Errorf("select row: expected a name, got %T", value)
+	}
+
+	return key, nil
+}
+
+// NewName asks for a required name.
+func (s legacySession) NewName() (string, error) {
+	return helper.InputName(s.cfg)
+}
+
+// NewAliases asks for aliases until the user enters an empty line.
+func (s legacySession) NewAliases() ([]string, error) {
+	return helper.InputAlias(s.cfg)
+}
+
+// NewExec asks for a required command line.
+func (s legacySession) NewExec() (string, error) {
+	return helper.InputExec(s.cfg)
+}
+
+// Reset is the history note for a reset.
+func (s legacySession) Reset() string {
+	return notes.Reset()
+}
+
+// Update is the history note for an update.
+func (s legacySession) Update(before, after catalog.Command, last operation.Operation) string {
+	return notes.UpdateNote(before, after, last)
 }
