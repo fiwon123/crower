@@ -254,6 +254,9 @@ Crower stores data in `~/crower/` by default:
 - `historyhelper.json` - Operation history
 - `history/` - Command snapshots for revert/restore
 - `crower.log` - Execution logs
+- `versions.json` - The last installed versions, read by `--rollback`
+- `settings.json` - `update_check` (`daily`, `weekly` or `never`), and when the
+  periodic notice last looked
 
 Override with `--config /path/to/config.yaml`
 

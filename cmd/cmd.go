@@ -121,6 +121,8 @@ func Execute() {
 		fmt.Fprintln(streams.Err, "error:", err)
 		os.Exit(1)
 	}
+
+	maybeNotifyUpdate()
 }
 
 func init() {

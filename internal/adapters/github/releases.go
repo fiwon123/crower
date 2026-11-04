@@ -13,13 +13,23 @@ const LatestReleaseURL = "https://api.github.com/repos/fiwon123/crower/releases/
 
 // LatestTag returns the tag of the newest published release.
 func LatestTag() (string, error) {
-	return latestTagFrom(LatestReleaseURL)
+	return LatestTagTimeout(30 * time.Second)
+}
+
+// LatestTagTimeout is LatestTag with a shorter deadline, for the periodic
+// notice: a check that delays every command must not wait half a minute.
+func LatestTagTimeout(timeout time.Duration) (string, error) {
+	return latestTagFromWithin(LatestReleaseURL, timeout)
 }
 
 // latestTagFrom is LatestTag against an arbitrary endpoint, so a test can
 // answer without the network.
 func latestTagFrom(url string) (string, error) {
-	client := &http.Client{Timeout: 30 * time.Second}
+	return latestTagFromWithin(url, 30*time.Second)
+}
+
+func latestTagFromWithin(url string, timeout time.Duration) (string, error) {
+	client := &http.Client{Timeout: timeout}
 
 	response, err := client.Get(url)
 	if err != nil {
