@@ -162,7 +162,7 @@ func TestListCommands(t *testing.T) {
 	h.state.commands = catalog.New(
 		[]string{"greet", "build"},
 		[]catalog.Command{
-			{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi"},
+			{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi", Description: "Say hi", Params: []string{"name"}},
 			{Name: "build", Exec: "go build ./..."},
 		},
 	)
@@ -186,6 +186,10 @@ func TestListCommands(t *testing.T) {
 
 	if payload.Commands[0].Row != 0 || payload.Commands[0].Name != "greet" {
 		t.Errorf("first row = %+v, want greet at row 0", payload.Commands[0])
+	}
+
+	if payload.Commands[0].Description != "Say hi" || !slices.Equal(payload.Commands[0].Params, []string{"name"}) {
+		t.Errorf("metadata = %+v, want the description and params", payload.Commands[0])
 	}
 
 	// An empty alias list encodes as [] rather than null.

@@ -77,10 +77,12 @@ func (s restoreSession) FindCommand(key, file string) (catalog.Command, error) {
 	}
 
 	return catalog.Command{
-		Name:    stored.Name,
-		Aliases: stored.AllAlias,
-		Exec:    stored.Exec,
-		Steps:   stored.Steps,
+		Name:        stored.Name,
+		Aliases:     stored.AllAlias,
+		Exec:        stored.Exec,
+		Steps:       stored.Steps,
+		Description: stored.Description,
+		Params:      stored.Params,
 	}, nil
 }
 

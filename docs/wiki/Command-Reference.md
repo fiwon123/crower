@@ -75,6 +75,8 @@ silently ignored would report success without honouring it.
 
 ---
 
+`crower list --json` rows carry `description` and `params` when the command declares them. They are metadata and change no execution.
+
 ## ➕ crower create
 
 ```text

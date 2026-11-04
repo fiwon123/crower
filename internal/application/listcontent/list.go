@@ -169,10 +169,12 @@ func (u *UseCase) listCommands() error {
 		}
 
 		payload.Commands = append(payload.Commands, CommandRow{
-			Row:     i,
-			Name:    command.Name,
-			Aliases: aliases,
-			Exec:    command.Exec,
+			Row:         i,
+			Name:        command.Name,
+			Aliases:     aliases,
+			Exec:        command.Exec,
+			Description: command.Description,
+			Params:      command.Params,
 		})
 	}
 

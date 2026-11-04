@@ -10,11 +10,17 @@ type Command struct {
 	Aliases []string
 	Exec    string
 	Steps   []string
+
+	// Description and Params are metadata: what the command is for and what
+	// its positional values mean. They never change how it runs.
+	Description string
+	Params      []string
 }
 
 // clone returns a command whose slices do not share storage with the catalog.
 func (c Command) clone() Command {
 	c.Aliases = slices.Clone(c.Aliases)
 	c.Steps = slices.Clone(c.Steps)
+	c.Params = slices.Clone(c.Params)
 	return c
 }

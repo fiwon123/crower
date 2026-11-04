@@ -238,10 +238,12 @@ func (u *UseCase) importPack(pack []catalog.Command, overwrite bool) error {
 		}
 
 		staged = append(staged, catalog.Command{
-			Name:    key,
-			Aliases: kept,
-			Exec:    imported.Exec,
-			Steps:   imported.Steps,
+			Name:        key,
+			Aliases:     kept,
+			Exec:        imported.Exec,
+			Steps:       imported.Steps,
+			Description: imported.Description,
+			Params:      imported.Params,
 		})
 
 		stagedNames[key] = true
