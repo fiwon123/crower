@@ -47,6 +47,21 @@ func TestCheckNames(t *testing.T) {
 			entries: nil,
 			wantMsg: "missing \"crower\"",
 		},
+		{
+			name:    "parent traversal",
+			entries: []string{"crower", "cr", "../README.md"},
+			wantMsg: "unsafe member",
+		},
+		{
+			name:    "absolute member",
+			entries: []string{"crower", "cr", "/etc/passwd"},
+			wantMsg: "unsafe member",
+		},
+		{
+			name:    "windows parent traversal",
+			entries: []string{"crower.exe", "cr.exe", `..\README.md`},
+			wantMsg: "unsafe member",
+		},
 	}
 
 	for _, tt := range tests {
@@ -66,6 +81,29 @@ func TestCheckNames(t *testing.T) {
 				t.Errorf("checkNames(%v) = %q, want it to mention %q", tt.entries, joined, tt.wantMsg)
 			}
 		})
+	}
+}
+
+func TestIsUnsafePath(t *testing.T) {
+	tests := []struct {
+		entry string
+		want  bool
+	}{
+		{"crower", false},
+		{"README.md", false},
+		{"add_to_path.sh", false},
+		{"../README.md", true},
+		{"a/../b", true},
+		{`..\README.md`, true},
+		{"/etc/passwd", true},
+		{`C:\Windows\system32`, true},
+		{"a..b", false},
+	}
+
+	for _, tt := range tests {
+		if got := isUnsafePath(tt.entry); got != tt.want {
+			t.Errorf("isUnsafePath(%q) = %v, want %v", tt.entry, got, tt.want)
+		}
 	}
 }
 
