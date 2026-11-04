@@ -27,6 +27,16 @@ func (e *fakeExecutor) Execute(key string, params []string) (string, string, err
 	return e.out, e.name, e.err
 }
 
+type fakeExporter struct {
+	paths []string
+	err   error
+}
+
+func (e *fakeExporter) Export(_ string, outPath string) error {
+	e.paths = append(e.paths, outPath)
+	return e.err
+}
+
 func greeter() catalog.Catalog {
 	return catalog.New(nil, []catalog.Command{
 		{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi"},
@@ -36,9 +46,15 @@ func greeter() catalog.Catalog {
 func runMenu(t *testing.T, input string, commands catalog.Catalog, history timeline.Log, exec Executor) string {
 	t.Helper()
 
+	return runMenuWith(t, input, commands, history, exec, &fakeExporter{})
+}
+
+func runMenuWith(t *testing.T, input string, commands catalog.Catalog, history timeline.Log, exec Executor, exporter Exporter) string {
+	t.Helper()
+
 	var out bytes.Buffer
 
-	ui := newTUI(commands, history, exec, strings.NewReader(input), &out)
+	ui := newTUI(commands, history, exec, exporter, strings.NewReader(input), &out)
 
 	if err := ui.Run(); err != nil {
 		t.Fatalf("Run: %v", err)
@@ -165,17 +181,43 @@ func TestHistoryEmpty(t *testing.T) {
 }
 
 func TestExport(t *testing.T) {
-	text := runMenu(t, "5\n\n\n6\n", greeter(), timeline.Log{}, &fakeExecutor{})
+	exporter := &fakeExporter{}
 
-	if !strings.Contains(text, "Would export to: crower-export.toml") {
-		t.Errorf("output = %q, want the default export path", text)
+	text := runMenuWith(t, "5\n\n\n6\n", greeter(), timeline.Log{}, &fakeExecutor{}, exporter)
+
+	if !slices.Equal(exporter.paths, []string{"crower-export.toml"}) {
+		t.Errorf("exported paths = %v, want the default", exporter.paths)
+	}
+
+	if !strings.Contains(text, "Exported to crower-export.toml") {
+		t.Errorf("output = %q, want the success line", text)
 	}
 }
 
 func TestExportNamed(t *testing.T) {
-	text := runMenu(t, "5\nout.toml\n\n6\n", greeter(), timeline.Log{}, &fakeExecutor{})
+	exporter := &fakeExporter{}
 
-	if !strings.Contains(text, "Would export to: out.toml") {
-		t.Errorf("output = %q, want the named export path", text)
+	text := runMenuWith(t, "5\nout.toml\n\n6\n", greeter(), timeline.Log{}, &fakeExecutor{}, exporter)
+
+	if !slices.Equal(exporter.paths, []string{"out.toml"}) {
+		t.Errorf("exported paths = %v, want out.toml", exporter.paths)
+	}
+
+	if !strings.Contains(text, "Exported to out.toml") {
+		t.Errorf("output = %q, want the named path", text)
+	}
+}
+
+func TestExportErrorIsPrinted(t *testing.T) {
+	exporter := &fakeExporter{err: errors.New("boom")}
+
+	text := runMenuWith(t, "5\n\n\n6\n", greeter(), timeline.Log{}, &fakeExecutor{}, exporter)
+
+	if !strings.Contains(text, "Export failed: boom") {
+		t.Errorf("output = %q, want the export error", text)
+	}
+
+	if !strings.Contains(text, "Goodbye!") {
+		t.Errorf("output = %q, want the menu to continue", text)
 	}
 }
