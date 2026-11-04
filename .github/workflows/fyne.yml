@@ -7,8 +7,6 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-  push:
-    branches: [feat/325-fyne-view] # temporary, removed before the PR
 
 permissions:
   contents: read
