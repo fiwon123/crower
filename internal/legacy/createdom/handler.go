@@ -3,30 +3,32 @@ package createdom
 import (
 	"fmt"
 	"path/filepath"
-
-	"runtime"
-	"strconv"
 	"strings"
 
+	"github.com/fiwon123/crower/internal/adapters/system"
 	"github.com/fiwon123/crower/internal/app"
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
-	"github.com/fiwon123/crower/internal/shell"
-
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
+// Handler owns the rules that decide whether a command may be added. The
+// platform work -- creating paths, writing environment files, resolving a
+// process -- lives in internal/adapters/system.
 type Handler struct {
-	app   *app.Config
-	shell *shell.Runner
+	app         *app.Config
+	creator     *system.Creator
+	environment *system.Environment
+	processes   *system.Processes
+	scripts     *system.Scripts
 }
 
 func NewHandler(app *app.Config) *Handler {
-
 	return &Handler{
-		app:   app,
-		shell: shell.New(),
+		app:         app,
+		creator:     system.NewCreator(),
+		environment: system.NewEnvironment(),
+		processes:   system.NewProcesses(),
+		scripts:     system.NewScripts(filepath.Join(app.ConfigFolder(), "scripts")),
 	}
 }
 
@@ -85,112 +87,26 @@ func (h *Handler) CreateProcess(name string, allAlias []string, args []string) (
 		return nil, errors.NotEnoughArgs("process name or pid")
 	}
 
-	process := args[0]
-	pathStr := ""
-	processName := ""
-	pid, err := strconv.Atoi(process)
+	execLine, err := h.processes.ExecLine(args[0])
 	if err != nil {
-		processName = process
-		pathStr, err = utils.GetProcessPathByName(processName)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-
-		pathStr, err = utils.GetProcessPathByID(int32(pid))
-		if err != nil {
-			return nil, err
-		}
-
+		return nil, err
 	}
 
-	if strings.Contains(pathStr, "app/") {
-		if processName == "" {
-			processName, err = utils.GetProcessNameByID(int32(pid))
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		var appID string
-		appID, err = utils.GetFlatpakAppIDByName(processName)
-		if err != nil {
-			return nil, err
-		}
-
-		execCommand := fmt.Sprintf("flatpak run %s", appID)
-		command, err := h.CreateCommand(name, allAlias, execCommand)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return command, nil
-	} else if pathStr != "" {
-		// The path becomes the stored exec and is later run by a shell, so it
-		// gets the same quoting every other domain uses. Hand-written single
-		// quotes are literal to cmd and break on a path containing one.
-		pathStr = helper.Quote(pathStr)
-		command, err := h.CreateCommand(name, allAlias, pathStr)
-
-		if err != nil {
-			return nil, err
-		}
-
-		return command, nil
-	}
-
-	return nil, fmt.Errorf("couldn't find the process either by pid or name")
+	return h.CreateCommand(name, allAlias, execLine)
 }
 
 // Create a new file on filepath
 func (h *Handler) CreateFile(filePath string) error {
-	commandLine, err := createFileCommand(runtime.GOOS, filePath)
-	if err != nil {
-		return err
-	}
-
-	out, err := h.shell.Exec(commandLine)
-	if err != nil {
-		return fmt.Errorf("create file %s: %w (output: %s)", filePath, err, strings.TrimSpace(out))
-	}
-
-	return nil
+	return h.creator.File(filePath)
 }
 
 // Create a new folder on folderpath
 func (h *Handler) CreateFolder(folderPath string) error {
-	commandLine, err := createFolderCommand(runtime.GOOS, folderPath)
-	if err != nil {
-		return err
-	}
-
-	out, err := h.shell.Exec(commandLine)
-	if err != nil {
-		return fmt.Errorf("create folder %s: %w (output: %s)", folderPath, err, strings.TrimSpace(out))
-	}
-
-	return nil
+	return h.creator.Folder(folderPath)
 }
 
+// CreateScriptCommand writes the script file for name and returns its path.
 func (h *Handler) CreateScriptCommand(name string) (string, error) {
-	cfgFolderPath := h.app.ConfigFolder()
-	scriptFolderPath := filepath.Join(cfgFolderPath, "scripts")
-	err := utils.CreateFolderIfNotExists(scriptFolderPath)
-	if err != nil {
-		return "", err
-	}
-
-	extension, err := scriptExtension(runtime.GOOS)
-	if err != nil {
-		return "", err
-	}
-
-	scriptFilePath := filepath.Join(scriptFolderPath, name+extension)
-
-	if err := utils.CreateFileIfNotExists(scriptFilePath); err != nil {
-		return "", err
-	}
-
-	return scriptFilePath, nil
+	path, _, err := h.scripts.Create(name)
+	return path, err
 }

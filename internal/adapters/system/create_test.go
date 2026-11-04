@@ -1,9 +1,12 @@
-package createdom
+package system_test
 
 import (
 	"errors"
+	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/fiwon123/crower/internal/adapters/system"
 	crowererrors "github.com/fiwon123/crower/internal/errors"
 )
 
@@ -22,12 +25,13 @@ func TestCreateFileCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := createFileCommand(tt.goos, "new.txt")
+			got, err := system.CreateFileCommand(tt.goos, "new.txt")
 
 			if tt.wantErr {
 				if !errors.Is(err, crowererrors.ErrUnsupportedOS) {
 					t.Fatalf("error = %v, want ErrUnsupportedOS", err)
 				}
+
 				return
 			}
 
@@ -57,12 +61,13 @@ func TestCreateFolderCommand(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := createFolderCommand(tt.goos, "new")
+			got, err := system.CreateFolderCommand(tt.goos, "new")
 
 			if tt.wantErr {
 				if !errors.Is(err, crowererrors.ErrUnsupportedOS) {
 					t.Fatalf("error = %v, want ErrUnsupportedOS", err)
 				}
+
 				return
 			}
 
@@ -77,36 +82,27 @@ func TestCreateFolderCommand(t *testing.T) {
 	}
 }
 
-func TestScriptExtension(t *testing.T) {
-	tests := []struct {
-		goos    string
-		want    string
-		wantErr bool
-	}{
-		{"windows", ".bat", false},
-		{"linux", ".sh", false},
-		{"darwin", ".sh", false},
-		{"plan9", "", true},
+// The table proves the line is right; this proves it runs, and that a path
+// with a space survives the quoting.
+func TestCreatorCreatesAFileAndAFolderWithSpaces(t *testing.T) {
+	dir := t.TempDir()
+	creator := system.NewCreator()
+
+	file := filepath.Join(dir, "new file.txt")
+	if err := creator.File(file); err != nil {
+		t.Fatalf("File(%s): %v", file, err)
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.goos, func(t *testing.T) {
-			got, err := scriptExtension(tt.goos)
+	if _, err := os.Stat(file); err != nil {
+		t.Errorf("Stat(%s) = %v, want the file created", file, err)
+	}
 
-			if tt.wantErr {
-				if !errors.Is(err, crowererrors.ErrUnsupportedOS) {
-					t.Fatalf("error = %v, want ErrUnsupportedOS", err)
-				}
-				return
-			}
+	folder := filepath.Join(dir, "new folder", "nested")
+	if err := creator.Folder(folder); err != nil {
+		t.Fatalf("Folder(%s): %v", folder, err)
+	}
 
-			if err != nil {
-				t.Fatalf("error = %v", err)
-			}
-
-			if got != tt.want {
-				t.Errorf("extension = %q, want %q", got, tt.want)
-			}
-		})
+	if info, err := os.Stat(folder); err != nil || !info.IsDir() {
+		t.Errorf("Stat(%s) = %v, %v; want a directory", folder, info, err)
 	}
 }
