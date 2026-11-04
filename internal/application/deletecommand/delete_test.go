@@ -151,7 +151,6 @@ type fakeHistory struct {
 	removeOut string
 	removeErr error
 	removed   []string
-	chosen    bool
 }
 
 func (h *fakeHistory) HistoryTable() string {
@@ -159,7 +158,6 @@ func (h *fakeHistory) HistoryTable() string {
 }
 
 func (h *fakeHistory) ChooseHistoryEntry() (deletecommand.Entry, error) {
-	h.chosen = true
 	return h.entry, h.chooseErr
 }
 
@@ -715,5 +713,49 @@ func assertRecordedWithoutCommand(t *testing.T, got record) {
 
 	if got.commandName != "" {
 		t.Errorf("recorded command name %q, want empty", got.commandName)
+	}
+}
+
+// An empty answer to "which command?" names nothing, so it is refused with the
+// legacy message rather than being retried as "command not found".
+func TestDeleteCommandRefusesAnEmptySelection(t *testing.T) {
+	h := newHarness(twoCommands()...)
+
+	err := h.run(deletecommand.Request{})
+	if err == nil || !strings.Contains(err.Error(), "selected row holds no command") {
+		t.Fatalf("error = %v, want the empty-selection error", err)
+	}
+
+	if h.state.committed != nil {
+		t.Error("an empty selection committed a catalog")
+	}
+}
+
+// An unknown mode is a programming error and must not fall back to the mode
+// that deletes a command.
+func TestUnknownModeFails(t *testing.T) {
+	h := newHarness(twoCommands()...)
+
+	err := h.run(deletecommand.Request{Mode: deletecommand.Mode(99), Key: "greet"})
+	if err == nil || !strings.Contains(err.Error(), "unknown delete mode") {
+		t.Fatalf("error = %v, want an unknown-mode error", err)
+	}
+
+	if h.state.committed != nil || len(h.remover.calls) != 0 || len(h.state.records) != 0 {
+		t.Errorf("an unknown mode did work: committed=%+v remover=%v records=%v", h.state.committed, h.remover.calls, h.state.records)
+	}
+}
+
+// The file is gone by the time the history is written, so a failed save has to
+// surface: the run did happen, and the exit status must say the record could
+// not be kept.
+func TestDeleteRecordsFailTheRun(t *testing.T) {
+	boom := errors.New("boom")
+
+	h := newHarness()
+	h.state.recordErr = boom
+
+	if err := h.run(deletecommand.Request{Mode: deletecommand.ModeFile, Args: []string{"notes.txt"}}); !errors.Is(err, boom) {
+		t.Fatalf("error = %v, want boom", err)
 	}
 }

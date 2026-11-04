@@ -2,6 +2,9 @@ package system_test
 
 import (
 	"errors"
+	"io/fs"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/adapters/system"
@@ -50,5 +53,44 @@ func TestRemoveCommand(t *testing.T) {
 				t.Errorf("RemoveCommand() = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+// The command table only proves the line is right; these two prove the line
+// runs. A path with a space is the case that broke before #129, and a folder
+// needs a different flag from a file.
+func TestRemoverDeletesAFileWithASpaceInItsName(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "new file.txt")
+
+	if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+		t.Fatalf("write %s: %v", path, err)
+	}
+
+	if err := system.NewRemover().File(path); err != nil {
+		t.Fatalf("File(%s): %v", path, err)
+	}
+
+	if _, err := os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("Stat(%s) = %v, want the file gone", path, err)
+	}
+}
+
+func TestRemoverDeletesAFolderWithASpaceInItsName(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "new folder")
+
+	if err := os.Mkdir(path, 0o700); err != nil {
+		t.Fatalf("mkdir %s: %v", path, err)
+	}
+
+	if err := os.WriteFile(filepath.Join(path, "inside.txt"), []byte("x"), 0o600); err != nil {
+		t.Fatalf("write inside file: %v", err)
+	}
+
+	if err := system.NewRemover().Folder(path); err != nil {
+		t.Fatalf("Folder(%s): %v", path, err)
+	}
+
+	if _, err := os.Stat(path); !errors.Is(err, fs.ErrNotExist) {
+		t.Errorf("Stat(%s) = %v, want the folder and its contents gone", path, err)
 	}
 }

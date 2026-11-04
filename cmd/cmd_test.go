@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/data/history"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -1534,4 +1535,82 @@ func configExec(t *testing.T, path string) string {
 	}
 
 	return ""
+}
+
+// delete --history drops the chosen entry and its snapshot, and rewrites only
+// the index: the command set is untouched, so the command file must not be
+// rewritten either.
+func TestDeleteHistoryEntry(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "list"); err != nil {
+		t.Fatalf("list returned an error: %v", err)
+	}
+
+	commandsBefore, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatalf("read the command file: %v", err)
+	}
+
+	// Rows are newest first, so row 1 is the create entry (version 1).
+	_, stderr, err := runWith(t, cfgPath, "1\ny\n", "delete", "--history")
+	if err != nil {
+		t.Fatalf("delete --history returned an error: %v", err)
+	}
+
+	if !strings.Contains(stderr, "history entry deleted") {
+		t.Errorf("diagnostics = %q, want the success line", stderr)
+	}
+
+	index, err := os.ReadFile(filepath.Join(dir, "historyhelper.json"))
+	if err != nil {
+		t.Fatalf("read the history index: %v", err)
+	}
+
+	var history history.Data
+	if err := json.Unmarshal(index, &history); err != nil {
+		t.Fatalf("decode the history index: %v", err)
+	}
+
+	for _, entry := range history.AllData {
+		if entry.Version == 1 {
+			t.Errorf("version 1 is still in the index: %+v", entry)
+		}
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "history", "00001.yaml")); !os.IsNotExist(err) {
+		t.Errorf("snapshot 00001.yaml: err = %v, want it gone", err)
+	}
+
+	commandsAfter, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatalf("read the command file: %v", err)
+	}
+
+	if !bytes.Equal(commandsBefore, commandsAfter) {
+		t.Errorf("the command file changed:\nbefore: %q\nafter:  %q", commandsBefore, commandsAfter)
+	}
+}
+
+// A declined history delete removes nothing.
+func TestDeleteHistoryEntryDeclined(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "0\nn\n", "delete", "--history"); err != nil {
+		t.Fatalf("delete --history returned an error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "history", "00001.yaml")); err != nil {
+		t.Errorf("snapshot 00001.yaml = %v, want it kept", err)
+	}
 }
