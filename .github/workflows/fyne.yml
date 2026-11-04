@@ -7,8 +7,6 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-  push:
-    branches: [feat/335-fyne-intel-macos] # temporary for this PR
 
 permissions:
   contents: read
