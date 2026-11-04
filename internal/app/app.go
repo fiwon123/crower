@@ -5,9 +5,9 @@ import (
 	"io"
 	"path/filepath"
 
+	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/note"
 
 	"github.com/fiwon123/crower/internal/adapters/storage"
 
@@ -92,7 +92,7 @@ func NewApp(
 	// work on a file from an older build.
 	for i := range historyData.AllData {
 		if historyData.AllData[i].CommandName == "" {
-			historyData.AllData[i].CommandName = note.CommandName(historyData.AllData[i].Note)
+			historyData.AllData[i].CommandName = notes.CommandName(historyData.AllData[i].Note)
 		}
 	}
 

@@ -1,7 +1,6 @@
 package notes
 
 import (
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
@@ -11,7 +10,7 @@ import (
 // params are the arguments the command ran with; without them the recorded line
 // replays a different invocation.
 func ExecuteCommandNote(command catalog.Command, params []string) string {
-	builder := note.New()
+	builder := New()
 
 	builder.
 		AddMainOperation(operation.Execute).
@@ -33,7 +32,7 @@ func ExecuteCommandNote(command catalog.Command, params []string) string {
 // ExecuteLastNote renders the history note for the --last/--create/--update
 // forms.
 func ExecuteLastNote(op operation.Operation, command catalog.Command, params []string) string {
-	builder := note.New()
+	builder := New()
 
 	builder.
 		AddMainOperation(operation.Execute).

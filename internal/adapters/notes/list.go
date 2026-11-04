@@ -1,13 +1,12 @@
 package notes
 
 import (
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 // ListCommandsNote renders the history note for `list`.
 func ListCommandsNote() string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.Command).
 		AddCrowerExec("list", nil).
@@ -16,7 +15,7 @@ func ListCommandsNote() string {
 
 // ListProcessNote renders the history note for `list --process`.
 func ListProcessNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.Process).
 		AddCrowerExec("list --process", args).
@@ -25,7 +24,7 @@ func ListProcessNote(args []string) string {
 
 // ListHistoryNote renders the history note for `list --history`.
 func ListHistoryNote() string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.History).
 		AddCrowerExec("list --history", nil).
@@ -34,7 +33,7 @@ func ListHistoryNote() string {
 
 // ListFolderNote renders the history note for `list --folder`.
 func ListFolderNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.Folder).
 		AddCrowerExec("list --folder", args).
@@ -43,7 +42,7 @@ func ListFolderNote(args []string) string {
 
 // ListSystemNote renders the history note for `list --system`.
 func ListSystemNote() string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.System).
 		AddCrowerExec("list --system", nil).
@@ -52,7 +51,7 @@ func ListSystemNote() string {
 
 // ListPathNote renders the history note for `list --syspath`.
 func ListPathNote() string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.SysPath).
 		AddCrowerExec("list --syspath", nil).

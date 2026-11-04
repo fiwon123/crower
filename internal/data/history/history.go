@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fiwon123/crower/internal/data/note"
+	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
@@ -216,7 +216,7 @@ func getContent(line int, version int, file string, timestemp string, command st
 		command = "-"
 	}
 
-	return fmt.Sprintf("%-4d %-8d %-16s %-32s %-20s %s\n", line, version, file, timestemp, command, note.Display(built))
+	return fmt.Sprintf("%-4d %-8d %-16s %-32s %-20s %s\n", line, version, file, timestemp, command, notes.Display(built))
 }
 
 func getHeader() string {

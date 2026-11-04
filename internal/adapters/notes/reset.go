@@ -1,7 +1,6 @@
 package notes
 
 import (
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
@@ -10,7 +9,7 @@ import (
 // A reset touches the whole command set rather than one command, so the note
 // carries only the operation and the line that reproduces it.
 func Reset() string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Reset).
 		AddCrowerExec("reset", nil).
 		Build()

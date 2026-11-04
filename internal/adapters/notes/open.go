@@ -1,13 +1,12 @@
 package notes
 
 import (
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 // OpenNote renders the history note for the positional `open`.
 func OpenNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Open).
 		AddCrowerExec("open", args).
 		Build()
@@ -15,7 +14,7 @@ func OpenNote(args []string) string {
 
 // OpenFileNote renders the history note for `open --file`.
 func OpenFileNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Open).
 		AddSubOperation(operation.File).
 		AddCrowerExec("open --file", args).
@@ -24,7 +23,7 @@ func OpenFileNote(args []string) string {
 
 // OpenFolderNote renders the history note for `open --folder`.
 func OpenFolderNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Open).
 		AddSubOperation(operation.Folder).
 		AddCrowerExec("open --folder", args).
@@ -33,7 +32,7 @@ func OpenFolderNote(args []string) string {
 
 // OpenSystemNote renders the history note for `open --system`.
 func OpenSystemNote() string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Open).
 		AddSubOperation(operation.System).
 		AddCrowerExec("open --system", nil).
