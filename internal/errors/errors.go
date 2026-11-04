@@ -30,6 +30,15 @@ var ErrChecksumMismatch = stderrors.New("checksum mismatch")
 // has no usable entry for the asset.
 var ErrChecksumUnavailable = stderrors.New("checksum unavailable")
 
+// ErrUnknownShell reports a command that names a shell crower does not know.
+// The portable schema allows "sh", "pwsh" and "cmd"; a typo must fail before a
+// process starts rather than fall back to a shell the command did not ask for.
+var ErrUnknownShell = stderrors.New("unknown shell")
+
+// ErrInvalidWorkDir reports a working directory that does not exist or is not a
+// directory. A command that names one must fail before anything runs.
+var ErrInvalidWorkDir = stderrors.New("invalid working directory")
+
 // NotEnoughArgs reports a command that was run without the arguments it needs.
 // what names the missing input, so the message says what to add.
 func NotEnoughArgs(what string) error {

@@ -244,6 +244,8 @@ func (u *UseCase) importPack(pack []catalog.Command, overwrite bool) error {
 			Steps:       imported.Steps,
 			Description: imported.Description,
 			Params:      imported.Params,
+			Shell:       imported.Shell,
+			Cwd:         imported.Cwd,
 		})
 
 		stagedNames[key] = true

@@ -55,6 +55,27 @@ func TestExecuteNoteRecordsSteps(t *testing.T) {
 	}
 }
 
+// A declared shell is part of what ran; an empty one is the platform default,
+// which every note written before the field existed already means.
+func TestExecuteNoteRecordsTheShell(t *testing.T) {
+	command := catalog.Command{Name: "deploy", Exec: "echo hi", Shell: "pwsh"}
+
+	built := notes.ExecuteCommandNote(command, nil)
+	if !strings.Contains(built, "command_shell=pwsh") {
+		t.Errorf("note = %q, want it to record the shell", built)
+	}
+
+	last := notes.ExecuteLastNote(operation.Execute, command, nil)
+	if !strings.Contains(last, "command_shell=pwsh") {
+		t.Errorf("note = %q, want it to record the shell", last)
+	}
+
+	plain := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
+	if strings.Contains(plain, "command_shell") {
+		t.Errorf("note = %q, want no shell field for the platform default", plain)
+	}
+}
+
 // Each --last form records the flag that reproduces it.
 func TestExecuteLastNoteRecordsTheFlag(t *testing.T) {
 	command := catalog.Command{Name: "greet", Exec: "echo hi"}

@@ -11,6 +11,12 @@ type Data struct {
 	// behaviour, so an old crower reading them ignores what it does not know.
 	Description string   `toml:"Description,omitempty" json:"Description,omitempty"`
 	Params      []string `toml:"Params,omitempty" json:"Params,omitempty"`
+
+	// Shell and Cwd are where the command runs: the shell it needs and the
+	// folder it starts in. Empty keeps the platform default and the caller's
+	// working directory, so every existing file keeps its behaviour.
+	Shell string `toml:"Shell,omitempty" json:"Shell,omitempty"`
+	Cwd   string `toml:"Cwd,omitempty" json:"Cwd,omitempty"`
 }
 
 // Create new command.

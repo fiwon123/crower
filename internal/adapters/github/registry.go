@@ -115,10 +115,14 @@ func (r *Registry) Pack(name string) ([]catalog.Command, string, error) {
 
 	for key, value := range commands {
 		pack = append(pack, catalog.Command{
-			Name:    key,
-			Aliases: value.AllAlias,
-			Exec:    value.Exec,
-			Steps:   value.Steps,
+			Name:        key,
+			Aliases:     value.AllAlias,
+			Exec:        value.Exec,
+			Steps:       value.Steps,
+			Description: value.Description,
+			Params:      value.Params,
+			Shell:       value.Shell,
+			Cwd:         value.Cwd,
 		})
 	}
 

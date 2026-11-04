@@ -34,6 +34,50 @@ func TestCommandForPlatform(t *testing.T) {
 	}
 }
 
+// A command may name its shell; the name is portable, so the same value picks
+// the same interpreter on every platform.
+func TestCommandForNamedShell(t *testing.T) {
+	tests := []struct {
+		name  string
+		goos  string
+		shell string
+		want  []string
+	}{
+		{"sh on linux", "linux", "sh", []string{"sh", "-c", "echo hello"}},
+		{"sh on windows", "windows", "sh", []string{"sh", "-c", "echo hello"}},
+		{"pwsh on linux", "linux", "pwsh", []string{"pwsh", "-NoProfile", "-Command", "echo hello"}},
+		{"pwsh on darwin", "darwin", "pwsh", []string{"pwsh", "-NoProfile", "-Command", "echo hello"}},
+		{"cmd on linux", "linux", "cmd", []string{"cmd", "/c", "echo hello"}},
+		{"cmd on darwin", "darwin", "cmd", []string{"cmd", "/c", "echo hello"}},
+		{"empty on windows is the platform default", "windows", "", []string{"cmd", "/c", "echo hello"}},
+		{"empty on linux is the platform default", "linux", "", []string{"sh", "-c", "echo hello"}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmd, err := commandForShell(tt.goos, tt.shell, "echo hello")
+			if err != nil {
+				t.Fatalf("commandForShell(%q, %q) error = %v", tt.goos, tt.shell, err)
+			}
+
+			if got, want := strings.Join(cmd.Args, "|"), strings.Join(tt.want, "|"); got != want {
+				t.Errorf("args = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+// A shell name the schema does not define is an error, not a fallback: running
+// through a different interpreter than the command asked for would hide the
+// mistake.
+func TestCommandForUnknownShell(t *testing.T) {
+	if _, err := commandForShell("linux", "fish", "echo hello"); err == nil {
+		t.Fatal("commandForShell accepted an unknown shell")
+	} else if !errors.Is(err, crerrors.ErrUnknownShell) {
+		t.Errorf("error = %v, want ErrUnknownShell", err)
+	}
+}
+
 // An unsupported platform must be an error: a shell invocation that does not
 // exist cannot look like a command that succeeded.
 func TestCommandForUnsupportedPlatform(t *testing.T) {

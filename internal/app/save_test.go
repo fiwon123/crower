@@ -217,6 +217,36 @@ func TestCommitWritesSnapshotIndexAndCommandFile(t *testing.T) {
 	}
 }
 
+// Commit rewrites the whole command map through toData, so a field it forgets
+// is lost by every create, update, delete and restore. Pin the target fields on
+// the path a user's data actually takes: in memory, in the file, and back.
+func TestCommitKeepsShellAndCwd(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	commands := catalog.New(nil, []catalog.Command{{
+		Name:  "deploy",
+		Exec:  "pwd",
+		Shell: "sh",
+		Cwd:   "~/projects/api",
+	}})
+
+	if err := cfg.Commit(commands, operation.Create, "deploy", "main_operation=create"); err != nil {
+		t.Fatalf("Commit: %v", err)
+	}
+
+	stored := cfg.AllCommandsByName.Get("deploy")
+	if stored == nil || stored.Shell != "sh" || stored.Cwd != "~/projects/api" {
+		t.Fatalf("stored = %+v, want the shell and cwd kept", stored)
+	}
+
+	reloaded := newTestConfigAt(t, cfg.ConfigFile())
+
+	back := reloaded.AllCommandsByName.Get("deploy")
+	if back == nil || back.Shell != "sh" || back.Cwd != "~/projects/api" {
+		t.Errorf("reloaded = %+v, want the shell and cwd on disk", back)
+	}
+}
+
 // The second commit starts from what the first wrote: the history version and
 // the snapshot name advance together, and nothing is left half-written.
 func TestCommitTwice(t *testing.T) {

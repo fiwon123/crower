@@ -20,6 +20,8 @@ type CommandRow struct {
 	Exec        string   `json:"exec"`
 	Description string   `json:"description,omitempty"`
 	Params      []string `json:"params,omitempty"`
+	Shell       string   `json:"shell,omitempty"`
+	Cwd         string   `json:"cwd,omitempty"`
 }
 
 // CommandsResult is the result of `list` and `list --json`.

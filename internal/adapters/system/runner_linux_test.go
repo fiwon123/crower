@@ -14,7 +14,7 @@ import (
 func TestRunNestedPassesTheDepthToTheChild(t *testing.T) {
 	t.Setenv("CROWER_EXEC_DEPTH", "")
 
-	out, err := system.NewRunner().RunNested("echo $CROWER_EXEC_DEPTH")
+	out, err := system.NewRunner().RunNested("echo $CROWER_EXEC_DEPTH", "", "")
 	if err != nil {
 		t.Fatalf("RunNested: %v", err)
 	}
@@ -27,7 +27,7 @@ func TestRunNestedPassesTheDepthToTheChild(t *testing.T) {
 func TestRunNestedIncrementsAnExistingDepth(t *testing.T) {
 	t.Setenv("CROWER_EXEC_DEPTH", "2")
 
-	out, err := system.NewRunner().RunNested("echo $CROWER_EXEC_DEPTH")
+	out, err := system.NewRunner().RunNested("echo $CROWER_EXEC_DEPTH", "", "")
 	if err != nil {
 		t.Fatalf("RunNested: %v", err)
 	}

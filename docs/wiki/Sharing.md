@@ -17,6 +17,12 @@ The file is TOML: readable, diffable, and safe to commit. A command may carry
 `Description` and `Params` — what it is for and what its positional values mean;
 both are metadata and never change how it runs.
 
+It may also declare `Shell` (`sh`, `pwsh` or `cmd`; empty is the platform's
+own) and `Cwd` (the folder it runs in, with `~` for the home directory). A pack
+that says `Shell = "pwsh"` runs through PowerShell 7 on every platform, so the
+reader needs `pwsh` installed; the declaration removes the guess about which
+shell the command meant, not the requirement that it exists.
+
 ## 📥 Import
 
 ```bash

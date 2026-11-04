@@ -32,6 +32,8 @@ func (p *Packs) Write(path string, commands []catalog.Command) error {
 			Steps:       item.Steps,
 			Description: item.Description,
 			Params:      item.Params,
+			Shell:       item.Shell,
+			Cwd:         item.Cwd,
 		}
 	}
 
@@ -69,6 +71,8 @@ func fromPack(pack map[string]command.Data) []catalog.Command {
 			Steps:       value.Steps,
 			Description: value.Description,
 			Params:      value.Params,
+			Shell:       value.Shell,
+			Cwd:         value.Cwd,
 		})
 	}
 
