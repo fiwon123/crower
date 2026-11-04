@@ -72,6 +72,9 @@ func resetFlags() {
 	versionFlag = false
 	checkNewVersion = false
 	upgradeFlag = false
+	rollbackFlag = false
+	installVersion = ""
+	assumeYesFlag = false
 	executeFlag = false
 	fileFlag = false
 	folderFlag = false
