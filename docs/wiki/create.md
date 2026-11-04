@@ -53,6 +53,12 @@ crower create -p editor code -a ed
 > never runs its `--exec`, and a list of steps is not one command line. It
 > fails with an error instead of creating something different.
 
+> [!NOTE]
+> `Description`, `Params`, `Shell`, `Cwd`, `Env` and `Timeout` are part of the
+> command schema, but `create` has no flags for them yet: set them in the
+> configuration file or import a pack. See
+> [`execute`](execute#-execution-target).
+
 ## 🔗 Related
 
 [`update`](update) · [`execute`](execute) · [`delete`](delete) · **[📖 Commands](How-to-Use)**
