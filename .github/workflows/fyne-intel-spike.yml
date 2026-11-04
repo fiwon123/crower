@@ -1,0 +1,32 @@
+name: Fyne Intel macOS package spike
+
+# Throwaway verification for the Intel macOS Fyne release job (#335). Removed
+# before the PR.
+on:
+  push:
+    branches: [feat/335-fyne-intel-macos]
+
+permissions:
+  contents: read
+
+jobs:
+  macos-intel:
+    name: Package Fyne Intel macOS
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Build and package
+        env:
+          VERSION: v0.0.0-test
+          GOOS: darwin
+          GOARCH: amd64
+          CGO_ENABLED: '1'
+        run: make release-fyne-platform
+      - name: Provenance
+        run: go version -m build/crower | grep -E 'vcs.revision|vcs.modified'
+      - name: Assets
+        run: ls -lh build/dist

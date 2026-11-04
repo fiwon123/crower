@@ -21,10 +21,10 @@ always `crower` and `cr`, with no architecture suffix.
 | 🍎 macOS Intel | `crower_<v>_darwin_amd64.tar.gz` | ✅ | ✅ |
 | 🍎 macOS Apple Silicon | `crower_<v>_darwin_arm64.tar.gz` | ✅ | ✅ |
 
-A separate Fyne archive exists for Linux/Windows amd64 and macOS arm64:
-`crower_fyne_<v>_linux_amd64.tar.gz`, `crower_fyne_<v>_windows_amd64.zip` and
-`crower_fyne_<v>_darwin_arm64.tar.gz`. It adds `crower fyne`; the archive above
-keeps the cgo-free `desktop`.
+A separate Fyne archive exists for Linux/Windows amd64 and macOS arm64/Intel:
+`crower_fyne_<v>_linux_amd64.tar.gz`, `crower_fyne_<v>_windows_amd64.zip`,
+`crower_fyne_<v>_darwin_arm64.tar.gz` and `crower_fyne_<v>_darwin_amd64.tar.gz`.
+It adds `crower fyne`; the archive above keeps the cgo-free `desktop`.
 
 ```bash
 VERSION=v0.5.2   # replace with the tag you are installing
