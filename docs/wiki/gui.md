@@ -15,7 +15,9 @@ crower fyne
 ```
 
 All three read the same `crower.yaml`, so a command created in the CLI appears
-in each, and anything done there lands in the history.
+in each, and anything done there lands in the history. The Fyne window can
+create, edit and delete commands with the same catalog rules and history notes
+as the CLI.
 
 > [!NOTE]
 > `desktop` needs a graphical session; in a terminal-only environment use `gui`.
