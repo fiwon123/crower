@@ -198,6 +198,7 @@ cr restore <key>
 | `export` | Export commands to share | `crower export` or `crower export name` |
 | `import` | Import commands from file | `crower import pack.toml` |
 | `share` | Browse and pull from registry | `crower share list` or `cr share pull pack` |
+| `setup` | Manage named command sets | `crower setup use streamer` |
 | `init` | Put the install directory on PATH | `crower init --apply` |
 | `doctor` | Show paths, permissions and environment | `crower doctor --json` |
 

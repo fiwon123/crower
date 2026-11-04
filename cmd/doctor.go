@@ -14,6 +14,7 @@ import (
 
 // doctorReport is what `crower doctor` answers, in text or JSON.
 type doctorReport struct {
+	Setup          string `json:"setup"`
 	ConfigFile     string `json:"config_file"`
 	ConfigFolder   string `json:"config_folder"`
 	ConfigWritable bool   `json:"config_writable"`
@@ -45,7 +46,12 @@ terminal). --json prints the same as one object.`,
 			return err
 		}
 
-		report := buildDoctorReport(cfg.ConfigFile(), cfg.ConfigFolder(), cfg.Catalog().Len(), len(cfg.History.AllData))
+		setup := activeSetup()
+		if setup == "" {
+			setup = "default"
+		}
+
+		report := buildDoctorReport(setup, cfg.ConfigFile(), cfg.ConfigFolder(), cfg.Catalog().Len(), len(cfg.History.AllData))
 
 		if doctorJSON {
 			line, err := json.MarshalIndent(report, "", "  ")
@@ -62,7 +68,7 @@ terminal). --json prints the same as one object.`,
 	},
 }
 
-func buildDoctorReport(cfgFile, cfgFolder string, commands, history int) doctorReport {
+func buildDoctorReport(setup, cfgFile, cfgFolder string, commands, history int) doctorReport {
 	settings := storage.NewSettings(cfgFolder).Load()
 
 	shell := os.Getenv("SHELL")
@@ -71,6 +77,7 @@ func buildDoctorReport(cfgFile, cfgFolder string, commands, history int) doctorR
 	}
 
 	return doctorReport{
+		Setup:          setup,
 		ConfigFile:     cfgFile,
 		ConfigFolder:   cfgFolder,
 		ConfigWritable: folderWritable(cfgFolder),
@@ -116,6 +123,7 @@ func folderWritable(folder string) bool {
 
 func printDoctorReport(r doctorReport) {
 	lines := []struct{ label, value string }{
+		{"Setup", r.Setup},
 		{"Config file", r.ConfigFile},
 		{"Config folder", r.ConfigFolder},
 		{"Config writable", yesNo(r.ConfigWritable)},

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/errors"
@@ -57,6 +58,21 @@ func setupConfigPath(home, name string) (string, error) {
 	return filepath.Join(home, "crower", "setups", name, "crower.yaml"), nil
 }
 
+// persistedSetup is the name saved by "crower setup use", or "" when none is.
+func persistedSetup() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	body, err := os.ReadFile(filepath.Join(home, "crower", "setup"))
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(body))
+}
+
 // resolveConfigPath applies the selection order: an explicit --config wins,
 // then --setup, then CROWER_SETUP, then the default installation.
 func resolveConfigPath(explicit, setup string) (string, error) {
@@ -100,6 +116,10 @@ func newApp(cmd *cobra.Command) (*app.Config, error) {
 
 	if setup == "" {
 		setup = os.Getenv("CROWER_SETUP")
+	}
+
+	if setup == "" {
+		setup = persistedSetup()
 	}
 
 	cfgPath, err = resolveConfigPath(cfgPath, setup)
