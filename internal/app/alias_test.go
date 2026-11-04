@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,7 +11,6 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
 )
 
 // Ranging a Go map made the same config run a different command on different
@@ -252,7 +252,7 @@ Exec = "echo b"
 		t.Fatalf("write snapshot: %v", err)
 	}
 
-	content := history.Content{File: "00001.yaml"}
+	content := timeline.Content{File: "00001.yaml"}
 
 	for range 20 {
 		got, err := cfg.FindCommand("a", content)

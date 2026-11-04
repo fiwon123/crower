@@ -2,12 +2,12 @@ package app
 
 import (
 	"bufio"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 	"io"
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
 
 	"github.com/fiwon123/crower/internal/adapters/storage"
 
@@ -17,7 +17,7 @@ import (
 // Config is everything one crower run needs: where its state lives, what it
 // reads, and where its output goes.
 type Config struct {
-	History            history.Data
+	History            timeline.Log
 	Logger             logger.Logger
 	OrderKeys          []string
 	AllCommandsByAlias command.MapData

@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/fiwon123/crower/internal/adapters/output"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/restorecommand"
-	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/helper"
 
@@ -72,7 +73,7 @@ func (s restoreSession) HistoryRows() []restorecommand.Entry {
 
 // FindCommand resolves the key inside the chosen snapshot.
 func (s restoreSession) FindCommand(key, file string) (catalog.Command, error) {
-	stored, err := s.cfg.FindCommand(key, history.Content{File: file})
+	stored, err := s.cfg.FindCommand(key, timeline.Content{File: file})
 	if err != nil {
 		return catalog.Command{}, err
 	}
@@ -99,7 +100,7 @@ func (s restoreSession) Warning(message string, data ...any) {
 
 // HistoryTable renders the operation log.
 func (s restoreSession) HistoryTable() string {
-	return s.cfg.History.GetList()
+	return output.HistoryTable(s.cfg.History)
 }
 
 // ChooseHistoryEntry asks which history row to restore.
@@ -109,7 +110,7 @@ func (s restoreSession) ChooseHistoryEntry() (restorecommand.Entry, error) {
 		return restorecommand.Entry{}, err
 	}
 
-	content, ok := value.(history.Content)
+	content, ok := value.(timeline.Content)
 	if !ok {
 		return restorecommand.Entry{}, fmt.Errorf("selected row is not a history entry")
 	}

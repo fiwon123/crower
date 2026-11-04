@@ -7,8 +7,8 @@ import (
 
 	"github.com/fiwon123/crower/internal/adapters/storage"
 	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
 func commandMap(t *testing.T) command.MapData {
@@ -119,7 +119,7 @@ func TestHistoryIndexRoundTrip(t *testing.T) {
 		t.Fatalf("Ensure: %v", err)
 	}
 
-	data := history.New(t.TempDir())
+	data := timeline.Log{}
 	data.Add(operation.Create, "greet", "main_operation=create")
 
 	if err := files.SaveIndex(data); err != nil {

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/output"
 	"github.com/fiwon123/crower/internal/adapters/system"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/listcontent"
@@ -92,7 +93,7 @@ func (s listSession) Structured() bool {
 
 // HistoryTable renders the operation log.
 func (s listSession) HistoryTable() string {
-	return s.cfg.History.GetList()
+	return output.HistoryTable(s.cfg.History)
 }
 
 // HistoryRows returns the log newest first for a structured result.

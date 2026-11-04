@@ -2,17 +2,17 @@ package app
 
 import (
 	"fmt"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 	"maps"
 	"slices"
 
 	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
 )
 
 // FindCommand resolves a key inside a history snapshot. A name wins over an
 // alias, and both passes run in name order: ranging the map made a snapshot
 // with a collision restore a different command on different runs.
-func (app *Config) FindCommand(key string, content history.Content) (*command.Data, error) {
+func (app *Config) FindCommand(key string, content timeline.Content) (*command.Data, error) {
 	allCommands, err := app.historyFiles.ReadSnapshot(content.File)
 	if err != nil {
 		return nil, err

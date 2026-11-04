@@ -161,7 +161,7 @@ func (s legacySession) Pending(steps int) (string, string, error) {
 		return "", "", fmt.Errorf("can't revert: steps is greater than quantity of history registry")
 	}
 
-	return s.cfg.History.GetListLastHistory(steps), s.cfg.History.GetListFirstHistory(stopIndex), nil
+	return output.HistoryLast(s.cfg.History, steps), output.HistoryFirst(s.cfg.History, stopIndex), nil
 }
 
 // RevertTo restores the command set steps entries back and reports the version

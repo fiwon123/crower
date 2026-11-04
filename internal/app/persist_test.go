@@ -9,8 +9,8 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -180,7 +180,7 @@ func TestWrittenMapKeepsAStableKeyOrder(t *testing.T) {
 func TestHistoryJSONKeepsItsOnDiskKeys(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "historyhelper.json")
 
-	data := history.New(filepath.Join(t.TempDir(), "history"))
+	data := timeline.Log{}
 	data.Add(operation.Create, "greet", "main_operation=create;command_name=greet")
 	data.Add(operation.Copy, "", "main_operation=copy;crower_exec=crower copy a b")
 
@@ -203,7 +203,7 @@ func TestHistoryJSONKeepsItsOnDiskKeys(t *testing.T) {
 		}
 	}
 
-	var back history.Data
+	var back timeline.Log
 	if err := utils.ReadJson(path, &back); err != nil {
 		t.Fatalf("ReadJson: %v", err)
 	}
@@ -222,7 +222,7 @@ func TestEmptyHistoryFileIsNotAnError(t *testing.T) {
 		t.Fatalf("write empty file: %v", err)
 	}
 
-	var data history.Data
+	var data timeline.Log
 	if err := utils.ReadJson(path, &data); err != nil {
 		t.Fatalf("ReadJson of an empty file: %v", err)
 	}

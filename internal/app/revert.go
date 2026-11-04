@@ -1,12 +1,12 @@
 package app
 
 import (
-	"github.com/fiwon123/crower/internal/data/history"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
 // RevertTo restores the command map an entry points at, then drops that entry
 // and every entry after it.
-func (app *Config) RevertTo(entry *history.Content) error {
+func (app *Config) RevertTo(entry *timeline.Content) error {
 	commands, err := app.historyFiles.ReadSnapshot(entry.File)
 	if err != nil {
 		return err
@@ -23,7 +23,7 @@ func (app *Config) RevertTo(entry *history.Content) error {
 
 // removeUntilHistory drops entries from the newest down to the one that was
 // restored, and the snapshot file that belongs to each.
-func (app *Config) removeUntilHistory(entry *history.Content) {
+func (app *Config) removeUntilHistory(entry *timeline.Content) {
 	for {
 		last := app.History.GetLast()
 		if last == nil || last.Version == entry.Version {
