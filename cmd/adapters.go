@@ -50,19 +50,10 @@ func (s legacySession) LastCommand(op operation.Operation) (string, bool) {
 
 // Commit replaces the command set and records the operation with its note.
 //
-// It is still two writes -- the command file, then the history -- because it
-// wraps the legacy core; making that one unit of work belongs to the storage
-// adapter in Phase 2.
+// It is one unit of work: the snapshot, the index, then the command file (see
+// app.Config.Commit for why that order).
 func (s legacySession) Commit(commands catalog.Catalog, op operation.Operation, commandName, note string) error {
-	s.cfg.ReplaceCatalog(commands)
-
-	if err := s.cfg.SaveCommands(); err != nil {
-		return err
-	}
-
-	s.cfg.History.Add(op, commandName, note)
-
-	return s.cfg.Save()
+	return s.cfg.Commit(commands, op, commandName, note)
 }
 
 // Info writes a diagnostic line.

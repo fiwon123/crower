@@ -1,5 +1,10 @@
 package app
 
+import (
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/operation"
+)
+
 // Save writes the current command map as a history snapshot and the history
 // index next to the config file.
 //
@@ -17,6 +22,33 @@ func (app *Config) Save() error {
 	}
 
 	return app.historyFiles.SaveIndex(app.History)
+}
+
+// Commit writes a new command set and the operation that produced it as one
+// unit: the snapshot first, then the history index, then the command file.
+//
+// The order is the contract. A failure after the snapshot leaves an orphan
+// snapshot and an index that still describes the old state; a failure after the
+// index leaves the history ahead of the command file, which `revert` and
+// `restore` can bring back. The command file is written last because it is the
+// one copy the history can reconstruct.
+//
+// Each file is replaced through a temporary file and a rename, so a crash
+// cannot leave a half-written file behind.
+func (app *Config) Commit(commands catalog.Catalog, op operation.Operation, commandName, note string) error {
+	app.ReplaceCatalog(commands)
+	app.History.Add(op, commandName, note)
+
+	entry := app.History.GetLast()
+	if err := app.historyFiles.WriteSnapshot(entry.File, app.AllCommandsByName); err != nil {
+		return err
+	}
+
+	if err := app.SaveOnlyHistory(); err != nil {
+		return err
+	}
+
+	return app.SaveCommands()
 }
 
 // SaveCommands writes the command map to the configuration file.

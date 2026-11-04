@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/timeline"
 
@@ -165,5 +166,81 @@ func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
 
 	if got := cfg.History.AllData[1].CommandName; got != "real" {
 		t.Errorf("stored name = %q, want it left alone", got)
+	}
+}
+
+// Commit is the one unit of work a command-changing operation uses: the
+// snapshot, the index and the command file all describe the same new state.
+func TestCommitWritesSnapshotIndexAndCommandFile(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	commands := catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+
+	if err := cfg.Commit(commands, operation.Create, "greet", "main_operation=create"); err != nil {
+		t.Fatalf("Commit: %v", err)
+	}
+
+	if cfg.AllCommandsByName.Get("greet") == nil {
+		t.Error("the running configuration does not hold the committed command")
+	}
+
+	configBody, err := os.ReadFile(cfg.ConfigFile())
+	if err != nil {
+		t.Fatalf("read command file: %v", err)
+	}
+
+	if !strings.Contains(string(configBody), "greet") {
+		t.Errorf("command file = %q, want the committed command", configBody)
+	}
+
+	indexBody, err := os.ReadFile(filepath.Join(filepath.Dir(cfg.ConfigFile()), "historyhelper.json"))
+	if err != nil {
+		t.Fatalf("read history index: %v", err)
+	}
+
+	if !strings.Contains(string(indexBody), `"Version": 1`) {
+		t.Errorf("history index = %q, want the new entry", indexBody)
+	}
+
+	entry := cfg.History.GetLast()
+	if entry == nil {
+		t.Fatal("Commit did not add a history entry")
+	}
+
+	snapshot, err := cfg.historyFiles.ReadSnapshot(entry.File)
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+
+	if got := snapshot["greet"].Name; got != "greet" {
+		t.Errorf("snapshot command = %q, want greet", got)
+	}
+}
+
+// The second commit starts from what the first wrote: the history version and
+// the snapshot name advance together, and nothing is left half-written.
+func TestCommitTwice(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	first := catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo one"}})
+	if err := cfg.Commit(first, operation.Create, "greet", "one"); err != nil {
+		t.Fatalf("first Commit: %v", err)
+	}
+
+	second, err := first.Add(catalog.Command{Name: "build", Exec: "go build"})
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	if err := cfg.Commit(second, operation.Create, "build", "two"); err != nil {
+		t.Fatalf("second Commit: %v", err)
+	}
+
+	if got := cfg.History.GetLast(); got == nil || got.Version != 2 {
+		t.Fatalf("last entry = %+v, want version 2", got)
+	}
+
+	if _, err := os.Stat(filepath.Join(cfg.ConfigFolder(), "history", "00002.yaml")); err != nil {
+		t.Errorf("snapshot 00002.yaml: %v", err)
 	}
 }
