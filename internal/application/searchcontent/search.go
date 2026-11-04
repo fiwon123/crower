@@ -156,14 +156,21 @@ func (u *UseCase) searchBoth(args []string) error {
 	return u.emit(out, searchPayload(operation.FileAndFolder, content, currentPath, out), u.notes.SearchBothNote(args))
 }
 
-// assertArgs splits the positional values the way the search has always done:
-// the query and the path are read only when both are present.
+// assertArgs splits the positional values: the term is the first, the path the
+// optional second, defaulting to the current directory.
+//
+// It used to read both only when two were present, so `crower search report`
+// searched for the empty term in `.` -- a search that never looked for what the
+// user typed (#283).
 func assertArgs(args []string) (string, string) {
 	content := ""
 	currentPath := "."
 
-	if len(args) > 1 {
+	if len(args) > 0 {
 		content = args[0]
+	}
+
+	if len(args) > 1 {
 		currentPath = args[1]
 	}
 
