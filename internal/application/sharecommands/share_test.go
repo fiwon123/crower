@@ -451,6 +451,8 @@ func TestImportKeepsMetadata(t *testing.T) {
 		Params:      []string{"name"},
 		Shell:       "pwsh",
 		Cwd:         "~/api",
+		Env:         map[string]string{"STAGE": "prod"},
+		Timeout:     "30s",
 	}}
 
 	if err := h.useCase().Import("pack.toml", false); err != nil {
@@ -464,5 +466,9 @@ func TestImportKeepsMetadata(t *testing.T) {
 
 	if got.Shell != "pwsh" || got.Cwd != "~/api" {
 		t.Errorf("imported = %+v, want the shell and cwd", got)
+	}
+
+	if got.Env["STAGE"] != "prod" || got.Timeout != "30s" {
+		t.Errorf("imported = %+v, want the env and timeout", got)
 	}
 }

@@ -230,14 +230,17 @@ func TestResolveUnknownKey(t *testing.T) {
 }
 
 // Metadata travels with the command and is copied, like every other slice.
-// Shell and Cwd describe how a command runs, and an update that changes only
-// its name must not drop them: the update starts from a copy of the old value.
-func TestUpdateKeepsShellAndCwd(t *testing.T) {
+// Shell, Cwd, Env and Timeout describe how a command runs, and an update that
+// changes only its name must not drop them: the update starts from a copy of
+// the old value.
+func TestUpdateKeepsTargetFields(t *testing.T) {
 	original := New(nil, []Command{{
-		Name:  "deploy",
-		Exec:  "echo hi",
-		Shell: "pwsh",
-		Cwd:   "~/projects/api",
+		Name:    "deploy",
+		Exec:    "echo hi",
+		Shell:   "pwsh",
+		Cwd:     "~/projects/api",
+		Env:     map[string]string{"STAGE": "prod"},
+		Timeout: "30s",
 	}})
 
 	result, err := original.Update("deploy", Changes{Name: "ship"})
@@ -247,6 +250,32 @@ func TestUpdateKeepsShellAndCwd(t *testing.T) {
 
 	if result.New.Shell != "pwsh" || result.New.Cwd != "~/projects/api" {
 		t.Errorf("New = %+v, want the shell and cwd kept", result.New)
+	}
+
+	if result.New.Env["STAGE"] != "prod" || result.New.Timeout != "30s" {
+		t.Errorf("New = %+v, want the env and timeout kept", result.New)
+	}
+}
+
+// The environment is a map, so a copy that shares it lets a caller change the
+// catalog through Get.
+func TestCommandCloneCopiesEnv(t *testing.T) {
+	original := New(nil, []Command{{
+		Name: "deploy",
+		Exec: "echo hi",
+		Env:  map[string]string{"STAGE": "prod"},
+	}})
+
+	got, found := original.Get("deploy")
+	if !found {
+		t.Fatal("Get did not find the command")
+	}
+
+	got.Env["STAGE"] = "changed"
+
+	again, _ := original.Get("deploy")
+	if again.Env["STAGE"] != "prod" {
+		t.Errorf("env = %v, want the catalog untouched", again.Env)
 	}
 }
 

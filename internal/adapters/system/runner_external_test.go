@@ -15,7 +15,7 @@ import (
 // The runner validates the target before starting anything: a typo in Shell
 // must not fall back to a shell the command did not ask for.
 func TestRunRejectsAnUnknownShell(t *testing.T) {
-	_, err := system.NewRunner().Run("echo hi", "fish", "")
+	_, err := system.NewRunner().Run("echo hi", system.Target{Shell: "fish"})
 	if !errors.Is(err, crerrors.ErrUnknownShell) {
 		t.Fatalf("error = %v, want ErrUnknownShell", err)
 	}
@@ -26,7 +26,7 @@ func TestRunRejectsAnUnknownShell(t *testing.T) {
 func TestRunRejectsAMissingWorkDir(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "nope")
 
-	_, err := system.NewRunner().Run("echo hi", "", missing)
+	_, err := system.NewRunner().Run("echo hi", system.Target{Dir: missing})
 	if !errors.Is(err, crerrors.ErrInvalidWorkDir) {
 		t.Fatalf("error = %v, want ErrInvalidWorkDir", err)
 	}
@@ -39,7 +39,7 @@ func TestRunThroughNamedSh(t *testing.T) {
 		t.Skip("the test needs a POSIX sh")
 	}
 
-	out, err := system.NewRunner().Run("echo hi", "sh", "")
+	out, err := system.NewRunner().Run("echo hi", system.Target{Shell: "sh"})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestRunThroughNamedSh(t *testing.T) {
 func TestRunUsesTheWorkingDirectory(t *testing.T) {
 	dir := t.TempDir()
 
-	out, err := system.NewRunner().Run(printWorkingDirectory(), "", dir)
+	out, err := system.NewRunner().Run(printWorkingDirectory(), system.Target{Dir: dir})
 	if err != nil {
 		t.Fatalf("Run: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestRunUsesTheWorkingDirectory(t *testing.T) {
 func TestRunNestedUsesTheWorkingDirectory(t *testing.T) {
 	dir := t.TempDir()
 
-	out, err := system.NewRunner().RunNested(printWorkingDirectory(), "", dir)
+	out, err := system.NewRunner().RunNested(printWorkingDirectory(), system.Target{Dir: dir})
 	if err != nil {
 		t.Fatalf("RunNested: %v", err)
 	}

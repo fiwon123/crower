@@ -55,6 +55,8 @@ Description = "Say hi"
 Params = ["name"]
 Shell = "pwsh"
 Cwd = "~/api"
+Env = { STAGE = "prod" }
+Timeout = "30s"
 `)
 
 	pack, url, err := github.NewRegistry().WithBase(server.URL, server.Client()).Pack("tools")
@@ -77,6 +79,10 @@ Cwd = "~/api"
 
 	if got.Shell != "pwsh" || got.Cwd != "~/api" {
 		t.Errorf("pack = %+v, want the shell and cwd", got)
+	}
+
+	if got.Env["STAGE"] != "prod" || got.Timeout != "30s" {
+		t.Errorf("pack = %+v, want the env and timeout", got)
 	}
 }
 

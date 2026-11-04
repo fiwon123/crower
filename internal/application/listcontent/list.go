@@ -177,6 +177,8 @@ func (u *UseCase) listCommands() error {
 			Params:      command.Params,
 			Shell:       command.Shell,
 			Cwd:         command.Cwd,
+			Env:         command.Env,
+			Timeout:     command.Timeout,
 		})
 	}
 

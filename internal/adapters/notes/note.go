@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/domain/operation"
@@ -42,6 +44,21 @@ func (note *Note) AddCommandExec(exec string) *Note {
 // that was never chosen.
 func (note *Note) AddCommandShell(name string) *Note {
 	fmt.Fprintf(&note.builder, ";command_shell=%s", escapeValue(name))
+	return note
+}
+
+// AddCommandEnv records the keys of the command's environment, never the
+// values: a history file is not a secret store. The keys are sorted so the
+// same command always produces the same note.
+func (note *Note) AddCommandEnv(env map[string]string) *Note {
+	keys := slices.Sorted(maps.Keys(env))
+	fmt.Fprintf(&note.builder, ";command_env=%s", escapeValue(strings.Join(keys, ",")))
+	return note
+}
+
+// AddCommandTimeout records the per-step limit the command declared.
+func (note *Note) AddCommandTimeout(raw string) *Note {
+	fmt.Fprintf(&note.builder, ";command_timeout=%s", escapeValue(raw))
 	return note
 }
 

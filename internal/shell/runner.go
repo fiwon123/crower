@@ -6,6 +6,7 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -89,6 +90,12 @@ func (r *Runner) CommandFor(shellName, line string) (*exec.Cmd, error) {
 	return commandForShell(runtime.GOOS, shellName, line)
 }
 
+// CommandForContext is CommandFor with a context, so a caller can cancel the
+// process it starts (a command's Timeout uses this).
+func (r *Runner) CommandForContext(ctx context.Context, shellName, line string) (*exec.Cmd, error) {
+	return commandForShellContext(ctx, runtime.GOOS, shellName, line)
+}
+
 // commandFor is the platform choice, with goos as a parameter so a test can
 // exercise every arm: runtime.GOOS cannot be overridden at run time.
 func commandFor(goos string, line string) (*exec.Cmd, error) {
@@ -97,27 +104,36 @@ func commandFor(goos string, line string) (*exec.Cmd, error) {
 
 // commandForShell is the platform default plus the three shells a command may
 // name explicitly.
+func commandForShell(goos, shellName, line string) (*exec.Cmd, error) {
+	return commandForShellContext(context.Background(), goos, shellName, line)
+}
+
+// commandForShellContext builds the process under ctx.
 //
 // pwsh runs with -NoProfile: a shared command should behave the same on every
 // machine, and a user's profile can change what a command line means.
-func commandForShell(goos, shellName, line string) (*exec.Cmd, error) {
+func commandForShellContext(ctx context.Context, goos, shellName, line string) (*exec.Cmd, error) {
+	var command *exec.Cmd
+
 	switch shellName {
 	case "":
 		switch goos {
 		case "windows":
-			return exec.Command("cmd", "/c", line), nil
+			command = exec.CommandContext(ctx, "cmd", "/c", line)
 		case "linux", "darwin":
-			return exec.Command("sh", "-c", line), nil
+			command = exec.CommandContext(ctx, "sh", "-c", line)
 		default:
 			return nil, fmt.Errorf("%w: %q", errors.ErrUnsupportedOS, goos)
 		}
 	case "sh":
-		return exec.Command("sh", "-c", line), nil
+		command = exec.CommandContext(ctx, "sh", "-c", line)
 	case "pwsh":
-		return exec.Command("pwsh", "-NoProfile", "-Command", line), nil
+		command = exec.CommandContext(ctx, "pwsh", "-NoProfile", "-Command", line)
 	case "cmd":
-		return exec.Command("cmd", "/c", line), nil
+		command = exec.CommandContext(ctx, "cmd", "/c", line)
 	default:
 		return nil, fmt.Errorf("%w: %q", errors.ErrUnknownShell, shellName)
 	}
+
+	return command, nil
 }

@@ -76,6 +76,35 @@ func TestExecuteNoteRecordsTheShell(t *testing.T) {
 	}
 }
 
+// The environment is recorded by key only: a history file must not become a
+// secret store. The timeout is part of what ran.
+func TestExecuteNoteRecordsEnvKeysAndTimeout(t *testing.T) {
+	command := catalog.Command{
+		Name:    "deploy",
+		Exec:    "echo hi",
+		Env:     map[string]string{"TOKEN": "${TOKEN}", "STAGE": "prod"},
+		Timeout: "30s",
+	}
+
+	built := notes.ExecuteCommandNote(command, nil)
+	if !strings.Contains(built, "command_env=STAGE,TOKEN") {
+		t.Errorf("note = %q, want the sorted env keys", built)
+	}
+
+	if strings.Contains(built, "prod") || strings.Contains(built, "${TOKEN}") {
+		t.Errorf("note = %q, want no environment values", built)
+	}
+
+	if !strings.Contains(built, "command_timeout=30s") {
+		t.Errorf("note = %q, want the timeout", built)
+	}
+
+	last := notes.ExecuteLastNote(operation.Execute, command, nil)
+	if !strings.Contains(last, "command_env=STAGE,TOKEN") || !strings.Contains(last, "command_timeout=30s") {
+		t.Errorf("note = %q, want the env keys and timeout", last)
+	}
+}
+
 // Each --last form records the flag that reproduces it.
 func TestExecuteLastNoteRecordsTheFlag(t *testing.T) {
 	command := catalog.Command{Name: "greet", Exec: "echo hi"}

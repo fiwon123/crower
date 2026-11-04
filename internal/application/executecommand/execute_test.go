@@ -112,15 +112,16 @@ type fakeRunner struct {
 	nestedCalls []string
 	shells      []string
 	dirs        []string
+	envs        []map[string]string
+	timeouts    []string
 	out         map[string]string
 	err         error
 	errOnLine   string
 }
 
-func (r *fakeRunner) Run(line, shellName, dir string) (string, error) {
+func (r *fakeRunner) Run(line string, target executecommand.Target) (string, error) {
+	r.record(line, target)
 	r.calls = append(r.calls, line)
-	r.shells = append(r.shells, shellName)
-	r.dirs = append(r.dirs, dir)
 
 	if r.errOnLine != "" && line == r.errOnLine {
 		return r.out[line], r.err
@@ -129,16 +130,24 @@ func (r *fakeRunner) Run(line, shellName, dir string) (string, error) {
 	return r.out[line], nil
 }
 
-func (r *fakeRunner) RunNested(line, shellName, dir string) (string, error) {
+func (r *fakeRunner) RunNested(line string, target executecommand.Target) (string, error) {
+	r.record(line, target)
 	r.nestedCalls = append(r.nestedCalls, line)
-	r.shells = append(r.shells, shellName)
-	r.dirs = append(r.dirs, dir)
 
 	if r.errOnLine != "" && line == r.errOnLine {
 		return r.out[line], r.err
 	}
 
 	return r.out[line], nil
+}
+
+// record keeps each target field separately, so a test can assert on the one
+// it cares about without rebuilding the struct.
+func (r *fakeRunner) record(_ string, target executecommand.Target) {
+	r.shells = append(r.shells, target.Shell)
+	r.dirs = append(r.dirs, target.Dir)
+	r.envs = append(r.envs, target.Env)
+	r.timeouts = append(r.timeouts, target.Timeout)
 }
 
 type fakeNotes struct{}
@@ -507,6 +516,35 @@ func TestRunPassesShellAndCwdToANestedStep(t *testing.T) {
 
 	if got, want := h.runner.dirs, []string{"/tmp"}; !slices.Equal(got, want) {
 		t.Errorf("dirs = %v, want %v", got, want)
+	}
+}
+
+// The environment and timeout reach every step too, and they are the command's
+// own values rather than a copy the use case invented.
+func TestRunPassesEnvAndTimeoutToEveryStep(t *testing.T) {
+	h := newHarness(catalog.Command{
+		Name:    "deploy",
+		Env:     map[string]string{"STAGE": "prod"},
+		Timeout: "30s",
+		Steps:   []string{"echo a", "echo b"},
+	})
+
+	if err := h.run(executecommand.Request{Key: "deploy"}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if len(h.runner.envs) != 2 {
+		t.Fatalf("recorded %d envs, want 2", len(h.runner.envs))
+	}
+
+	for i, env := range h.runner.envs {
+		if env["STAGE"] != "prod" {
+			t.Errorf("step %d env = %v, want STAGE=prod", i, env)
+		}
+	}
+
+	if got, want := h.runner.timeouts, []string{"30s", "30s"}; !slices.Equal(got, want) {
+		t.Errorf("timeouts = %v, want %v", got, want)
 	}
 }
 

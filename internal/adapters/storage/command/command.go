@@ -17,6 +17,12 @@ type Data struct {
 	// working directory, so every existing file keeps its behaviour.
 	Shell string `toml:"Shell,omitempty" json:"Shell,omitempty"`
 	Cwd   string `toml:"Cwd,omitempty" json:"Cwd,omitempty"`
+
+	// Env is merged over the process environment; a value is a literal or a
+	// "${VAR}" reference, never a secret. Timeout is the per-step limit as a
+	// Go duration ("120s"). Both are additive.
+	Env     map[string]string `toml:"Env,omitempty" json:"Env,omitempty"`
+	Timeout string            `toml:"Timeout,omitempty" json:"Timeout,omitempty"`
 }
 
 // Create new command.
