@@ -29,7 +29,7 @@ var desktopCmd = &cobra.Command{
 			return err
 		}
 
-		return desktop.Run(cfg, newExecutor(cfg))
+		return desktop.Run(cfg.Catalog(), cfg.History, newExecutor(cfg))
 	},
 }
 
@@ -44,7 +44,7 @@ var guiCmd = &cobra.Command{
 			return err
 		}
 
-		return tui.NewTUI(cfg, newExecutor(cfg)).Run()
+		return tui.NewTUI(cfg.Catalog(), cfg.History, newExecutor(cfg)).Run()
 	},
 }
 

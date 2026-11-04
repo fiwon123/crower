@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
 // Executor runs a managed command for the window.
@@ -28,12 +29,13 @@ const (
 )
 
 type Model struct {
-	App    *app.Config
-	Exec   Executor
-	State  ViewState
-	Keys   []string
-	Index  int
-	Filter string
+	Commands catalog.Catalog
+	History  timeline.Log
+	Exec     Executor
+	State    ViewState
+	Keys     []string
+	Index    int
+	Filter   string
 
 	// run
 	SelectedKey string
@@ -46,14 +48,15 @@ type Model struct {
 	LastCmd string
 }
 
-func NewModel(a *app.Config, exec Executor) *Model {
-	m := &Model{
-		App:   a,
-		Exec:  exec,
-		State: ViewList,
-		Keys:  append([]string(nil), a.OrderKeys...),
+// NewModel builds the window over the current command set and history.
+func NewModel(commands catalog.Catalog, history timeline.Log, exec Executor) *Model {
+	return &Model{
+		Commands: commands,
+		History:  history,
+		Exec:     exec,
+		State:    ViewList,
+		Keys:     commands.Names(),
 	}
-	return m
 }
 
 func (m *Model) FilteredKeys() []string {
@@ -150,12 +153,12 @@ func (m *Model) historyText() string {
 
 	sb.WriteString("[HISTORY] Enter/Esc=back\n\n")
 
-	if len(m.App.History.AllData) == 0 {
+	if len(m.History.AllData) == 0 {
 		sb.WriteString("No history\n")
 		return sb.String()
 	}
 
-	for i, entry := range m.App.History.AllData {
+	for i, entry := range m.History.AllData {
 		if i > 20 {
 			break
 		}

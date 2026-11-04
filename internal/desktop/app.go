@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -88,7 +89,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			sb.WriteString("No commands\n")
 		}
 		for i, k := range keys {
-			cmd := m.App.AllCommandsByName.Get(k)
+			cmd, found := m.Commands.Get(k)
 			prefix := "  "
 			if i == m.Index && len(keys) > 0 {
 				// find index in filtered
@@ -97,7 +98,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 					prefix = "> "
 				}
 			}
-			if cmd != nil {
+			if found {
 				sb.WriteString(fmt.Sprintf("%s%d. %s - %s\n", prefix, i+1, cmd.Name, cmd.Exec))
 			} else {
 				sb.WriteString(fmt.Sprintf("%s%d. %s\n", prefix, i+1, k))
@@ -129,8 +130,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return 800, 600
 }
 
-func Run(a *app.Config, exec Executor) error {
-	m := NewModel(a, exec)
+func Run(commands catalog.Catalog, history timeline.Log, exec Executor) error {
+	m := NewModel(commands, history, exec)
 	game := NewGame(m)
 	ebiten.SetWindowTitle("Crower Desktop")
 	ebiten.SetWindowSize(800, 600)
