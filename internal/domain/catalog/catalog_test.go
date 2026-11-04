@@ -228,3 +228,25 @@ func TestResolveUnknownKey(t *testing.T) {
 		t.Fatal("Resolve(nope) found a command")
 	}
 }
+
+// Metadata travels with the command and is copied, like every other slice.
+func TestCommandCloneCopiesMetadata(t *testing.T) {
+	original := New(nil, []Command{{
+		Name:        "greet",
+		Exec:        "echo hi",
+		Description: "Say hi",
+		Params:      []string{"name"},
+	}})
+
+	got, found := original.Get("greet")
+	if !found || got.Description != "Say hi" || len(got.Params) != 1 || got.Params[0] != "name" {
+		t.Fatalf("Get = %+v, %v; want the metadata", got, found)
+	}
+
+	got.Params[0] = "changed"
+
+	again, _ := original.Get("greet")
+	if again.Params[0] != "name" {
+		t.Errorf("params = %v, want the catalog untouched", again.Params)
+	}
+}

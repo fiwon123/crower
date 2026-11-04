@@ -15,7 +15,7 @@ func TestPacksRoundTrip(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "pack.toml")
 
 	written := []catalog.Command{
-		{Name: "greet", Aliases: []string{"hi", "hello"}, Exec: "echo hi"},
+		{Name: "greet", Aliases: []string{"hi", "hello"}, Exec: "echo hi", Description: "Say hi", Params: []string{"name"}},
 		{Name: "multi", Exec: "unused", Steps: []string{"echo a", "echo b"}},
 	}
 
@@ -36,6 +36,10 @@ func TestPacksRoundTrip(t *testing.T) {
 	greet := byName["greet"]
 	if !slices.Equal(greet.Aliases, []string{"hi", "hello"}) || greet.Exec != "echo hi" {
 		t.Errorf("greet = %+v, want the aliases and exec", greet)
+	}
+
+	if greet.Description != "Say hi" || !slices.Equal(greet.Params, []string{"name"}) {
+		t.Errorf("greet = %+v, want the description and params", greet)
 	}
 
 	if multi := byName["multi"]; !slices.Equal(multi.Steps, []string{"echo a", "echo b"}) {

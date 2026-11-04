@@ -439,3 +439,24 @@ func TestPullErrors(t *testing.T) {
 		}
 	})
 }
+
+// A pack's description and params belong to the command: import must not drop
+// them, or a shared pack loses the only thing that explains it.
+func TestImportKeepsMetadata(t *testing.T) {
+	h := newHarness()
+	h.packs.read = []catalog.Command{{
+		Name:        "greet",
+		Exec:        "echo hi",
+		Description: "Say hi",
+		Params:      []string{"name"},
+	}}
+
+	if err := h.useCase().Import("pack.toml", false); err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+
+	got, found := h.state.saved[0].Get("greet")
+	if !found || got.Description != "Say hi" || !slices.Equal(got.Params, []string{"name"}) {
+		t.Errorf("imported = %+v, want the metadata", got)
+	}
+}

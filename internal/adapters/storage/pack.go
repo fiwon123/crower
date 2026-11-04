@@ -26,10 +26,12 @@ func (p *Packs) Write(path string, commands []catalog.Command) error {
 
 	for _, item := range commands {
 		pack[item.Name] = &command.Data{
-			Name:     item.Name,
-			AllAlias: item.Aliases,
-			Exec:     item.Exec,
-			Steps:    item.Steps,
+			Name:        item.Name,
+			AllAlias:    item.Aliases,
+			Exec:        item.Exec,
+			Steps:       item.Steps,
+			Description: item.Description,
+			Params:      item.Params,
 		}
 	}
 
@@ -61,10 +63,12 @@ func fromPack(pack map[string]command.Data) []catalog.Command {
 
 	for key, value := range pack {
 		commands = append(commands, catalog.Command{
-			Name:    key,
-			Aliases: value.AllAlias,
-			Exec:    value.Exec,
-			Steps:   value.Steps,
+			Name:        key,
+			Aliases:     value.AllAlias,
+			Exec:        value.Exec,
+			Steps:       value.Steps,
+			Description: value.Description,
+			Params:      value.Params,
 		})
 	}
 
