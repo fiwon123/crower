@@ -11,6 +11,14 @@ import (
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
+// stubExecutor stands in for the command layer's executor: these tests are
+// about the model's state, not about running anything.
+type stubExecutor struct{}
+
+func (stubExecutor) Execute(string, []string) (string, string, error) {
+	return "", "", nil
+}
+
 func testApp(t *testing.T) *app.Config {
 	t.Helper()
 
@@ -34,7 +42,7 @@ func testApp(t *testing.T) *app.Config {
 
 func TestNewModel(t *testing.T) {
 	a := testApp(t)
-	m := NewModel(a)
+	m := NewModel(a, stubExecutor{})
 	if m.State != ViewList {
 		t.Fatalf("want list state")
 	}
@@ -47,7 +55,7 @@ func TestMove(t *testing.T) {
 	a := testApp(t)
 	a.AllCommandsByName.Add("b", command.New("b", nil, "echo b"))
 	a.OrderKeys = append(a.OrderKeys, "b")
-	m := NewModel(a)
+	m := NewModel(a, stubExecutor{})
 	m.Move(1)
 	if m.Selected() != "b" {
 		t.Fatalf("want b")
@@ -62,7 +70,7 @@ func TestFilter(t *testing.T) {
 	a := testApp(t)
 	a.AllCommandsByName.Add("build", command.New("build", nil, "make build"))
 	a.OrderKeys = append(a.OrderKeys, "build")
-	m := NewModel(a)
+	m := NewModel(a, stubExecutor{})
 	m.Filter = "bui"
 	keys := m.FilteredKeys()
 	if len(keys) != 1 || keys[0] != "build" {
@@ -77,7 +85,7 @@ func TestHistoryTextShowsTheCommand(t *testing.T) {
 	a.History.Add(operation.Create, "greet", "note")
 	a.History.Add(operation.Copy, "", "note")
 
-	m := NewModel(a)
+	m := NewModel(a, stubExecutor{})
 	text := m.historyText()
 
 	if !strings.Contains(text, "[create] greet") {

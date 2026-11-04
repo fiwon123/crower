@@ -8,19 +8,28 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/legacy/executedom"
 )
+
+// Executor runs a managed command for the interface.
+//
+// It is declared here, at the point of use, so this package does not depend on
+// the use case or its adapters; the command layer supplies one.
+type Executor interface {
+	// Execute runs key with params and returns the output and the command's
+	// name.
+	Execute(key string, params []string) (string, string, error)
+}
 
 type TUI struct {
 	app    *app.Config
-	exec   *executedom.Handler
+	exec   Executor
 	reader *bufio.Reader
 }
 
-func NewTUI(app *app.Config) *TUI {
+func NewTUI(app *app.Config, exec Executor) *TUI {
 	return &TUI{
 		app:    app,
-		exec:   executedom.NewHandler(app),
+		exec:   exec,
 		reader: bufio.NewReader(os.Stdin),
 	}
 }
@@ -103,9 +112,9 @@ func (t *TUI) runCommand(withParams bool) {
 	}
 
 	fmt.Println("\n--- Executing ---")
-	out, cmd, err := t.exec.Execute(cmdName, params)
-	if cmd != nil {
-		fmt.Printf("Command: %s\n", cmd.Name)
+	out, name, err := t.exec.Execute(cmdName, params)
+	if name != "" {
+		fmt.Printf("Command: %s\n", name)
 	}
 	if out != "" {
 		fmt.Println(out)
