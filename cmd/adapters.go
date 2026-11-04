@@ -7,6 +7,7 @@ import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/output"
 	"github.com/fiwon123/crower/internal/adapters/prompt"
+	"github.com/fiwon123/crower/internal/adapters/storage"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
@@ -188,6 +189,34 @@ func (s legacySession) Reset() string {
 // Update is the history note for an update.
 func (s legacySession) Update(before, after catalog.Command, last operation.Operation) string {
 	return notes.UpdateNote(before, after, last)
+}
+
+// updateSession adds the installed-version list to the shared session.
+//
+// It exists because the version history is its own file, not the command set:
+// the update use case asks it what ran before, and records what it installed.
+type updateSession struct {
+	legacySession
+
+	versions *storage.Versions
+}
+
+// newUpdateSession wires the configuration and the version list.
+func newUpdateSession(cfg *app.Config) updateSession {
+	return updateSession{
+		legacySession: newLegacySession(cfg),
+		versions:      storage.NewVersions(cfg.ConfigFolder()),
+	}
+}
+
+// Previous returns the most recently installed version other than current.
+func (s updateSession) Previous(current string) (string, bool) {
+	return s.versions.Previous(current)
+}
+
+// RecordInstalled puts version at the front of the installed list.
+func (s updateSession) RecordInstalled(version string) error {
+	return s.versions.RecordInstalled(version)
 }
 
 // latestTag adapts the github adapter's function to the Releases port, so cmd

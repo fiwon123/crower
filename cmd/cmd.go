@@ -15,6 +15,9 @@ import (
 var versionFlag bool
 var checkNewVersion bool
 var upgradeFlag bool
+var rollbackFlag bool
+var installVersion string
+var assumeYesFlag bool
 
 // Shared flags, parsed by more than one command.
 var executeFlag bool
@@ -83,10 +86,17 @@ Every command has its own help: crower <command> --help.`,
 			session := newLegacySession(cfg)
 			return checkrelease.New(latestTag{}, session, session, session).Run(Version)
 
-		case upgradeFlag:
-			session := newLegacySession(cfg)
+		case upgradeFlag, rollbackFlag, installVersion != "":
+			session := newUpdateSession(cfg)
 
-			return upgradeapp.New(session, session, latestTag{}, update.New(), session).Run(Version)
+			return upgradeapp.New(session, session, latestTag{}, update.New(), session, session, session).Run(
+				upgradeapp.Request{
+					Current:   Version,
+					Version:   installVersion,
+					Rollback:  rollbackFlag,
+					AssumeYes: assumeYesFlag,
+				},
+			)
 
 		case len(args) == 0:
 			return cmd.Help()
@@ -134,6 +144,9 @@ func init() {
 
 	// Flags
 	rootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "print the current version")
-	rootCmd.Flags().BoolVar(&upgradeFlag, "upgrade", false, "upgrade to the latest version")
+	rootCmd.Flags().BoolVar(&upgradeFlag, "upgrade", false, "install the latest version (asks first; use --yes in scripts)")
 	rootCmd.Flags().BoolVar(&checkNewVersion, "check", false, "check whether a newer version exists")
+	rootCmd.Flags().BoolVarP(&assumeYesFlag, "yes", "y", false, "install without asking for confirmation")
+	rootCmd.Flags().StringVar(&installVersion, "install-version", "", "install a specific version, older or newer")
+	rootCmd.Flags().BoolVar(&rollbackFlag, "rollback", false, "install the version that ran before this one")
 }
