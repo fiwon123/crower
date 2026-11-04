@@ -3,6 +3,7 @@ package tui
 import (
 	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -30,30 +31,37 @@ type TUI struct {
 	history  timeline.Log
 	exec     Executor
 	reader   *bufio.Reader
+	out      io.Writer
 }
 
 // NewTUI builds the menu over the current command set and history.
 func NewTUI(commands catalog.Catalog, history timeline.Log, exec Executor) *TUI {
+	return newTUI(commands, history, exec, os.Stdin, os.Stdout)
+}
+
+// newTUI is the injectable constructor a test uses; NewTUI is the terminal.
+func newTUI(commands catalog.Catalog, history timeline.Log, exec Executor, in io.Reader, out io.Writer) *TUI {
 	return &TUI{
 		commands: commands,
 		history:  history,
 		exec:     exec,
-		reader:   bufio.NewReader(os.Stdin),
+		reader:   bufio.NewReader(in),
+		out:      out,
 	}
 }
 
 func (t *TUI) Run() error {
 	for {
-		fmt.Println("\n╔═══════════════════════════════════════╗")
-		fmt.Println("║           CROWER - TUI GUI           ║")
-		fmt.Println("╚═══════════════════════════════════════╝")
-		fmt.Println("\n1. List Commands")
-		fmt.Println("2. Run Command")
-		fmt.Println("3. Run Command with Parameters")
-		fmt.Println("4. View History")
-		fmt.Println("5. Export Commands")
-		fmt.Println("6. Exit")
-		fmt.Print("\nSelect option: ")
+		fmt.Fprintln(t.out, "\n╔═══════════════════════════════════════╗")
+		fmt.Fprintln(t.out, "║           CROWER - TUI GUI           ║")
+		fmt.Fprintln(t.out, "╚═══════════════════════════════════════╝")
+		fmt.Fprintln(t.out, "\n1. List Commands")
+		fmt.Fprintln(t.out, "2. Run Command")
+		fmt.Fprintln(t.out, "3. Run Command with Parameters")
+		fmt.Fprintln(t.out, "4. View History")
+		fmt.Fprintln(t.out, "5. Export Commands")
+		fmt.Fprintln(t.out, "6. Exit")
+		fmt.Fprint(t.out, "\nSelect option: ")
 
 		input, _ := t.reader.ReadString('\n')
 		input = strings.TrimSpace(input)
@@ -70,33 +78,33 @@ func (t *TUI) Run() error {
 		case "5":
 			t.exportCommands()
 		case "6":
-			fmt.Println("Goodbye!")
+			fmt.Fprintln(t.out, "Goodbye!")
 			return nil
 		default:
-			fmt.Println("Invalid option")
+			fmt.Fprintln(t.out, "Invalid option")
 		}
 	}
 }
 
 func (t *TUI) listCommands() {
-	fmt.Println("\n=== Commands ===")
+	fmt.Fprintln(t.out, "\n=== Commands ===")
 	commands := t.commands.Commands()
 	if len(commands) == 0 {
-		fmt.Println("No commands found")
+		fmt.Fprintln(t.out, "No commands found")
 		return
 	}
 
 	for i, command := range commands {
-		fmt.Printf("%d. %s - %s\n", i+1, command.Name, command.Exec)
+		fmt.Fprintf(t.out, "%d. %s - %s\n", i+1, command.Name, command.Exec)
 		if len(command.Aliases) > 0 {
-			fmt.Printf("   Aliases: %v\n", command.Aliases)
+			fmt.Fprintf(t.out, "   Aliases: %v\n", command.Aliases)
 		}
 	}
 }
 
 func (t *TUI) runCommand(withParams bool) {
 	t.listCommands()
-	fmt.Print("\nEnter command name/number: ")
+	fmt.Fprint(t.out, "\nEnter command name/number: ")
 	input, _ := t.reader.ReadString('\n')
 	input = strings.TrimSpace(input)
 
@@ -111,7 +119,7 @@ func (t *TUI) runCommand(withParams bool) {
 
 	var params []string
 	if withParams {
-		fmt.Print("Enter parameters (space separated): ")
+		fmt.Fprint(t.out, "Enter parameters (space separated): ")
 		pinput, _ := t.reader.ReadString('\n')
 		pinput = strings.TrimSpace(pinput)
 		if pinput != "" {
@@ -119,45 +127,45 @@ func (t *TUI) runCommand(withParams bool) {
 		}
 	}
 
-	fmt.Println("\n--- Executing ---")
+	fmt.Fprintln(t.out, "\n--- Executing ---")
 	out, name, err := t.exec.Execute(cmdName, params)
 	if name != "" {
-		fmt.Printf("Command: %s\n", name)
+		fmt.Fprintf(t.out, "Command: %s\n", name)
 	}
 	if out != "" {
-		fmt.Println(out)
+		fmt.Fprintln(t.out, out)
 	}
 	if err != nil {
-		fmt.Printf("Error: %v\n", err)
+		fmt.Fprintf(t.out, "Error: %v\n", err)
 	}
-	fmt.Println("--- Done ---")
-	fmt.Print("\nPress Enter to continue...")
+	fmt.Fprintln(t.out, "--- Done ---")
+	fmt.Fprint(t.out, "\nPress Enter to continue...")
 	t.reader.ReadString('\n')
 }
 
 func (t *TUI) viewHistory() {
-	fmt.Println("\n=== History ===")
+	fmt.Fprintln(t.out, "\n=== History ===")
 	if len(t.history.AllData) == 0 {
-		fmt.Println("No history")
+		fmt.Fprintln(t.out, "No history")
 		return
 	}
 	for i, h := range t.history.AllData {
-		fmt.Printf("%d. [%s] %s - %s\n", i+1, h.Operation, h.CommandName, h.Timestemp)
+		fmt.Fprintf(t.out, "%d. [%s] %s - %s\n", i+1, h.Operation, h.CommandName, h.Timestemp)
 	}
-	fmt.Print("\nPress Enter to continue...")
+	fmt.Fprint(t.out, "\nPress Enter to continue...")
 	t.reader.ReadString('\n')
 }
 
 func (t *TUI) exportCommands() {
-	fmt.Print("\nExport to file (default: crower-export.toml): ")
+	fmt.Fprint(t.out, "\nExport to file (default: crower-export.toml): ")
 	input, _ := t.reader.ReadString('\n')
 	input = strings.TrimSpace(input)
 	if input == "" {
 		input = "crower-export.toml"
 	}
 	// Use sharedom logic would be better but keep it simple
-	fmt.Printf("Export functionality available via 'crower export' command\n")
-	fmt.Printf("Would export to: %s\n", input)
-	fmt.Print("\nPress Enter to continue...")
+	fmt.Fprintf(t.out, "Export functionality available via 'crower export' command\n")
+	fmt.Fprintf(t.out, "Would export to: %s\n", input)
+	fmt.Fprint(t.out, "\nPress Enter to continue...")
 	t.reader.ReadString('\n')
 }
