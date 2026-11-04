@@ -1,7 +1,11 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/legacy/sharedom"
+	"github.com/fiwon123/crower/internal/adapters/github"
+	"github.com/fiwon123/crower/internal/adapters/storage"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/sharecommands"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 
 	"github.com/spf13/cobra"
 )
@@ -29,7 +33,7 @@ var exportCmd = &cobra.Command{
 			return err
 		}
 
-		return sharedom.NewCore(cfg).Export(name, out)
+		return newShareUseCase(cfg).Export(name, out)
 	},
 }
 
@@ -55,7 +59,7 @@ already exists with the same name.`,
 			return err
 		}
 
-		return sharedom.NewCore(cfg).Import(args[0], overwrite)
+		return newShareUseCase(cfg).Import(args[0], overwrite)
 	},
 }
 
@@ -78,7 +82,7 @@ var shareListCmd = &cobra.Command{
 			return err
 		}
 
-		return sharedom.NewCore(cfg).List()
+		return newShareUseCase(cfg).List()
 	},
 }
 
@@ -97,8 +101,53 @@ var sharePullCmd = &cobra.Command{
 			return err
 		}
 
-		return sharedom.NewCore(cfg).Pull(args[0])
+		return newShareUseCase(cfg).Pull(args[0])
 	},
+}
+
+// shareSession adapts the configuration to the ports the share use case
+// declares.
+type shareSession struct {
+	legacySession
+
+	packs    *storage.Packs
+	registry *github.Registry
+}
+
+// newShareSession wires the configuration, the pack files and the registry.
+func newShareSession(cfg *app.Config) shareSession {
+	return shareSession{
+		legacySession: newLegacySession(cfg),
+		packs:         storage.NewPacks(),
+		registry:      github.NewRegistry(),
+	}
+}
+
+// Write stores a pack at path.
+func (s shareSession) Write(path string, commands []catalog.Command) error {
+	return s.packs.Write(path, commands)
+}
+
+// Read loads the pack at path.
+func (s shareSession) Read(path string) ([]catalog.Command, error) {
+	return s.packs.Read(path)
+}
+
+// Index returns the registry's packs.
+func (s shareSession) Index() ([]sharecommands.Pack, error) {
+	return s.registry.Index()
+}
+
+// Pack fetches one registry pack.
+func (s shareSession) Pack(name string) ([]catalog.Command, string, error) {
+	return s.registry.Pack(name)
+}
+
+// newShareUseCase builds the use case over the configuration.
+func newShareUseCase(cfg *app.Config) *sharecommands.UseCase {
+	session := newShareSession(cfg)
+
+	return sharecommands.New(session, session, session, session, session)
 }
 
 func init() {

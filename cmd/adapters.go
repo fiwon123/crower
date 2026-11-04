@@ -80,6 +80,16 @@ func (s legacySession) Debug(message string, data ...any) {
 	s.cfg.Logger.Debug(message, data...)
 }
 
+// Save replaces the command set and writes the command file.
+//
+// A use case that writes in two steps -- the command file, then the history --
+// calls this and Record separately.
+func (s legacySession) Save(commands catalog.Catalog) error {
+	s.cfg.ReplaceCatalog(commands)
+
+	return s.cfg.SaveCommands()
+}
+
 // ConfigFile is the path of the configuration file.
 func (s legacySession) ConfigFile() string {
 	return s.cfg.ConfigFile()
