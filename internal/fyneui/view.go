@@ -20,9 +20,12 @@ import (
 	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
-// Editor applies an edit and returns the refreshed set and history.
+// Editor applies an edit, a creation or a deletion and returns the refreshed
+// set and history.
 type Editor interface {
 	Update(key string, changes catalog.Changes) (catalog.Catalog, timeline.Log, error)
+	Create(name string, aliases []string, exec string) (catalog.Catalog, timeline.Log, error)
+	Delete(key string) (catalog.Catalog, timeline.Log, error)
 }
 
 // Run opens the Fyne window and blocks until it closes.
@@ -89,8 +92,16 @@ func NewContent(model *desktop.Model, window fyne.Window, editor Editor) fyne.Ca
 		askParams(model, window)
 	})
 
+	newCommand := widget.NewButton("New", func() {
+		showCreate(model, editor, window, list)
+	})
+
 	edit := widget.NewButton("Edit", func() {
 		showEdit(model, editor, window, list)
+	})
+
+	deleteCommand := widget.NewButton("Delete", func() {
+		showDelete(model, editor, window, list)
 	})
 
 	history := widget.NewButton("History", func() {
@@ -99,7 +110,10 @@ func NewContent(model *desktop.Model, window fyne.Window, editor Editor) fyne.Ca
 
 	quit := widget.NewButton("Quit", func() { window.Close() })
 
-	buttons := container.NewHBox(run, params, edit, history, quit)
+	buttons := container.NewVBox(
+		container.NewHBox(newCommand, edit, deleteCommand),
+		container.NewHBox(run, params, history, quit),
+	)
 
 	return container.NewBorder(
 		container.NewVBox(filter, keys),
@@ -108,6 +122,68 @@ func NewContent(model *desktop.Model, window fyne.Window, editor Editor) fyne.Ca
 		nil,
 		list,
 	)
+}
+
+// showCreate asks for the three fields and adds the command through the Editor
+// port. A rule error is shown and the set is left alone.
+func showCreate(model *desktop.Model, editor Editor, window fyne.Window, list *widget.List) {
+	name := widget.NewEntry()
+	aliases := widget.NewEntry()
+	exec := widget.NewEntry()
+
+	items := []*widget.FormItem{
+		widget.NewFormItem("Name", name),
+		widget.NewFormItem("Aliases", aliases),
+		widget.NewFormItem("Exec", exec),
+	}
+
+	dialog.NewForm("New command", "Create", "Cancel", items, func(ok bool) {
+		if !ok {
+			return
+		}
+
+		nameText := strings.TrimSpace(name.Text)
+		execText := strings.TrimSpace(exec.Text)
+
+		if nameText == "" || execText == "" {
+			showError("Name and exec are required.", window)
+			return
+		}
+
+		commands, history, err := editor.Create(nameText, splitAliases(aliases.Text), execText)
+		if err != nil {
+			showError(err.Error(), window)
+			return
+		}
+
+		model.Reload(commands, history)
+		list.Refresh()
+		list.UnselectAll()
+	}, window).Show()
+}
+
+// showDelete asks for confirmation and removes the selected command.
+func showDelete(model *desktop.Model, editor Editor, window fyne.Window, list *widget.List) {
+	key := model.Selected()
+	if key == "" {
+		return
+	}
+
+	dialog.ShowConfirm("Delete command", "Delete "+key+"?", func(ok bool) {
+		if !ok {
+			return
+		}
+
+		commands, history, err := editor.Delete(key)
+		if err != nil {
+			showError(err.Error(), window)
+			return
+		}
+
+		model.Reload(commands, history)
+		list.Refresh()
+		list.UnselectAll()
+	}, window)
 }
 
 // showEdit asks for the three editable fields and applies the change through
