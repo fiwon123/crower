@@ -282,7 +282,7 @@ jobs:
           New-Item -ItemType Directory -Force build/dist, build/fyne | Out-Null
           go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower.exe .
           Copy-Item build/crower.exe build/cr.exe
-          Copy-Item build/crower.exe, build/cr.exe, scripts/add_to_path.bat, README.md, LICENSE, LICENSE-APACHE, NOTICE build/fyne/
+          Copy-Item build/crower.exe, build/cr.exe, scripts/add_to_path.bat, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/fyne/
           Push-Location build/fyne
           Compress-Archive -Path * -DestinationPath "../dist/crower_fyne_${env:VERSION}_windows_amd64.zip" -Force
           Pop-Location
