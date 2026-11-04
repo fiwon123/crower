@@ -239,11 +239,11 @@ func buildEnv(overrides map[string]string) ([]string, error) {
 	}
 
 	// Sorted so a config with two bad entries always reports the same one.
-	for _, key := range slices.Sorted(maps.Keys(overrides)) {
-		if key == "" || strings.ContainsAny(key, "=\x00") {
-			return nil, fmt.Errorf("%w: key %q", errors.ErrInvalidEnv, key)
-		}
+	if err := shell.ValidateEnv(overrides); err != nil {
+		return nil, err
+	}
 
+	for _, key := range slices.Sorted(maps.Keys(overrides)) {
 		resolved, err := resolveEnvValue(key, overrides[key])
 		if err != nil {
 			return nil, err
@@ -277,71 +277,21 @@ func setEnvValue(values map[string]string, key, value string) {
 	values[key] = value
 }
 
-// resolveEnvValue reads a "${VAR}" reference or accepts a literal.
-//
-// A literal under a key that looks like a secret is refused: the schema says a
-// pack carries placeholders, and a pack is a file people commit and share. The
-// check is a key-name heuristic, not a secret scanner -- it catches the common
-// names, and it is documented as such rather than pretending to be complete.
+// resolveEnvValue resolves a "${VAR}" reference. ValidateEnv has already
+// refused a literal under a secret-looking key, so a non-reference is returned
+// as written.
 func resolveEnvValue(key, value string) (string, error) {
-	if strings.ContainsRune(value, 0) {
-		return "", fmt.Errorf("%w: %s", errors.ErrInvalidEnv, key)
+	name, ok := shell.EnvReference(value)
+	if !ok {
+		return value, nil
 	}
 
-	if name, ok := envReference(value); ok {
-		resolved, found := os.LookupEnv(name)
-		if !found {
-			return "", fmt.Errorf("%w: %s references %s", errors.ErrUnsetEnvVar, key, name)
-		}
-
-		return resolved, nil
+	resolved, found := os.LookupEnv(name)
+	if !found {
+		return "", fmt.Errorf("%w: %s references %s", errors.ErrUnsetEnvVar, key, name)
 	}
 
-	if looksSecret(key) {
-		return "", fmt.Errorf("%w: %s; use ${VAR}", errors.ErrSecretEnvValue, key)
-	}
-
-	return value, nil
-}
-
-// envReference reports whether the whole value is a "${VAR}" reference.
-//
-// Only the exact form is a reference: a value that merely contains "${VAR}"
-// stays literal, so a command cannot smuggle a resolved secret into a value the
-// secret check would otherwise see as text.
-func envReference(value string) (string, bool) {
-	if !strings.HasPrefix(value, "${") || !strings.HasSuffix(value, "}") {
-		return "", false
-	}
-
-	name := value[2 : len(value)-1]
-	if name == "" {
-		return "", false
-	}
-
-	for i, r := range name {
-		switch {
-		case r == '_', r >= 'A' && r <= 'Z', r >= 'a' && r <= 'z':
-		case i > 0 && r >= '0' && r <= '9':
-		default:
-			return "", false
-		}
-	}
-
-	return name, true
-}
-
-// looksSecret reports whether a key names a credential by convention.
-func looksSecret(key string) bool {
-	upper := strings.ToUpper(key)
-
-	for _, marker := range []string{"TOKEN", "SECRET", "PASSWORD", "PASSWD", "CREDENTIAL"} {
-		if strings.Contains(upper, marker) {
-			return true
-		}
-	}
-
-	return upper == "KEY" || strings.HasSuffix(upper, "_KEY")
+	return resolved, nil
 }
 
 // nestedDepth is how many nested crower calls led to this process.

@@ -1,6 +1,8 @@
 package session
 
 import (
+	"bytes"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,6 +13,7 @@ import (
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/timeline"
+	crerrors "github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -254,6 +257,95 @@ func TestCommitKeepsTargetFields(t *testing.T) {
 
 	if back.Env["STAGE"] != "prod" || back.Timeout != "30s" {
 		t.Errorf("reloaded = %+v, want the env and timeout on disk", back)
+	}
+}
+
+// The write path refuses what the executor would refuse, and it refuses before
+// changing the in-memory catalog or the file.
+func TestCommitRejectsALiteralSecret(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	commands := catalog.New(nil, []catalog.Command{{
+		Name: "bad",
+		Exec: "echo hi",
+		Env:  map[string]string{"API_TOKEN": "literal"},
+	}})
+
+	err := cfg.Commit(commands, operation.Create, "bad", "main_operation=create")
+	if !errors.Is(err, crerrors.ErrSecretEnvValue) {
+		t.Fatalf("error = %v, want ErrSecretEnvValue", err)
+	}
+
+	if _, found := cfg.Catalog().Get("bad"); found {
+		t.Error("Commit changed the catalog before validating")
+	}
+
+	body, readErr := os.ReadFile(cfg.ConfigFile())
+	if readErr != nil {
+		t.Fatalf("read config: %v", readErr)
+	}
+
+	if strings.Contains(string(body), "bad") {
+		t.Errorf("config = %q, want nothing written", body)
+	}
+}
+
+func TestSaveCommandsRejectsALiteralSecret(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	cfg.ReplaceCatalog(catalog.New(nil, []catalog.Command{{
+		Name: "bad",
+		Exec: "echo hi",
+		Env:  map[string]string{"API_TOKEN": "literal"},
+	}}))
+
+	err := cfg.SaveCommands()
+	if !errors.Is(err, crerrors.ErrSecretEnvValue) {
+		t.Fatalf("error = %v, want ErrSecretEnvValue", err)
+	}
+
+	body, readErr := os.ReadFile(cfg.ConfigFile())
+	if readErr != nil {
+		t.Fatalf("read config: %v", readErr)
+	}
+
+	if strings.Contains(string(body), "bad") {
+		t.Errorf("config = %q, want nothing written", body)
+	}
+}
+
+// An old or hand-edited config still loads, with a warning: refusing the whole
+// file would leave the user unable to fix it.
+func TestLoadWarnsAboutALiteralSecret(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "crower.yaml")
+
+	body := `[bad]
+Name = "bad"
+AllAlias = []
+Exec = "echo hi"
+Env = { API_TOKEN = "literal" }
+`
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	var stderr bytes.Buffer
+
+	cfg, err := Load(path, Options{Streams: Streams{
+		In:  strings.NewReader(""),
+		Out: io.Discard,
+		Err: &stderr,
+	}})
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if _, found := cfg.Catalog().Get("bad"); !found {
+		t.Fatal("Load dropped the command with the literal")
+	}
+
+	if !strings.Contains(stderr.String(), "secret-looking environment value") {
+		t.Errorf("stderr = %q, want the warning", stderr.String())
 	}
 }
 

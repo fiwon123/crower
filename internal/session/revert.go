@@ -12,6 +12,9 @@ func (s *Session) RevertTo(entry *timeline.Content) error {
 		return err
 	}
 
+	// Revert restores a state that already existed; the load warning already
+	// told the user about a literal it holds. Refusing the undo would trap them
+	// in the state they are trying to leave, so this path writes it back.
 	if err := s.commands.Save(commands); err != nil {
 		return err
 	}

@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 // Pack is one entry of the registry index.
@@ -76,6 +77,10 @@ func (u *UseCase) Export(name, outPath string) error {
 	commands := u.state.Commands()
 
 	if name == "" {
+		if err := validatePack(commands.Commands()); err != nil {
+			return err
+		}
+
 		if outPath == "" {
 			outPath = "crower-export.toml"
 		}
@@ -86,6 +91,10 @@ func (u *UseCase) Export(name, outPath string) error {
 	command, found := commands.Resolve(name)
 	if !found {
 		return fmt.Errorf("command not found")
+	}
+
+	if err := validatePack([]catalog.Command{command}); err != nil {
+		return err
 	}
 
 	if outPath == "" {
@@ -169,6 +178,13 @@ func (u *UseCase) importPack(pack []catalog.Command, overwrite bool) error {
 	})
 
 	for _, imported := range pack {
+		// Refuse a literal under a secret-looking key before staging anything:
+		// a pack carries placeholders, and import must not persist what the
+		// executor would refuse to run.
+		if err := validatePack([]catalog.Command{imported}); err != nil {
+			return err
+		}
+
 		originalKey := imported.Name
 		key := originalKey
 
@@ -282,6 +298,19 @@ func (u *UseCase) importPack(pack []catalog.Command, overwrite bool) error {
 	// and records no history entry: one per imported command would describe
 	// states that never existed.
 	return u.state.Save(next)
+}
+
+// validatePack refuses a pack that would carry a literal the executor refuses.
+// Export and import both go through it, so a pack is a placeholder file on the
+// way out as well as on the way in.
+func validatePack(commands []catalog.Command) error {
+	for _, command := range commands {
+		if err := shell.ValidateEnv(command.Env); err != nil {
+			return fmt.Errorf("command %q: %w", command.Name, err)
+		}
+	}
+
+	return nil
 }
 
 // existsIn reports whether a name or alias is used anywhere in the set.
