@@ -44,7 +44,7 @@ rule per ring. It is not a convention in a document — a violation fails
 `make check`:
 
 ```text
-internal/application/… imports internal/legacy/…: the dependency arrow points the other way
+internal/application/… imports internal/adapters/…: the dependency arrow points the other way
 ```
 
 It also reports which rings it examined, and fails a rule that is marked
@@ -61,7 +61,6 @@ green.
 | `internal/adapters/storage` | the TOML command map, the JSON history index, the snapshots |
 | `internal/adapters/output` | the streams, the result format, the JSON encoding |
 | `internal/shell` | the platform's shell invocation and quoting |
-| `internal/legacy/<op>dom` | operations not ported yet — temporary, one deleted per PR |
 | `internal/testutil` | the fixture harness every test starts from |
 | `pkg/` | generic helpers: logging, filesystem, codecs |
 

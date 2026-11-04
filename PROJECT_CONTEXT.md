@@ -49,14 +49,13 @@ internal/domain/              the model: catalog aggregate, operation enum
   ↓
 internal/adapters/            storage, output, shell, prompt (the technology)
 
-internal/legacy/<op>dom/      the operations not ported yet (temporary)
-internal/data/ + internal/app/  storage shapes and wiring (to be dissolved)
+internal/data/ + internal/app/  storage shapes and wiring (Phase 5 work)
 ```
 
 A use case is a package under `internal/application/`, and it declares the
 interfaces it needs (consumer-owned ports). The model under `internal/domain/`
-depends on the standard library only. `internal/legacy/` holds the operations
-still waiting to be ported; it shrinks one command per pull request (#215).
+depends on the standard library only. Every operation has been ported (#215):
+`internal/legacy/` is gone; `internal/data`/`internal/app` are Phase 5 work.
 
 `internal/shell` is the shared floor: the platform's shell invocation. A domain
 depends on it to run `ls`, `cp` or `xdg-open`, never on another operation.
@@ -84,7 +83,6 @@ cmd/                 cobra commands, one file per operation
 internal/domain/     the model: catalog aggregate, operation enum (stdlib only)
 internal/application/ use cases, one package per verb, with their own ports
 internal/adapters/   storage, output, shell, prompt — the technology side
-internal/legacy/     operation packages not ported yet (temporary, #215)
 internal/data/       history, notes, operations, command map, state
 internal/app/        configuration and application wiring
 internal/errors/     error types shared across layers

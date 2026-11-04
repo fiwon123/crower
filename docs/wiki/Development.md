@@ -49,8 +49,8 @@ cmd/  ->  internal/application/  ->  internal/domain/
 ```
 
 **[Architecture](Architecture)** explains the rule, what each ring may import,
-and where a new operation goes. `internal/legacy/` holds the operations that are
-still being ported, and shrinks one command per pull request.
+and where a new operation goes. Every operation has been ported (#215): there is
+no `internal/legacy/` left to shrink.
 
 ## 🌿 Branches
 
