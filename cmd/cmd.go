@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/fiwon123/crower/internal/application/checkrelease"
-	"github.com/fiwon123/crower/internal/legacy/executedom"
+	"github.com/fiwon123/crower/internal/application/executecommand"
 	"github.com/fiwon123/crower/internal/legacy/listdom"
 	"github.com/fiwon123/crower/internal/legacy/upgradedom"
 
@@ -90,9 +90,11 @@ Every command has its own help: crower <command> --help.`,
 			return cmd.Help()
 		}
 
-		listHandler := listdom.NewHandler(cfg)
+		session := newExecuteSession(cfg)
 
-		return executedom.NewCore(cfg, listHandler).ExecuteCommand(args)
+		return executecommand.New(session, session, session, session, session).Run(
+			executecommand.Request{Key: args[0], Params: args[1:]},
+		)
 	},
 }
 

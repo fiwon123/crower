@@ -129,8 +129,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return 800, 600
 }
 
-func Run(a *app.Config) error {
-	m := NewModel(a)
+func Run(a *app.Config, exec Executor) error {
+	m := NewModel(a, exec)
 	game := NewGame(m)
 	ebiten.SetWindowTitle("Crower Desktop")
 	ebiten.SetWindowSize(800, 600)

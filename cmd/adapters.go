@@ -71,6 +71,16 @@ func (s legacySession) Info(message string, data ...any) {
 	s.cfg.Logger.Info(message, data...)
 }
 
+// Result writes data a caller may pipe -- a command's own output.
+func (s legacySession) Result(text string) {
+	s.cfg.Logger.Out(text)
+}
+
+// Debug writes a line only the debug log keeps.
+func (s legacySession) Debug(message string, data ...any) {
+	s.cfg.Logger.Debug(message, data...)
+}
+
 // Table renders the current command table.
 func (s legacySession) Table(catalog.Catalog) string {
 	return s.table()

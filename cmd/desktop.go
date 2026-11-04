@@ -1,11 +1,22 @@
 package cmd
 
 import (
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/executecommand"
 	"github.com/fiwon123/crower/internal/desktop"
 	"github.com/fiwon123/crower/internal/tui"
 
 	"github.com/spf13/cobra"
 )
+
+// newExecutor builds the use case the terminal and desktop interfaces run
+// through. They own their own interaction, so they use its Execute entry point,
+// which neither prompts nor records history.
+func newExecutor(cfg *app.Config) *executecommand.UseCase {
+	session := newExecuteSession(cfg)
+
+	return executecommand.New(session, session, session, session, session)
+}
 
 var desktopCmd = &cobra.Command{
 	Use:     "desktop",
@@ -18,7 +29,7 @@ var desktopCmd = &cobra.Command{
 			return err
 		}
 
-		return desktop.Run(cfg)
+		return desktop.Run(cfg, newExecutor(cfg))
 	},
 }
 
@@ -33,7 +44,7 @@ var guiCmd = &cobra.Command{
 			return err
 		}
 
-		return tui.NewTUI(cfg).Run()
+		return tui.NewTUI(cfg, newExecutor(cfg)).Run()
 	},
 }
 
