@@ -51,6 +51,38 @@ var supportedRunners = map[string]bool{
 // goos/goarch/runner triple each `- goos:` entry declares. Fields are read only
 // while they are indented deeper than the row that opened them, so a `runner:`
 // key belonging to another job is never attributed to a row.
+// releaseJobSection returns one top-level job from a workflow, from its
+// two-space key to the next job key. The release has two matrices now (the
+// cgo-free build and the Fyne build); a parser that scans the whole file would
+// mix them.
+func releaseJobSection(workflow, job string) string {
+	lines := strings.Split(workflow, "\n")
+	start := -1
+
+	for i, line := range lines {
+		if line == "  "+job+":" {
+			start = i
+			continue
+		}
+
+		if start < 0 || i == start {
+			continue
+		}
+
+		if strings.HasPrefix(line, "  ") && !strings.HasPrefix(line, "   ") &&
+			!strings.HasPrefix(strings.TrimSpace(line), "#") &&
+			strings.HasSuffix(strings.TrimSpace(line), ":") {
+			return strings.Join(lines[start:i], "\n")
+		}
+	}
+
+	if start >= 0 {
+		return strings.Join(lines[start:], "\n")
+	}
+
+	return ""
+}
+
 func releaseTargets(workflow string) []releaseTarget {
 	var (
 		targets   []releaseTarget
@@ -96,7 +128,7 @@ func releaseTargets(workflow string) []releaseTarget {
 }
 
 func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
-	targets := releaseTargets(readRepositoryFile(t, releaseWorkflowPath))
+	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "build"))
 	if len(targets) == 0 {
 		t.Fatal("no build matrix rows found in the release workflow — the guard is not looking at anything")
 	}
@@ -118,8 +150,33 @@ func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
 	}
 }
 
+// The Fyne job is a separate CGO build. It targets Linux and Windows amd64,
+// and its rows must stay on runners that exist; it is not part of the six
+// cgo-free targets above.
+func TestReleaseWorkflowBuildsTheFynePlatforms(t *testing.T) {
+	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "fyne"))
+	if len(targets) != 2 {
+		t.Fatalf("found %d Fyne targets, want 2", len(targets))
+	}
+
+	built := make(map[string]bool, len(targets))
+	for _, target := range targets {
+		built[target.goos+"/"+target.goarch] = true
+
+		if !supportedRunners[target.runner] {
+			t.Errorf("Fyne %s/%s builds on %q, which is not a runner label known to exist", target.goos, target.goarch, target.runner)
+		}
+	}
+
+	for _, platform := range []string{"linux/amd64", "windows/amd64"} {
+		if !built[platform] {
+			t.Errorf("the Fyne release no longer builds %s", platform)
+		}
+	}
+}
+
 func TestReleaseWorkflowRunnersAreSupported(t *testing.T) {
-	targets := releaseTargets(readRepositoryFile(t, releaseWorkflowPath))
+	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "build"))
 	if len(targets) == 0 {
 		t.Fatal("no build matrix rows found in the release workflow — the guard is not looking at anything")
 	}
@@ -383,7 +440,7 @@ func TestWorkflowGuardsCatchTheReleaseNotesBug(t *testing.T) {
 // platform and the architecture the build matrix actually produces, or the
 // request is a 404 (#143).
 func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
-	targets := releaseTargets(readRepositoryFile(t, releaseWorkflowPath))
+	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "build"))
 	if len(targets) != 6 {
 		t.Fatalf("found %d release targets, want 6", len(targets))
 	}

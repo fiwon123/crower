@@ -22,7 +22,7 @@ LINUX_SCRIPT :=  $(SCRIPTS_DIR)/$(SCRIPT_NAME).sh
 .PHONY: all windows linux zip_linux zip_windows clean release check \
 	help dev-up dev-down dev-shell dev-opencode dev-opencode-auto dev-log dev-build reset \
 	preflight require-agent prepare-agent-mounts check-identity opencode-version opencode-upgrade \
-	shell opencode opencode-auto release-platform package-cli package-gui verify-release
+	shell opencode opencode-auto release-platform release-fyne-platform package-cli package-gui package-fyne verify-release
 
 all: release
 
@@ -75,6 +75,19 @@ release-platform: $(BUILD_DIR)
 	@$(MAKE) package-gui GOOS=$(GOOS) GOARCH=$(GOARCH)
 	@$(MAKE) verify-release
 
+# Platform release for the Fyne front end.
+#
+# Fyne needs CGO, so this target runs on the target OS runner (Linux or
+# Windows), not as a cross-compile. It packages only the Fyne archive; the
+# cgo-free CLI/GUI archives come from release-platform.
+release-fyne-platform: $(BUILD_DIR)
+	mkdir -p $(DIST_DIR)
+	@echo "Building $(APP_NAME) with -tags fyne for $(GOOS)/$(GOARCH) with version $(VERSION)"
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go build -tags fyne -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(APP_NAME)$(EXT)
+	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT)
+	@$(MAKE) package-fyne GOOS=$(GOOS) GOARCH=$(GOARCH)
+	@$(MAKE) verify-release
+
 # Fail the build if an archive does not carry the names users are told to run.
 # GOOS/GOARCH are pinned to the host: this target inspects archives, so it must
 # run on the machine doing the build rather than be cross-compiled to the
@@ -87,12 +100,14 @@ EXT := .exe
 SCRIPT_EXT := .bat
 CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS)_$(GOARCH).zip
 GUI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_gui_$(VERSION)_$(GOOS)_$(GOARCH).zip
+FYNE_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_fyne_$(VERSION)_$(GOOS)_$(GOARCH).zip
 LEGACY_CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS).zip
 else
 EXT :=
 SCRIPT_EXT := .sh
 CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
 GUI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_gui_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
+FYNE_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_fyne_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
 LEGACY_CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS).tar.gz
 endif
 
@@ -119,6 +134,15 @@ else
 	tar -czvf $(GUI_ARCHIVE) -C $(BUILD_DIR) $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) ../README.md ../NOTICE ../LICENSE ../LICENSE-APACHE
 endif
 	@echo "GUI package: $(GUI_ARCHIVE)"
+
+package-fyne: $(BUILD_DIR)
+	@mkdir -p $(DIST_DIR)
+ifeq ($(GOOS),windows)
+	zip -j $(FYNE_ARCHIVE) $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT) $(SCRIPTS_DIR)/add_to_path$(SCRIPT_EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE
+else
+	tar -czvf $(FYNE_ARCHIVE) -C $(BUILD_DIR) $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) -C ../$(SCRIPTS_DIR) add_to_path$(SCRIPT_EXT) ../README.md ../NOTICE ../LICENSE ../LICENSE-APACHE ../LICENSE-FYNE
+endif
+	@echo "Fyne package: $(FYNE_ARCHIVE)"
 
 
 # ---------------------------------------------------------------------------
