@@ -12,7 +12,6 @@ import (
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
-	"github.com/fiwon123/crower/internal/legacy/listdom"
 	"github.com/fiwon123/crower/internal/legacy/opendom"
 
 	"github.com/fiwon123/crower/pkg/utils"
@@ -121,7 +120,7 @@ type createSession struct {
 // create needs.
 func newCreateSession(cfg *app.Config) createSession {
 	return createSession{
-		legacySession: newLegacySession(cfg, listdom.NewHandler(cfg).CommandsTable),
+		legacySession: newLegacySession(cfg),
 		creator:       system.NewCreator(),
 		scripts:       system.NewScripts(filepath.Join(cfg.ConfigFolder(), "scripts")),
 		processes:     system.NewProcesses(),
