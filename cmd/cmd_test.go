@@ -301,7 +301,7 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 // The JSON flag has to be part of the command that can honour it, not a global
 // switch a command silently ignores: an unsupported --json is a usage error.
 func TestJSONIsDeclaredOnlyWhereSupported(t *testing.T) {
-	supported := map[string]bool{"list": true, "search": true}
+	supported := map[string]bool{"list": true, "search": true, "doctor": true}
 	seen := 0
 
 	for _, child := range rootCmd.Commands() {

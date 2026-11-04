@@ -69,7 +69,18 @@ cr greet John Developer
 
 ## 📦 Installation
 
-### Download a release (recommended)
+### One command (Linux / macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/fiwon123/crower/main/scripts/install.sh | sh
+```
+
+It resolves the newest release, verifies the archive against the release's
+`checksums.txt`, and installs `crower` and `cr` into `~/.local/bin`. Pin a
+version or a directory with `sh -s -- --version v0.8.0 --dir ~/.local/bin`.
+Then `crower init --apply` puts the directory on your PATH.
+
+### Download a release (any platform)
 
 Download the latest release for your platform from the [releases page](https://github.com/fiwon123/crower/releases).
 
@@ -82,7 +93,7 @@ installing.
 `darwin_arm64` on another platform):
 
 ```bash
-VERSION=v0.4.0
+VERSION=v0.8.0
 curl -LO "https://github.com/fiwon123/crower/releases/download/$VERSION/crower_${VERSION}_linux_amd64.tar.gz"
 tar -xzf "crower_${VERSION}_linux_amd64.tar.gz"
 chmod +x crower cr
@@ -187,6 +198,8 @@ cr restore <key>
 | `export` | Export commands to share | `crower export` or `crower export name` |
 | `import` | Import commands from file | `crower import pack.toml` |
 | `share` | Browse and pull from registry | `crower share list` or `cr share pull pack` |
+| `init` | Put the install directory on PATH | `crower init --apply` |
+| `doctor` | Show paths, permissions and environment | `crower doctor --json` |
 
 Use `crower <command> --help` for detailed options.
 
