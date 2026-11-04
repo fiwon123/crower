@@ -1,6 +1,6 @@
 //go:build windows
 
-package deletedom
+package system
 
 import (
 	"fmt"
@@ -11,31 +11,31 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-func (h *Handler) DeleteSystemVariable(varName string) (string, error) {
+// Variable removes one value from the user's Environment registry key.
+func (e *Environment) Variable(varName string) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,
 		registry.SET_VALUE|registry.QUERY_VALUE,
 	)
 	if err != nil {
-		panic(err)
+		return "", fmt.Errorf("open environment key: %w", err)
 	}
 	defer key.Close()
 
-	_, _, err = key.GetStringValue(varName)
-	if err != nil {
+	if _, _, err := key.GetStringValue(varName); err != nil {
 		return "", fmt.Errorf("var name not found")
 	}
 
-	err = key.DeleteValue(varName)
-	if err != nil {
+	if err := key.DeleteValue(varName); err != nil {
 		return "", fmt.Errorf("can't delete var name: %v", err)
 	}
 
 	return "var name deleted", nil
 }
 
-func (h *Handler) DeleteSystemPathVariable(pathValue string) (string, error) {
+// VariablePath removes one entry from the user's Path value.
+func (e *Environment) VariablePath(pathValue string) (string, error) {
 	key, err := registry.OpenKey(
 		registry.CURRENT_USER,
 		`Environment`,
@@ -51,8 +51,7 @@ func (h *Handler) DeleteSystemPathVariable(pathValue string) (string, error) {
 		return "", err
 	}
 
-	ok := utils.CheckNewVarValuePath(pathValue, path)
-	if ok {
+	if utils.CheckNewVarValuePath(pathValue, path) {
 		return "", fmt.Errorf("path not found in PATH")
 	}
 
@@ -60,20 +59,24 @@ func (h *Handler) DeleteSystemPathVariable(pathValue string) (string, error) {
 	pathSlice = removeFromSlice(pathSlice, pathValue)
 
 	newPath := strings.Join(pathSlice, string(os.PathListSeparator))
-	err = key.SetStringValue("Path", newPath)
-	if err != nil {
+
+	if err := key.SetStringValue("Path", newPath); err != nil {
 		return "", fmt.Errorf("can't delete path from PATH: %v", err)
 	}
 
 	return "Deleted path from PATH", nil
 }
 
+// removeFromSlice drops every occurrence of item and the empty entries a
+// trailing separator leaves behind.
 func removeFromSlice(slice []string, item string) []string {
 	newSlice := []string{}
+
 	for _, s := range slice {
 		if s != item && s != "" {
 			newSlice = append(newSlice, s)
 		}
 	}
+
 	return newSlice
 }
