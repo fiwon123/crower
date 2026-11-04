@@ -16,6 +16,8 @@
 package deletecommand
 
 import (
+	"fmt"
+
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/errors"
@@ -200,8 +202,14 @@ func (u *UseCase) Run(request Request) error {
 	case ModeHistory:
 		return u.deleteHistory()
 
-	default:
+	case ModeCommand:
 		return u.deleteCommand(request)
+
+	default:
+		// A mode this build does not know must not fall back to the one that
+		// deletes a command: an unknown value is a programming error, not a
+		// request.
+		return fmt.Errorf("unknown delete mode %d", request.Mode)
 	}
 }
 
@@ -285,10 +293,22 @@ func (u *UseCase) remove(key string, note func(deleted catalog.Command) string) 
 }
 
 // chooseCommand prints the table and asks for a row.
+//
+// An empty answer is refused here: it names no command, and letting it through
+// would turn a failed selection into "command not found" and a second question.
 func (u *UseCase) chooseCommand() (string, error) {
 	u.output.Info(u.output.Table(u.state.Commands()))
 
-	return u.prompt.ChooseCommand()
+	key, err := u.prompt.ChooseCommand()
+	if err != nil {
+		return "", err
+	}
+
+	if key == "" {
+		return "", fmt.Errorf("selected row holds no command")
+	}
+
+	return key, nil
 }
 
 // showCommand prints the fields the confirmation is about.
