@@ -1,19 +1,41 @@
-package extractdom
+package system
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/helper"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
-// extractCommand builds the platform's invocation for one archive.
+// Archiver expands compressed archives with the platform's tools.
+type Archiver struct {
+	shell *shell.Runner
+	goos  string
+}
+
+// NewArchiver builds an Archiver that runs on the host.
+func NewArchiver() *Archiver {
+	return &Archiver{shell: shell.New(), goos: runtime.GOOS}
+}
+
+// Extract expands one archive into outDir and returns the tool's output.
+func (a *Archiver) Extract(ext, archive, outDir string) (string, error) {
+	commandLine, err := ExtractCommand(a.goos, ext, archive, outDir)
+	if err != nil {
+		return "", err
+	}
+
+	return a.shell.Exec(commandLine)
+}
+
+// ExtractCommand builds the platform's invocation for one archive.
 //
 // Both the platform and the extension are parameters so a table test can cover
 // every combination the release can meet: runtime.GOOS cannot be overridden at
 // run time, and `.zip` had a linux arm but no darwin one, so macOS reported
 // "no extractor" for a format `unzip` handles (#129).
-func extractCommand(goos string, ext string, filePath string, outDir string) (string, error) {
+func ExtractCommand(goos, ext, filePath, outDir string) (string, error) {
 	switch goos {
 	case "windows", "linux", "darwin":
 	default:
@@ -23,8 +45,8 @@ func extractCommand(goos string, ext string, filePath string, outDir string) (st
 	// Quote with the same helper every other domain uses. Hand-written single
 	// quotes are passed through literally by cmd.exe, and they stop protecting
 	// a path that itself contains one, so the shell would run the rest.
-	archive := helper.QuoteFor(goos, filePath)
-	output := helper.QuoteFor(goos, outDir)
+	archive := shell.QuoteFor(goos, filePath)
+	output := shell.QuoteFor(goos, outDir)
 
 	switch ext {
 	case "tar":
