@@ -22,6 +22,13 @@ type Executor interface {
 	Execute(key string, params []string) (string, string, error)
 }
 
+// Exporter writes the command set to a pack file.
+type Exporter interface {
+	// Export writes the command named name, or every command when name is
+	// empty, to outPath.
+	Export(name, outPath string) error
+}
+
 // TUI is the menu interface.
 //
 // It takes the catalogue and the timeline as values: the interface renders
@@ -30,21 +37,23 @@ type TUI struct {
 	commands catalog.Catalog
 	history  timeline.Log
 	exec     Executor
+	exporter Exporter
 	reader   *bufio.Reader
 	out      io.Writer
 }
 
 // NewTUI builds the menu over the current command set and history.
-func NewTUI(commands catalog.Catalog, history timeline.Log, exec Executor) *TUI {
-	return newTUI(commands, history, exec, os.Stdin, os.Stdout)
+func NewTUI(commands catalog.Catalog, history timeline.Log, exec Executor, exporter Exporter) *TUI {
+	return newTUI(commands, history, exec, exporter, os.Stdin, os.Stdout)
 }
 
 // newTUI is the injectable constructor a test uses; NewTUI is the terminal.
-func newTUI(commands catalog.Catalog, history timeline.Log, exec Executor, in io.Reader, out io.Writer) *TUI {
+func newTUI(commands catalog.Catalog, history timeline.Log, exec Executor, exporter Exporter, in io.Reader, out io.Writer) *TUI {
 	return &TUI{
 		commands: commands,
 		history:  history,
 		exec:     exec,
+		exporter: exporter,
 		reader:   bufio.NewReader(in),
 		out:      out,
 	}
@@ -160,12 +169,17 @@ func (t *TUI) exportCommands() {
 	fmt.Fprint(t.out, "\nExport to file (default: crower-export.toml): ")
 	input, _ := t.reader.ReadString('\n')
 	input = strings.TrimSpace(input)
+
 	if input == "" {
 		input = "crower-export.toml"
 	}
-	// Use sharedom logic would be better but keep it simple
-	fmt.Fprintf(t.out, "Export functionality available via 'crower export' command\n")
-	fmt.Fprintf(t.out, "Would export to: %s\n", input)
+
+	if err := t.exporter.Export("", input); err != nil {
+		fmt.Fprintf(t.out, "Export failed: %v\n", err)
+	} else {
+		fmt.Fprintf(t.out, "Exported to %s\n", input)
+	}
+
 	fmt.Fprint(t.out, "\nPress Enter to continue...")
 	t.reader.ReadString('\n')
 }
