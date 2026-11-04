@@ -1,10 +1,11 @@
-package createdom
+package notes_test
 
 import (
 	"strings"
 	"testing"
 
-	command "github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/shell"
 )
 
@@ -23,42 +24,52 @@ func TestCreateNotesRecordReplayableCommands(t *testing.T) {
 	}{
 		{
 			"a command create",
-			newCreateCommandNote(command.New("greet", []string{"g"}, "echo hello world")),
+			notes.CreateCommandNote(catalog.Command{Name: "greet", Aliases: []string{"g"}, Exec: "echo hello world"}),
 			"crower_exec=crower create --alias " + quote("g") + " " + quote("greet") + " " + quote("echo hello world"),
 		},
 		{
 			"a process create",
-			newCreateProcessNote(command.New("editor", []string{"ed"}, "'/usr/bin/code'"), []string{"code runner"}),
+			notes.CreateProcessNote(catalog.Command{Name: "editor", Aliases: []string{"ed"}, Exec: "'/usr/bin/code'"}, []string{"code runner"}),
 			"crower_exec=crower create --process " + quote("editor") + " --alias " + quote("ed") + " " + quote("code runner"),
 		},
 		{
 			"a script create",
-			newCreateScriptCommandNote(command.New("deploy", nil, "deploy.sh")),
+			notes.CreateScriptNote(catalog.Command{Name: "deploy", Exec: "deploy.sh"}),
 			"crower_exec=crower create --script " + quote("deploy"),
 		},
 		{
 			"a reuse of the last execute",
-			newCreateCommandLastExecuteNote(command.New("greet2", []string{"g2"}, "echo hi")),
+			notes.CreateLastNote(catalog.Command{Name: "greet2", Aliases: []string{"g2"}, Exec: "echo hi"}),
 			"crower_exec=crower create --execute --alias " + quote("g2") + " " + quote("greet2"),
 		},
 		{
 			"a file create keeps its flag",
-			generateCreateFile([]string{"notes.md", "todo.txt"}),
+			notes.CreateFileNote([]string{"notes.md", "todo.txt"}),
 			"crower_exec=crower create --file " + quote("notes.md") + " " + quote("todo.txt"),
 		},
 		{
 			"a folder create keeps its flag",
-			newCreateFolder([]string{"tmp", "logs"}),
+			notes.CreateFolderNote([]string{"tmp", "logs"}),
 			"crower_exec=crower create --folder " + quote("tmp") + " " + quote("logs"),
 		},
 		{
+			"a system variable create keeps its flag",
+			notes.CreateSystemVariableNote([]string{"FOO", "bar"}),
+			"crower_exec=crower create --system " + quote("FOO") + " " + quote("bar"),
+		},
+		{
+			"a path create keeps its flag",
+			notes.CreateSystemPathNote([]string{"/opt/tools"}),
+			"crower_exec=crower create --syspath " + quote("/opt/tools"),
+		},
+		{
 			"an alias with a comma survives the CSV flag",
-			newCreateCommandNote(command.New("greet", []string{"a,b", "g2"}, "echo hi")),
+			notes.CreateCommandNote(catalog.Command{Name: "greet", Aliases: []string{"a,b", "g2"}, Exec: "echo hi"}),
 			"crower_exec=crower create --alias " + quote(`"a,b",g2`) + " " + quote("greet") + " " + quote("echo hi"),
 		},
 		{
 			"a name that looks like a flag needs the terminator",
-			newCreateCommandNote(command.New("-v", nil, "echo x")),
+			notes.CreateCommandNote(catalog.Command{Name: "-v", Exec: "echo x"}),
 			"crower_exec=crower create -- " + quote("-v") + " " + quote("echo x"),
 		},
 	}
@@ -69,5 +80,23 @@ func TestCreateNotesRecordReplayableCommands(t *testing.T) {
 				t.Errorf("note = %q, want it to contain %q", tt.built, tt.want)
 			}
 		})
+	}
+}
+
+// The note also records what the command is, so `list --history` reads as an
+// audit line and not only as a replay recipe.
+func TestCreateCommandNoteRecordsTheCommand(t *testing.T) {
+	got := notes.CreateCommandNote(catalog.Command{Name: "greet", Aliases: []string{"g"}, Exec: "echo hi"})
+
+	for _, want := range []string{
+		"main_operation=create",
+		"sub_operation=command",
+		"command_name=greet",
+		"command_alias=[g]",
+		"command_exec=echo hi",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("note = %q, want it to contain %q", got, want)
+		}
 	}
 }

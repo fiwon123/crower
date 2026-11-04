@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/legacy/createdom"
+	"github.com/fiwon123/crower/internal/adapters/system"
 	"github.com/fiwon123/crower/internal/legacy/opendom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
@@ -51,14 +51,14 @@ func TestOpenFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		createHandler := createdom.NewHandler(app)
+		creator := system.NewCreator()
 
 		var commands []string
 		openHandler := opendom.NewHandlerWithRunner(app, recordingOpener(t, &commands))
 
 		newFilePath := filepath.Join(app.ConfigFolder(), "new.txt")
 
-		err = createHandler.CreateFile(newFilePath)
+		err = creator.File(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
@@ -77,14 +77,14 @@ func TestOpenFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		createHandler := createdom.NewHandler(app)
+		creator := system.NewCreator()
 
 		var commands []string
 		openHandler := opendom.NewHandlerWithRunner(app, recordingOpener(t, &commands))
 
 		newFilePath := filepath.Join(app.ConfigFolder(), "new file.txt")
 
-		err = createHandler.CreateFile(newFilePath)
+		err = creator.File(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
@@ -105,14 +105,14 @@ func TestOpenFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		createHandler := createdom.NewHandler(app)
+		creator := system.NewCreator()
 
 		var commands []string
 		openHandler := opendom.NewHandlerWithRunner(app, recordingOpener(t, &commands))
 
 		newFolderPath := filepath.Join(app.ConfigFolder(), "new")
 
-		err = createHandler.CreateFolder(newFolderPath)
+		err = creator.Folder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
@@ -131,14 +131,14 @@ func TestOpenFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		createHandler := createdom.NewHandler(app)
+		creator := system.NewCreator()
 
 		var commands []string
 		openHandler := opendom.NewHandlerWithRunner(app, recordingOpener(t, &commands))
 
 		newFolderPath := filepath.Join(app.ConfigFolder(), "new folder")
 
-		err = createHandler.CreateFolder(newFolderPath)
+		err = creator.Folder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}

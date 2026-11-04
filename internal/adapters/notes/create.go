@@ -1,12 +1,11 @@
-package createdom
+package notes
 
 import (
 	"encoding/csv"
 	"strings"
 
-	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/note"
-
+	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
 )
@@ -22,6 +21,7 @@ func aliasArg(aliases []string) string {
 	}
 
 	var list strings.Builder
+
 	writer := csv.NewWriter(&list)
 
 	if err := writer.Write(aliases); err != nil {
@@ -34,94 +34,87 @@ func aliasArg(aliases []string) string {
 	return " --alias " + shell.Quote(strings.TrimSuffix(list.String(), "\n"))
 }
 
-// Create a new add note
-func newCreateCommandNote(command *command.Data) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// CreateCommandNote renders the history note for `create <name> <exec>`.
+func CreateCommandNote(command catalog.Command) string {
+	return note.New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
-		AddCommandAlias(command.AllAlias).
+		AddCommandAlias(command.Aliases).
 		AddCommandExec(command.Exec).
-		AddCrowerExec("create"+aliasArg(command.AllAlias), []string{command.Name, command.Exec}).
+		AddCrowerExec("create"+aliasArg(command.Aliases), []string{command.Name, command.Exec}).
 		Build()
 }
 
-func newCreateScriptCommandNote(command *command.Data) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// CreateScriptNote renders the history note for `create --script`.
+func CreateScriptNote(command catalog.Command) string {
+	return note.New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Script).
 		AddCommandName(command.Name).
-		AddCommandAlias(command.AllAlias).
+		AddCommandAlias(command.Aliases).
 		AddCommandExec(command.Exec).
-		AddCrowerExec("create --script"+aliasArg(command.AllAlias), []string{command.Name}).
+		AddCrowerExec("create --script"+aliasArg(command.Aliases), []string{command.Name}).
 		Build()
 }
 
-func newCreateCommandLastExecuteNote(command *command.Data) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// CreateLastNote renders the history note for `create --execute`.
+func CreateLastNote(command catalog.Command) string {
+	return note.New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Last).
 		AddCommandName(command.Name).
-		AddCommandAlias(command.AllAlias).
+		AddCommandAlias(command.Aliases).
 		AddCommandExec(command.Exec).
-		AddCrowerExec("create --execute"+aliasArg(command.AllAlias), []string{command.Name}).
+		AddCrowerExec("create --execute"+aliasArg(command.Aliases), []string{command.Name}).
 		Build()
 }
 
-// Create a new add process note
-func newCreateProcessNote(command *command.Data, args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// CreateProcessNote renders the history note for `create --process`.
+//
+// The replay line carries the new name as the flag's value and the original
+// positional values after it.
+func CreateProcessNote(command catalog.Command, args []string) string {
+	return note.New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Process).
 		AddCommandName(command.Name).
-		AddCommandAlias(command.AllAlias).
+		AddCommandAlias(command.Aliases).
 		AddCommandExec(command.Exec).
-		AddCrowerExec("create --process "+shell.Quote(command.Name)+aliasArg(command.AllAlias), args).
+		AddCrowerExec("create --process "+shell.Quote(command.Name)+aliasArg(command.Aliases), args).
 		Build()
 }
 
-func newCreateSystemVariableNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// CreateSystemVariableNote renders the history note for `create --system`.
+func CreateSystemVariableNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.System).
 		AddCrowerExec("create --system", args).
 		Build()
 }
 
-func newCreateSystemPathVariableNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// CreateSystemPathNote renders the history note for `create --syspath`.
+func CreateSystemPathNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.SysPath).
 		AddCrowerExec("create --syspath", args).
 		Build()
 }
 
-func generateCreateFile(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// CreateFileNote renders the history note for `create --file`.
+func CreateFileNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.File).
 		AddCrowerExec("create --file", args).
 		Build()
 }
 
-func newCreateFolder(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// CreateFolderNote renders the history note for `create --folder`.
+func CreateFolderNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Folder).
 		AddCrowerExec("create --folder", args).
