@@ -8,6 +8,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/shell"
 )
 
 // Mode is what a request reports.
@@ -169,14 +170,45 @@ func (u *UseCase) listCommands() error {
 		}
 
 		payload.Commands = append(payload.Commands, CommandRow{
-			Row:     i,
-			Name:    command.Name,
-			Aliases: aliases,
-			Exec:    command.Exec,
+			Row:         i,
+			Name:        command.Name,
+			Aliases:     aliases,
+			Exec:        command.Exec,
+			Description: command.Description,
+			Params:      command.Params,
+			Shell:       command.Shell,
+			Cwd:         command.Cwd,
+			Env:         redactEnv(command.Env),
+			Timeout:     command.Timeout,
 		})
 	}
 
 	return u.emit(u.output.Table(commands), payload, u.notes.ListCommandsNote())
+}
+
+// redactEnv hides a literal under a secret-looking key from the JSON result.
+//
+// The write path refuses such a value, but an old or hand-edited config still
+// loads (with a warning), and a result a script can read must not be the one
+// place the literal is printed. A ${VAR} reference is the placeholder itself
+// and stays readable.
+func redactEnv(env map[string]string) map[string]string {
+	if len(env) == 0 {
+		return nil
+	}
+
+	redacted := make(map[string]string, len(env))
+
+	for key, value := range env {
+		if _, reference := shell.EnvReference(value); !reference && shell.LooksSecret(key) {
+			redacted[key] = "${REDACTED}"
+			continue
+		}
+
+		redacted[key] = value
+	}
+
+	return redacted
 }
 
 // listProcess reports the running processes, optionally filtered.

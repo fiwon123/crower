@@ -1,6 +1,8 @@
-package app
+package session
 
 import (
+	"bytes"
+	"errors"
 	"io"
 	"os"
 	"path/filepath"
@@ -11,25 +13,26 @@ import (
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/timeline"
+	crerrors "github.com/fiwon123/crower/internal/errors"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func newTestConfigAt(t *testing.T, cfgPath string) *Config {
+func newTestConfigAt(t *testing.T, cfgPath string) *Session {
 	t.Helper()
 
-	cfg, err := InitApp(
+	cfg, err := Load(
 		cfgPath,
 		Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}},
 	)
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	return cfg
 }
 
-func newTestConfig(t *testing.T) *Config {
+func newTestConfig(t *testing.T) *Session {
 	t.Helper()
 
 	return newTestConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
@@ -51,12 +54,12 @@ func TestConfigPaths(t *testing.T) {
 // SaveCommands is the one writer of the configuration file. A domain calls it
 // instead of knowing that the file is TOML or where it is.
 func TestSaveCommandsWritesTheCommandMap(t *testing.T) {
-	// Read back the path handed to InitApp, not ConfigFile(): a wrong path on
+	// Read back the path handed to Load, not ConfigFile(): a wrong path on
 	// both sides would otherwise hide itself.
 	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
 	cfg := newTestConfigAt(t, cfgPath)
 
-	cfg.AllCommandsByName.Add("greet", command.New("greet", []string{"hi"}, "echo hello"))
+	cfg.allCommandsByName.Add("greet", command.New("greet", []string{"hi"}, "echo hello"))
 
 	if err := cfg.SaveCommands(); err != nil {
 		t.Fatalf("SaveCommands: %v", err)
@@ -116,7 +119,7 @@ func TestDeleteHistoryBackupRejectsAPath(t *testing.T) {
 // A history file written by an older build has no CommandName field: the name
 // lives only inside the note. Loading it must resolve the name, or `--last`
 // stays broken for every entry made before the fix.
-func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
+func TestNewBackfillsTheCommandNameFromTheNote(t *testing.T) {
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "crower.yaml")
 
@@ -127,9 +130,9 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 		t.Fatalf("write legacy history: %v", err)
 	}
 
-	cfg, err := InitApp(cfgPath, Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
+	cfg, err := Load(cfgPath, Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	last := cfg.GetLast(operation.Create)
@@ -144,7 +147,7 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 
 // A file note can carry the same text inside a path; resolving that would point
 // `--last` at a command the operation never touched.
-func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
+func TestNewDoesNotBackfillAFileNote(t *testing.T) {
 	dir := t.TempDir()
 
 	legacy := timeline.Log{}
@@ -155,9 +158,9 @@ func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
 		t.Fatalf("write legacy history: %v", err)
 	}
 
-	cfg, err := InitApp(filepath.Join(dir, "crower.yaml"), Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
+	cfg, err := Load(filepath.Join(dir, "crower.yaml"), Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	if got := cfg.History.AllData[0].CommandName; got != "" {
@@ -180,7 +183,7 @@ func TestCommitWritesSnapshotIndexAndCommandFile(t *testing.T) {
 		t.Fatalf("Commit: %v", err)
 	}
 
-	if cfg.AllCommandsByName.Get("greet") == nil {
+	if cfg.allCommandsByName.Get("greet") == nil {
 		t.Error("the running configuration does not hold the committed command")
 	}
 
@@ -214,6 +217,135 @@ func TestCommitWritesSnapshotIndexAndCommandFile(t *testing.T) {
 
 	if got := snapshot["greet"].Name; got != "greet" {
 		t.Errorf("snapshot command = %q, want greet", got)
+	}
+}
+
+// Commit rewrites the whole command map through toData, so a field it forgets
+// is lost by every create, update, delete and restore. Pin the target fields on
+// the path a user's data actually takes: in memory, in the file, and back.
+func TestCommitKeepsTargetFields(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	commands := catalog.New(nil, []catalog.Command{{
+		Name:    "deploy",
+		Exec:    "pwd",
+		Shell:   "sh",
+		Cwd:     "~/projects/api",
+		Env:     map[string]string{"STAGE": "prod"},
+		Timeout: "30s",
+	}})
+
+	if err := cfg.Commit(commands, operation.Create, "deploy", "main_operation=create"); err != nil {
+		t.Fatalf("Commit: %v", err)
+	}
+
+	stored := cfg.allCommandsByName.Get("deploy")
+	if stored == nil || stored.Shell != "sh" || stored.Cwd != "~/projects/api" {
+		t.Fatalf("stored = %+v, want the shell and cwd kept", stored)
+	}
+
+	if stored.Env["STAGE"] != "prod" || stored.Timeout != "30s" {
+		t.Fatalf("stored = %+v, want the env and timeout kept", stored)
+	}
+
+	reloaded := newTestConfigAt(t, cfg.ConfigFile())
+
+	back := reloaded.allCommandsByName.Get("deploy")
+	if back == nil || back.Shell != "sh" || back.Cwd != "~/projects/api" {
+		t.Errorf("reloaded = %+v, want the shell and cwd on disk", back)
+	}
+
+	if back.Env["STAGE"] != "prod" || back.Timeout != "30s" {
+		t.Errorf("reloaded = %+v, want the env and timeout on disk", back)
+	}
+}
+
+// The write path refuses what the executor would refuse, and it refuses before
+// changing the in-memory catalog or the file.
+func TestCommitRejectsALiteralSecret(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	commands := catalog.New(nil, []catalog.Command{{
+		Name: "bad",
+		Exec: "echo hi",
+		Env:  map[string]string{"API_TOKEN": "literal"},
+	}})
+
+	err := cfg.Commit(commands, operation.Create, "bad", "main_operation=create")
+	if !errors.Is(err, crerrors.ErrSecretEnvValue) {
+		t.Fatalf("error = %v, want ErrSecretEnvValue", err)
+	}
+
+	if _, found := cfg.Catalog().Get("bad"); found {
+		t.Error("Commit changed the catalog before validating")
+	}
+
+	body, readErr := os.ReadFile(cfg.ConfigFile())
+	if readErr != nil {
+		t.Fatalf("read config: %v", readErr)
+	}
+
+	if strings.Contains(string(body), "bad") {
+		t.Errorf("config = %q, want nothing written", body)
+	}
+}
+
+func TestSaveCommandsRejectsALiteralSecret(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	cfg.ReplaceCatalog(catalog.New(nil, []catalog.Command{{
+		Name: "bad",
+		Exec: "echo hi",
+		Env:  map[string]string{"API_TOKEN": "literal"},
+	}}))
+
+	err := cfg.SaveCommands()
+	if !errors.Is(err, crerrors.ErrSecretEnvValue) {
+		t.Fatalf("error = %v, want ErrSecretEnvValue", err)
+	}
+
+	body, readErr := os.ReadFile(cfg.ConfigFile())
+	if readErr != nil {
+		t.Fatalf("read config: %v", readErr)
+	}
+
+	if strings.Contains(string(body), "bad") {
+		t.Errorf("config = %q, want nothing written", body)
+	}
+}
+
+// An old or hand-edited config still loads, with a warning: refusing the whole
+// file would leave the user unable to fix it.
+func TestLoadWarnsAboutALiteralSecret(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "crower.yaml")
+
+	body := `[bad]
+Name = "bad"
+AllAlias = []
+Exec = "echo hi"
+Env = { API_TOKEN = "literal" }
+`
+	if err := os.WriteFile(path, []byte(body), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	var stderr bytes.Buffer
+
+	cfg, err := Load(path, Options{Streams: Streams{
+		In:  strings.NewReader(""),
+		Out: io.Discard,
+		Err: &stderr,
+	}})
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if _, found := cfg.Catalog().Get("bad"); !found {
+		t.Fatal("Load dropped the command with the literal")
+	}
+
+	if !strings.Contains(stderr.String(), "secret-looking environment value") {
+		t.Errorf("stderr = %q, want the warning", stderr.String())
 	}
 }
 

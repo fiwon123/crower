@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"os"
@@ -214,7 +214,7 @@ func TestHistoryJSONKeepsItsOnDiskKeys(t *testing.T) {
 }
 
 // An empty history file is a fresh install, not a broken one: ReadJson leaves
-// the zero value alone and InitApp continues with no entries.
+// the zero value alone and Load continues with no entries.
 func TestEmptyHistoryFileIsNotAnError(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "historyhelper.json")
 
@@ -239,7 +239,7 @@ func TestHistorySnapshotUsesTheCommandMapFormat(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
 
 	cfg := newTestConfigAt(t, cfgPath)
-	cfg.AllCommandsByName.Add("greet", command.New("greet", []string{"hi"}, "echo hello"))
+	cfg.allCommandsByName.Add("greet", command.New("greet", []string{"hi"}, "echo hello"))
 
 	if err := cfg.SaveCommands(); err != nil {
 		t.Fatalf("SaveCommands: %v", err)

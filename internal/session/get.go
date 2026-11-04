@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"github.com/fiwon123/crower/internal/domain/operation"
@@ -6,6 +6,6 @@ import (
 )
 
 // Get last operation
-func (app *Config) GetLast(state operation.Operation) *timeline.Content {
-	return app.History.GetLastOperation(state)
+func (s *Session) GetLast(state operation.Operation) *timeline.Content {
+	return s.History.GetLastOperation(state)
 }

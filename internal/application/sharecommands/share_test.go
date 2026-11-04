@@ -9,6 +9,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/application/sharecommands"
 	"github.com/fiwon123/crower/internal/domain/catalog"
+	crerrors "github.com/fiwon123/crower/internal/errors"
 )
 
 type fakeState struct {
@@ -438,4 +439,100 @@ func TestPullErrors(t *testing.T) {
 			t.Fatalf("error = %v, want boom", err)
 		}
 	})
+}
+
+// A pack's description and params belong to the command: import must not drop
+// them, or a shared pack loses the only thing that explains it.
+func TestImportKeepsMetadata(t *testing.T) {
+	h := newHarness()
+	h.packs.read = []catalog.Command{{
+		Name:        "greet",
+		Exec:        "echo hi",
+		Description: "Say hi",
+		Params:      []string{"name"},
+		Shell:       "pwsh",
+		Cwd:         "~/api",
+		Env:         map[string]string{"STAGE": "prod"},
+		Timeout:     "30s",
+	}}
+
+	if err := h.useCase().Import("pack.toml", false); err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+
+	got, found := h.state.saved[0].Get("greet")
+	if !found || got.Description != "Say hi" || !slices.Equal(got.Params, []string{"name"}) {
+		t.Errorf("imported = %+v, want the metadata", got)
+	}
+
+	if got.Shell != "pwsh" || got.Cwd != "~/api" {
+		t.Errorf("imported = %+v, want the shell and cwd", got)
+	}
+
+	if got.Env["STAGE"] != "prod" || got.Timeout != "30s" {
+		t.Errorf("imported = %+v, want the env and timeout", got)
+	}
+}
+
+// A pack must not persist a literal the executor would refuse. The error
+// arrives before anything is saved, so a failed import changes nothing.
+func TestImportRejectsALiteralSecret(t *testing.T) {
+	h := newHarness()
+	h.packs.read = []catalog.Command{{
+		Name: "bad",
+		Exec: "echo hi",
+		Env:  map[string]string{"API_TOKEN": "literal"},
+	}}
+
+	err := h.useCase().Import("pack.toml", false)
+	if !errors.Is(err, crerrors.ErrSecretEnvValue) {
+		t.Fatalf("error = %v, want ErrSecretEnvValue", err)
+	}
+
+	if len(h.state.saved) != 0 {
+		t.Errorf("saved %v, want nothing", h.state.saved)
+	}
+}
+
+// A pack must not carry a literal the executor would refuse on the way out
+// either: export goes through the same check as import.
+func TestExportRejectsALiteralSecret(t *testing.T) {
+	h := newHarness()
+	h.state.commands = catalog.New(nil, []catalog.Command{{
+		Name: "bad",
+		Exec: "echo hi",
+		Env:  map[string]string{"API_TOKEN": "literal"},
+	}})
+
+	err := h.useCase().Export("", "out.toml")
+	if !errors.Is(err, crerrors.ErrSecretEnvValue) {
+		t.Fatalf("error = %v, want ErrSecretEnvValue", err)
+	}
+
+	if len(h.packs.written) != 0 {
+		t.Errorf("written = %v, want nothing", h.packs.written)
+	}
+}
+
+// A ${VAR} reference is the placeholder the schema expects, so it imports.
+func TestImportAcceptsAnEnvReference(t *testing.T) {
+	h := newHarness()
+	h.packs.read = []catalog.Command{{
+		Name: "ok",
+		Exec: "echo hi",
+		Env:  map[string]string{"TOKEN": "${TOKEN}"},
+	}}
+
+	if err := h.useCase().Import("pack.toml", false); err != nil {
+		t.Fatalf("Import: %v", err)
+	}
+
+	if len(h.state.saved) != 1 {
+		t.Fatalf("saved %d catalogs, want 1", len(h.state.saved))
+	}
+
+	got, found := h.state.saved[0].Get("ok")
+	if !found || got.Env["TOKEN"] != "${TOKEN}" {
+		t.Errorf("imported = %+v, %v; want the reference", got, found)
+	}
 }

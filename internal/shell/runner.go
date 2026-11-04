@@ -6,6 +6,7 @@
 package shell
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -77,15 +78,69 @@ func (r *Runner) Command(line string) (*exec.Cmd, error) {
 	return commandFor(runtime.GOOS, line)
 }
 
+// CommandFor builds the invocation of the shell a command names.
+//
+// An empty name is the platform's own shell, which is what every command did
+// before the portable schema. A named shell runs on every platform: "sh" is
+// POSIX sh, "pwsh" is PowerShell, and "cmd" is the Windows command interpreter.
+// The name is a portable declaration, not a platform guess -- a command that
+// asks for pwsh runs pwsh on Linux too, and fails with the OS's own "not found"
+// when it is not installed.
+func (r *Runner) CommandFor(shellName, line string) (*exec.Cmd, error) {
+	return commandForShell(runtime.GOOS, shellName, line)
+}
+
+// CommandForContext is CommandFor with a context, so a caller can cancel the
+// process it starts (a command's Timeout uses this).
+func (r *Runner) CommandForContext(ctx context.Context, shellName, line string) (*exec.Cmd, error) {
+	return commandForShellContext(ctx, runtime.GOOS, shellName, line)
+}
+
 // commandFor is the platform choice, with goos as a parameter so a test can
 // exercise every arm: runtime.GOOS cannot be overridden at run time.
 func commandFor(goos string, line string) (*exec.Cmd, error) {
-	switch goos {
-	case "windows":
-		return exec.Command("cmd", "/c", line), nil
-	case "linux", "darwin":
-		return exec.Command("sh", "-c", line), nil
+	return commandForShell(goos, "", line)
+}
+
+// commandForShell is the platform default plus the three shells a command may
+// name explicitly.
+func commandForShell(goos, shellName, line string) (*exec.Cmd, error) {
+	return commandForShellContext(context.Background(), goos, shellName, line)
+}
+
+// commandForShellContext builds the process under ctx.
+//
+// pwsh runs with -NoProfile: a shared command should behave the same on every
+// machine, and a user's profile can change what a command line means.
+func commandForShellContext(ctx context.Context, goos, shellName, line string) (*exec.Cmd, error) {
+	var command *exec.Cmd
+
+	switch shellName {
+	case "":
+		switch goos {
+		case "windows":
+			command = exec.CommandContext(ctx, "cmd", "/c", line)
+		case "linux", "darwin":
+			command = exec.CommandContext(ctx, "sh", "-c", line)
+		default:
+			return nil, fmt.Errorf("%w: %q", errors.ErrUnsupportedOS, goos)
+		}
+	case "sh":
+		command = exec.CommandContext(ctx, "sh", "-c", line)
+	case "pwsh":
+		command = exec.CommandContext(ctx, "pwsh", "-NoProfile", "-Command", line)
+	case "cmd":
+		command = exec.CommandContext(ctx, "cmd", "/c", line)
 	default:
-		return nil, fmt.Errorf("%w: %q", errors.ErrUnsupportedOS, goos)
+		return nil, fmt.Errorf("%w: %q", errors.ErrUnknownShell, shellName)
 	}
+
+	// Go escapes an argument for CreateProcess; cmd has its own quoting rules
+	// and /c may strip the outer quotes. Hand cmd the line verbatim through
+	// CmdLine instead of letting Go escape it a second time (#185).
+	if goos == "windows" {
+		prepareWindows(command, line)
+	}
+
+	return command, nil
 }

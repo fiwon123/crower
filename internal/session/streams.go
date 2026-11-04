@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"bufio"
@@ -18,7 +18,7 @@ func DefaultStreams() Streams {
 }
 
 // Options are the settings a command resolves from its global flags and hands
-// to InitApp.
+// to Load.
 type Options struct {
 	Streams Streams
 
@@ -47,8 +47,8 @@ func (o Options) withDefaults() Options {
 // nothing must fail, and the old reader ignored the error and asked again
 // forever, so `crower create </dev/null` hung and wrote hundreds of thousands
 // of lines.
-func (a *Config) ReadLine() (string, error) {
-	line, err := a.in.ReadString('\n')
+func (s *Session) ReadLine() (string, error) {
+	line, err := s.in.ReadString('\n')
 	if err != nil && line == "" {
 		return "", errors.NoInputAvailable()
 	}
@@ -59,6 +59,6 @@ func (a *Config) ReadLine() (string, error) {
 // Reader is the buffered input stream, so several prompts in one command share
 // one buffer. Wrapping os.Stdin per prompt used to discard whatever the last
 // prompt had already buffered.
-func (a *Config) Reader() *bufio.Reader {
-	return a.in
+func (s *Session) Reader() *bufio.Reader {
+	return s.in
 }

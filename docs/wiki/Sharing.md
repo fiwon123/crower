@@ -13,7 +13,37 @@ crower export -o my-workflows.toml      # every command
 crower export deploy -o deploy.toml     # one command
 ```
 
-The file is TOML: readable, diffable, and safe to commit.
+The file is TOML: readable, diffable, and safe to commit. A command may carry
+`Description` and `Params` — what it is for and what its positional values mean;
+both are metadata and never change how it runs.
+
+It may also declare `Shell` (`sh`, `pwsh` or `cmd`; empty is the platform's
+own) and `Cwd` (the folder it runs in, with `~` for the home directory). A pack
+that says `Shell = "pwsh"` runs through PowerShell 7 on every platform, so the
+reader needs `pwsh` installed; the declaration removes the guess about which
+shell the command meant, not the requirement that it exists.
+
+`Env` adds environment entries, and `Timeout` (`120s`) limits each step. An
+`Env` value should be a `${VAR}` reference when it is a credential: a literal
+under a secret-looking key is refused on export, import and save, because a
+pack is a file people commit and share. A hand-edited config with one still
+loads, with a warning.
+
+A whole pack can describe itself:
+
+```toml
+[deploy]
+Description = "Ship the API"
+Exec        = "rsync -az ./ {1}:/srv/api && ssh {1} 'systemctl restart api'"
+Shell       = "sh"
+Cwd         = "~/projects/api"
+Env         = { STAGE = "prod", TOKEN = "${DEPLOY_TOKEN}" }
+Timeout     = "120s"
+Params      = ["host"]
+AllAlias    = ["d"]
+```
+
+A `Steps` command inherits the same target for every step.
 
 ## 📥 Import
 

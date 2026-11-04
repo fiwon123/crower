@@ -43,6 +43,13 @@ func ReadKeysTomlInOrder(filePath string) ([]string, error) {
 		it := e.Key()
 		parts := keyAsStrings(it)
 
+		// Only a top-level table names a command. A nested table such as
+		// [deploy.Env] is part of the command above it; counting it would list
+		// the command twice and shift its position on every save.
+		if len(parts) != 1 {
+			continue
+		}
+
 		keysInOrder = append(keysInOrder, string(parts[0]))
 	}
 

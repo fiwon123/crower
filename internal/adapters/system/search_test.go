@@ -63,7 +63,7 @@ func TestSearchCommands(t *testing.T) {
 		wantErr bool
 	}{
 		{"files on windows", "windows", "a.txt", system.FilesSearchCommand, `dir . /s /b /a-d | findstr a.txt`, false},
-		{"files on windows with specials", "windows", `a" & calc`, system.FilesSearchCommand, `dir . /s /b /a-d | findstr "a"" & calc"`, false},
+		{"files on windows with specials", "windows", `a" & calc`, system.FilesSearchCommand, `dir . /s /b /a-d | findstr "a\"^ ^&^ calc"`, false},
 		{"files on linux", "linux", "a.txt", system.FilesSearchCommand, `find '.' -type f -name 'a.txt'`, false},
 		{"files on darwin", "darwin", "a.txt", system.FilesSearchCommand, `find '.' -type f -name 'a.txt'`, false},
 		{"folders on windows", "windows", "a", system.FoldersSearchCommand, `dir . /s /b /ad | findstr a`, false},

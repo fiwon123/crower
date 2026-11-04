@@ -1,27 +1,33 @@
-package app
+// Package session is the composition root of a crower run.
+//
+// It owns the configuration paths, the loaded command and history state, and
+// the save/commit/revert calls that persist them. cmd builds one per run and
+// hands it to the use cases through the ports they declare; nothing else may
+// import this package.
+package session
 
 import (
 	"bufio"
-	"github.com/fiwon123/crower/internal/domain/timeline"
+	"fmt"
 	"io"
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
-	"github.com/fiwon123/crower/internal/adapters/storage/command"
-
 	"github.com/fiwon123/crower/internal/adapters/storage"
-
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
+	"github.com/fiwon123/crower/internal/domain/timeline"
+	"github.com/fiwon123/crower/internal/shell"
 	"github.com/fiwon123/crower/pkg/logger"
 )
 
-// Config is everything one crower run needs: where its state lives, what it
+// Session is everything one crower run needs: where its state lives, what it
 // reads, and where its output goes.
-type Config struct {
+type Session struct {
 	History            timeline.Log
 	Logger             logger.Logger
-	OrderKeys          []string
-	AllCommandsByAlias command.MapData
-	AllCommandsByName  command.MapData
+	orderKeys          []string
+	allCommandsByAlias command.MapData
+	allCommandsByName  command.MapData
 
 	// Where the run's state lives. They are private because a domain should
 	// not know the storage layout: it records through Save/SaveCommands and
@@ -45,32 +51,32 @@ type Config struct {
 //
 // It is read-only on purpose: writing it is this package's job (SaveCommands,
 // RevertTo), so a domain does not have to know the format or the location.
-func (app *Config) ConfigFile() string {
-	return app.commands.Path()
+func (s *Session) ConfigFile() string {
+	return s.commands.Path()
 }
 
 // ConfigFolder is the folder the configuration lives in, which is also where
 // `create --script` keeps its scripts.
-func (app *Config) ConfigFolder() string {
-	return app.commands.Folder()
+func (s *Session) ConfigFolder() string {
+	return s.commands.Folder()
 }
 
-// NewApp builds the run from an already-read configuration.
+// New builds the run from an already-read configuration.
 //
-// allAliases must have been built by getAliasMap from allCommands; NewApp warns
+// allAliases must have been built by getAliasMap from allCommands; New warns
 // about collisions but does not rebuild the index.
 //
 // It returns an error instead of panicking: a state directory that cannot be
 // created, a history file that cannot be parsed, and a log that cannot be
 // opened are conditions of the environment, not reasons to crash. The old code
 // panicked on all three, which a script sees as an unexplained exit 2.
-func NewApp(
+func New(
 	cfgFilePath string,
 	orderKeys []string,
 	allAliases command.MapData,
 	allCommands command.MapData,
 	opts Options,
-) (*Config, error) {
+) (*Session, error) {
 	opts = opts.withDefaults()
 
 	commands := storage.NewCommandFile(cfgFilePath)
@@ -101,14 +107,14 @@ func NewApp(
 		return nil, err
 	}
 
-	cfg := &Config{
+	cfg := &Session{
 		History:            historyData,
 		commands:           commands,
 		historyFiles:       historyFiles,
 		Logger:             *log,
-		OrderKeys:          orderKeys,
-		AllCommandsByAlias: allAliases,
-		AllCommandsByName:  allCommands,
+		orderKeys:          orderKeys,
+		allCommandsByAlias: allAliases,
+		allCommandsByName:  allCommands,
 		NoInput:            opts.NoInput,
 		Format:             opts.Format,
 		in:                 bufio.NewReader(opts.Streams.In),
@@ -121,6 +127,15 @@ func NewApp(
 	// know that one of the two commands is unreachable by that key.
 	for _, warning := range commandCollisions(allCommands) {
 		cfg.Logger.Warning(warning)
+	}
+
+	// A file written by an older build (or edited by hand) may hold a literal
+	// the write path now refuses. Load it and say so: refusing the whole
+	// configuration would leave the user unable to fix it.
+	for _, command := range cfg.Catalog().Commands() {
+		if err := shell.ValidateEnv(command.Env); err != nil {
+			cfg.Logger.Warning(fmt.Sprintf("command %q: %v", command.Name, err))
+		}
 	}
 
 	return cfg, nil

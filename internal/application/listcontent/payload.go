@@ -14,10 +14,16 @@ import (
 
 // CommandRow is one row of the command table.
 type CommandRow struct {
-	Row     int      `json:"row"`
-	Name    string   `json:"name"`
-	Aliases []string `json:"aliases"`
-	Exec    string   `json:"exec"`
+	Row         int               `json:"row"`
+	Name        string            `json:"name"`
+	Aliases     []string          `json:"aliases"`
+	Exec        string            `json:"exec"`
+	Description string            `json:"description,omitempty"`
+	Params      []string          `json:"params,omitempty"`
+	Shell       string            `json:"shell,omitempty"`
+	Cwd         string            `json:"cwd,omitempty"`
+	Env         map[string]string `json:"env,omitempty"`
+	Timeout     string            `json:"timeout,omitempty"`
 }
 
 // CommandsResult is the result of `list` and `list --json`.

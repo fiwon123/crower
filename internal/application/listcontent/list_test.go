@@ -162,7 +162,7 @@ func TestListCommands(t *testing.T) {
 	h.state.commands = catalog.New(
 		[]string{"greet", "build"},
 		[]catalog.Command{
-			{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi"},
+			{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi", Description: "Say hi", Params: []string{"name"}, Shell: "pwsh", Cwd: "~/api", Env: map[string]string{"STAGE": "prod"}, Timeout: "30s"},
 			{Name: "build", Exec: "go build ./..."},
 		},
 	)
@@ -188,6 +188,18 @@ func TestListCommands(t *testing.T) {
 		t.Errorf("first row = %+v, want greet at row 0", payload.Commands[0])
 	}
 
+	if payload.Commands[0].Description != "Say hi" || !slices.Equal(payload.Commands[0].Params, []string{"name"}) {
+		t.Errorf("metadata = %+v, want the description and params", payload.Commands[0])
+	}
+
+	if payload.Commands[0].Shell != "pwsh" || payload.Commands[0].Cwd != "~/api" {
+		t.Errorf("target = %+v, want the shell and cwd", payload.Commands[0])
+	}
+
+	if payload.Commands[0].Env["STAGE"] != "prod" || payload.Commands[0].Timeout != "30s" {
+		t.Errorf("target = %+v, want the env and timeout", payload.Commands[0])
+	}
+
 	// An empty alias list encodes as [] rather than null.
 	if payload.Commands[1].Aliases == nil {
 		t.Error("aliases = nil, want an empty slice")
@@ -199,6 +211,41 @@ func TestListCommands(t *testing.T) {
 
 	if h.state.records[0].op != operation.List || h.state.records[0].commandName != "" {
 		t.Errorf("recorded %+v, want list with no command name", h.state.records[0])
+	}
+}
+
+// The write path refuses a literal under a secret-looking key, but an old or
+// hand-edited config still loads. The JSON result must not be the one place
+// the literal is printed; a ${VAR} reference stays readable.
+func TestListCommandsRedactsASecretLiteral(t *testing.T) {
+	h := newHarness()
+	h.state.commands = catalog.New(nil, []catalog.Command{{
+		Name: "deploy",
+		Exec: "echo hi",
+		Env: map[string]string{
+			"STAGE":     "prod",
+			"TOKEN":     "${TOKEN}",
+			"API_TOKEN": "literal",
+		},
+	}})
+
+	if err := h.run(listcontent.Request{}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	payload, ok := h.output.emitted[0].payload.(listcontent.CommandsResult)
+	if !ok {
+		t.Fatalf("payload = %T, want CommandsResult", h.output.emitted[0].payload)
+	}
+
+	env := payload.Commands[0].Env
+
+	if env["STAGE"] != "prod" || env["TOKEN"] != "${TOKEN}" {
+		t.Errorf("env = %v, want the ordinary literal and the reference", env)
+	}
+
+	if env["API_TOKEN"] != "${REDACTED}" {
+		t.Errorf("API_TOKEN = %q, want the literal redacted", env["API_TOKEN"])
 	}
 }
 

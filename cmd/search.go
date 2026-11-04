@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/searchcontent"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -28,7 +28,7 @@ var searchCmd = &cobra.Command{
 	crower search --browser "golang context"
 	crower search report ./notes --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -58,16 +58,16 @@ var searchCmd = &cobra.Command{
 // searchSession adapts the configuration to the ports the search use case
 // declares.
 type searchSession struct {
-	legacySession
+	sessionPorts
 
 	searcher *system.Search
 }
 
 // newSearchSession wires the configuration and the platform search.
-func newSearchSession(cfg *app.Config) searchSession {
+func newSearchSession(cfg *session.Session) searchSession {
 	return searchSession{
-		legacySession: newLegacySession(cfg),
-		searcher:      system.NewSearch(),
+		sessionPorts: newSessionPorts(cfg),
+		searcher:     system.NewSearch(),
 	}
 }
 

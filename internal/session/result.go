@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"fmt"
@@ -28,24 +28,24 @@ const (
 // Raw command output (execute, extract, open) is deliberately not routed
 // through here: those bytes belong to the command that produced them, and
 // wrapping them in an envelope would break `crower execute ... | grep`.
-func (a *Config) Result(text string, payload any) error {
-	switch a.Format {
+func (s *Session) Result(text string, payload any) error {
+	switch s.Format {
 	case FormatJSON:
 		line, err := output.EncodeJSON(payload)
 		if err != nil {
 			return err
 		}
 
-		a.Logger.Out(line)
+		s.Logger.Out(line)
 		return nil
 
 	case FormatText, "":
-		a.Logger.Out(text)
+		s.Logger.Out(text)
 		return nil
 
 	default:
 		// A format nobody implements must not fall through to text: the
 		// caller asked for something specific and would read the wrong result.
-		return fmt.Errorf("unknown result format %q", a.Format)
+		return fmt.Errorf("unknown result format %q", s.Format)
 	}
 }

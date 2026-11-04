@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"bufio"
@@ -6,10 +6,10 @@ import (
 	"testing"
 )
 
-func newReaderConfig(t *testing.T, input string) *Config {
+func newReaderConfig(t *testing.T, input string) *Session {
 	t.Helper()
 
-	return &Config{in: bufio.NewReader(strings.NewReader(input))}
+	return &Session{in: bufio.NewReader(strings.NewReader(input))}
 }
 
 func TestReadLineReturnsTheLine(t *testing.T) {

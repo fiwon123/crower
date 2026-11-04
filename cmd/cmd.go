@@ -15,6 +15,9 @@ import (
 var versionFlag bool
 var checkNewVersion bool
 var upgradeFlag bool
+var rollbackFlag bool
+var installVersion string
+var assumeYesFlag bool
 
 // Shared flags, parsed by more than one command.
 var executeFlag bool
@@ -73,20 +76,27 @@ Every command has its own help: crower <command> --help.`,
 			return nil
 		}
 
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
 
 		switch {
 		case checkNewVersion:
-			session := newLegacySession(cfg)
+			session := newSessionPorts(cfg)
 			return checkrelease.New(latestTag{}, session, session, session).Run(Version)
 
-		case upgradeFlag:
-			session := newLegacySession(cfg)
+		case upgradeFlag, rollbackFlag, installVersion != "":
+			session := newUpdateSession(cfg)
 
-			return upgradeapp.New(session, session, latestTag{}, update.New(), session).Run(Version)
+			return upgradeapp.New(session, session, latestTag{}, update.New(), session, session, session).Run(
+				upgradeapp.Request{
+					Current:   Version,
+					Version:   installVersion,
+					Rollback:  rollbackFlag,
+					AssumeYes: assumeYesFlag,
+				},
+			)
 
 		case len(args) == 0:
 			return cmd.Help()
@@ -111,6 +121,8 @@ func Execute() {
 		fmt.Fprintln(streams.Err, "error:", err)
 		os.Exit(1)
 	}
+
+	maybeNotifyUpdate()
 }
 
 func init() {
@@ -130,10 +142,14 @@ func init() {
 
 	// Persistent flags
 	rootCmd.PersistentFlags().String(flagConfig, "", "configuration file path (default: $HOME/crower/crower.yaml)")
+	rootCmd.PersistentFlags().String(flagSetup, "", "use a named setup (default: $CROWER_SETUP, or the default installation)")
 	rootCmd.PersistentFlags().Bool(flagNoInput, false, "never prompt; fail instead of waiting for input")
 
 	// Flags
 	rootCmd.Flags().BoolVarP(&versionFlag, "version", "v", false, "print the current version")
-	rootCmd.Flags().BoolVar(&upgradeFlag, "upgrade", false, "upgrade to the latest version")
+	rootCmd.Flags().BoolVar(&upgradeFlag, "upgrade", false, "install the latest version (asks first; use --yes in scripts)")
 	rootCmd.Flags().BoolVar(&checkNewVersion, "check", false, "check whether a newer version exists")
+	rootCmd.Flags().BoolVarP(&assumeYesFlag, "yes", "y", false, "install without asking for confirmation")
+	rootCmd.Flags().StringVar(&installVersion, "install-version", "", "install a specific version, older or newer")
+	rootCmd.Flags().BoolVar(&rollbackFlag, "rollback", false, "install the version that ran before this one")
 }

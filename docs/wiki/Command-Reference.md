@@ -47,6 +47,10 @@ These work on every command.
 
 `--config` and `--no-input` are persistent: every subcommand inherits them.
 
+`--setup <name>` selects a named command setup (`~/crower/setups/<name>/`).
+It applies when `--config` is not given; `CROWER_SETUP` sets the same default.
+The default installation keeps its old path and history.
+
 ## 🤖 Machine-readable results
 
 `list` and `search` accept `--json`: the result becomes **one JSON object** on
@@ -70,6 +74,8 @@ Any other command rejects `--json` as an unknown flag: a global switch a command
 silently ignored would report success without honouring it.
 
 ---
+
+`crower list --json` rows carry `description`, `params`, `shell`, `cwd`, `env` and `timeout` when the command declares them. The first two are metadata; the rest say how it runs.
 
 ## ➕ crower create
 
@@ -99,9 +105,9 @@ crower create --folder reports
 crower create -p server nginx
 ```
 
-A command runs through `sh -c` on Linux and macOS, and `cmd /c` on Windows. A
-Steps command runs its steps instead of its `exec`; `execute` refuses to run one
-with parameters it cannot apply.
+A command runs through `sh -c` on Linux and macOS, and `cmd /c` on Windows,
+unless it declares its own `Shell`. A Steps command runs its steps instead of
+its `exec`; `execute` refuses to run one with parameters it cannot apply.
 
 ## ✏️ crower update
 
@@ -204,6 +210,23 @@ crower execute --last
 
 Parameters after the command fill `{1}`, `{2}`, … in its steps; `{}` takes the
 rest. Each parameter is quoted before it reaches the shell.
+
+A command may declare the shell it needs and the folder it runs in. `Shell` is
+`sh`, `pwsh` or `cmd` (the named shell must be installed); empty keeps the
+platform's own shell (`sh` on Linux and macOS, `cmd` on Windows). `Cwd` is the
+working directory, and a leading `~` is the user's home. Every step of a Steps
+command inherits both. An unknown shell, or a folder that does not exist, fails
+before anything runs. Set both in the configuration file or in a pack; `create`
+and `update` have no flags for them yet.
+
+`Env` merges entries over the process environment. A value that is exactly
+`${VAR}` reads `VAR` from the environment, and an unset variable is an error
+rather than an empty value. A literal under a secret-looking key (`*TOKEN*`,
+`*SECRET*`, `*PASSWORD*`, `*_KEY*`, …) is refused on export, import, save and
+execute: a pack carries placeholders, never secrets. A hand-edited config with
+one still loads, with a warning, and `list --json` redacts it. `Timeout` is a Go
+duration (`120s`, `2m`) applied to **each** step; an overrun kills the step and
+the error names the limit.
 
 ## 📂 crower open
 
@@ -407,6 +430,68 @@ crower desktop
 ```
 
 ---
+
+## 🗂️ crower setup
+
+```bash
+crower setup list                 # the default setup and every named one
+crower setup new streamer         # create ~/crower/setups/streamer/
+crower setup use streamer         # make it the default for future runs
+crower setup show                 # active setup, config path, command count
+crower setup delete gaming --force
+```
+
+Each setup keeps its own commands and its own history. The default setup keeps
+`~/crower/crower.yaml`; nothing migrates.
+
+### crower setup list
+
+Prints `default` and every folder under `~/crower/setups/`, marking the active
+one.
+
+### crower setup new
+
+Creates an empty named setup. The name must be a slug (letters, digits, `-`, `_`,
+`.`).
+
+### crower setup use
+
+Persists the default setup for future runs (the same as `--setup` and
+`CROWER_SETUP`). The setup must exist.
+
+### crower setup show
+
+Prints the active setup, its configuration path and how many commands it holds.
+
+### crower setup delete
+
+Removes a named setup and its history. The active setup is protected unless
+`--force` is passed; the default setup is not a folder and is never deleted here.
+
+## 🩺 crower doctor
+
+```bash
+crower doctor
+crower doctor --json
+```
+
+Shows the configuration file and folder, whether the folder is writable, how
+many commands and history entries exist, the update-check mode, the detected
+shell and editor, whether the diagnostics stream is a terminal, and the
+platform. `--json` prints the same as one object.
+
+It reads only: nothing is created beyond the config folder the run needs.
+
+## 🚀 crower init
+
+```bash
+crower init            # show the line for your shell
+crower init --apply    # append it to the startup file
+```
+
+Prints the PATH line for bash, zsh or fish and where it goes. `--apply` appends
+it once; a second run is a no-op. It also prints the completion command for the
+detected shell.
 
 ## 🧾 Exit codes
 

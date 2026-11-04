@@ -51,6 +51,12 @@ func TestRegistryPack(t *testing.T) {
 Name = "greet"
 Exec = "echo hi"
 AllAlias = ["hi"]
+Description = "Say hi"
+Params = ["name"]
+Shell = "pwsh"
+Cwd = "~/api"
+Env = { STAGE = "prod" }
+Timeout = "30s"
 `)
 
 	pack, url, err := github.NewRegistry().WithBase(server.URL, server.Client()).Pack("tools")
@@ -64,6 +70,19 @@ AllAlias = ["hi"]
 
 	if len(pack) != 1 || pack[0].Name != "greet" || !slices.Equal(pack[0].Aliases, []string{"hi"}) {
 		t.Errorf("pack = %+v, want greet with its alias", pack)
+	}
+
+	got := pack[0]
+	if got.Description != "Say hi" || !slices.Equal(got.Params, []string{"name"}) {
+		t.Errorf("pack = %+v, want the description and params", got)
+	}
+
+	if got.Shell != "pwsh" || got.Cwd != "~/api" {
+		t.Errorf("pack = %+v, want the shell and cwd", got)
+	}
+
+	if got.Env["STAGE"] != "prod" || got.Timeout != "30s" {
+		t.Errorf("pack = %+v, want the env and timeout", got)
 	}
 }
 

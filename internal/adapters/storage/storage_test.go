@@ -1,6 +1,7 @@
 package storage_test
 
 import (
+	"maps"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,6 +22,10 @@ func commandMap(t *testing.T) command.MapData {
 		AllAlias: []string{},
 		Exec:     "go build ./...",
 		Steps:    []string{"go vet ./...", "go test ./..."},
+		Shell:    "pwsh",
+		Cwd:      "~/projects/api",
+		Env:      map[string]string{"STAGE": "prod"},
+		Timeout:  "30s",
 	})
 
 	return commands
@@ -80,6 +85,14 @@ func TestCommandFileRoundTrip(t *testing.T) {
 
 		if len(stored.Steps) != len(expected.Steps) {
 			t.Errorf("%s: Steps = %v, want %v", name, stored.Steps, expected.Steps)
+		}
+
+		if stored.Shell != expected.Shell || stored.Cwd != expected.Cwd {
+			t.Errorf("%s: Shell/Cwd = %q/%q, want %q/%q", name, stored.Shell, stored.Cwd, expected.Shell, expected.Cwd)
+		}
+
+		if !maps.Equal(stored.Env, expected.Env) || stored.Timeout != expected.Timeout {
+			t.Errorf("%s: Env/Timeout = %v/%q, want %v/%q", name, stored.Env, stored.Timeout, expected.Env, expected.Timeout)
 		}
 	}
 }

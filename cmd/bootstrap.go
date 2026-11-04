@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -15,11 +16,12 @@ const (
 	flagConfig  = "config"
 	flagNoInput = "no-input"
 	flagJSON    = "json"
+	flagSetup   = "setup"
 )
 
 // streams is the terminal this run reads and writes. It is a variable so a test
 // can capture results and diagnostics separately instead of scraping one pipe.
-var streams = app.DefaultStreams()
+var streams = session.DefaultStreams()
 
 // defaultConfigPath is where crower keeps its state when --config is not given.
 //
@@ -34,7 +36,63 @@ func defaultConfigPath() (string, error) {
 	return filepath.Join(home, "crower", "crower.yaml"), nil
 }
 
-// newApp builds the application from the global flags of cmd.
+// setupConfigPath is where a named setup keeps its state.
+//
+// The default setup deliberately keeps the old path: a user who never asks for
+// a setup sees no change and needs no migration. Each setup folder carries its
+// own history, so reverting in one can never touch another.
+func setupConfigPath(home, name string) (string, error) {
+	if name == "" || name == "." || name == ".." {
+		return "", fmt.Errorf("invalid setup name %q", name)
+	}
+
+	for _, r := range name {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+		case r == '-', r == '_', r == '.':
+		default:
+			return "", fmt.Errorf("invalid setup name %q", name)
+		}
+	}
+
+	return filepath.Join(home, "crower", "setups", name, "crower.yaml"), nil
+}
+
+// persistedSetup is the name saved by "crower setup use", or "" when none is.
+func persistedSetup() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	body, err := os.ReadFile(filepath.Join(home, "crower", "setup"))
+	if err != nil {
+		return ""
+	}
+
+	return strings.TrimSpace(string(body))
+}
+
+// resolveConfigPath applies the selection order: an explicit --config wins,
+// then --setup, then CROWER_SETUP, then the default installation.
+func resolveConfigPath(explicit, setup string) (string, error) {
+	if explicit != "" {
+		return explicit, nil
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.NotUserHome()
+	}
+
+	if setup == "" {
+		return filepath.Join(home, "crower", "crower.yaml"), nil
+	}
+
+	return setupConfigPath(home, setup)
+}
+
+// newSession builds the session from the global flags of cmd.
 //
 // Every command goes through here, so --config and --no-input are resolved in
 // exactly one place. The commands used to call helper.GetPersistentConfigFlag
@@ -43,7 +101,7 @@ func defaultConfigPath() (string, error) {
 // It also marks the command as past argument parsing: an operational failure
 // must not print the whole help text after "file not found", because that
 // buries the one line a script needs.
-func newApp(cmd *cobra.Command) (*app.Config, error) {
+func newSession(cmd *cobra.Command) (*session.Session, error) {
 	cmd.SilenceUsage = true
 
 	cfgPath, err := cmd.Flags().GetString(flagConfig)
@@ -51,11 +109,22 @@ func newApp(cmd *cobra.Command) (*app.Config, error) {
 		return nil, err
 	}
 
-	if cfgPath == "" {
-		cfgPath, err = defaultConfigPath()
-		if err != nil {
-			return nil, err
-		}
+	setup, err := cmd.Flags().GetString(flagSetup)
+	if err != nil {
+		return nil, err
+	}
+
+	if setup == "" {
+		setup = os.Getenv("CROWER_SETUP")
+	}
+
+	if setup == "" {
+		setup = persistedSetup()
+	}
+
+	cfgPath, err = resolveConfigPath(cfgPath, setup)
+	if err != nil {
+		return nil, err
 	}
 
 	noInput, err := cmd.Flags().GetBool(flagNoInput)
@@ -63,7 +132,7 @@ func newApp(cmd *cobra.Command) (*app.Config, error) {
 		return nil, err
 	}
 
-	return app.InitApp(cfgPath, app.Options{
+	return session.Load(cfgPath, session.Options{
 		Streams: streams,
 		NoInput: noInput,
 		Format:  requestedFormat(cmd),
@@ -78,17 +147,17 @@ func newApp(cmd *cobra.Command) (*app.Config, error) {
 // unsupported `--json` is an unknown-flag error rather than a silent fall back
 // to text -- exactly the "reported success without doing the work" failure the
 // exit-status contract was added to prevent.
-func requestedFormat(cmd *cobra.Command) app.Format {
+func requestedFormat(cmd *cobra.Command) session.Format {
 	if cmd.Flags().Lookup(flagJSON) == nil {
-		return app.FormatText
+		return session.FormatText
 	}
 
 	asJSON, err := cmd.Flags().GetBool(flagJSON)
 	if err != nil || !asJSON {
-		return app.FormatText
+		return session.FormatText
 	}
 
-	return app.FormatJSON
+	return session.FormatJSON
 }
 
 // missingArgs reports a command run without the arguments it needs.

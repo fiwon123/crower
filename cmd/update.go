@@ -35,12 +35,12 @@ With no field given, crower asks for each one.`,
 	crower update --last
 	crower update --create`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
 
-		session := newLegacySession(cfg)
+		session := newSessionPorts(cfg)
 
 		request := updatecommand.Request{
 			Changes: catalog.Changes{

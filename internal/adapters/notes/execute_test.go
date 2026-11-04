@@ -55,6 +55,56 @@ func TestExecuteNoteRecordsSteps(t *testing.T) {
 	}
 }
 
+// A declared shell is part of what ran; an empty one is the platform default,
+// which every note written before the field existed already means.
+func TestExecuteNoteRecordsTheShell(t *testing.T) {
+	command := catalog.Command{Name: "deploy", Exec: "echo hi", Shell: "pwsh"}
+
+	built := notes.ExecuteCommandNote(command, nil)
+	if !strings.Contains(built, "command_shell=pwsh") {
+		t.Errorf("note = %q, want it to record the shell", built)
+	}
+
+	last := notes.ExecuteLastNote(operation.Execute, command, nil)
+	if !strings.Contains(last, "command_shell=pwsh") {
+		t.Errorf("note = %q, want it to record the shell", last)
+	}
+
+	plain := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
+	if strings.Contains(plain, "command_shell") {
+		t.Errorf("note = %q, want no shell field for the platform default", plain)
+	}
+}
+
+// The environment is recorded by key only: a history file must not become a
+// secret store. The timeout is part of what ran.
+func TestExecuteNoteRecordsEnvKeysAndTimeout(t *testing.T) {
+	command := catalog.Command{
+		Name:    "deploy",
+		Exec:    "echo hi",
+		Env:     map[string]string{"TOKEN": "${TOKEN}", "STAGE": "prod"},
+		Timeout: "30s",
+	}
+
+	built := notes.ExecuteCommandNote(command, nil)
+	if !strings.Contains(built, "command_env=STAGE,TOKEN") {
+		t.Errorf("note = %q, want the sorted env keys", built)
+	}
+
+	if strings.Contains(built, "prod") || strings.Contains(built, "${TOKEN}") {
+		t.Errorf("note = %q, want no environment values", built)
+	}
+
+	if !strings.Contains(built, "command_timeout=30s") {
+		t.Errorf("note = %q, want the timeout", built)
+	}
+
+	last := notes.ExecuteLastNote(operation.Execute, command, nil)
+	if !strings.Contains(last, "command_env=STAGE,TOKEN") || !strings.Contains(last, "command_timeout=30s") {
+		t.Errorf("note = %q, want the env keys and timeout", last)
+	}
+}
+
 // Each --last form records the flag that reproduces it.
 func TestExecuteLastNoteRecordsTheFlag(t *testing.T) {
 	command := catalog.Command{Name: "greet", Exec: "echo hi"}

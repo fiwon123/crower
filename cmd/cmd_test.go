@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -32,7 +32,7 @@ func runWith(t *testing.T, cfgPath string, stdin string, args ...string) (stdout
 	errOut := &bytes.Buffer{}
 
 	previous := streams
-	streams = app.Streams{In: strings.NewReader(stdin), Out: out, Err: errOut}
+	streams = session.Streams{In: strings.NewReader(stdin), Out: out, Err: errOut}
 	t.Cleanup(func() { streams = previous })
 
 	rootCmd.SetArgs(append([]string{"--config", cfgPath}, args...))
@@ -72,6 +72,9 @@ func resetFlags() {
 	versionFlag = false
 	checkNewVersion = false
 	upgradeFlag = false
+	rollbackFlag = false
+	installVersion = ""
+	assumeYesFlag = false
 	executeFlag = false
 	fileFlag = false
 	folderFlag = false
@@ -298,7 +301,7 @@ func TestGlobalFlagsArePersistent(t *testing.T) {
 // The JSON flag has to be part of the command that can honour it, not a global
 // switch a command silently ignores: an unsupported --json is a usage error.
 func TestJSONIsDeclaredOnlyWhereSupported(t *testing.T) {
-	supported := map[string]bool{"list": true, "search": true}
+	supported := map[string]bool{"list": true, "search": true, "doctor": true}
 	seen := 0
 
 	for _, child := range rootCmd.Commands() {

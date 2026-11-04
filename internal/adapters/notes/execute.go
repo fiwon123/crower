@@ -24,6 +24,20 @@ func ExecuteCommandNote(command catalog.Command, params []string) string {
 		builder.AddCommandSteps(command.Steps)
 	}
 
+	// An empty shell is the platform default, which is what every note meant
+	// before the field existed, so only a declared shell is recorded.
+	if command.Shell != "" {
+		builder.AddCommandShell(command.Shell)
+	}
+
+	if len(command.Env) > 0 {
+		builder.AddCommandEnv(command.Env)
+	}
+
+	if command.Timeout != "" {
+		builder.AddCommandTimeout(command.Timeout)
+	}
+
 	return builder.
 		AddCrowerExec("execute", append([]string{command.Name}, params...)).
 		Build()
@@ -43,6 +57,18 @@ func ExecuteLastNote(op operation.Operation, command catalog.Command, params []s
 
 	if len(command.Steps) > 0 {
 		builder.AddCommandSteps(command.Steps)
+	}
+
+	if command.Shell != "" {
+		builder.AddCommandShell(command.Shell)
+	}
+
+	if len(command.Env) > 0 {
+		builder.AddCommandEnv(command.Env)
+	}
+
+	if command.Timeout != "" {
+		builder.AddCommandTimeout(command.Timeout)
 	}
 
 	switch op {

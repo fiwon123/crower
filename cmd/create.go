@@ -5,10 +5,10 @@ import (
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/createcommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
@@ -47,7 +47,7 @@ the last command you ran.`,
 	crower create -p server nginx
 	crower create --script deploy`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -98,12 +98,12 @@ the last command you ran.`,
 // createSession adapts the configuration to the ports the create use case
 // declares.
 //
-// It embeds legacySession for the ports create shares with every other use
+// It embeds sessionPorts for the ports create shares with every other use
 // case -- the catalog, the diagnostics stream, the confirmation -- and adds the
 // rest: the prompt texts create has always used, the platform adapters, the last
 // operation read from the history, and the notes.
 type createSession struct {
-	legacySession
+	sessionPorts
 
 	creator     *system.Creator
 	scripts     *system.Scripts
@@ -114,14 +114,14 @@ type createSession struct {
 
 // newCreateSession wires the configuration, the renderer and the adapters
 // create needs.
-func newCreateSession(cfg *app.Config) createSession {
+func newCreateSession(cfg *session.Session) createSession {
 	return createSession{
-		legacySession: newLegacySession(cfg),
-		creator:       system.NewCreator(),
-		scripts:       system.NewScripts(filepath.Join(cfg.ConfigFolder(), "scripts")),
-		processes:     system.NewProcesses(),
-		environment:   system.NewEnvironment(),
-		opener:        system.NewOpener(),
+		sessionPorts: newSessionPorts(cfg),
+		creator:      system.NewCreator(),
+		scripts:      system.NewScripts(filepath.Join(cfg.ConfigFolder(), "scripts")),
+		processes:    system.NewProcesses(),
+		environment:  system.NewEnvironment(),
+		opener:       system.NewOpener(),
 	}
 }
 
@@ -148,8 +148,8 @@ func (s createSession) LastOperation(op operation.Operation) (createcommand.Last
 	steps, hasSteps := notes.CommandSteps(content.Note)
 
 	if !hasSteps && content.CommandName != "" {
-		if command := s.cfg.AllCommandsByName.Get(content.CommandName); command != nil && len(command.Steps) > 0 {
-			steps, hasSteps = command.Steps, true
+		if stored, found := s.cfg.Catalog().Get(content.CommandName); found && len(stored.Steps) > 0 {
+			steps, hasSteps = stored.Steps, true
 		}
 	}
 

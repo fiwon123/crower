@@ -20,7 +20,7 @@ The argument is how many history entries to roll back. "crower list
 	Example: `	crower revert 1
 	crower revert 3`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -31,7 +31,7 @@ The argument is how many history entries to roll back. "crower list
 			return missingArgs(cmd, "the number of steps to revert")
 		}
 
-		session := newLegacySession(cfg)
+		session := newSessionPorts(cfg)
 
 		return reverthistory.New(session, session, session, session).Run(args)
 	},

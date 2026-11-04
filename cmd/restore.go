@@ -5,9 +5,9 @@ import (
 	"github.com/fiwon123/crower/internal/domain/timeline"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/restorecommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -26,7 +26,7 @@ operation, so a deleted or overwritten command can come back.
 	Example: `	crower restore greet
 	crower restore hi`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -45,12 +45,12 @@ operation, so a deleted or overwritten command can come back.
 // restoreSession adapts the configuration to the ports the restore use case
 // declares.
 type restoreSession struct {
-	legacySession
+	sessionPorts
 }
 
 // newRestoreSession wires the configuration.
-func newRestoreSession(cfg *app.Config) restoreSession {
-	return restoreSession{legacySession: newLegacySession(cfg)}
+func newRestoreSession(cfg *session.Session) restoreSession {
+	return restoreSession{sessionPorts: newSessionPorts(cfg)}
 }
 
 // HistoryRows returns the log newest first for the selection table.
@@ -77,10 +77,16 @@ func (s restoreSession) FindCommand(key, file string) (catalog.Command, error) {
 	}
 
 	return catalog.Command{
-		Name:    stored.Name,
-		Aliases: stored.AllAlias,
-		Exec:    stored.Exec,
-		Steps:   stored.Steps,
+		Name:        stored.Name,
+		Aliases:     stored.AllAlias,
+		Exec:        stored.Exec,
+		Steps:       stored.Steps,
+		Description: stored.Description,
+		Params:      stored.Params,
+		Shell:       stored.Shell,
+		Cwd:         stored.Cwd,
+		Env:         stored.Env,
+		Timeout:     stored.Timeout,
 	}, nil
 }
 

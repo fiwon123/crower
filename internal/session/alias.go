@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"maps"
@@ -20,10 +20,16 @@ func catalogOf(commandMap command.MapData, order []string) catalog.Catalog {
 	for _, name := range slices.Sorted(maps.Keys(commandMap)) {
 		stored := commandMap[name]
 		commands = append(commands, catalog.Command{
-			Name:    stored.Name,
-			Aliases: stored.AllAlias,
-			Exec:    stored.Exec,
-			Steps:   stored.Steps,
+			Name:        stored.Name,
+			Aliases:     stored.AllAlias,
+			Exec:        stored.Exec,
+			Steps:       stored.Steps,
+			Description: stored.Description,
+			Params:      stored.Params,
+			Shell:       stored.Shell,
+			Cwd:         stored.Cwd,
+			Env:         maps.Clone(stored.Env),
+			Timeout:     stored.Timeout,
 		})
 	}
 
@@ -66,9 +72,15 @@ func commandCollisions(commandMap command.MapData) []string {
 // toData converts an aggregate command back to the persisted shape.
 func toData(c catalog.Command) *command.Data {
 	return &command.Data{
-		Name:     c.Name,
-		AllAlias: c.Aliases,
-		Exec:     c.Exec,
-		Steps:    c.Steps,
+		Name:        c.Name,
+		AllAlias:    c.Aliases,
+		Exec:        c.Exec,
+		Steps:       c.Steps,
+		Description: c.Description,
+		Params:      c.Params,
+		Shell:       c.Shell,
+		Cwd:         c.Cwd,
+		Env:         maps.Clone(c.Env),
+		Timeout:     c.Timeout,
 	}
 }

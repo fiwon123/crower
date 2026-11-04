@@ -7,10 +7,10 @@ import (
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/deletecommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/session"
 	"github.com/fiwon123/crower/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -45,7 +45,7 @@ With no arguments crower asks which command to delete.`,
 	crower delete --folder reports
 	crower delete --create`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -91,12 +91,12 @@ With no arguments crower asks which command to delete.`,
 // deleteSession adapts the configuration to the ports the delete use case
 // declares.
 //
-// It embeds legacySession for the ports delete shares with every other use case
+// It embeds sessionPorts for the ports delete shares with every other use case
 // -- the catalog, the diagnostics stream, the two prompts -- and adds the four
 // this operation needs: the platform remover, the environment editor, the
 // history log, and the delete notes.
 type deleteSession struct {
-	legacySession
+	sessionPorts
 
 	remover     *system.Remover
 	environment *system.Environment
@@ -104,11 +104,11 @@ type deleteSession struct {
 
 // newDeleteSession wires the configuration, the renderer and the two platform
 // adapters delete needs.
-func newDeleteSession(cfg *app.Config) deleteSession {
+func newDeleteSession(cfg *session.Session) deleteSession {
 	return deleteSession{
-		legacySession: newLegacySession(cfg),
-		remover:       system.NewRemover(),
-		environment:   system.NewEnvironment(),
+		sessionPorts: newSessionPorts(cfg),
+		remover:      system.NewRemover(),
+		environment:  system.NewEnvironment(),
 	}
 }
 

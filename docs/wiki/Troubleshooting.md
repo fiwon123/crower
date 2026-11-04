@@ -54,6 +54,13 @@ crower restore <name>                # bring back a deleted command
 crower revert 1                      # or undo the last operation
 ```
 
+## A command behaves differently on Windows
+
+A command line is one line. `cmd` is line-oriented: a CR/LF inside a value
+starts a new command, and no quoting prevents it. `%VAR%` expands on the
+command line and cannot be quoted away either. Keep `Exec` single-line and use
+`Env` with `${VAR}` for values that must not be expanded.
+
 ## The desktop window does not open
 
 `crower desktop` is a native window (cgo-free) and needs a graphical session.
