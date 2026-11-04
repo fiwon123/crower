@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -32,7 +32,7 @@ func runWith(t *testing.T, cfgPath string, stdin string, args ...string) (stdout
 	errOut := &bytes.Buffer{}
 
 	previous := streams
-	streams = app.Streams{In: strings.NewReader(stdin), Out: out, Err: errOut}
+	streams = session.Streams{In: strings.NewReader(stdin), Out: out, Err: errOut}
 	t.Cleanup(func() { streams = previous })
 
 	rootCmd.SetArgs(append([]string{"--config", cfgPath}, args...))

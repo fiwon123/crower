@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ import (
 // FindCommand resolves a key inside a history snapshot. A name wins over an
 // alias, and both passes run in name order: ranging the map made a snapshot
 // with a collision restore a different command on different runs.
-func (app *Config) FindCommand(key string, content timeline.Content) (*command.Data, error) {
-	allCommands, err := app.historyFiles.ReadSnapshot(content.File)
+func (s *Session) FindCommand(key string, content timeline.Content) (*command.Data, error) {
+	allCommands, err := s.historyFiles.ReadSnapshot(content.File)
 	if err != nil {
 		return nil, err
 	}

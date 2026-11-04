@@ -1,12 +1,12 @@
-package app
+package session
 
 import (
 	"github.com/fiwon123/crower/internal/adapters/storage"
 	"github.com/fiwon123/crower/internal/adapters/storage/command"
 )
 
-// InitApp reads the configuration at cfgFilePath and builds a run from it.
-func InitApp(cfgFilePath string, opts Options) (*Config, error) {
+// Load reads the configuration at cfgFilePath and builds a run from it.
+func Load(cfgFilePath string, opts Options) (*Session, error) {
 	opts = opts.withDefaults()
 
 	allCommands := command.NewMapData()
@@ -24,5 +24,5 @@ func InitApp(cfgFilePath string, opts Options) (*Config, error) {
 		allAliases = getAliasMap(allCommands)
 	}
 
-	return NewApp(cfgFilePath, orderKeys, allAliases, allCommands, opts)
+	return New(cfgFilePath, orderKeys, allAliases, allCommands, opts)
 }

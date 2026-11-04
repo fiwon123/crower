@@ -19,12 +19,12 @@ and "crower revert" can bring the commands back.
 	crower reset`,
 	Example: `	crower reset`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
 
-		session := newLegacySession(cfg)
+		session := newSessionPorts(cfg)
 
 		return resetcommands.New(session, session, session, session).Run()
 	},

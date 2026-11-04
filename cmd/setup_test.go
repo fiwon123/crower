@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/session"
 )
 
 func TestSetupConfigPath(t *testing.T) {
@@ -76,7 +76,7 @@ func runSetup(t *testing.T, home string, args ...string) (string, string, error)
 	out := &bytes.Buffer{}
 	errOut := &bytes.Buffer{}
 	previous := streams
-	streams = app.Streams{In: strings.NewReader(""), Out: out, Err: errOut}
+	streams = session.Streams{In: strings.NewReader(""), Out: out, Err: errOut}
 	t.Cleanup(func() { streams = previous })
 
 	rootCmd.SetArgs(args)

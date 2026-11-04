@@ -3,9 +3,9 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/adapters/github"
 	"github.com/fiwon123/crower/internal/adapters/storage"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/sharecommands"
 	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -18,7 +18,7 @@ var exportCmd = &cobra.Command{
 	crower export greet
 	crower export --out ./commands.toml`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -49,7 +49,7 @@ already exists with the same name.`,
 			return missingArgs(cmd, "a file to import")
 		}
 
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ var shareListCmd = &cobra.Command{
 	Long:    `List the packs available in the registry.`,
 	Example: `	crower share list`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -96,7 +96,7 @@ var sharePullCmd = &cobra.Command{
 			return missingArgs(cmd, "a pack name")
 		}
 
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -108,18 +108,18 @@ var sharePullCmd = &cobra.Command{
 // shareSession adapts the configuration to the ports the share use case
 // declares.
 type shareSession struct {
-	legacySession
+	sessionPorts
 
 	packs    *storage.Packs
 	registry *github.Registry
 }
 
 // newShareSession wires the configuration, the pack files and the registry.
-func newShareSession(cfg *app.Config) shareSession {
+func newShareSession(cfg *session.Session) shareSession {
 	return shareSession{
-		legacySession: newLegacySession(cfg),
-		packs:         storage.NewPacks(),
-		registry:      github.NewRegistry(),
+		sessionPorts: newSessionPorts(cfg),
+		packs:        storage.NewPacks(),
+		registry:     github.NewRegistry(),
 	}
 }
 
@@ -144,7 +144,7 @@ func (s shareSession) Pack(name string) ([]catalog.Command, string, error) {
 }
 
 // newShareUseCase builds the use case over the configuration.
-func newShareUseCase(cfg *app.Config) *sharecommands.UseCase {
+func newShareUseCase(cfg *session.Session) *sharecommands.UseCase {
 	session := newShareSession(cfg)
 
 	return sharecommands.New(session, session, session, session, session)

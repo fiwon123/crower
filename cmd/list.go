@@ -4,8 +4,8 @@ import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/output"
 	"github.com/fiwon123/crower/internal/adapters/system"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/listcontent"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +34,7 @@ saved.
 	crower list --folder ~/projects
 	crower list --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -64,20 +64,20 @@ saved.
 
 // listSession adapts the configuration to the ports the list use case declares.
 //
-// It embeds legacySession for the catalog, the command table, the diagnostics
+// It embeds sessionPorts for the catalog, the command table, the diagnostics
 // stream and the history entry, and adds what only list needs: the result
 // stream and its format, the history rows, and the platform listings.
 type listSession struct {
-	legacySession
+	sessionPorts
 
 	listings *system.Listings
 }
 
 // newListSession wires the configuration and the platform listings.
-func newListSession(cfg *app.Config) listSession {
+func newListSession(cfg *session.Session) listSession {
 	return listSession{
-		legacySession: newLegacySession(cfg),
-		listings:      system.NewListings(),
+		sessionPorts: newSessionPorts(cfg),
+		listings:     system.NewListings(),
 	}
 }
 
@@ -88,7 +88,7 @@ func (s listSession) Emit(text string, payload any) error {
 
 // Structured reports whether the result is requested as JSON.
 func (s listSession) Structured() bool {
-	return s.cfg.Format == app.FormatJSON
+	return s.cfg.Format == session.FormatJSON
 }
 
 // HistoryTable renders the operation log.

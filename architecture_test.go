@@ -55,20 +55,14 @@ type importRule struct {
 
 var rules = []importRule{
 	{
-		// The old storage-shaped packages. They know nothing about the
-		// terminal, the composition root, or the commands that drive them.
-		//
-		// internal/domain is deliberately absent from the forbid list: during
-		// the migration a legacy shape may hold a domain value object (the
-		// history index stores an operation.Operation). The reverse stays
-		// forbidden -- the domain rule below allows a ring's own subtree only
-		// -- so the arrow still points one way.
-		name: "internal/data",
-		dir:  "internal/data",
+		// The composition root. It wires adapters and the model together and
+		// is driven by cmd; it must never reach back into the driver or the
+		// two user interfaces, which import it in turn.
+		name:     "internal/session",
+		dir:      "internal/session",
+		required: true,
 		forbid: []string{
-			"internal/app",
-			"internal/helper",
-			"internal/gui",
+			"internal/tui",
 			"internal/desktop",
 			"cmd",
 		},
@@ -81,10 +75,8 @@ var rules = []importRule{
 		dir:      "internal/shell",
 		required: true,
 		forbid: []string{
-			"internal/app",
-			"internal/data",
-			"internal/helper",
-			"internal/gui",
+			"internal/session",
+			"internal/tui",
 			"internal/desktop",
 			"cmd",
 		},
@@ -123,28 +115,20 @@ var rules = []importRule{
 		dir:  "internal/application",
 		forbid: []string{
 			"internal/adapters",
-			"internal/app",
-			"internal/data",
-			"internal/gui",
+			"internal/session",
+			"internal/tui",
 			"internal/desktop",
-			"internal/legacy",
 			"cmd",
 		},
 	},
 	{
 		// Ring 3. Adapters implement ports; they do not drive the CLI.
-		//
-		// internal/data is deliberately absent: the storage adapter is exactly
-		// the code that knows the persisted shapes (command.MapData,
-		// history.Data), and those types are transitional -- they move into
-		// the adapters when the legacy core is dissolved.
 		name: "internal/adapters",
 		dir:  "internal/adapters",
 		forbid: []string{
-			"internal/app",
+			"internal/session",
 			"internal/tui",
 			"internal/desktop",
-			"internal/legacy",
 			"cmd",
 		},
 	},
@@ -154,7 +138,7 @@ var rules = []importRule{
 // its string comparison, and a prefix rule that silently stopped matching
 // would report every package as clean.
 func TestRuleViolation(t *testing.T) {
-	shared := importRule{forbid: []string{"internal/app", "cmd"}}
+	shared := importRule{forbid: []string{"internal/session", "cmd"}}
 	domain := importRule{dir: "internal/domain", noModuleOutsideOwn: true, noExternal: true}
 	pure := importRule{noModule: true, noExternal: true}
 
@@ -168,13 +152,13 @@ func TestRuleViolation(t *testing.T) {
 		{
 			name: "forbidden package",
 			rule: shared,
-			imp:  modulePath + "/internal/app",
+			imp:  modulePath + "/internal/session",
 			want: "the dependency arrow points the other way",
 		},
 		{
 			name: "forbidden subtree",
 			rule: shared,
-			imp:  modulePath + "/internal/app/save",
+			imp:  modulePath + "/internal/session/save",
 			want: "the dependency arrow points the other way",
 		},
 		{
@@ -269,6 +253,33 @@ func TestLayerDependencies(t *testing.T) {
 
 	if !checkedAny {
 		t.Fatal("the architecture gate examined no package; it cannot fail and reports nothing")
+	}
+}
+
+// TestSessionIsOnlyImportedByTheDriver pins the composition root's position:
+// cmd builds it, testutil constructs one for tests, and nothing else may
+// depend on it. Without this, an adapter could quietly import the root and the
+// dependency arrow would point backwards again.
+func TestSessionIsOnlyImportedByTheDriver(t *testing.T) {
+	allowed := map[string]bool{"cmd": true, "internal/testutil": true}
+	found := false
+
+	for _, pkg := range packagesUnder(t, ".") {
+		for _, imported := range pkg.imports {
+			if imported != modulePath+"/internal/session" {
+				continue
+			}
+
+			found = true
+
+			if !allowed[pkg.path] {
+				t.Errorf("%s imports internal/session; only cmd and internal/testutil may", pkg.path)
+			}
+		}
+	}
+
+	if !found {
+		t.Fatal("no package imports internal/session; this rule checked nothing")
 	}
 }
 

@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/errors"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ const (
 
 // streams is the terminal this run reads and writes. It is a variable so a test
 // can capture results and diagnostics separately instead of scraping one pipe.
-var streams = app.DefaultStreams()
+var streams = session.DefaultStreams()
 
 // defaultConfigPath is where crower keeps its state when --config is not given.
 //
@@ -92,7 +92,7 @@ func resolveConfigPath(explicit, setup string) (string, error) {
 	return setupConfigPath(home, setup)
 }
 
-// newApp builds the application from the global flags of cmd.
+// newSession builds the session from the global flags of cmd.
 //
 // Every command goes through here, so --config and --no-input are resolved in
 // exactly one place. The commands used to call helper.GetPersistentConfigFlag
@@ -101,7 +101,7 @@ func resolveConfigPath(explicit, setup string) (string, error) {
 // It also marks the command as past argument parsing: an operational failure
 // must not print the whole help text after "file not found", because that
 // buries the one line a script needs.
-func newApp(cmd *cobra.Command) (*app.Config, error) {
+func newSession(cmd *cobra.Command) (*session.Session, error) {
 	cmd.SilenceUsage = true
 
 	cfgPath, err := cmd.Flags().GetString(flagConfig)
@@ -132,7 +132,7 @@ func newApp(cmd *cobra.Command) (*app.Config, error) {
 		return nil, err
 	}
 
-	return app.InitApp(cfgPath, app.Options{
+	return session.Load(cfgPath, session.Options{
 		Streams: streams,
 		NoInput: noInput,
 		Format:  requestedFormat(cmd),
@@ -147,17 +147,17 @@ func newApp(cmd *cobra.Command) (*app.Config, error) {
 // unsupported `--json` is an unknown-flag error rather than a silent fall back
 // to text -- exactly the "reported success without doing the work" failure the
 // exit-status contract was added to prevent.
-func requestedFormat(cmd *cobra.Command) app.Format {
+func requestedFormat(cmd *cobra.Command) session.Format {
 	if cmd.Flags().Lookup(flagJSON) == nil {
-		return app.FormatText
+		return session.FormatText
 	}
 
 	asJSON, err := cmd.Flags().GetBool(flagJSON)
 	if err != nil || !asJSON {
-		return app.FormatText
+		return session.FormatText
 	}
 
-	return app.FormatJSON
+	return session.FormatJSON
 }
 
 // missingArgs reports a command run without the arguments it needs.

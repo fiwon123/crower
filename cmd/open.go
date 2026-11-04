@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/opencontent"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -23,7 +23,7 @@ var openCmd = &cobra.Command{
 	crower open --file notes.txt
 	crower open --folder ~/projects`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -51,7 +51,7 @@ var openCmd = &cobra.Command{
 
 // openSession adapts the configuration to the ports the open use case declares.
 type openSession struct {
-	legacySession
+	sessionPorts
 
 	opener *system.Opener
 	editor *system.SystemEditor
@@ -59,11 +59,11 @@ type openSession struct {
 
 // newOpenSession wires the configuration, the platform opener and the system
 // editor.
-func newOpenSession(cfg *app.Config) openSession {
+func newOpenSession(cfg *session.Session) openSession {
 	return openSession{
-		legacySession: newLegacySession(cfg),
-		opener:        system.NewOpener(),
-		editor:        system.NewSystemEditor(),
+		sessionPorts: newSessionPorts(cfg),
+		opener:       system.NewOpener(),
+		editor:       system.NewSystemEditor(),
 	}
 }
 

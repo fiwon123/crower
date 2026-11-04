@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/executecommand"
 	"github.com/fiwon123/crower/internal/desktop"
+	"github.com/fiwon123/crower/internal/session"
 	"github.com/fiwon123/crower/internal/tui"
 
 	"github.com/spf13/cobra"
@@ -12,7 +12,7 @@ import (
 // newExecutor builds the use case the terminal and desktop interfaces run
 // through. They own their own interaction, so they use its Execute entry point,
 // which neither prompts nor records history.
-func newExecutor(cfg *app.Config) *executecommand.UseCase {
+func newExecutor(cfg *session.Session) *executecommand.UseCase {
 	session := newExecuteSession(cfg)
 
 	return executecommand.New(session, session, session, session, session)
@@ -24,7 +24,7 @@ var desktopCmd = &cobra.Command{
 	Long:    `Open a native window UI (cgo-free).`,
 	Example: `	crower desktop`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -39,7 +39,7 @@ var guiCmd = &cobra.Command{
 	Long:    `Open an interactive terminal UI.`,
 	Example: `	crower gui`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
