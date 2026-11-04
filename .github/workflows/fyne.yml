@@ -29,13 +29,16 @@ jobs:
       - name: Install X11/GL and Wayland headers
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev xvfb libwayland-dev libxkbcommon-dev wayland-protocols
 
       - name: Build with the fyne tag
         run: CGO_ENABLED=1 go build -tags fyne ./...
 
       - name: Test the headless model
         run: go test ./internal/desktop
+
+      - name: Test the Fyne view headlessly
+        run: xvfb-run -a go test -tags fyne ./internal/fyneui
 
   windows:
     name: Fyne Windows
