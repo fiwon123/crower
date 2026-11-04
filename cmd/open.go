@@ -1,7 +1,10 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/legacy/opendom"
+	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/system"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/opencontent"
 
 	"github.com/spf13/cobra"
 )
@@ -25,21 +28,73 @@ var openCmd = &cobra.Command{
 			return err
 		}
 
-		core := opendom.NewCore(cfg)
+		request := opencontent.Request{Args: args}
 
 		switch {
 		case folderFlag:
-			return core.OpenFolder(args)
+			request.Mode = opencontent.ModeFolder
 		case fileFlag:
-			return core.OpenFile(args)
+			request.Mode = opencontent.ModeFile
 		case systemFlag:
-			return core.OpenSystem()
+			request.Mode = opencontent.ModeSystem
 		case len(args) > 0:
-			return core.Open(args)
+			request.Mode = opencontent.ModePaths
+		default:
+			return missingArgs(cmd, "a path, or one of --file, --folder, --system")
 		}
 
-		return missingArgs(cmd, "a path, or one of --file, --folder, --system")
+		session := newOpenSession(cfg)
+
+		return opencontent.New(session, session, session, session, session).Run(request)
 	},
+}
+
+// openSession adapts the configuration to the ports the open use case declares.
+type openSession struct {
+	legacySession
+
+	opener *system.Opener
+	editor *system.SystemEditor
+}
+
+// newOpenSession wires the configuration, the platform opener and the system
+// editor.
+func newOpenSession(cfg *app.Config) openSession {
+	return openSession{
+		legacySession: newLegacySession(cfg),
+		opener:        system.NewOpener(),
+		editor:        system.NewSystemEditor(),
+	}
+}
+
+// Open opens one path with the platform's default application.
+func (s openSession) Open(path string) (string, string, error) {
+	return s.opener.Open(path)
+}
+
+// OpenEditor opens the platform's environment editor.
+func (s openSession) OpenEditor() error {
+	return s.editor.Open()
+}
+
+// OpenNote is the history note for the positional open.
+func (s openSession) OpenNote(args []string) string {
+	return notes.OpenNote(args)
+}
+
+// OpenFileNote is the history note for `open --file`.
+func (s openSession) OpenFileNote(args []string) string {
+	return notes.OpenFileNote(args)
+}
+
+// OpenFolderNote is the history note for `open --folder`.
+func (s openSession) OpenFolderNote(args []string) string {
+	return notes.OpenFolderNote(args)
+}
+
+// OpenSystemNote is the history note for `open --system`.
+func (s openSession) OpenSystemNote() string {
+	return notes.OpenSystemNote()
 }
 
 func init() {
