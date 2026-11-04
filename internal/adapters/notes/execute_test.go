@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
@@ -21,11 +20,11 @@ func TestExecuteCommandNoteCarriesTheExecCreateReuses(t *testing.T) {
 
 	built := notes.ExecuteCommandNote(command, []string{"a b"})
 
-	if got := note.CommandExec(built); got != "echo hello" {
+	if got := notes.CommandExec(built); got != "echo hello" {
 		t.Errorf("CommandExec(%q) = %q, want %q", built, got, "echo hello")
 	}
 
-	if got := note.CommandName(built); got != "greet" {
+	if got := notes.CommandName(built); got != "greet" {
 		t.Errorf("CommandName(%q) = %q, want greet", built, got)
 	}
 
@@ -45,13 +44,13 @@ func TestExecuteNoteRecordsSteps(t *testing.T) {
 
 	built := notes.ExecuteCommandNote(command, nil)
 
-	got, present := note.CommandSteps(built)
+	got, present := notes.CommandSteps(built)
 	if !present || !slices.Equal(got, command.Steps) {
 		t.Errorf("CommandSteps(%q) = %v, %v, want %v, true", built, got, present, command.Steps)
 	}
 
 	last := notes.ExecuteLastNote(operation.Execute, command, []string{"a"})
-	if got, present := note.CommandSteps(last); !present || !slices.Equal(got, command.Steps) {
+	if got, present := notes.CommandSteps(last); !present || !slices.Equal(got, command.Steps) {
 		t.Errorf("CommandSteps(%q) = %v, %v, want the steps", last, got, present)
 	}
 }

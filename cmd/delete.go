@@ -8,7 +8,6 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/deletecommand"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
@@ -156,7 +155,7 @@ func (s deleteSession) ChooseHistoryEntry() (deletecommand.Entry, error) {
 	return deletecommand.Entry{
 		Version: content.Version,
 		File:    content.File,
-		Note:    note.Display(content.Note),
+		Note:    notes.Display(content.Note),
 	}, nil
 }
 

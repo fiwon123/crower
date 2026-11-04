@@ -1,7 +1,6 @@
 package notes
 
 import (
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
@@ -11,7 +10,7 @@ import (
 // The note carries the whole command, not only its name: a delete is replayed
 // by re-creating it, and that needs the aliases and the line the command ran.
 func DeleteCommandNote(command catalog.Command, args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Delete).
 		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
@@ -27,7 +26,7 @@ func DeleteCommandNote(command catalog.Command, args []string) string {
 // last names the operation whose command was deleted; an operation without such
 // a form records the command and nothing to replay.
 func DeleteLastNote(op operation.Operation, command catalog.Command) string {
-	builder := note.New().
+	builder := New().
 		AddMainOperation(operation.Delete).
 		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
@@ -48,7 +47,7 @@ func DeleteLastNote(op operation.Operation, command catalog.Command) string {
 
 // DeleteFileNote renders the history note for a deleted file.
 func DeleteFileNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Delete).
 		AddSubOperation(operation.File).
 		AddCrowerExec("delete", args).
@@ -57,7 +56,7 @@ func DeleteFileNote(args []string) string {
 
 // DeleteFolderNote renders the history note for a deleted folder.
 func DeleteFolderNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Delete).
 		AddSubOperation(operation.Folder).
 		AddCrowerExec("delete", args).
@@ -66,7 +65,7 @@ func DeleteFolderNote(args []string) string {
 
 // DeleteSystemVariableNote renders the history note for `delete --system`.
 func DeleteSystemVariableNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Delete).
 		AddSubOperation(operation.System).
 		AddCrowerExec("delete --system", args).
@@ -75,7 +74,7 @@ func DeleteSystemVariableNote(args []string) string {
 
 // DeleteSystemPathNote renders the history note for `delete --syspath`.
 func DeleteSystemPathNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Delete).
 		AddSubOperation(operation.SysPath).
 		AddCrowerExec("delete --syspath", args).

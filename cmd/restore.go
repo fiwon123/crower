@@ -7,7 +7,6 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/restorecommand"
 	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/helper"
 
@@ -64,7 +63,7 @@ func (s restoreSession) HistoryRows() []restorecommand.Entry {
 		rows = append(rows, restorecommand.Entry{
 			Version: entry.Version,
 			File:    entry.File,
-			Note:    note.Display(entry.Note),
+			Note:    notes.Display(entry.Note),
 		})
 	}
 
@@ -118,7 +117,7 @@ func (s restoreSession) ChooseHistoryEntry() (restorecommand.Entry, error) {
 	return restorecommand.Entry{
 		Version: content.Version,
 		File:    content.File,
-		Note:    note.Display(content.Note),
+		Note:    notes.Display(content.Note),
 	}, nil
 }
 

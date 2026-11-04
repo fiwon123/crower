@@ -4,7 +4,6 @@ import (
 	"encoding/csv"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
@@ -36,7 +35,7 @@ func aliasArg(aliases []string) string {
 
 // CreateCommandNote renders the history note for `create <name> <exec>`.
 func CreateCommandNote(command catalog.Command) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
@@ -48,7 +47,7 @@ func CreateCommandNote(command catalog.Command) string {
 
 // CreateScriptNote renders the history note for `create --script`.
 func CreateScriptNote(command catalog.Command) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Script).
 		AddCommandName(command.Name).
@@ -60,7 +59,7 @@ func CreateScriptNote(command catalog.Command) string {
 
 // CreateLastNote renders the history note for `create --execute`.
 func CreateLastNote(command catalog.Command) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Last).
 		AddCommandName(command.Name).
@@ -75,7 +74,7 @@ func CreateLastNote(command catalog.Command) string {
 // The replay line carries the new name as the flag's value and the original
 // positional values after it.
 func CreateProcessNote(command catalog.Command, args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Process).
 		AddCommandName(command.Name).
@@ -87,7 +86,7 @@ func CreateProcessNote(command catalog.Command, args []string) string {
 
 // CreateSystemVariableNote renders the history note for `create --system`.
 func CreateSystemVariableNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.System).
 		AddCrowerExec("create --system", args).
@@ -96,7 +95,7 @@ func CreateSystemVariableNote(args []string) string {
 
 // CreateSystemPathNote renders the history note for `create --syspath`.
 func CreateSystemPathNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.SysPath).
 		AddCrowerExec("create --syspath", args).
@@ -105,7 +104,7 @@ func CreateSystemPathNote(args []string) string {
 
 // CreateFileNote renders the history note for `create --file`.
 func CreateFileNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.File).
 		AddCrowerExec("create --file", args).
@@ -114,7 +113,7 @@ func CreateFileNote(args []string) string {
 
 // CreateFolderNote renders the history note for `create --folder`.
 func CreateFolderNote(args []string) string {
-	return note.New().
+	return New().
 		AddMainOperation(operation.Create).
 		AddSubOperation(operation.Folder).
 		AddCrowerExec("create --folder", args).

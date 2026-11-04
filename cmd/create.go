@@ -8,7 +8,6 @@ import (
 	"github.com/fiwon123/crower/internal/adapters/system"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/createcommand"
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
@@ -148,7 +147,7 @@ func (s createSession) LastOperation(op operation.Operation) (createcommand.Last
 		return createcommand.LastRun{}, false
 	}
 
-	steps, hasSteps := note.CommandSteps(content.Note)
+	steps, hasSteps := notes.CommandSteps(content.Note)
 
 	if !hasSteps && content.CommandName != "" {
 		if command := s.cfg.AllCommandsByName.Get(content.CommandName); command != nil && len(command.Steps) > 0 {
@@ -158,7 +157,7 @@ func (s createSession) LastOperation(op operation.Operation) (createcommand.Last
 
 	return createcommand.LastRun{
 		CommandName: content.CommandName,
-		Exec:        note.CommandExec(content.Note),
+		Exec:        notes.CommandExec(content.Note),
 		Steps:       steps,
 		HasSteps:    hasSteps,
 	}, true

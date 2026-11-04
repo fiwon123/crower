@@ -12,7 +12,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/shell"
@@ -24,7 +23,7 @@ import (
 // empty last means the positional form, which is the only one that carries the
 // command name.
 func UpdateNote(before, after catalog.Command, last operation.Operation) string {
-	builder := note.New()
+	builder := New()
 
 	builder.
 		AddMainOperation(operation.Update).
@@ -96,7 +95,7 @@ func csvAliases(aliases []string) string {
 	return strings.TrimSuffix(list.String(), "\n")
 }
 
-func addDiff(builder *note.Note, before, after catalog.Command) {
+func addDiff(builder *Note, before, after catalog.Command) {
 	if before.Name != after.Name {
 		builder.
 			AddOldCommandName(before.Name).
