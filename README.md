@@ -271,7 +271,15 @@ Crower stores data in `~/crower/` by default:
 - `settings.json` - `update_check` (`daily`, `weekly` or `never`), and when the
   periodic notice last looked
 
-Override with `--config /path/to/config.yaml`
+Override with `--config /path/to/config.yaml`.
+
+Named setups keep separate command sets **and separate history**:
+
+```bash
+crower --setup streamer create obs "obs"     # ~/crower/setups/streamer/
+CROWER_SETUP=streamer crower list
+crower --setup streamer revert 1             # only this setup's history
+```
 
 ## 🛠️ Development
 

@@ -142,6 +142,7 @@ func init() {
 
 	// Persistent flags
 	rootCmd.PersistentFlags().String(flagConfig, "", "configuration file path (default: $HOME/crower/crower.yaml)")
+	rootCmd.PersistentFlags().String(flagSetup, "", "use a named setup (default: $CROWER_SETUP, or the default installation)")
 	rootCmd.PersistentFlags().Bool(flagNoInput, false, "never prompt; fail instead of waiting for input")
 
 	// Flags
