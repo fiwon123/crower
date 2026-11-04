@@ -1,45 +1,40 @@
-package searchdom
+package notes
 
 import (
 	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
-// Create a new search browser note
-func newSearchBrowserNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// SearchBrowserNote renders the history note for `search --browser`.
+func SearchBrowserNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Search).
 		AddSubOperation(operation.Browser).
 		AddCrowerExec("search --browser", args).
 		Build()
 }
 
-func newSearchFileNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// SearchFileNote renders the history note for `search --file`.
+func SearchFileNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Search).
 		AddSubOperation(operation.File).
 		AddCrowerExec("search --file", args).
 		Build()
 }
 
-func newSearchFolderNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// SearchFolderNote renders the history note for `search --folder`.
+func SearchFolderNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Search).
 		AddSubOperation(operation.Folder).
 		AddCrowerExec("search --folder", args).
 		Build()
 }
 
-func newSearchFileAndFolderNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// SearchBothNote renders the history note for the positional search.
+func SearchBothNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.Search).
 		AddSubOperation(operation.FileAndFolder).
 		AddCrowerExec("search", args).
