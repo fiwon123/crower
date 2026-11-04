@@ -408,6 +408,31 @@ crower desktop
 
 ---
 
+## 🩺 crower doctor
+
+```bash
+crower doctor
+crower doctor --json
+```
+
+Shows the configuration file and folder, whether the folder is writable, how
+many commands and history entries exist, the update-check mode, the detected
+shell and editor, whether the diagnostics stream is a terminal, and the
+platform. `--json` prints the same as one object.
+
+It reads only: nothing is created beyond the config folder the run needs.
+
+## 🚀 crower init
+
+```bash
+crower init            # show the line for your shell
+crower init --apply    # append it to the startup file
+```
+
+Prints the PATH line for bash, zsh or fish and where it goes. `--apply` appends
+it once; a second run is a no-op. It also prints the completion command for the
+detected shell.
+
 ## 🧾 Exit codes
 
 | Status | Meaning |

@@ -27,6 +27,8 @@
 - [reset](reset)
 - [share / export / import](share)
 - [gui / desktop](gui)
+- [init](init)
+- [doctor](doctor)
 
 ### 🛠️ Project
 - [🏛️ Architecture](Architecture)
