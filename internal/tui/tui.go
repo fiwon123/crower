@@ -7,7 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
 // Executor runs a managed command for the interface.
@@ -20,17 +21,24 @@ type Executor interface {
 	Execute(key string, params []string) (string, string, error)
 }
 
+// TUI is the menu interface.
+//
+// It takes the catalogue and the timeline as values: the interface renders
+// them, it does not own them, and it never touches the composition root.
 type TUI struct {
-	app    *app.Config
-	exec   Executor
-	reader *bufio.Reader
+	commands catalog.Catalog
+	history  timeline.Log
+	exec     Executor
+	reader   *bufio.Reader
 }
 
-func NewTUI(app *app.Config, exec Executor) *TUI {
+// NewTUI builds the menu over the current command set and history.
+func NewTUI(commands catalog.Catalog, history timeline.Log, exec Executor) *TUI {
 	return &TUI{
-		app:    app,
-		exec:   exec,
-		reader: bufio.NewReader(os.Stdin),
+		commands: commands,
+		history:  history,
+		exec:     exec,
+		reader:   bufio.NewReader(os.Stdin),
 	}
 }
 
@@ -72,18 +80,16 @@ func (t *TUI) Run() error {
 
 func (t *TUI) listCommands() {
 	fmt.Println("\n=== Commands ===")
-	keys := t.app.OrderKeys
-	if len(keys) == 0 {
+	commands := t.commands.Commands()
+	if len(commands) == 0 {
 		fmt.Println("No commands found")
 		return
 	}
-	for i, k := range keys {
-		cmd := t.app.AllCommandsByName.Get(k)
-		if cmd != nil {
-			fmt.Printf("%d. %s - %s\n", i+1, cmd.Name, cmd.Exec)
-			if len(cmd.AllAlias) > 0 {
-				fmt.Printf("   Aliases: %v\n", cmd.AllAlias)
-			}
+
+	for i, command := range commands {
+		fmt.Printf("%d. %s - %s\n", i+1, command.Name, command.Exec)
+		if len(command.Aliases) > 0 {
+			fmt.Printf("   Aliases: %v\n", command.Aliases)
 		}
 	}
 }
@@ -94,9 +100,11 @@ func (t *TUI) runCommand(withParams bool) {
 	input, _ := t.reader.ReadString('\n')
 	input = strings.TrimSpace(input)
 
+	names := t.commands.Names()
+
 	var cmdName string
-	if idx, err := strconv.Atoi(input); err == nil && idx > 0 && idx <= len(t.app.OrderKeys) {
-		cmdName = t.app.OrderKeys[idx-1]
+	if idx, err := strconv.Atoi(input); err == nil && idx > 0 && idx <= len(names) {
+		cmdName = names[idx-1]
 	} else {
 		cmdName = input
 	}
@@ -129,11 +137,11 @@ func (t *TUI) runCommand(withParams bool) {
 
 func (t *TUI) viewHistory() {
 	fmt.Println("\n=== History ===")
-	if len(t.app.History.AllData) == 0 {
+	if len(t.history.AllData) == 0 {
 		fmt.Println("No history")
 		return
 	}
-	for i, h := range t.app.History.AllData {
+	for i, h := range t.history.AllData {
 		fmt.Printf("%d. [%s] %s - %s\n", i+1, h.Operation, h.CommandName, h.Timestemp)
 	}
 	fmt.Print("\nPress Enter to continue...")
