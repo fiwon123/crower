@@ -1,9 +1,14 @@
 package system
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+
+	crerrors "github.com/fiwon123/crower/internal/errors"
 )
 
 // The nesting level comes from the environment, because the recursive call is a
@@ -30,12 +35,103 @@ func TestNestedDepthIsZeroWithoutTheVariable(t *testing.T) {
 func TestRunNestedRefusesToGoTooDeep(t *testing.T) {
 	t.Setenv(nestedDepthEnv, strconv.Itoa(maxExecDepth))
 
-	_, err := NewRunner().RunNested("crower list")
+	_, err := NewRunner().RunNested("crower list", "", "")
 	if err == nil {
 		t.Fatal("RunNested() at the maximum depth returned no error")
 	}
 
 	if !strings.Contains(err.Error(), "maximum depth") {
 		t.Errorf("error = %v, want it to name the limit", err)
+	}
+}
+
+// An empty Cwd is the process's own directory, not a folder named "".
+func TestResolveDirEmpty(t *testing.T) {
+	got, err := resolveDir("")
+	if err != nil || got != "" {
+		t.Fatalf("resolveDir(\"\") = %q, %v; want empty and no error", got, err)
+	}
+}
+
+func TestResolveDirAcceptsADirectory(t *testing.T) {
+	dir := t.TempDir()
+
+	got, err := resolveDir(dir)
+	if err != nil {
+		t.Fatalf("resolveDir(%q): %v", dir, err)
+	}
+
+	if got != dir {
+		t.Errorf("resolveDir(%q) = %q, want it unchanged", dir, got)
+	}
+}
+
+// "~" is the user's home, and "~/x" is a folder below it.
+func TestResolveDirExpandsHome(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+
+	if err := os.Mkdir(filepath.Join(home, "projects"), 0o700); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+
+	tests := []struct {
+		name string
+		dir  string
+		want string
+	}{
+		{"bare tilde", "~", home},
+		{"tilde slash", "~/projects", filepath.Join(home, "projects")},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := resolveDir(tt.dir)
+			if err != nil {
+				t.Fatalf("resolveDir(%q): %v", tt.dir, err)
+			}
+
+			if got != tt.want {
+				t.Errorf("resolveDir(%q) = %q, want %q", tt.dir, got, tt.want)
+			}
+		})
+	}
+}
+
+// A missing folder is refused before a process starts, with a sentinel a caller
+// can test rather than a message it has to parse.
+func TestResolveDirRejectsAMissingFolder(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "nope")
+
+	_, err := resolveDir(missing)
+	if !errors.Is(err, crerrors.ErrInvalidWorkDir) {
+		t.Fatalf("error = %v, want ErrInvalidWorkDir", err)
+	}
+}
+
+// A file is not a working directory.
+func TestResolveDirRejectsAFile(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "file.txt")
+	if err := os.WriteFile(path, []byte("x"), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+
+	_, err := resolveDir(path)
+	if !errors.Is(err, crerrors.ErrInvalidWorkDir) {
+		t.Fatalf("error = %v, want ErrInvalidWorkDir", err)
+	}
+}
+
+// Only the current user's home is expanded; "~other/x" is a relative path, not
+// a lookup of another account.
+func TestExpandHomeLeavesAnotherUserAlone(t *testing.T) {
+	got, err := expandHome("~other/x")
+	if err != nil {
+		t.Fatalf("expandHome: %v", err)
+	}
+
+	if got != "~other/x" {
+		t.Errorf("expandHome(\"~other/x\") = %q, want it unchanged", got)
 	}
 }

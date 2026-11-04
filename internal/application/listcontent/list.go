@@ -175,6 +175,8 @@ func (u *UseCase) listCommands() error {
 			Exec:        command.Exec,
 			Description: command.Description,
 			Params:      command.Params,
+			Shell:       command.Shell,
+			Cwd:         command.Cwd,
 		})
 	}
 

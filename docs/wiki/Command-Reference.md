@@ -75,7 +75,7 @@ silently ignored would report success without honouring it.
 
 ---
 
-`crower list --json` rows carry `description` and `params` when the command declares them. They are metadata and change no execution.
+`crower list --json` rows carry `description`, `params`, `shell` and `cwd` when the command declares them. The first two are metadata; the last two say how it runs.
 
 ## ➕ crower create
 
@@ -105,9 +105,9 @@ crower create --folder reports
 crower create -p server nginx
 ```
 
-A command runs through `sh -c` on Linux and macOS, and `cmd /c` on Windows. A
-Steps command runs its steps instead of its `exec`; `execute` refuses to run one
-with parameters it cannot apply.
+A command runs through `sh -c` on Linux and macOS, and `cmd /c` on Windows,
+unless it declares its own `Shell`. A Steps command runs its steps instead of
+its `exec`; `execute` refuses to run one with parameters it cannot apply.
 
 ## ✏️ crower update
 
@@ -210,6 +210,14 @@ crower execute --last
 
 Parameters after the command fill `{1}`, `{2}`, … in its steps; `{}` takes the
 rest. Each parameter is quoted before it reaches the shell.
+
+A command may declare the shell it needs and the folder it runs in. `Shell` is
+`sh`, `pwsh` or `cmd` (the named shell must be installed); empty keeps the
+platform's own shell (`sh` on Linux and macOS, `cmd` on Windows). `Cwd` is the
+working directory, and a leading `~` is the user's home. Every step of a Steps
+command inherits both. An unknown shell, or a folder that does not exist, fails
+before anything runs. Set both in the configuration file or in a pack; `create`
+and `update` have no flags for them yet.
 
 ## 📂 crower open
 

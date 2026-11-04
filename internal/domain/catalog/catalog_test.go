@@ -230,6 +230,26 @@ func TestResolveUnknownKey(t *testing.T) {
 }
 
 // Metadata travels with the command and is copied, like every other slice.
+// Shell and Cwd describe how a command runs, and an update that changes only
+// its name must not drop them: the update starts from a copy of the old value.
+func TestUpdateKeepsShellAndCwd(t *testing.T) {
+	original := New(nil, []Command{{
+		Name:  "deploy",
+		Exec:  "echo hi",
+		Shell: "pwsh",
+		Cwd:   "~/projects/api",
+	}})
+
+	result, err := original.Update("deploy", Changes{Name: "ship"})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	if result.New.Shell != "pwsh" || result.New.Cwd != "~/projects/api" {
+		t.Errorf("New = %+v, want the shell and cwd kept", result.New)
+	}
+}
+
 func TestCommandCloneCopiesMetadata(t *testing.T) {
 	original := New(nil, []Command{{
 		Name:        "greet",

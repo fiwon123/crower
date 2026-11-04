@@ -26,6 +26,8 @@ func catalogOf(commandMap command.MapData, order []string) catalog.Catalog {
 			Steps:       stored.Steps,
 			Description: stored.Description,
 			Params:      stored.Params,
+			Shell:       stored.Shell,
+			Cwd:         stored.Cwd,
 		})
 	}
 
@@ -74,5 +76,7 @@ func toData(c catalog.Command) *command.Data {
 		Steps:       c.Steps,
 		Description: c.Description,
 		Params:      c.Params,
+		Shell:       c.Shell,
+		Cwd:         c.Cwd,
 	}
 }

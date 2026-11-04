@@ -77,14 +77,14 @@ func newExecuteSession(cfg *app.Config) executeSession {
 	}
 }
 
-// Run runs one shell line.
-func (s executeSession) Run(line string) (string, error) {
-	return s.runner.Run(line)
+// Run runs one shell line in the command's shell and working directory.
+func (s executeSession) Run(line, shellName, dir string) (string, error) {
+	return s.runner.Run(line, shellName, dir)
 }
 
 // RunNested runs a line that invokes crower again, with the depth guard.
-func (s executeSession) RunNested(line string) (string, error) {
-	return s.runner.RunNested(line)
+func (s executeSession) RunNested(line, shellName, dir string) (string, error) {
+	return s.runner.RunNested(line, shellName, dir)
 }
 
 // ExecuteCommandNote is the history note for `execute <command>`.

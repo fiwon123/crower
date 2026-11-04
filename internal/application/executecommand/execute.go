@@ -70,12 +70,14 @@ type Prompter interface {
 
 // Runner runs shell lines.
 type Runner interface {
-	// Run runs one line and returns its combined output.
-	Run(line string) (string, error)
+	// Run runs one line in the named shell and working directory and returns
+	// its combined output. An empty shell is the platform's own; an empty
+	// directory is the process's own.
+	Run(line, shellName, dir string) (string, error)
 
 	// RunNested runs a line that invokes crower again, refusing to go past the
-	// nesting limit.
-	RunNested(line string) (string, error)
+	// nesting limit. It takes the same target as Run.
+	RunNested(line, shellName, dir string) (string, error)
 }
 
 // Notes renders the history note for the execution.
@@ -208,6 +210,10 @@ func (u *UseCase) execute(key string, params []string) (string, catalog.Command,
 //
 // A command with steps never runs its exec, so an unusable brace there must not
 // fail a run that never touches it.
+//
+// Every step runs in the shell and folder the command declares. A per-step
+// override is deliberately absent: the schema names the target once, and a step
+// inheriting it is the behaviour that needs no extra syntax.
 func (u *UseCase) runSteps(command catalog.Command, params []string) (string, error) {
 	steps := command.Steps
 
@@ -238,7 +244,7 @@ func (u *UseCase) runSteps(command catalog.Command, params []string) (string, er
 		}
 
 		if isNestedCrower(step) {
-			out, err := u.runner.RunNested(step)
+			out, err := u.runner.RunNested(step, command.Shell, command.Cwd)
 			allOut.WriteString(out)
 
 			if err != nil {
@@ -250,7 +256,7 @@ func (u *UseCase) runSteps(command catalog.Command, params []string) (string, er
 
 		u.output.Debug(fmt.Sprintf("[%d/%d] %s", i+1, len(steps), step))
 
-		out, err := u.runner.Run(step)
+		out, err := u.runner.Run(step, command.Shell, command.Cwd)
 		allOut.WriteString(out)
 
 		if err != nil {

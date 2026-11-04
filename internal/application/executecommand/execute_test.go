@@ -110,13 +110,17 @@ func (p *fakePrompt) Confirm(question string) (bool, error) {
 type fakeRunner struct {
 	calls       []string
 	nestedCalls []string
+	shells      []string
+	dirs        []string
 	out         map[string]string
 	err         error
 	errOnLine   string
 }
 
-func (r *fakeRunner) Run(line string) (string, error) {
+func (r *fakeRunner) Run(line, shellName, dir string) (string, error) {
 	r.calls = append(r.calls, line)
+	r.shells = append(r.shells, shellName)
+	r.dirs = append(r.dirs, dir)
 
 	if r.errOnLine != "" && line == r.errOnLine {
 		return r.out[line], r.err
@@ -125,8 +129,10 @@ func (r *fakeRunner) Run(line string) (string, error) {
 	return r.out[line], nil
 }
 
-func (r *fakeRunner) RunNested(line string) (string, error) {
+func (r *fakeRunner) RunNested(line, shellName, dir string) (string, error) {
 	r.nestedCalls = append(r.nestedCalls, line)
+	r.shells = append(r.shells, shellName)
+	r.dirs = append(r.dirs, dir)
 
 	if r.errOnLine != "" && line == r.errOnLine {
 		return r.out[line], r.err
@@ -461,6 +467,64 @@ func TestRunNestedStepUsesTheGuardedRunner(t *testing.T) {
 
 	if got, want := h.runner.calls, []string{"echo done"}; !slices.Equal(got, want) {
 		t.Errorf("plain calls = %v, want %v", got, want)
+	}
+}
+
+// A command's shell and folder reach every step: a step inherits them, which is
+// why the schema needs no per-step syntax.
+func TestRunPassesShellAndCwdToEveryStep(t *testing.T) {
+	h := newHarness(catalog.Command{
+		Name:  "deploy",
+		Shell: "pwsh",
+		Cwd:   "~/projects/api",
+		Steps: []string{"echo a", "echo b"},
+	})
+
+	if err := h.run(executecommand.Request{Key: "deploy"}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if got, want := h.runner.shells, []string{"pwsh", "pwsh"}; !slices.Equal(got, want) {
+		t.Errorf("shells = %v, want %v", got, want)
+	}
+
+	if got, want := h.runner.dirs, []string{"~/projects/api", "~/projects/api"}; !slices.Equal(got, want) {
+		t.Errorf("dirs = %v, want %v", got, want)
+	}
+}
+
+// A nested crower step runs in the same shell and folder.
+func TestRunPassesShellAndCwdToANestedStep(t *testing.T) {
+	h := newHarness(catalog.Command{Name: "outer", Shell: "sh", Cwd: "/tmp", Steps: []string{"crower list"}})
+
+	if err := h.run(executecommand.Request{Key: "outer"}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if got, want := h.runner.shells, []string{"sh"}; !slices.Equal(got, want) {
+		t.Errorf("shells = %v, want %v", got, want)
+	}
+
+	if got, want := h.runner.dirs, []string{"/tmp"}; !slices.Equal(got, want) {
+		t.Errorf("dirs = %v, want %v", got, want)
+	}
+}
+
+// No declared shell or folder stays empty: the runner turns empty into the
+// platform default, and the use case must not choose one.
+func TestRunWithoutATargetKeepsThePlatformDefault(t *testing.T) {
+	h := newHarness(catalog.Command{Name: "greet", Exec: "echo hi"})
+
+	if err := h.run(executecommand.Request{Key: "greet"}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if got, want := h.runner.shells, []string{""}; !slices.Equal(got, want) {
+		t.Errorf("shells = %v, want %v", got, want)
+	}
+
+	if got, want := h.runner.dirs, []string{""}; !slices.Equal(got, want) {
+		t.Errorf("dirs = %v, want %v", got, want)
 	}
 }
 

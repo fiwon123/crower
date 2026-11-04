@@ -35,6 +35,16 @@ func (note *Note) AddCommandExec(exec string) *Note {
 	return note
 }
 
+// AddCommandShell records the shell a command asked to run through.
+//
+// A note written before the field existed has no command_shell, which is the
+// same statement as "the platform default": the reader must not infer a shell
+// that was never chosen.
+func (note *Note) AddCommandShell(name string) *Note {
+	fmt.Fprintf(&note.builder, ";command_shell=%s", escapeValue(name))
+	return note
+}
+
 // AddCommandSteps records the steps a command is built from (before parameter
 // substitution). A command with steps never runs its Exec, so the history has
 // to name them for the entry to describe what happened.

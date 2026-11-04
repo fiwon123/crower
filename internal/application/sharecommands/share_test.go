@@ -449,6 +449,8 @@ func TestImportKeepsMetadata(t *testing.T) {
 		Exec:        "echo hi",
 		Description: "Say hi",
 		Params:      []string{"name"},
+		Shell:       "pwsh",
+		Cwd:         "~/api",
 	}}
 
 	if err := h.useCase().Import("pack.toml", false); err != nil {
@@ -458,5 +460,9 @@ func TestImportKeepsMetadata(t *testing.T) {
 	got, found := h.state.saved[0].Get("greet")
 	if !found || got.Description != "Say hi" || !slices.Equal(got.Params, []string{"name"}) {
 		t.Errorf("imported = %+v, want the metadata", got)
+	}
+
+	if got.Shell != "pwsh" || got.Cwd != "~/api" {
+		t.Errorf("imported = %+v, want the shell and cwd", got)
 	}
 }
