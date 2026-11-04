@@ -419,6 +419,11 @@ gh workflow run release.yml --ref main -f version=v0.6.0
   release and this commit, and groups by label.
 - A published release is never rewritten; re-running the same version refreshes
   the draft. Bump the version instead of moving a published tag.
+- **Release notes follow `docs/release-notes-template.md`.** Title
+  `Crower vX.Y.Z` (short, no emoji); emoji only on section headings and the
+  download table's platform rows; professional and under ~60 lines; the full PR
+  list is a compare link, not a pasted list. Copy asset names, the commit and
+  the checksum file from the published release before writing them down.
 - The workflow itself is not covered by CI. Its first real proof is a run, and a
   run whose jobs never executed proves nothing — which is also why a build job
   stuck on a retired runner label used to leave no draft at all (#121).
