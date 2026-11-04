@@ -3,12 +3,32 @@ package cmd
 import (
 	"io"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/session"
 )
+
+func newFyneEditorConfig(t *testing.T) *session.Session {
+	t.Helper()
+
+	cfg, err := session.Load(
+		filepath.Join(t.TempDir(), "crower.yaml"),
+		session.Options{Streams: session.Streams{
+			In:  strings.NewReader(""),
+			Out: io.Discard,
+			Err: io.Discard,
+		}},
+	)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	return cfg
+}
 
 // The Fyne editor goes through catalog.Update and Session.Commit, so a rename,
 // a changed exec and an alias change are persisted and recorded like the CLI.
@@ -52,6 +72,64 @@ func TestFyneEditorUpdateCommitsTheChange(t *testing.T) {
 
 	if stored, found := cfg.Catalog().Get("ship"); !found || stored.Exec != "echo ship" {
 		t.Errorf("session catalog = %+v, %v; want the change persisted", stored, found)
+	}
+}
+
+// Create goes through catalog.Add and records a create entry.
+func TestFyneEditorCreateCommitsTheCommand(t *testing.T) {
+	cfg := newFyneEditorConfig(t)
+
+	commands, history, err := newFyneEditor(cfg).Create("ship", []string{"s"}, "echo ship")
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	got, found := commands.Get("ship")
+	if !found || got.Exec != "echo ship" || !slices.Equal(got.Aliases, []string{"s"}) {
+		t.Fatalf("commands = %+v, %v; want ship with its alias and exec", got, found)
+	}
+
+	if len(history.AllData) != 1 || history.AllData[0].CommandName != "ship" {
+		t.Errorf("history = %+v, want one create entry for ship", history.AllData)
+	}
+}
+
+// Delete goes through catalog.Remove and records the command it removed.
+func TestFyneEditorDeleteCommitsTheChange(t *testing.T) {
+	cfg := newFyneEditorConfig(t)
+	if _, _, err := newFyneEditor(cfg).Create("ship", nil, "echo ship"); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	commands, history, err := newFyneEditor(cfg).Delete("ship")
+	if err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	if _, found := commands.Get("ship"); found {
+		t.Error("Delete left the command in the set")
+	}
+
+	if len(history.AllData) != 2 || history.AllData[1].Operation != operation.Delete {
+		t.Errorf("history = %+v, want a delete entry", history.AllData)
+	}
+}
+
+// A create with a name that already exists is refused and writes nothing.
+func TestFyneEditorCreateRefusesACollision(t *testing.T) {
+	cfg := newFyneEditorConfig(t)
+	if _, _, err := newFyneEditor(cfg).Create("ship", nil, "echo ship"); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	before := len(cfg.History.AllData)
+
+	if _, _, err := newFyneEditor(cfg).Create("ship", nil, "echo again"); err == nil {
+		t.Fatal("Create accepted a duplicate name")
+	}
+
+	if got := len(cfg.History.AllData); got != before {
+		t.Errorf("history grew from %d to %d for a refused create", before, got)
 	}
 }
 
