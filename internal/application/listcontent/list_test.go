@@ -214,6 +214,41 @@ func TestListCommands(t *testing.T) {
 	}
 }
 
+// The write path refuses a literal under a secret-looking key, but an old or
+// hand-edited config still loads. The JSON result must not be the one place
+// the literal is printed; a ${VAR} reference stays readable.
+func TestListCommandsRedactsASecretLiteral(t *testing.T) {
+	h := newHarness()
+	h.state.commands = catalog.New(nil, []catalog.Command{{
+		Name: "deploy",
+		Exec: "echo hi",
+		Env: map[string]string{
+			"STAGE":     "prod",
+			"TOKEN":     "${TOKEN}",
+			"API_TOKEN": "literal",
+		},
+	}})
+
+	if err := h.run(listcontent.Request{}); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	payload, ok := h.output.emitted[0].payload.(listcontent.CommandsResult)
+	if !ok {
+		t.Fatalf("payload = %T, want CommandsResult", h.output.emitted[0].payload)
+	}
+
+	env := payload.Commands[0].Env
+
+	if env["STAGE"] != "prod" || env["TOKEN"] != "${TOKEN}" {
+		t.Errorf("env = %v, want the ordinary literal and the reference", env)
+	}
+
+	if env["API_TOKEN"] != "${REDACTED}" {
+		t.Errorf("API_TOKEN = %q, want the literal redacted", env["API_TOKEN"])
+	}
+}
+
 func TestListProcess(t *testing.T) {
 	h := newHarness()
 	h.procs.rows = []listcontent.ProcessRow{{PID: 7, Name: "go", Path: "/usr/bin/go"}}

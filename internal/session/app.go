@@ -8,15 +8,15 @@ package session
 
 import (
 	"bufio"
-	"github.com/fiwon123/crower/internal/domain/timeline"
+	"fmt"
 	"io"
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
-	"github.com/fiwon123/crower/internal/adapters/storage/command"
-
 	"github.com/fiwon123/crower/internal/adapters/storage"
-
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
+	"github.com/fiwon123/crower/internal/domain/timeline"
+	"github.com/fiwon123/crower/internal/shell"
 	"github.com/fiwon123/crower/pkg/logger"
 )
 
@@ -127,6 +127,15 @@ func New(
 	// know that one of the two commands is unreachable by that key.
 	for _, warning := range commandCollisions(allCommands) {
 		cfg.Logger.Warning(warning)
+	}
+
+	// A file written by an older build (or edited by hand) may hold a literal
+	// the write path now refuses. Load it and say so: refusing the whole
+	// configuration would leave the user unable to fix it.
+	for _, command := range cfg.Catalog().Commands() {
+		if err := shell.ValidateEnv(command.Env); err != nil {
+			cfg.Logger.Warning(fmt.Sprintf("command %q: %v", command.Name, err))
+		}
 	}
 
 	return cfg, nil

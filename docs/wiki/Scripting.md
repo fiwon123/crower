@@ -44,7 +44,9 @@ crower list --folder ~/projects --json | jq -r '.entries[].name'
 - History is listed **newest first**, like the table.
 - An empty collection is `[]`, never `null`.
 - A command row carries `description`, `params`, `shell`, `cwd`, `env` and
-  `timeout` only when the command declares them.
+  `timeout` only when the command declares them. An `env` value under a
+  secret-looking key that is a literal (an old or hand-edited config) is shown
+  as `${REDACTED}`.
 - `--json` exists only on `list` and `search`. Any other command **rejects** it
   as an unknown flag instead of ignoring it — a flag that quietly does nothing
   is worse than a flag that is missing.

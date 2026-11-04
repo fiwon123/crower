@@ -1,9 +1,25 @@
 package session
 
 import (
+	"fmt"
+
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/shell"
 )
+
+// validateEnv refuses a command set the executor would refuse. The write path
+// is where a pack or a hand-edited command would otherwise persist a literal
+// under a secret-looking key; the runner's check alone runs too late.
+func validateEnv(commands catalog.Catalog) error {
+	for _, command := range commands.Commands() {
+		if err := shell.ValidateEnv(command.Env); err != nil {
+			return fmt.Errorf("command %q: %w", command.Name, err)
+		}
+	}
+
+	return nil
+}
 
 // Save writes the current command map as a history snapshot and the history
 // index next to the config file.
@@ -36,6 +52,10 @@ func (s *Session) Save() error {
 // Each file is replaced through a temporary file and a rename, so a crash
 // cannot leave a half-written file behind.
 func (s *Session) Commit(commands catalog.Catalog, op operation.Operation, commandName, note string) error {
+	if err := validateEnv(commands); err != nil {
+		return err
+	}
+
 	s.ReplaceCatalog(commands)
 	s.History.Add(op, commandName, note)
 
@@ -57,6 +77,10 @@ func (s *Session) Commit(commands catalog.Catalog, op operation.Operation, comma
 // writer of the configuration file; both live in this package, so no domain has
 // to know that the file is TOML or where it is.
 func (s *Session) SaveCommands() error {
+	if err := validateEnv(s.Catalog()); err != nil {
+		return err
+	}
+
 	return s.commands.Save(s.allCommandsByName)
 }
 

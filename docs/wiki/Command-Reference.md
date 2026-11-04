@@ -222,9 +222,11 @@ and `update` have no flags for them yet.
 `Env` merges entries over the process environment. A value that is exactly
 `${VAR}` reads `VAR` from the environment, and an unset variable is an error
 rather than an empty value. A literal under a secret-looking key (`*TOKEN*`,
-`*SECRET*`, `*PASSWORD*`, `*_KEY`, …) is refused: a pack carries placeholders,
-never secrets. `Timeout` is a Go duration (`120s`, `2m`) applied to **each**
-step; an overrun kills the step and the error names the limit.
+`*SECRET*`, `*PASSWORD*`, `*_KEY*`, …) is refused on export, import, save and
+execute: a pack carries placeholders, never secrets. A hand-edited config with
+one still loads, with a warning, and `list --json` redacts it. `Timeout` is a Go
+duration (`120s`, `2m`) applied to **each** step; an overrun kills the step and
+the error names the limit.
 
 ## 📂 crower open
 

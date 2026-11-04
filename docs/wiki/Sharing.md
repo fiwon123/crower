@@ -25,8 +25,9 @@ shell the command meant, not the requirement that it exists.
 
 `Env` adds environment entries, and `Timeout` (`120s`) limits each step. An
 `Env` value should be a `${VAR}` reference when it is a credential: a literal
-under a secret-looking key is refused, because a pack is a file people commit
-and share.
+under a secret-looking key is refused on export, import and save, because a
+pack is a file people commit and share. A hand-edited config with one still
+loads, with a warning.
 
 A whole pack can describe itself:
 
