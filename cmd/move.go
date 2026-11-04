@@ -1,7 +1,8 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/legacy/movedom"
+	"github.com/fiwon123/crower/internal/application/transfercontent"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/spf13/cobra"
 )
@@ -28,6 +29,10 @@ var moveCmd = &cobra.Command{
 			return missingArgs(cmd, "source paths and a destination")
 		}
 
-		return movedom.NewCore(cfg).Move(args)
+		session := newTransferSession(cfg)
+
+		return transfercontent.New(session, session, session, session).Run(
+			transfercontent.Request{Op: operation.Move, Args: args},
+		)
 	},
 }
