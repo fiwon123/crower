@@ -37,7 +37,7 @@ is a page (a command page's file name is the command, e.g. `create.md`).
 | `Verifying-claims.md` | The unproven claims and the steps that settle them |
 | `How-to-Contribute.md` | Issues, discussions, the bar for a patch |
 | `Documentation.md` | Editing the wiki, style guide |
-| Command pages | `create`, `update`, `delete`, `list`, `execute`, `open`, `copy`, `move`, `search`, `extract`, `revert`, `restore`, `reset`, `share`, `gui` |
+| Command pages | `create`, `update`, `delete`, `list`, `execute`, `open`, `copy`, `move`, `search`, `extract`, `revert`, `restore`, `reset`, `share`, `gui`, `setup`, `init`, `doctor` |
 
 > **Note:** enabling the wiki is a manual GitHub setting (Settings → Features →
 > Wikis), and CI cannot push to it. The sync above is a human step — run it in
