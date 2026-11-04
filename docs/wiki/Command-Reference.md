@@ -47,6 +47,10 @@ These work on every command.
 
 `--config` and `--no-input` are persistent: every subcommand inherits them.
 
+`--setup <name>` selects a named command setup (`~/crower/setups/<name>/`).
+It applies when `--config` is not given; `CROWER_SETUP` sets the same default.
+The default installation keeps its old path and history.
+
 ## 🤖 Machine-readable results
 
 `list` and `search` accept `--json`: the result becomes **one JSON object** on

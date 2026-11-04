@@ -15,6 +15,7 @@ const (
 	flagConfig  = "config"
 	flagNoInput = "no-input"
 	flagJSON    = "json"
+	flagSetup   = "setup"
 )
 
 // streams is the terminal this run reads and writes. It is a variable so a test
@@ -34,6 +35,47 @@ func defaultConfigPath() (string, error) {
 	return filepath.Join(home, "crower", "crower.yaml"), nil
 }
 
+// setupConfigPath is where a named setup keeps its state.
+//
+// The default setup deliberately keeps the old path: a user who never asks for
+// a setup sees no change and needs no migration. Each setup folder carries its
+// own history, so reverting in one can never touch another.
+func setupConfigPath(home, name string) (string, error) {
+	if name == "" || name == "." || name == ".." {
+		return "", fmt.Errorf("invalid setup name %q", name)
+	}
+
+	for _, r := range name {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9':
+		case r == '-', r == '_', r == '.':
+		default:
+			return "", fmt.Errorf("invalid setup name %q", name)
+		}
+	}
+
+	return filepath.Join(home, "crower", "setups", name, "crower.yaml"), nil
+}
+
+// resolveConfigPath applies the selection order: an explicit --config wins,
+// then --setup, then CROWER_SETUP, then the default installation.
+func resolveConfigPath(explicit, setup string) (string, error) {
+	if explicit != "" {
+		return explicit, nil
+	}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", errors.NotUserHome()
+	}
+
+	if setup == "" {
+		return filepath.Join(home, "crower", "crower.yaml"), nil
+	}
+
+	return setupConfigPath(home, setup)
+}
+
 // newApp builds the application from the global flags of cmd.
 //
 // Every command goes through here, so --config and --no-input are resolved in
@@ -51,11 +93,18 @@ func newApp(cmd *cobra.Command) (*app.Config, error) {
 		return nil, err
 	}
 
-	if cfgPath == "" {
-		cfgPath, err = defaultConfigPath()
-		if err != nil {
-			return nil, err
-		}
+	setup, err := cmd.Flags().GetString(flagSetup)
+	if err != nil {
+		return nil, err
+	}
+
+	if setup == "" {
+		setup = os.Getenv("CROWER_SETUP")
+	}
+
+	cfgPath, err = resolveConfigPath(cfgPath, setup)
+	if err != nil {
+		return nil, err
 	}
 
 	noInput, err := cmd.Flags().GetBool(flagNoInput)
