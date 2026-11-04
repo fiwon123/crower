@@ -44,7 +44,7 @@ var guiCmd = &cobra.Command{
 			return err
 		}
 
-		return tui.NewTUI(cfg.Catalog(), cfg.History, newExecutor(cfg)).Run()
+		return tui.NewTUI(cfg.Catalog(), cfg.History, newExecutor(cfg), newShareUseCase(cfg)).Run()
 	},
 }
 
