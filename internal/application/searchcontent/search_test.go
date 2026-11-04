@@ -141,23 +141,22 @@ func TestSearchModes(t *testing.T) {
 	}
 }
 
-// The one-positional-value case keeps the legacy parsing: the query stays empty
-// and the path stays `.`. It is tracked as a bug; the refactor must not change
-// it silently.
-func TestSearchWithOneArgumentKeepsTheLegacyParsing(t *testing.T) {
+// One positional value is the search term, and the path defaults to the
+// current directory. It used to search for the empty term in `.` (#283).
+func TestSearchWithOneArgumentSearchesForThatTerm(t *testing.T) {
 	h := newHarness()
 
 	if err := h.run(searchcontent.Request{Mode: searchcontent.ModeBoth, Args: []string{"needle"}}); err != nil {
 		t.Fatalf("Run: %v", err)
 	}
 
-	if got, want := h.search.calls, []string{"both . "}; !slices.Equal(got, want) {
+	if got, want := h.search.calls, []string{"both . needle"}; !slices.Equal(got, want) {
 		t.Errorf("calls = %v, want %v", got, want)
 	}
 
 	payload := h.output.emitted[0].payload.(searchcontent.Result)
-	if payload.Search.Query != "" || payload.Search.Path != "." {
-		t.Errorf("payload = %+v, want an empty query and the current path", payload.Search)
+	if payload.Search.Query != "needle" || payload.Search.Path != "." {
+		t.Errorf("payload = %+v, want the term and the current path", payload.Search)
 	}
 }
 
