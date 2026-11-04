@@ -7,22 +7,14 @@ import (
 	command "github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/catalog"
-	"github.com/fiwon123/crower/internal/legacy/createdom"
 )
 
 type Handler struct {
-	app           *app.Config
-	createHandler *createdom.Handler
+	app *app.Config
 }
 
 func NewHandler(app *app.Config) *Handler {
-
-	createHandler := createdom.NewHandler(app)
-
-	return &Handler{
-		app:           app,
-		createHandler: createHandler,
-	}
+	return &Handler{app: app}
 }
 
 // RestoreHistory brings back the command a history entry holds: it updates the
@@ -49,10 +41,19 @@ func (h *Handler) RestoreHistory(key string, content history.Content) (string, e
 		return fmt.Sprintf("restored by updating: from %v to %v", toData(result.Old), toData(result.New)), nil
 	}
 
-	_, err = h.createHandler.CreateCommand(restored.Name, restored.AllAlias, restored.Exec)
+	// The rules for adding a command -- empty fields, a taken name, a name that
+	// is another command's alias -- live in the catalog, so restore uses the
+	// same ones create does.
+	commands, err := h.app.Catalog().Add(catalog.Command{
+		Name:    restored.Name,
+		Aliases: restored.AllAlias,
+		Exec:    restored.Exec,
+	})
 	if err != nil {
 		return "", err
 	}
+
+	h.app.ReplaceCatalog(commands)
 
 	return fmt.Sprintf("restored by creating: %v", restored), nil
 }

@@ -4,8 +4,8 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/fiwon123/crower/internal/adapters/system"
 	"github.com/fiwon123/crower/internal/legacy/copydom"
-	"github.com/fiwon123/crower/internal/legacy/createdom"
 	"github.com/fiwon123/crower/internal/testutil"
 )
 
@@ -17,12 +17,12 @@ func TestCopyFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		createHandler := createdom.NewHandler(app)
+		creator := system.NewCreator()
 		copyHandler := copydom.NewHandler(app)
 
 		newFilePath := filepath.Join(app.ConfigFolder(), "new.txt")
 
-		err = createHandler.CreateFile(newFilePath)
+		err = creator.File(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
@@ -39,12 +39,12 @@ func TestCopyFile(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		createHandler := createdom.NewHandler(app)
+		creator := system.NewCreator()
 		copyHandler := copydom.NewHandler(app)
 
 		newFilePath := filepath.Join(app.ConfigFolder(), "new file.txt")
 
-		err = createHandler.CreateFile(newFilePath)
+		err = creator.File(newFilePath)
 		if err != nil {
 			t.Fatalf("error before test create file: %v", err)
 		}
@@ -65,12 +65,12 @@ func TestCopyFolder(t *testing.T) {
 			t.Fatalf("error before test: %v", err)
 		}
 
-		createHandler := createdom.NewHandler(app)
+		creator := system.NewCreator()
 		copyHandler := copydom.NewHandler(app)
 
 		newFolderPath := filepath.Join(app.ConfigFolder(), "new")
 
-		err = createHandler.CreateFolder(newFolderPath)
+		err = creator.Folder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
@@ -86,11 +86,11 @@ func TestCopyFolder(t *testing.T) {
 		if err != nil {
 			t.Fatalf("error before test: %v", err)
 		}
-		createHandler := createdom.NewHandler(app)
+		creator := system.NewCreator()
 		copyHandler := copydom.NewHandler(app)
 		newFolderPath := filepath.Join(app.ConfigFolder(), "new folder")
 
-		err = createHandler.CreateFolder(newFolderPath)
+		err = creator.Folder(newFolderPath)
 		if err != nil {
 			t.Fatalf("error before test create folder: %v", err)
 		}
