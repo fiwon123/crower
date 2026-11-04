@@ -20,7 +20,7 @@ var moveCmd = &cobra.Command{
 	crower move a.txt b.txt ~/archive
 	crower move ./reports ~/archive`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}

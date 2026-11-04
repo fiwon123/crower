@@ -43,19 +43,18 @@ package rather than a new branch in a shared handler.
 ```text
 cmd/<operation>.go            cobra command: flags and argument parsing
   ↓
-internal/application/<verb>/  use cases: the flow, with ports it declares itself
-  ↓
+internal/session/             composition root: paths, loaded state, persistence
+  ├─→ internal/application/<verb>/  use cases: the flow, with ports it declares
+  └─→ internal/adapters/            storage, output, shell, prompt (the technology)
+        ↓
 internal/domain/              the model: catalog aggregate, operation enum
-  ↓
-internal/adapters/            storage, output, shell, prompt (the technology)
-
-internal/data/ + internal/app/  storage shapes and wiring (Phase 5 work)
 ```
 
 A use case is a package under `internal/application/`, and it declares the
 interfaces it needs (consumer-owned ports). The model under `internal/domain/`
 depends on the standard library only. Every operation has been ported (#215):
-`internal/legacy/` is gone; `internal/data`/`internal/app` are Phase 5 work.
+`internal/legacy/`, `internal/app`, `internal/data` and `internal/helper` are
+gone; `internal/session` is the composition root.
 
 `internal/shell` is the shared floor: the platform's shell invocation. A domain
 depends on it to run `ls`, `cp` or `xdg-open`, never on another operation.
@@ -83,10 +82,8 @@ cmd/                 cobra commands, one file per operation
 internal/domain/     the model: catalog aggregate, operation enum (stdlib only)
 internal/application/ use cases, one package per verb, with their own ports
 internal/adapters/   storage, output, shell, prompt — the technology side
-internal/data/       history, notes, operations, command map, state
-internal/app/        configuration and application wiring
+internal/session/    composition root: paths, loaded state, persistence
 internal/errors/     error types shared across layers
-internal/helper/     shared helpers
 internal/shell/      the platform's shell invocation, shared by every domain
 pkg/logger/          logging
 pkg/utils/           filesystem and process helpers

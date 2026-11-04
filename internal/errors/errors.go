@@ -1,10 +1,11 @@
 // Package errors holds the errors crower returns to its command layer.
 //
-// It deliberately does not import internal/app. An error is a value, and a
+// It deliberately does not import internal/session. An error is a value, and a
 // package that builds values must not also own the terminal: the old helpers
-// here printed through app.Logger and returned nothing, so no caller could
-// propagate a failure and every command exited 0. Callers now decide where a
-// message is printed, which is exactly what lets cmd report a non-zero status.
+// here printed through the session logger and returned nothing, so no caller
+// could propagate a failure and every command exited 0. Callers now decide
+// where a message is printed, which is exactly what lets cmd report a non-zero
+// status.
 package errors
 
 import (

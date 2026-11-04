@@ -41,7 +41,7 @@ and history entries exist, and the environment crower uses (shell, editor,
 terminal). --json prints the same as one object.`,
 	Example: "  crower doctor\n  crower doctor --json",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}

@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"bytes"
@@ -124,7 +124,7 @@ func TestCommandCollisions(t *testing.T) {
 
 // Loading a colliding config reports it once and resolves the alias the same
 // way every run.
-func TestInitAppWarnsAboutACollision(t *testing.T) {
+func TestLoadWarnsAboutACollision(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
 
 	contents := `[a]
@@ -144,14 +144,14 @@ Exec = "echo b"
 
 	var stderr bytes.Buffer
 
-	cfg, err := InitApp(cfgPath, Options{
+	cfg, err := Load(cfgPath, Options{
 		Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: &stderr},
 	})
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
-	if owner := cfg.AllCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
+	if owner := cfg.allCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
 		t.Errorf("alias x resolves to %+v, want a", owner)
 	}
 
@@ -160,7 +160,7 @@ Exec = "echo b"
 	}
 }
 
-func TestInitAppWarnsAboutAnAliasThatIsAName(t *testing.T) {
+func TestLoadWarnsAboutAnAliasThatIsAName(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
 
 	contents := `[a]
@@ -179,11 +179,11 @@ Exec = "echo b"
 
 	var stderr bytes.Buffer
 
-	_, err := InitApp(cfgPath, Options{
+	_, err := Load(cfgPath, Options{
 		Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: &stderr},
 	})
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	if !strings.Contains(stderr.String(), `alias "a" of "b" is also a command name`) {
@@ -193,7 +193,7 @@ Exec = "echo b"
 
 // A clean config must not write to the diagnostics stream: `list --json`
 // promises an empty stderr, and this warning runs for every command.
-func TestInitAppWritesNoWarningForACleanConfig(t *testing.T) {
+func TestLoadWritesNoWarningForACleanConfig(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
 
 	contents := `[a]
@@ -213,10 +213,10 @@ Exec = "echo b"
 
 	var stderr bytes.Buffer
 
-	if _, err := InitApp(cfgPath, Options{
+	if _, err := Load(cfgPath, Options{
 		Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: &stderr},
 	}); err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	if stderr.Len() != 0 {
@@ -229,11 +229,11 @@ Exec = "echo b"
 func TestFindCommandPrefersNameAndIsDeterministic(t *testing.T) {
 	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
 
-	cfg, err := InitApp(cfgPath, Options{
+	cfg, err := Load(cfgPath, Options{
 		Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard},
 	})
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	snapshot := filepath.Join(cfg.ConfigFolder(), "history", "00001.yaml")

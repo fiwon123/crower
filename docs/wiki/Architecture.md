@@ -16,6 +16,8 @@ This page is for someone changing the code. A user does not need it; the
 ```text
 cmd/                          driver adapter — cobra parses and delegates
   ↓
+internal/session/             composition root — paths, loaded state, persistence
+  ↓
 internal/application/         use cases — the flow, one package per verb
   ↓
 internal/domain/              the model — the catalog aggregate, the operation enum
@@ -29,13 +31,16 @@ never the ones outside.
 | Ring | May import | Must not import |
 | --- | --- | --- |
 | `internal/domain` | its own subtree, the standard library | anything else |
-| `internal/application` | `internal/domain` | `internal/adapters`, `internal/app`, `internal/data`, `internal/legacy`, `cmd` |
-| `internal/adapters` | `internal/domain`, `internal/application`, the standard library, third-party code | `internal/app`, `internal/legacy`, `cmd` |
+| `internal/application` | `internal/domain` | `internal/adapters`, `internal/session`, `cmd` |
+| `internal/adapters` | `internal/domain`, `internal/application`, the standard library, third-party code | `internal/session`, `cmd` |
+| `internal/session` | `internal/adapters`, `internal/application`, `internal/domain`, the standard library | `cmd`, `internal/tui`, `internal/desktop` |
 | `cmd` | everything | — |
 
-`internal/app`, `internal/data`, `internal/helper` and `internal/interfaces` are
-the pre-refactor core. They are being dissolved into the rings; a new ring may
-not import them, and they disappear when the last command is ported (#215).
+`internal/session` is the composition root: it owns the configuration paths,
+the loaded command and history state, and the save/commit/revert calls. `cmd`
+is its only production importer; `internal/testutil` constructs one for tests.
+The pre-refactor `internal/app`, `internal/data`, `internal/helper` and
+`internal/interfaces` are gone (#215).
 
 ## 🚧 The gate
 
@@ -105,7 +110,7 @@ green.
 
 The field names in these files are a contract with every existing
 installation. `internal/adapters/storage` is the only package that knows them,
-and `internal/app/persist_test.go` pins them.
+and `internal/session/persist_test.go` pins them.
 
 ## 🔐 Two decisions worth knowing
 

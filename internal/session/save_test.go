@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"io"
@@ -15,21 +15,21 @@ import (
 	"github.com/fiwon123/crower/pkg/utils"
 )
 
-func newTestConfigAt(t *testing.T, cfgPath string) *Config {
+func newTestConfigAt(t *testing.T, cfgPath string) *Session {
 	t.Helper()
 
-	cfg, err := InitApp(
+	cfg, err := Load(
 		cfgPath,
 		Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}},
 	)
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	return cfg
 }
 
-func newTestConfig(t *testing.T) *Config {
+func newTestConfig(t *testing.T) *Session {
 	t.Helper()
 
 	return newTestConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
@@ -51,12 +51,12 @@ func TestConfigPaths(t *testing.T) {
 // SaveCommands is the one writer of the configuration file. A domain calls it
 // instead of knowing that the file is TOML or where it is.
 func TestSaveCommandsWritesTheCommandMap(t *testing.T) {
-	// Read back the path handed to InitApp, not ConfigFile(): a wrong path on
+	// Read back the path handed to Load, not ConfigFile(): a wrong path on
 	// both sides would otherwise hide itself.
 	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
 	cfg := newTestConfigAt(t, cfgPath)
 
-	cfg.AllCommandsByName.Add("greet", command.New("greet", []string{"hi"}, "echo hello"))
+	cfg.allCommandsByName.Add("greet", command.New("greet", []string{"hi"}, "echo hello"))
 
 	if err := cfg.SaveCommands(); err != nil {
 		t.Fatalf("SaveCommands: %v", err)
@@ -116,7 +116,7 @@ func TestDeleteHistoryBackupRejectsAPath(t *testing.T) {
 // A history file written by an older build has no CommandName field: the name
 // lives only inside the note. Loading it must resolve the name, or `--last`
 // stays broken for every entry made before the fix.
-func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
+func TestNewBackfillsTheCommandNameFromTheNote(t *testing.T) {
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "crower.yaml")
 
@@ -127,9 +127,9 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 		t.Fatalf("write legacy history: %v", err)
 	}
 
-	cfg, err := InitApp(cfgPath, Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
+	cfg, err := Load(cfgPath, Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	last := cfg.GetLast(operation.Create)
@@ -144,7 +144,7 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 
 // A file note can carry the same text inside a path; resolving that would point
 // `--last` at a command the operation never touched.
-func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
+func TestNewDoesNotBackfillAFileNote(t *testing.T) {
 	dir := t.TempDir()
 
 	legacy := timeline.Log{}
@@ -155,9 +155,9 @@ func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
 		t.Fatalf("write legacy history: %v", err)
 	}
 
-	cfg, err := InitApp(filepath.Join(dir, "crower.yaml"), Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
+	cfg, err := Load(filepath.Join(dir, "crower.yaml"), Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}})
 	if err != nil {
-		t.Fatalf("InitApp: %v", err)
+		t.Fatalf("Load: %v", err)
 	}
 
 	if got := cfg.History.AllData[0].CommandName; got != "" {
@@ -180,7 +180,7 @@ func TestCommitWritesSnapshotIndexAndCommandFile(t *testing.T) {
 		t.Fatalf("Commit: %v", err)
 	}
 
-	if cfg.AllCommandsByName.Get("greet") == nil {
+	if cfg.allCommandsByName.Get("greet") == nil {
 		t.Error("the running configuration does not hold the committed command")
 	}
 
@@ -236,7 +236,7 @@ func TestCommitKeepsTargetFields(t *testing.T) {
 		t.Fatalf("Commit: %v", err)
 	}
 
-	stored := cfg.AllCommandsByName.Get("deploy")
+	stored := cfg.allCommandsByName.Get("deploy")
 	if stored == nil || stored.Shell != "sh" || stored.Cwd != "~/projects/api" {
 		t.Fatalf("stored = %+v, want the shell and cwd kept", stored)
 	}
@@ -247,7 +247,7 @@ func TestCommitKeepsTargetFields(t *testing.T) {
 
 	reloaded := newTestConfigAt(t, cfg.ConfigFile())
 
-	back := reloaded.AllCommandsByName.Get("deploy")
+	back := reloaded.allCommandsByName.Get("deploy")
 	if back == nil || back.Shell != "sh" || back.Cwd != "~/projects/api" {
 		t.Errorf("reloaded = %+v, want the shell and cwd on disk", back)
 	}

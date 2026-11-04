@@ -46,11 +46,15 @@ fails the build when an import points the wrong way:
 cmd/  ->  internal/application/  ->  internal/domain/
                  ^
         internal/adapters/
+
+        internal/session/  (composition root, built by cmd)
 ```
 
+`internal/session` is the composition root between `cmd` and the adapters.
 **[Architecture](Architecture)** explains the rule, what each ring may import,
 and where a new operation goes. Every operation has been ported (#215): there is
-no `internal/legacy/` left to shrink.
+no `internal/legacy/`, `internal/app`, `internal/data` or `internal/helper` left
+to shrink.
 
 ## 🌿 Branches
 

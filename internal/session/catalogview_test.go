@@ -1,11 +1,31 @@
-package app_test
+package session
 
 import (
+	"io"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/adapters/storage/command"
-	"github.com/fiwon123/crower/internal/testutil"
 )
+
+// newCatalogSession builds an empty run whose command map a test can seed.
+func newCatalogSession(t *testing.T) *Session {
+	t.Helper()
+
+	cfg, err := New(
+		filepath.Join(t.TempDir(), "crower.yaml"),
+		nil,
+		command.NewMapData(),
+		command.NewMapData(),
+		Options{Streams: Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}},
+	)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	return cfg
+}
 
 // Two commands can declare the same alias -- a hand-edited or legacy config
 // does. The catalog gives it to the first declarer in sorted order, and
@@ -13,18 +33,15 @@ import (
 // claim that the alias moves to the other declarer at once rather than going
 // dormant until a reload.
 func TestReplaceCatalogHandsAContestedAliasToTheOtherDeclarer(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("testutil.New: %v", err)
-	}
+	cfg := newCatalogSession(t)
 
-	cfg.AllCommandsByName.Add("a", command.New("a", []string{"x"}, "echo a"))
-	cfg.AllCommandsByName.Add("b", command.New("b", []string{"x"}, "echo b"))
+	cfg.allCommandsByName.Add("a", command.New("a", []string{"x"}, "echo a"))
+	cfg.allCommandsByName.Add("b", command.New("b", []string{"x"}, "echo b"))
 
 	// Build the maps the loader would have built from that config.
 	cfg.ReplaceCatalog(cfg.Catalog())
 
-	if owner := cfg.AllCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
+	if owner := cfg.allCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
 		t.Fatalf("alias x = %+v, want a before the delete", owner)
 	}
 
@@ -35,20 +52,17 @@ func TestReplaceCatalogHandsAContestedAliasToTheOtherDeclarer(t *testing.T) {
 
 	cfg.ReplaceCatalog(remaining)
 
-	if owner := cfg.AllCommandsByAlias.Get("x"); owner == nil || owner.Name != "b" {
+	if owner := cfg.allCommandsByAlias.Get("x"); owner == nil || owner.Name != "b" {
 		t.Errorf("alias x = %+v, want b after deleting its owner", owner)
 	}
 }
 
 // Deleting the declarer that did not own the alias must leave it where it is.
 func TestReplaceCatalogKeepsAnAliasWhenItsNonOwnerIsDeleted(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("testutil.New: %v", err)
-	}
+	cfg := newCatalogSession(t)
 
-	cfg.AllCommandsByName.Add("a", command.New("a", []string{"x"}, "echo a"))
-	cfg.AllCommandsByName.Add("b", command.New("b", []string{"x"}, "echo b"))
+	cfg.allCommandsByName.Add("a", command.New("a", []string{"x"}, "echo a"))
+	cfg.allCommandsByName.Add("b", command.New("b", []string{"x"}, "echo b"))
 
 	cfg.ReplaceCatalog(cfg.Catalog())
 
@@ -59,7 +73,7 @@ func TestReplaceCatalogKeepsAnAliasWhenItsNonOwnerIsDeleted(t *testing.T) {
 
 	cfg.ReplaceCatalog(remaining)
 
-	if owner := cfg.AllCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
+	if owner := cfg.allCommandsByAlias.Get("x"); owner == nil || owner.Name != "a" {
 		t.Errorf("alias x = %+v, want a after deleting the other declarer", owner)
 	}
 }

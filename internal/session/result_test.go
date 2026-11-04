@@ -1,4 +1,4 @@
-package app_test
+package session_test
 
 import (
 	"bytes"
@@ -8,28 +8,28 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/adapters/storage/command"
-	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/session"
 )
 
 // newConfig builds a run against buffers instead of a terminal, rooted in a
 // fresh temporary directory so a test never writes into the working tree.
-func newConfig(t *testing.T, format app.Format) (*app.Config, *bytes.Buffer) {
+func newConfig(t *testing.T, format session.Format) (*session.Session, *bytes.Buffer) {
 	t.Helper()
 
 	out := &bytes.Buffer{}
 
-	cfg, err := app.NewApp(
+	cfg, err := session.New(
 		filepath.Join(t.TempDir(), "crower.yaml"),
 		nil,
 		command.NewMapData(),
 		command.NewMapData(),
-		app.Options{
-			Streams: app.Streams{In: strings.NewReader(""), Out: out, Err: &bytes.Buffer{}},
+		session.Options{
+			Streams: session.Streams{In: strings.NewReader(""), Out: out, Err: &bytes.Buffer{}},
 			Format:  format,
 		},
 	)
 	if err != nil {
-		t.Fatalf("NewApp: %v", err)
+		t.Fatalf("New: %v", err)
 	}
 
 	return cfg, out
@@ -38,7 +38,7 @@ func newConfig(t *testing.T, format app.Format) (*app.Config, *bytes.Buffer) {
 // Text mode must not touch the bytes an operation built: the table alignment is
 // the operation's, and rewriting it here would change what a script reads.
 func TestResultTextIsVerbatim(t *testing.T) {
-	cfg, out := newConfig(t, app.FormatText)
+	cfg, out := newConfig(t, session.FormatText)
 
 	if err := cfg.Result("row   name\n", map[string]string{"ignored": "yes"}); err != nil {
 		t.Fatalf("Result: %v", err)
@@ -50,7 +50,7 @@ func TestResultTextIsVerbatim(t *testing.T) {
 }
 
 func TestResultJSONIsOneObject(t *testing.T) {
-	cfg, out := newConfig(t, app.FormatJSON)
+	cfg, out := newConfig(t, session.FormatJSON)
 
 	payload := struct {
 		Commands []string `json:"commands"`
@@ -85,7 +85,7 @@ func TestResultJSONIsOneObject(t *testing.T) {
 // A path is data, not HTML: \u0026 would make the value differ from the path
 // the caller passed in.
 func TestResultJSONDoesNotEscapeHTML(t *testing.T) {
-	cfg, out := newConfig(t, app.FormatJSON)
+	cfg, out := newConfig(t, session.FormatJSON)
 
 	payload := struct {
 		Path string `json:"path"`
@@ -103,7 +103,7 @@ func TestResultJSONDoesNotEscapeHTML(t *testing.T) {
 // An empty collection has to encode as [] so a script does not have to special
 // case null.
 func TestResultJSONEmptyCollection(t *testing.T) {
-	cfg, out := newConfig(t, app.FormatJSON)
+	cfg, out := newConfig(t, session.FormatJSON)
 
 	payload := struct {
 		Items []string `json:"items"`
@@ -119,7 +119,7 @@ func TestResultJSONEmptyCollection(t *testing.T) {
 }
 
 func TestResultUnknownFormatIsAnError(t *testing.T) {
-	cfg, out := newConfig(t, app.Format("yaml"))
+	cfg, out := newConfig(t, session.Format("yaml"))
 
 	if err := cfg.Result("table", map[string]string{"a": "b"}); err == nil {
 		t.Fatal("Result accepted a format it cannot render")
@@ -131,7 +131,7 @@ func TestResultUnknownFormatIsAnError(t *testing.T) {
 }
 
 func TestResultJSONEncodeFailureIsAnError(t *testing.T) {
-	cfg, _ := newConfig(t, app.FormatJSON)
+	cfg, _ := newConfig(t, session.FormatJSON)
 
 	if err := cfg.Result("", make(chan int)); err == nil {
 		t.Fatal("Result accepted a payload it cannot encode")

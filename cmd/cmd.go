@@ -76,14 +76,14 @@ Every command has its own help: crower <command> --help.`,
 			return nil
 		}
 
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
 
 		switch {
 		case checkNewVersion:
-			session := newLegacySession(cfg)
+			session := newSessionPorts(cfg)
 			return checkrelease.New(latestTag{}, session, session, session).Run(Version)
 
 		case upgradeFlag, rollbackFlag, installVersion != "":

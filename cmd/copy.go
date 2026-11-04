@@ -3,9 +3,9 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/transfercontent"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -23,7 +23,7 @@ var copyCmd = &cobra.Command{
 	crower copy a.txt b.txt ~/backup
 	crower copy ./reports ~/backup`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -43,7 +43,7 @@ var copyCmd = &cobra.Command{
 // transferSession adapts the configuration to the ports the copy and move use
 // case declares. One session serves both commands.
 type transferSession struct {
-	legacySession
+	sessionPorts
 
 	*system.Transfer
 
@@ -52,11 +52,11 @@ type transferSession struct {
 
 // newTransferSession wires the configuration, the platform transfer and the
 // filesystem query.
-func newTransferSession(cfg *app.Config) transferSession {
+func newTransferSession(cfg *session.Session) transferSession {
 	return transferSession{
-		legacySession: newLegacySession(cfg),
-		Transfer:      system.NewTransfer(),
-		paths:         system.NewPaths(),
+		sessionPorts: newSessionPorts(cfg),
+		Transfer:     system.NewTransfer(),
+		paths:        system.NewPaths(),
 	}
 }
 

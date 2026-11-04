@@ -3,10 +3,10 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/executecommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +32,7 @@ Arguments after the command are applied to its steps.`,
 	crower execute greet --help
 	crower execute --last`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -60,20 +60,20 @@ Arguments after the command are applied to its steps.`,
 // executeSession adapts the configuration to the ports the execute use case
 // declares.
 //
-// It embeds legacySession for the catalog, the diagnostics stream, the result
+// It embeds sessionPorts for the catalog, the diagnostics stream, the result
 // stream, the debug log, the confirmation and the history entry, and adds the
 // shell runner and the two execution notes.
 type executeSession struct {
-	legacySession
+	sessionPorts
 
 	runner *system.Runner
 }
 
 // newExecuteSession wires the configuration and the shell runner.
-func newExecuteSession(cfg *app.Config) executeSession {
+func newExecuteSession(cfg *session.Session) executeSession {
 	return executeSession{
-		legacySession: newLegacySession(cfg),
-		runner:        system.NewRunner(),
+		sessionPorts: newSessionPorts(cfg),
+		runner:       system.NewRunner(),
 	}
 }
 

@@ -1,4 +1,4 @@
-package app
+package session
 
 import (
 	"github.com/fiwon123/crower/internal/adapters/storage/command"
@@ -10,8 +10,8 @@ import (
 // It is the bridge the new use cases use while the map-based core is still the
 // storage: the aggregate is built on every call, so a caller that holds one
 // does not see a later mutation through it.
-func (app *Config) Catalog() catalog.Catalog {
-	return catalogOf(app.AllCommandsByName, app.OrderKeys)
+func (s *Session) Catalog() catalog.Catalog {
+	return catalogOf(s.allCommandsByName, s.orderKeys)
 }
 
 // ReplaceCatalog writes the aggregate back into the maps the operations read.
@@ -20,16 +20,16 @@ func (app *Config) Catalog() catalog.Catalog {
 // other is what `reset` used to do: the alias index kept resolving commands
 // that no longer existed, which a command that continues to run after the
 // reset would see.
-func (app *Config) ReplaceCatalog(commands catalog.Catalog) {
-	app.AllCommandsByName = command.NewMapData()
-	app.OrderKeys = commands.Names()
+func (s *Session) ReplaceCatalog(commands catalog.Catalog) {
+	s.allCommandsByName = command.NewMapData()
+	s.orderKeys = commands.Names()
 
 	for _, cmd := range commands.Commands() {
-		app.AllCommandsByName.Add(cmd.Name, toData(cmd))
+		s.allCommandsByName.Add(cmd.Name, toData(cmd))
 	}
 
 	// The alias index is rebuilt with the loader's rule -- names sorted, first
 	// claim wins -- rather than by iteration order, so a config that already
 	// holds a collision resolves the same way before and after a change.
-	app.AllCommandsByAlias = aliasMapFrom(commands)
+	s.allCommandsByAlias = aliasMapFrom(commands)
 }

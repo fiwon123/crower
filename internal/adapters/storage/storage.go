@@ -7,8 +7,7 @@
 // home directory -- so the knowledge of them belongs in one place rather than
 // spread over the loader, the saver and the revert path.
 //
-// During the migration `internal/app` is still the session object and calls
-// this package, so the arrow points from the legacy core to the storage. In
-// Phase 5 the session is constructed by `cmd` and receives these types, and the
-// arrow reverses to the direction the rings describe.
+// The composition root (`internal/session`) constructs these types and calls
+// them. An adapter never imports the root: the architecture gate enforces that
+// direction, so the knowledge of the files stays below the session.
 package storage

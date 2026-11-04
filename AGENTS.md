@@ -36,19 +36,18 @@ the last operation.
 ```text
 cmd/<operation>.go            cobra command: flags and argument parsing
   ↓
-internal/application/<verb>/  use cases: the flow, with ports it declares itself
-  ↓
+internal/session/             composition root: paths, loaded state, persistence
+  ├─→ internal/application/<verb>/  use cases: the flow, with ports it declares
+  └─→ internal/adapters/            storage, output, shell, prompt (the technology)
+        ↓
 internal/domain/              the model: catalog aggregate, operation enum
-  ↓
-internal/adapters/            storage, output, shell, prompt (the technology)
-
-internal/data/ + internal/app/  storage shapes and wiring (Phase 5 work)
 ```
 
 A use case is a package under `internal/application/`, and it declares the
 interfaces it needs. The model under `internal/domain/` depends on the standard
-library only. Every operation has been ported (#215): `internal/legacy/` is gone,
-and the remaining `internal/data`/`internal/app` shapes are Phase 5 work.
+library only. Every operation has been ported (#215): `internal/legacy/`,
+`internal/app`, `internal/data` and `internal/helper` are gone; `internal/session`
+is the composition root, imported only by `cmd` and `internal/testutil`.
 
 `internal/shell` is the one thing the rings share below that line: the
 platform's shell invocation (`sh -c` / `cmd /c`) and its quoting. An adapter
@@ -62,10 +61,8 @@ cmd/                 cobra commands, one file per operation
 internal/domain/     the model: catalog aggregate, operation enum (stdlib only)
 internal/application/ use cases, one package per verb, with their own ports
 internal/adapters/   storage, output, shell, prompt — the technology side
-internal/data/       history, notes, operations, command map, state
-internal/app/        configuration and application wiring
+internal/session/    composition root: paths, loaded state, persistence
 internal/errors/     error types shared across layers
-internal/helper/     shared helpers
 internal/shell/      the platform's shell invocation, shared by every domain
 pkg/logger/          logging
 pkg/utils/           filesystem and process helpers

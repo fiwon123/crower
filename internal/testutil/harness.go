@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -25,7 +25,7 @@ import (
 //
 // It returns an error rather than calling t.Fatal so the signature stays the
 // one the call sites already use; the value is always nil in practice.
-func New(t *testing.T) (*app.Config, []string, error) {
+func New(t *testing.T) (*session.Session, []string, error) {
 	t.Helper()
 
 	root := t.TempDir()
@@ -41,7 +41,7 @@ func New(t *testing.T) (*app.Config, []string, error) {
 		paths = append(paths, folder)
 	}
 
-	cfg, err := app.InitApp(filepath.Join(root, "crower.yaml"), app.Options{})
+	cfg, err := session.Load(filepath.Join(root, "crower.yaml"), session.Options{})
 	if err != nil {
 		return nil, nil, err
 	}

@@ -3,8 +3,8 @@ package cmd
 import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/extractcontent"
+	"github.com/fiwon123/crower/internal/session"
 
 	"github.com/spf13/cobra"
 )
@@ -26,7 +26,7 @@ By default the content goes to the archive's own folder; --out changes it.
 	crower extract files.zip --out ./build
 	crower extract "*.zip" --out ./build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		cfg, err := newApp(cmd)
+		cfg, err := newSession(cmd)
 		if err != nil {
 			return err
 		}
@@ -46,16 +46,16 @@ By default the content goes to the archive's own folder; --out changes it.
 // extractSession adapts the configuration to the ports the extract use case
 // declares.
 type extractSession struct {
-	legacySession
+	sessionPorts
 
 	archives *system.Archiver
 }
 
 // newExtractSession wires the configuration and the platform archiver.
-func newExtractSession(cfg *app.Config) extractSession {
+func newExtractSession(cfg *session.Session) extractSession {
 	return extractSession{
-		legacySession: newLegacySession(cfg),
-		archives:      system.NewArchiver(),
+		sessionPorts: newSessionPorts(cfg),
+		archives:     system.NewArchiver(),
 	}
 }
 
