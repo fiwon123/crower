@@ -56,3 +56,21 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $env:CGO_ENABLED = '1'
           go build -tags fyne ./...
+
+  macos:
+    name: Fyne macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build with the fyne tag
+        run: CGO_ENABLED=1 go build -tags fyne ./...
+
+      - name: Test the headless model
+        run: go test ./internal/desktop

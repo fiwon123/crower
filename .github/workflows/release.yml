@@ -241,6 +241,9 @@ jobs:
           - goos: windows
             goarch: amd64
             runner: windows-latest
+          - goos: darwin
+            goarch: arm64
+            runner: macos-latest
     steps:
       - name: Checkout tag
         uses: actions/checkout@v7
@@ -260,8 +263,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
 
-      - name: Build Fyne assets (Linux)
-        if: matrix.goos == 'linux'
+      - name: Build Fyne assets (Unix)
+        if: matrix.goos != 'windows'
         env:
           VERSION: ${{ needs.prepare.outputs.tag }}
           GOOS: ${{ matrix.goos }}
@@ -288,8 +291,8 @@ jobs:
           Pop-Location
           go run ./internal/tools/archiveverify build/dist
 
-      - name: Verify build provenance (Linux)
-        if: matrix.goos == 'linux'
+      - name: Verify build provenance (Unix)
+        if: matrix.goos != 'windows'
         env:
           EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
         run: |
@@ -387,13 +390,13 @@ jobs:
             echo "| Windows (amd64) | crower_${TAG}_windows_amd64.zip | crower_gui_${TAG}_windows_amd64.zip | crower_fyne_${TAG}_windows_amd64.zip |"
             echo "| Windows (arm64) | crower_${TAG}_windows_arm64.zip | crower_gui_${TAG}_windows_arm64.zip | — |"
             echo "| macOS (Intel) | crower_${TAG}_darwin_amd64.tar.gz | crower_gui_${TAG}_darwin_amd64.tar.gz | — |"
-            echo "| macOS (Apple Silicon) | crower_${TAG}_darwin_arm64.tar.gz | crower_gui_${TAG}_darwin_arm64.tar.gz | — |"
+            echo "| macOS (Apple Silicon) | crower_${TAG}_darwin_arm64.tar.gz | crower_gui_${TAG}_darwin_arm64.tar.gz | crower_fyne_${TAG}_darwin_arm64.tar.gz |"
             echo ""
             echo "### Installation"
             echo "- **Linux/macOS:** extract, make executable, move \`crower\` and \`cr\` to your PATH — or run the bundled \`add_to_path.sh\`"
             echo "- **Windows:** extract and add to PATH — or run the bundled \`add_to_path.bat\`"
             echo "- Run \`crower gui\` for TUI or \`crower desktop\` for native desktop UI"
-            echo "- The **Fyne** archives are a separate CGO build for Linux/Windows amd64; they add \`crower fyne\`. The other archives keep the cgo-free desktop."
+            echo "- The **Fyne** archives are a separate CGO build for Linux/Windows amd64 and macOS arm64; they add \`crower fyne\`. The other archives keep the cgo-free desktop."
             echo ""
             echo "### Verification"
             echo "See \`checksums.txt\` for SHA256 checksums. Every binary reports the commit it was built from:"
