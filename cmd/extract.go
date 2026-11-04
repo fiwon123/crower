@@ -1,7 +1,10 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/legacy/extractdom"
+	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/system"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/extractcontent"
 
 	"github.com/spf13/cobra"
 )
@@ -32,8 +35,38 @@ By default the content goes to the archive's own folder; --out changes it.
 			return missingArgs(cmd, "compressed file paths")
 		}
 
-		return extractdom.NewCore(cfg).Extract(args, outDirFlag)
+		session := newExtractSession(cfg)
+
+		return extractcontent.New(session, session, session, session).Run(
+			extractcontent.Request{Args: args, OutDir: outDirFlag},
+		)
 	},
+}
+
+// extractSession adapts the configuration to the ports the extract use case
+// declares.
+type extractSession struct {
+	legacySession
+
+	archives *system.Archiver
+}
+
+// newExtractSession wires the configuration and the platform archiver.
+func newExtractSession(cfg *app.Config) extractSession {
+	return extractSession{
+		legacySession: newLegacySession(cfg),
+		archives:      system.NewArchiver(),
+	}
+}
+
+// Extract expands one archive.
+func (s extractSession) Extract(ext, archive, outDir string) (string, error) {
+	return s.archives.Extract(ext, archive, outDir)
+}
+
+// ExtractNote is the history note for the extraction.
+func (s extractSession) ExtractNote(out string, args []string) string {
+	return notes.ExtractNote(out, args)
 }
 
 func init() {
