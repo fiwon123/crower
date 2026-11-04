@@ -210,7 +210,7 @@ func TestRuleViolation(t *testing.T) {
 		{
 			name: "a domain may not import a neighbour",
 			rule: domain,
-			imp:  modulePath + "/internal/data/command",
+			imp:  modulePath + "/internal/adapters/storage/command",
 			want: "this ring may only import from its own subtree",
 		},
 		{

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/command"
 	"github.com/fiwon123/crower/internal/helper"
 )
 

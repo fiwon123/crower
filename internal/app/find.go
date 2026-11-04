@@ -6,7 +6,7 @@ import (
 	"maps"
 	"slices"
 
-	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
 )
 
 // FindCommand resolves a key inside a history snapshot. A name wins over an
