@@ -135,5 +135,12 @@ func commandForShellContext(ctx context.Context, goos, shellName, line string) (
 		return nil, fmt.Errorf("%w: %q", errors.ErrUnknownShell, shellName)
 	}
 
+	// Go escapes an argument for CreateProcess; cmd has its own quoting rules
+	// and /c may strip the outer quotes. Hand cmd the line verbatim through
+	// CmdLine instead of letting Go escape it a second time (#185).
+	if goos == "windows" {
+		prepareWindows(command, line)
+	}
+
 	return command, nil
 }
