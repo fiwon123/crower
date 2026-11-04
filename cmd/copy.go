@@ -1,7 +1,11 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/legacy/copydom"
+	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/system"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/transfercontent"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/spf13/cobra"
 )
@@ -28,6 +32,45 @@ var copyCmd = &cobra.Command{
 			return missingArgs(cmd, "source paths and a destination")
 		}
 
-		return copydom.NewCore(cfg).Copy(args)
+		session := newTransferSession(cfg)
+
+		return transfercontent.New(session, session, session, session).Run(
+			transfercontent.Request{Op: operation.Copy, Args: args},
+		)
 	},
+}
+
+// transferSession adapts the configuration to the ports the copy and move use
+// case declares. One session serves both commands.
+type transferSession struct {
+	legacySession
+
+	*system.Transfer
+
+	paths *system.Paths
+}
+
+// newTransferSession wires the configuration, the platform transfer and the
+// filesystem query.
+func newTransferSession(cfg *app.Config) transferSession {
+	return transferSession{
+		legacySession: newLegacySession(cfg),
+		Transfer:      system.NewTransfer(),
+		paths:         system.NewPaths(),
+	}
+}
+
+// IsFile reports whether a source is a file rather than a folder.
+func (s transferSession) IsFile(path string) bool {
+	return s.paths.IsFile(path)
+}
+
+// CopyNote is the history note for a copy.
+func (s transferSession) CopyNote(subOp operation.SubOperation, args []string) string {
+	return notes.CopyNote(subOp, args)
+}
+
+// MoveNote is the history note for a move.
+func (s transferSession) MoveNote(subOp operation.SubOperation, args []string) string {
+	return notes.MoveNote(subOp, args)
 }
