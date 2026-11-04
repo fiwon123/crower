@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
 )
 
 // Ranging a Go map made the same config run a different command on different

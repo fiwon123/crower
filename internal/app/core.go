@@ -2,7 +2,7 @@ package app
 
 import (
 	"github.com/fiwon123/crower/internal/adapters/storage"
-	"github.com/fiwon123/crower/internal/data/command"
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
 )
 
 // InitApp reads the configuration at cfgFilePath and builds a run from it.

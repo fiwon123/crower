@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/command"
 )
 
 // newConfig builds a run against buffers instead of a terminal, rooted in a
