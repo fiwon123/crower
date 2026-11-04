@@ -50,9 +50,10 @@ interfaces it needs. The model under `internal/domain/` depends on the standard
 library only. Every operation has been ported (#215): `internal/legacy/` is gone,
 and the remaining `internal/data`/`internal/app` shapes are Phase 5 work.
 
-`internal/shell` is the one thing the domains share below that line: the
-platform's shell invocation (`sh -c` / `cmd /c`). A domain that needs to run a
-shell line depends on it, never on another operation.
+`internal/shell` is the one thing the rings share below that line: the
+platform's shell invocation (`sh -c` / `cmd /c`) and its quoting. An adapter
+that needs to run a shell line depends on it, never on another adapter; it
+stays the shared floor through Phase 5 rather than being absorbed.
 
 ## Project Structure
 
