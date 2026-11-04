@@ -67,7 +67,7 @@ depends on it to run `ls`, `cp` or `xdg-open`, never on another operation.
 - **Cobra with a flat command set** — `crower <operation>`, no nested verb groups, so every operation is discoverable from `--help`. (2026-02)
 - **The `cr` short alias ships next to the `crower` binary** — a name typed many times a day should be short. (2026-02)
 - **The release archive carries the README and the licenses** — a download has to be usable and lawful without the repository. (2026-02)
-- **The shell runner is infrastructure, not an operation** — `internal/shell` owns `sh -c`/`cmd /c`, so `list`, `copy` or `open` do not import the `execute` operation to run a command. (2026-11)
+- **The shell runner is infrastructure, not an operation** — `internal/shell` owns `sh -c`/`cmd /c`, so `list`, `copy` or `open` do not import the `execute` operation to run a command. It stays the shared floor below every adapter rather than being absorbed into `adapters/system`: quoting and running a line is the one thing storage, output, notes, github, system and update would all otherwise duplicate. (2026-11)
 
 ## Topology
 
