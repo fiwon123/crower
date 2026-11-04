@@ -224,9 +224,121 @@ jobs:
           name: ${{ matrix.goos }}-${{ matrix.goarch }}
           path: build/dist/*
 
+  fyne:
+    # The Fyne front end is a CGO build, so it cannot join the cross-compile
+    # matrix above: it runs on the target OS runner and ships only the
+    # crower_fyne_* archives. The six cgo-free archives are unchanged.
+    name: Build Fyne ${{ matrix.goos }}/${{ matrix.goarch }}
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: amd64
+            runner: windows-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Install X11/GL and Wayland headers
+        if: matrix.goos == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
+
+      - name: Build Fyne assets (Linux)
+        if: matrix.goos == 'linux'
+        env:
+          VERSION: ${{ needs.prepare.outputs.tag }}
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: '1'
+        run: make release-fyne-platform
+
+      - name: Build Fyne assets (Windows)
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.prepare.outputs.tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:CGO_ENABLED = '1'
+          $env:GOOS = 'windows'
+          $env:GOARCH = 'amd64'
+          New-Item -ItemType Directory -Force build/dist, build/fyne | Out-Null
+          go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower.exe .
+          Copy-Item build/crower.exe build/cr.exe
+          Copy-Item build/crower.exe, build/cr.exe, scripts/add_to_path.bat, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/fyne/
+          Push-Location build/fyne
+          Compress-Archive -Path * -DestinationPath "../dist/crower_fyne_${env:VERSION}_windows_amd64.zip" -Force
+          Pop-Location
+          go run ./internal/tools/archiveverify build/dist
+
+      - name: Verify build provenance (Linux)
+        if: matrix.goos == 'linux'
+        env:
+          EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+
+          INFO="$(go version -m build/crower)"
+          REVISION="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.revision=//p')"
+          MODIFIED="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.modified=//p')"
+
+          if [ -z "$REVISION" ]; then
+            echo "::error::build/crower carries no vcs.revision" >&2
+            exit 1
+          fi
+
+          if [ "$REVISION" != "$EXPECTED_COMMIT" ]; then
+            echo "::error::Fyne binary was built from $REVISION, expected $EXPECTED_COMMIT" >&2
+            exit 1
+          fi
+
+          if [ "$MODIFIED" != "false" ]; then
+            echo "::error::Fyne binary reports vcs.modified=$MODIFIED" >&2
+            exit 1
+          fi
+
+          echo "provenance OK: built from $REVISION, unmodified"
+
+      - name: Verify build provenance (Windows)
+        if: matrix.goos == 'windows'
+        shell: pwsh
+        env:
+          EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $info = go version -m build/crower.exe
+          $rev = (($info | Select-String 'vcs.revision=').Line -split 'vcs.revision=')[1].Trim()
+          if ([string]::IsNullOrWhiteSpace($rev)) { throw 'Fyne binary carries no vcs.revision' }
+          if ($rev -ne $env:EXPECTED_COMMIT) { throw "Fyne binary was built from $rev, expected $env:EXPECTED_COMMIT" }
+          if (-not ($info -match 'vcs.modified=false')) { throw 'Fyne binary reports a modified tree' }
+          Write-Host "provenance OK: built from $rev, unmodified"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: fyne-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: build/dist/*
+
   publish:
     name: Publish release
-    needs: [prepare, build]
+    needs: [prepare, build, fyne]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
@@ -268,19 +380,20 @@ jobs:
             echo "A cross-platform terminal file manager and command-alias manager with undoable history and per-item notes."
             echo ""
             echo "### Downloads"
-            echo "| Platform | CLI | GUI/Desktop |"
-            echo "| --- | --- | --- |"
-            echo "| Linux (amd64) | crower_${TAG}_linux_amd64.tar.gz | crower_gui_${TAG}_linux_amd64.tar.gz |"
-            echo "| Linux (arm64) | crower_${TAG}_linux_arm64.tar.gz | crower_gui_${TAG}_linux_arm64.tar.gz |"
-            echo "| Windows (amd64) | crower_${TAG}_windows_amd64.zip | crower_gui_${TAG}_windows_amd64.zip |"
-            echo "| Windows (arm64) | crower_${TAG}_windows_arm64.zip | crower_gui_${TAG}_windows_arm64.zip |"
-            echo "| macOS (Intel) | crower_${TAG}_darwin_amd64.tar.gz | crower_gui_${TAG}_darwin_amd64.tar.gz |"
-            echo "| macOS (Apple Silicon) | crower_${TAG}_darwin_arm64.tar.gz | crower_gui_${TAG}_darwin_arm64.tar.gz |"
+            echo "| Platform | CLI | GUI/Desktop | Fyne |"
+            echo "| --- | --- | --- | --- |"
+            echo "| Linux (amd64) | crower_${TAG}_linux_amd64.tar.gz | crower_gui_${TAG}_linux_amd64.tar.gz | crower_fyne_${TAG}_linux_amd64.tar.gz |"
+            echo "| Linux (arm64) | crower_${TAG}_linux_arm64.tar.gz | crower_gui_${TAG}_linux_arm64.tar.gz | — |"
+            echo "| Windows (amd64) | crower_${TAG}_windows_amd64.zip | crower_gui_${TAG}_windows_amd64.zip | crower_fyne_${TAG}_windows_amd64.zip |"
+            echo "| Windows (arm64) | crower_${TAG}_windows_arm64.zip | crower_gui_${TAG}_windows_arm64.zip | — |"
+            echo "| macOS (Intel) | crower_${TAG}_darwin_amd64.tar.gz | crower_gui_${TAG}_darwin_amd64.tar.gz | — |"
+            echo "| macOS (Apple Silicon) | crower_${TAG}_darwin_arm64.tar.gz | crower_gui_${TAG}_darwin_arm64.tar.gz | — |"
             echo ""
             echo "### Installation"
             echo "- **Linux/macOS:** extract, make executable, move \`crower\` and \`cr\` to your PATH — or run the bundled \`add_to_path.sh\`"
             echo "- **Windows:** extract and add to PATH — or run the bundled \`add_to_path.bat\`"
             echo "- Run \`crower gui\` for TUI or \`crower desktop\` for native desktop UI"
+            echo "- The **Fyne** archives are a separate CGO build for Linux/Windows amd64; they add \`crower fyne\`. The other archives keep the cgo-free desktop."
             echo ""
             echo "### Verification"
             echo "See \`checksums.txt\` for SHA256 checksums. Every binary reports the commit it was built from:"
