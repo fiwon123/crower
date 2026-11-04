@@ -142,24 +142,29 @@ func showCreate(model *desktop.Model, editor Editor, window fyne.Window, list *w
 			return
 		}
 
-		nameText := strings.TrimSpace(name.Text)
-		execText := strings.TrimSpace(exec.Text)
-
-		if nameText == "" || execText == "" {
-			showError("Name and exec are required.", window)
-			return
-		}
-
-		commands, history, err := editor.Create(nameText, splitAliases(aliases.Text), execText)
-		if err != nil {
-			showError(err.Error(), window)
-			return
-		}
-
-		model.Reload(commands, history)
-		list.Refresh()
-		list.UnselectAll()
+		applyCreate(model, editor, name.Text, aliases.Text, exec.Text, list, window)
 	}, window).Show()
+}
+
+// applyCreate is the form's submit path, separate from the dialog so a test
+// can exercise it without building the popup.
+func applyCreate(model *desktop.Model, editor Editor, nameText, aliasesText, execText string, list *widget.List, window fyne.Window) bool {
+	nameText = strings.TrimSpace(nameText)
+	execText = strings.TrimSpace(execText)
+
+	if nameText == "" || execText == "" {
+		showError("Name and exec are required.", window)
+		return false
+	}
+
+	commands, history, err := editor.Create(nameText, splitAliases(aliasesText), execText)
+	if err != nil {
+		showError(err.Error(), window)
+		return false
+	}
+
+	reload(model, commands, history, list)
+	return true
 }
 
 // showDelete asks for confirmation and removes the selected command.
@@ -174,16 +179,20 @@ func showDelete(model *desktop.Model, editor Editor, window fyne.Window, list *w
 			return
 		}
 
-		commands, history, err := editor.Delete(key)
-		if err != nil {
-			showError(err.Error(), window)
-			return
-		}
-
-		model.Reload(commands, history)
-		list.Refresh()
-		list.UnselectAll()
+		applyDelete(model, editor, key, list, window)
 	}, window)
+}
+
+// applyDelete is the confirmation's submit path.
+func applyDelete(model *desktop.Model, editor Editor, key string, list *widget.List, window fyne.Window) bool {
+	commands, history, err := editor.Delete(key)
+	if err != nil {
+		showError(err.Error(), window)
+		return false
+	}
+
+	reload(model, commands, history, list)
+	return true
 }
 
 // showEdit asks for the three editable fields and applies the change through
@@ -219,29 +228,40 @@ func showEdit(model *desktop.Model, editor Editor, window fyne.Window, list *wid
 			return
 		}
 
-		aliasList := splitAliases(aliases.Text)
-		changes := catalog.Changes{
-			Name:         strings.TrimSpace(name.Text),
-			Aliases:      aliasList,
-			Exec:         strings.TrimSpace(exec.Text),
-			ClearAliases: len(aliasList) == 0,
-		}
-
-		if changes.Name == "" || changes.Exec == "" {
-			showError("Name and exec are required.", window)
-			return
-		}
-
-		commands, history, err := editor.Update(key, changes)
-		if err != nil {
-			showError(err.Error(), window)
-			return
-		}
-
-		model.Reload(commands, history)
-		list.Refresh()
-		list.UnselectAll()
+		applyEdit(model, editor, key, name.Text, aliases.Text, exec.Text, list, window)
 	}, window).Show()
+}
+
+// applyEdit is the form's submit path, separate from the dialog so a test can
+// exercise it without building the popup.
+func applyEdit(model *desktop.Model, editor Editor, key, nameText, aliasesText, execText string, list *widget.List, window fyne.Window) bool {
+	aliasList := splitAliases(aliasesText)
+	changes := catalog.Changes{
+		Name:         strings.TrimSpace(nameText),
+		Aliases:      aliasList,
+		Exec:         strings.TrimSpace(execText),
+		ClearAliases: len(aliasList) == 0,
+	}
+
+	if changes.Name == "" || changes.Exec == "" {
+		showError("Name and exec are required.", window)
+		return false
+	}
+
+	commands, history, err := editor.Update(key, changes)
+	if err != nil {
+		showError(err.Error(), window)
+		return false
+	}
+
+	reload(model, commands, history, list)
+	return true
+}
+
+func reload(model *desktop.Model, commands catalog.Catalog, history timeline.Log, list *widget.List) {
+	model.Reload(commands, history)
+	list.Refresh()
+	list.UnselectAll()
 }
 
 func splitAliases(text string) []string {
