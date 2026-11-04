@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -12,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/data/history"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -1572,7 +1572,7 @@ func TestDeleteHistoryEntry(t *testing.T) {
 		t.Fatalf("read the history index: %v", err)
 	}
 
-	var history history.Data
+	var history timeline.Log
 	if err := json.Unmarshal(index, &history); err != nil {
 		t.Fatalf("decode the history index: %v", err)
 	}

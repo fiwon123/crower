@@ -8,8 +8,8 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -119,7 +119,7 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "crower.yaml")
 
-	legacy := history.New(filepath.Join(dir, "history"))
+	legacy := timeline.Log{}
 	legacy.Add(operation.Create, "", "main_operation=create;sub_operation=command;command_name=greet;command_exec=echo hi")
 
 	if err := utils.WriteJson(legacy, filepath.Join(dir, "historyhelper.json")); err != nil {
@@ -146,7 +146,7 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
 	dir := t.TempDir()
 
-	legacy := history.New(filepath.Join(dir, "history"))
+	legacy := timeline.Log{}
 	legacy.Add(operation.Create, "", `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_name=greet"`)
 	legacy.Add(operation.Execute, "real", "main_operation=execute;sub_operation=command;command_name=other")
 

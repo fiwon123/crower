@@ -2,12 +2,13 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/fiwon123/crower/internal/adapters/output"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/deletecommand"
-	"github.com/fiwon123/crower/internal/data/history"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
@@ -134,7 +135,7 @@ func (s deleteSession) VariablePath(path string) (string, error) {
 
 // HistoryTable renders the operation log.
 func (s deleteSession) HistoryTable() string {
-	return s.cfg.History.GetList()
+	return output.HistoryTable(s.cfg.History)
 }
 
 // ChooseHistoryEntry asks which history row to drop.
@@ -147,7 +148,7 @@ func (s deleteSession) ChooseHistoryEntry() (deletecommand.Entry, error) {
 		return deletecommand.Entry{}, err
 	}
 
-	content, ok := value.(history.Content)
+	content, ok := value.(timeline.Content)
 	if !ok {
 		return deletecommand.Entry{}, fmt.Errorf("selected row is not a history entry")
 	}
@@ -185,14 +186,14 @@ func (s deleteSession) RemoveHistoryEntry(entry deletecommand.Entry) (string, er
 // historyEntry finds the stored row the selected entry came from. The version
 // is the identity RemoveContent matches on; the file is what the snapshot is
 // called.
-func (s deleteSession) historyEntry(version int) (history.Content, bool) {
+func (s deleteSession) historyEntry(version int) (timeline.Content, bool) {
 	for _, content := range s.cfg.History.AllData {
 		if content.Version == version {
 			return content, true
 		}
 	}
 
-	return history.Content{}, false
+	return timeline.Content{}, false
 }
 
 // DeleteCommand is the history note for a deleted command.

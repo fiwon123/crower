@@ -2,12 +2,12 @@ package storage
 
 import (
 	"fmt"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -51,18 +51,18 @@ func (h *HistoryFiles) Ensure() error {
 
 // Load reads the history index. An empty file is a fresh installation, not a
 // broken one.
-func (h *HistoryFiles) Load() (history.Data, error) {
-	var data history.Data
+func (h *HistoryFiles) Load() (timeline.Log, error) {
+	var data timeline.Log
 
 	if err := utils.ReadJson(h.index, &data); err != nil {
-		return history.Data{}, fmt.Errorf("read history %s: %w", h.index, err)
+		return timeline.Log{}, fmt.Errorf("read history %s: %w", h.index, err)
 	}
 
 	return data, nil
 }
 
 // SaveIndex writes the history index without taking a snapshot.
-func (h *HistoryFiles) SaveIndex(data history.Data) error {
+func (h *HistoryFiles) SaveIndex(data timeline.Log) error {
 	return utils.WriteJson(data, h.index)
 }
 
