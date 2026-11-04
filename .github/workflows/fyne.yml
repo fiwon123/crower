@@ -7,8 +7,6 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-  push:
-    branches: [feat/329-fyne-edit] # temporary for this PR
 
 permissions:
   contents: read
