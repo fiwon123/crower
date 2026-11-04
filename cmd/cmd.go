@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/fiwon123/crower/internal/adapters/update"
 	"github.com/fiwon123/crower/internal/application/checkrelease"
 	"github.com/fiwon123/crower/internal/application/executecommand"
-	"github.com/fiwon123/crower/internal/legacy/upgradedom"
+	"github.com/fiwon123/crower/internal/application/upgradeapp"
 
 	"github.com/spf13/cobra"
 )
@@ -83,7 +84,9 @@ Every command has its own help: crower <command> --help.`,
 			return checkrelease.New(latestTag{}, session, session, session).Run(Version)
 
 		case upgradeFlag:
-			return upgradedom.NewCore(cfg).UpgradeApp(Version)
+			session := newLegacySession(cfg)
+
+			return upgradeapp.New(session, session, latestTag{}, update.New(), session).Run(Version)
 
 		case len(args) == 0:
 			return cmd.Help()

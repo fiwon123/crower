@@ -179,6 +179,11 @@ func (s legacySession) Check() string {
 	return notes.Check()
 }
 
+// UpgradeNote is the history note for a self-update.
+func (s legacySession) UpgradeNote() string {
+	return notes.UpgradeNote()
+}
+
 // Reset is the history note for a reset.
 func (s legacySession) Reset() string {
 	return notes.Reset()

@@ -1,4 +1,4 @@
-package upgradedom
+package update
 
 import (
 	"archive/tar"
@@ -16,7 +16,6 @@ import (
 	"testing"
 
 	crowererrors "github.com/fiwon123/crower/internal/errors"
-	"github.com/fiwon123/crower/internal/testutil"
 	"github.com/minio/selfupdate"
 )
 
@@ -244,19 +243,14 @@ func TestBinaryFromArchive(t *testing.T) {
 }
 
 func TestFetchBinaryChecksTheStatus(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("error before test: %v", err)
-	}
-
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.NotFound(w, nil)
 	}))
 	defer server.Close()
 
-	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+	handler := New().WithRelease(server.URL, server.Client())
 
-	_, err = handler.fetchBinary("v1.2.3", "crower_v1.2.3_linux_amd64.tar.gz")
+	_, err := handler.fetchBinary("v1.2.3", "crower_v1.2.3_linux_amd64.tar.gz")
 	if err == nil {
 		t.Fatal("a 404 returned no error")
 	}
@@ -267,11 +261,6 @@ func TestFetchBinaryChecksTheStatus(t *testing.T) {
 }
 
 func TestFetchBinaryReturnsTheExecutable(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("error before test: %v", err)
-	}
-
 	binary := "binary"
 	body := tarGzArchive(t, map[string]string{"crower": binary})
 
@@ -289,7 +278,7 @@ func TestFetchBinaryReturnsTheExecutable(t *testing.T) {
 	}))
 	defer server.Close()
 
-	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+	handler := New().WithRelease(server.URL, server.Client())
 
 	got, err := handler.fetchBinary("v1.2.3", "crower_v1.2.3_linux_amd64.tar.gz")
 	if err != nil {
@@ -328,11 +317,6 @@ func TestHTTPSOnlyRedirect(t *testing.T) {
 // The upgrade must hand the extracted executable, not the archive, to
 // selfupdate. The applier is replaced so the test binary survives.
 func TestUpgradeAppAppliesTheExtractedBinary(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("error before test: %v", err)
-	}
-
 	asset, err := AssetName(runtime.GOOS, runtime.GOARCH, "v1.2.3")
 	if err != nil {
 		t.Skipf("no upgrade asset for this platform: %v", err)
@@ -365,13 +349,14 @@ func TestUpgradeAppAppliesTheExtractedBinary(t *testing.T) {
 	var applied []byte
 
 	applyUpdate = func(reader io.Reader, _ selfupdate.Options) error {
-		applied, err = io.ReadAll(reader)
+		body, err := io.ReadAll(reader)
+		applied = body
 		return err
 	}
 
-	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+	handler := New().WithRelease(server.URL, server.Client())
 
-	if err := handler.UpgradeApp("v1.2.3"); err != nil {
+	if err := handler.Upgrade("v1.2.3"); err != nil {
 		t.Fatalf("UpgradeApp: %v", err)
 	}
 
@@ -382,11 +367,6 @@ func TestUpgradeAppAppliesTheExtractedBinary(t *testing.T) {
 
 // A failed download must not reach the applier.
 func TestUpgradeAppDoesNotApplyAFailedDownload(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("error before test: %v", err)
-	}
-
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	}))
@@ -401,9 +381,9 @@ func TestUpgradeAppDoesNotApplyAFailedDownload(t *testing.T) {
 		return nil
 	}
 
-	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+	handler := New().WithRelease(server.URL, server.Client())
 
-	if err := handler.UpgradeApp("v1.2.3"); err == nil {
+	if err := handler.Upgrade("v1.2.3"); err == nil {
 		t.Fatal("a 404 returned no error")
 	}
 
@@ -413,25 +393,15 @@ func TestUpgradeAppDoesNotApplyAFailedDownload(t *testing.T) {
 }
 
 func TestFetchBinaryRefusesAPlaintextBase(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("error before test: %v", err)
-	}
+	handler := New().WithRelease("http://example.com", nil)
 
-	handler := NewHandler(cfg).WithRelease("http://example.com", nil)
-
-	_, err = handler.fetchBinary("v1.2.3", "crower_v1.2.3_linux_amd64.tar.gz")
+	_, err := handler.fetchBinary("v1.2.3", "crower_v1.2.3_linux_amd64.tar.gz")
 	if err == nil || !strings.Contains(err.Error(), "only HTTPS") {
 		t.Errorf("error = %v, want the HTTPS refusal", err)
 	}
 }
 
 func TestFetchBinaryRejectsATamperedArchive(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("error before test: %v", err)
-	}
-
 	asset := "crower_v1.2.3_linux_amd64.tar.gz"
 	body := tarGzArchive(t, map[string]string{"crower": "binary"})
 
@@ -447,20 +417,15 @@ func TestFetchBinaryRejectsATamperedArchive(t *testing.T) {
 	}))
 	defer server.Close()
 
-	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+	handler := New().WithRelease(server.URL, server.Client())
 
-	_, err = handler.fetchBinary("v1.2.3", asset)
+	_, err := handler.fetchBinary("v1.2.3", asset)
 	if !errors.Is(err, crowererrors.ErrChecksumMismatch) {
 		t.Errorf("error = %v, want ErrChecksumMismatch", err)
 	}
 }
 
 func TestFetchBinaryRequiresAChecksumEntry(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("error before test: %v", err)
-	}
-
 	asset := "crower_v1.2.3_linux_amd64.tar.gz"
 	body := tarGzArchive(t, map[string]string{"crower": "binary"})
 
@@ -476,9 +441,9 @@ func TestFetchBinaryRequiresAChecksumEntry(t *testing.T) {
 	}))
 	defer server.Close()
 
-	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+	handler := New().WithRelease(server.URL, server.Client())
 
-	_, err = handler.fetchBinary("v1.2.3", asset)
+	_, err := handler.fetchBinary("v1.2.3", asset)
 	if !errors.Is(err, crowererrors.ErrChecksumUnavailable) {
 		t.Errorf("error = %v, want ErrChecksumUnavailable", err)
 	}
@@ -486,11 +451,6 @@ func TestFetchBinaryRequiresAChecksumEntry(t *testing.T) {
 
 // A release without checksums.txt must fail before the archive is fetched.
 func TestFetchBinaryRequiresChecksums(t *testing.T) {
-	cfg, _, err := testutil.New(t)
-	if err != nil {
-		t.Fatalf("error before test: %v", err)
-	}
-
 	asset := "crower_v1.2.3_linux_amd64.tar.gz"
 	body := tarGzArchive(t, map[string]string{"crower": "binary"})
 	archiveFetched := false
@@ -506,9 +466,9 @@ func TestFetchBinaryRequiresChecksums(t *testing.T) {
 	}))
 	defer server.Close()
 
-	handler := NewHandler(cfg).WithRelease(server.URL, server.Client())
+	handler := New().WithRelease(server.URL, server.Client())
 
-	_, err = handler.fetchBinary("v1.2.3", asset)
+	_, err := handler.fetchBinary("v1.2.3", asset)
 	if err == nil {
 		t.Fatal("a release without checksums.txt returned no error")
 	}

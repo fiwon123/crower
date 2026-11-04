@@ -1,4 +1,4 @@
-package upgradedom
+package update
 
 import (
 	"archive/tar"
@@ -16,7 +16,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/errors"
 	"github.com/minio/selfupdate"
 )
@@ -38,16 +37,20 @@ var versionPattern = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)
 // bytes the upgrade would install without replacing the test binary.
 var applyUpdate = selfupdate.Apply
 
-type Handler struct {
-	app     *app.Config
+// Updater downloads, verifies and applies a release archive.
+type Updater struct {
 	baseURL string
 	client  *http.Client
+	goos    string
+	goarch  string
 }
 
-func NewHandler(app *app.Config) *Handler {
-	return &Handler{
-		app:     app,
+// New builds an Updater for the host.
+func New() *Updater {
+	return &Updater{
 		baseURL: defaultReleaseBase,
+		goos:    runtime.GOOS,
+		goarch:  runtime.GOARCH,
 		client: &http.Client{
 			Timeout:       60 * time.Second,
 			CheckRedirect: httpsOnlyRedirect,
@@ -57,7 +60,7 @@ func NewHandler(app *app.Config) *Handler {
 
 // WithRelease points the handler at another release base and HTTP client. A
 // test uses it with an httptest server; production keeps the default.
-func (h *Handler) WithRelease(base string, client *http.Client) *Handler {
+func (h *Updater) WithRelease(base string, client *http.Client) *Updater {
 	h.baseURL = base
 
 	if client != nil {
@@ -90,8 +93,9 @@ func AssetName(goos string, goarch string, version string) (string, error) {
 	}
 }
 
-func (h *Handler) UpgradeApp(newVersion string) error {
-	asset, err := AssetName(runtime.GOOS, runtime.GOARCH, newVersion)
+// Upgrade downloads the named release for the host, verifies it and applies it.
+func (h *Updater) Upgrade(newVersion string) error {
+	asset, err := AssetName(h.goos, h.goarch, newVersion)
 	if err != nil {
 		return err
 	}
@@ -108,7 +112,7 @@ func (h *Handler) UpgradeApp(newVersion string) error {
 // checksums.txt, and returns the executable inside it. The status is checked
 // before the body is read: a 404 is a response, not an error, and used to be
 // handed to selfupdate as if it were a binary.
-func (h *Handler) fetchBinary(version string, asset string) ([]byte, error) {
+func (h *Updater) fetchBinary(version string, asset string) ([]byte, error) {
 	url, err := h.releaseURL(version, asset)
 	if err != nil {
 		return nil, err
@@ -135,7 +139,7 @@ func (h *Handler) fetchBinary(version string, asset string) ([]byte, error) {
 }
 
 // releaseURL builds a release download URL, refusing anything but HTTPS.
-func (h *Handler) releaseURL(version string, file string) (string, error) {
+func (h *Updater) releaseURL(version string, file string) (string, error) {
 	if !strings.HasPrefix(h.baseURL, "https://") {
 		return "", fmt.Errorf("only HTTPS allowed for security")
 	}
@@ -143,7 +147,7 @@ func (h *Handler) releaseURL(version string, file string) (string, error) {
 	return h.baseURL + "/" + version + "/" + file, nil
 }
 
-func (h *Handler) download(url string, limit int64) ([]byte, error) {
+func (h *Updater) download(url string, limit int64) ([]byte, error) {
 	resp, err := h.client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("download %s: %w", url, err)
@@ -169,7 +173,7 @@ func (h *Handler) download(url string, limit int64) ([]byte, error) {
 // fetchChecksum reads the SHA-256 of one asset from checksums.txt. A missing or
 // malformed entry is an error: skipping the check would silently accept a
 // tampered archive.
-func (h *Handler) fetchChecksum(version string, asset string) ([]byte, error) {
+func (h *Updater) fetchChecksum(version string, asset string) ([]byte, error) {
 	url, err := h.releaseURL(version, "checksums.txt")
 	if err != nil {
 		return nil, err
