@@ -1,0 +1,57 @@
+name: Fyne
+
+# The Fyne front end is a CGO build behind `-tags fyne`; the default `CI (Go)`
+# job stays cgo-free. This workflow proves the tagged binary builds on the two
+# supported platforms (#325).
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  push:
+    branches: [feat/325-fyne-view] # temporary, removed before the PR
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Fyne Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Install X11/GL and Wayland headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
+
+      - name: Build with the fyne tag
+        run: CGO_ENABLED=1 go build -tags fyne ./...
+
+      - name: Test the headless model
+        run: go test ./internal/desktop
+
+  windows:
+    name: Fyne Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build with the fyne tag
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:CGO_ENABLED = '1'
+          go build -tags fyne ./...
