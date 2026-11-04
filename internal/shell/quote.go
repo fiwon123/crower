@@ -37,18 +37,20 @@ func quotePosix(s string) string {
 
 // quoteWindows quotes one argument in a line handed to cmd /c.
 //
-// cmd has no backslash escape. An embedded quote is written as "" — cmd
-// toggles its quoting twice, so the state around it does not change, and the
-// program's argument parser reads the pair as one literal quote. Percent signs
-// are left alone: "%%" is a batch-file escape that a command line does not
-// collapse, so doubling corrupts every path containing "%". A "%VAR%" still
-// expands, which no command-line quoting can prevent.
+// The target program parses argv with the Windows rules (a \" is a literal
+// quote), so an embedded quote is written as \". cmd has no backslash escape,
+// so that same \" toggles cmd's quoting state; while cmd is outside a quote,
+// the characters that would otherwise separate commands (space, &, |, <, >,
+// ^, parentheses) are prefixed with ^. The child sees the original value, and
+// cmd does not run the metacharacters.
 //
-// A trailing run of backslashes is doubled when the value is quoted: a single
-// "\" before the closing quote escapes it, and the argument swallows whatever
-// follows. A backslash immediately before an embedded quote cannot be carried
-// exactly: the run is doubled so the quote state stays balanced, which is the
-// safe choice even though the value is not preserved byte for byte.
+// Percent signs are left alone: "%%" is a batch-file escape that a command line
+// does not collapse, so doubling corrupts every path containing "%". A "%VAR%"
+// still expands, which no command-line quoting can prevent.
+//
+// A backslash before a quote is doubled the way the Windows argv parser
+// expects: 2n+1 backslashes before a literal quote keep n backslashes, and a
+// trailing run is doubled before the closing quote.
 func quoteWindows(s string) string {
 	if s == "" {
 		return `""`
@@ -61,39 +63,53 @@ func quoteWindows(s string) string {
 	var quoted strings.Builder
 	quoted.WriteByte('"')
 
+	// cmd toggles its quote state on every unescaped ". The opening quote
+	// starts inside one; an embedded \" toggles it.
+	cmdQuoted := true
+	backslashes := 0
+
 	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case '"':
-			quoted.WriteString(`""`)
+		c := s[i]
 
+		switch c {
 		case '\\':
-			end := i
-			for end < len(s) && s[end] == '\\' {
-				end++
-			}
+			backslashes++
 
-			run := s[i:end]
-			quoted.WriteString(run)
-
-			// Both a trailing run and a run before an embedded quote must be
-			// even: an odd count turns the next quote into a literal escape
-			// and leaves the quoting state flipped, so a later "&" would run.
-			// The cost is that a backslash directly before a literal quote is
-			// not preserved; no cmd line can carry both.
-			if end == len(s) || s[end] == '"' {
-				quoted.WriteString(run)
-			}
-
-			i = end - 1
+		case '"':
+			quoted.WriteString(strings.Repeat(`\`, 2*backslashes+1))
+			quoted.WriteByte('"')
+			backslashes = 0
+			cmdQuoted = !cmdQuoted
 
 		default:
-			quoted.WriteByte(s[i])
+			quoted.WriteString(strings.Repeat(`\`, backslashes))
+			backslashes = 0
+
+			if !cmdQuoted && needsCmdEscape(c) {
+				quoted.WriteByte('^')
+			}
+
+			quoted.WriteByte(c)
 		}
 	}
 
+	// A trailing run must be even, or the closing quote would be escaped for
+	// the child's argv parser.
+	quoted.WriteString(strings.Repeat(`\`, 2*backslashes))
 	quoted.WriteByte('"')
 
 	return quoted.String()
+}
+
+// needsCmdEscape reports whether c is a cmd metacharacter (or whitespace) that
+// must be prefixed with ^ while cmd is outside a quote.
+func needsCmdEscape(c byte) bool {
+	switch c {
+	case ' ', '\t', '&', '|', '<', '>', '^', '(', ')':
+		return true
+	default:
+		return false
+	}
 }
 
 // needsWindowsQuote reports whether cmd would read s as more than one word, or
