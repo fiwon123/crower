@@ -59,6 +59,17 @@ func NewModel(commands catalog.Catalog, history timeline.Log, exec Executor) *Mo
 	}
 }
 
+// Reload replaces the command set and history after an edit and resets the
+// selection and filter, so the list cannot point at a name that no longer
+// exists.
+func (m *Model) Reload(commands catalog.Catalog, history timeline.Log) {
+	m.Commands = commands
+	m.History = history
+	m.Keys = commands.Names()
+	m.Index = 0
+	m.Filter = ""
+}
+
 func (m *Model) FilteredKeys() []string {
 	if m.Filter == "" {
 		return m.Keys

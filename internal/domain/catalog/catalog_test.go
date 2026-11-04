@@ -257,6 +257,21 @@ func TestUpdateKeepsTargetFields(t *testing.T) {
 	}
 }
 
+// An empty alias slice means "not supplied"; ClearAliases is how a caller asks
+// for an empty list instead.
+func TestUpdateCanClearAliases(t *testing.T) {
+	original := New(nil, []Command{{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi"}})
+
+	result, err := original.Update("greet", Changes{ClearAliases: true})
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	if len(result.New.Aliases) != 0 {
+		t.Errorf("Aliases = %v, want none", result.New.Aliases)
+	}
+}
+
 // The environment is a map, so a copy that shares it lets a caller change the
 // catalog through Get.
 func TestCommandCloneCopiesEnv(t *testing.T) {
