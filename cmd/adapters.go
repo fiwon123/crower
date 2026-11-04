@@ -80,6 +80,16 @@ func (s legacySession) Debug(message string, data ...any) {
 	s.cfg.Logger.Debug(message, data...)
 }
 
+// ConfigFile is the path of the configuration file.
+func (s legacySession) ConfigFile() string {
+	return s.cfg.ConfigFile()
+}
+
+// ConfigFolder is the folder the configuration lives in.
+func (s legacySession) ConfigFolder() string {
+	return s.cfg.ConfigFolder()
+}
+
 // Table renders the command table from the catalog it is given.
 func (s legacySession) Table(commands catalog.Catalog) string {
 	return output.CommandsTable(commands)

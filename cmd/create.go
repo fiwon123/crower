@@ -12,7 +12,6 @@ import (
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
-	"github.com/fiwon123/crower/internal/legacy/opendom"
 
 	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
@@ -113,7 +112,7 @@ type createSession struct {
 	scripts     *system.Scripts
 	processes   *system.Processes
 	environment *system.Environment
-	opener      *opendom.Handler
+	opener      *system.Opener
 }
 
 // newCreateSession wires the configuration, the renderer and the adapters
@@ -125,7 +124,7 @@ func newCreateSession(cfg *app.Config) createSession {
 		scripts:       system.NewScripts(filepath.Join(cfg.ConfigFolder(), "scripts")),
 		processes:     system.NewProcesses(),
 		environment:   system.NewEnvironment(),
-		opener:        opendom.NewHandler(cfg),
+		opener:        system.NewOpener(),
 	}
 }
 
@@ -228,11 +227,20 @@ func (s createSession) AddPath(path string) (string, error) {
 
 // Open opens the folder that holds the new script, so the user can edit it.
 //
-// It still goes through the open operation's handler: that operation has not
-// been ported yet, and one operation importing another is what the shell
-// package exists to prevent. The wiring changes when `open` moves.
+// The diagnostic and the command's own output are still written the way the
+// open operation writes them.
 func (s createSession) Open(path string) error {
-	return s.opener.Open([]string{path})
+	command, output, err := s.opener.Open(path)
+
+	if command != "" {
+		s.cfg.Logger.Info("opening: ", command)
+	}
+
+	if output != "" {
+		s.cfg.Logger.Out(output)
+	}
+
+	return err
 }
 
 // CreateCommandNote is the history note for a created command.
