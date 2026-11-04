@@ -125,7 +125,39 @@ func checkNames(entries []string) []string {
 			"arch-suffixed binary %q: package the plain name, the archive filename already carries the platform", name,
 		))
 	}
+
+	for _, entry := range entries {
+		if isUnsafePath(entry) {
+			problems = append(problems, fmt.Sprintf(
+				"unsafe member %q: archive entries must be plain file names, never a parent or absolute path", entry,
+			))
+		}
+	}
 	return problems
+}
+
+// isUnsafePath reports whether an archive member escapes the extraction
+// directory. A member named ../README.md is what BSD tar wrote when the Fyne
+// archive was built from -C ../scripts; extraction refuses it, and an extractor
+// that strips the prefix writes outside the target.
+func isUnsafePath(entry string) bool {
+	normalized := strings.ReplaceAll(entry, `\`, "/")
+
+	if strings.HasPrefix(normalized, "/") {
+		return true
+	}
+
+	if len(normalized) > 1 && normalized[1] == ':' {
+		return true
+	}
+
+	for _, part := range strings.Split(normalized, "/") {
+		if part == ".." {
+			return true
+		}
+	}
+
+	return false
 }
 
 // isArchSuffixed reports whether base looks like crower_linux_amd64 or
