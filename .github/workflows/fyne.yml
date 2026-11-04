@@ -1,8 +1,8 @@
 name: Fyne
 
 # The Fyne front end is a CGO build behind `-tags fyne`; the default `CI (Go)`
-# job stays cgo-free. This workflow proves the tagged binary builds on the two
-# supported platforms (#325).
+# job stays cgo-free. This workflow proves the tagged binary builds on every
+# supported platform (#325, #333, #335).
 on:
   pull_request:
     branches: [main]
@@ -56,3 +56,39 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $env:CGO_ENABLED = '1'
           go build -tags fyne ./...
+
+  macos:
+    name: Fyne macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build with the fyne tag
+        run: CGO_ENABLED=1 go build -tags fyne ./...
+
+      - name: Test the headless model
+        run: go test ./internal/desktop
+
+  macos-intel:
+    name: Fyne macOS Intel
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build with the fyne tag
+        run: CGO_ENABLED=1 go build -tags fyne ./...
+
+      - name: Test the headless model
+        run: go test ./internal/desktop

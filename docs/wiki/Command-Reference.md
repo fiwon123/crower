@@ -432,7 +432,8 @@ crower desktop
 ## 🖼️ crower fyne
 
 Open the Fyne window. This command exists only in the `crower_fyne_*` archive
-(Linux/Windows amd64); the default archive keeps the cgo-free `desktop`.
+(Linux/Windows amd64, macOS arm64/Intel); the default archive keeps the
+cgo-free `desktop`.
 
 ```bash
 crower fyne

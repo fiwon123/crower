@@ -150,13 +150,13 @@ func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
 	}
 }
 
-// The Fyne job is a separate CGO build. It targets Linux and Windows amd64,
-// and its rows must stay on runners that exist; it is not part of the six
-// cgo-free targets above.
+// The Fyne job is a separate CGO build. It targets Linux/Windows amd64 and
+// macOS arm64/Intel, and its rows must stay on runners that exist; it is not
+// part of the six cgo-free targets above.
 func TestReleaseWorkflowBuildsTheFynePlatforms(t *testing.T) {
 	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "fyne"))
-	if len(targets) != 2 {
-		t.Fatalf("found %d Fyne targets, want 2", len(targets))
+	if len(targets) != 4 {
+		t.Fatalf("found %d Fyne targets, want 4", len(targets))
 	}
 
 	built := make(map[string]bool, len(targets))
@@ -168,7 +168,7 @@ func TestReleaseWorkflowBuildsTheFynePlatforms(t *testing.T) {
 		}
 	}
 
-	for _, platform := range []string{"linux/amd64", "windows/amd64"} {
+	for _, platform := range []string{"linux/amd64", "windows/amd64", "darwin/arm64", "darwin/amd64"} {
 		if !built[platform] {
 			t.Errorf("the Fyne release no longer builds %s", platform)
 		}

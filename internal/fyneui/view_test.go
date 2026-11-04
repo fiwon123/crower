@@ -19,6 +19,20 @@ func (stubExecutor) Execute(string, []string) (string, string, error) {
 	return "", "", nil
 }
 
+type stubEditor struct{}
+
+func (stubEditor) Update(string, catalog.Changes) (catalog.Catalog, timeline.Log, error) {
+	return catalog.New(nil, nil), timeline.Log{}, nil
+}
+
+func (stubEditor) Create(string, []string, string) (catalog.Catalog, timeline.Log, error) {
+	return catalog.New(nil, nil), timeline.Log{}, nil
+}
+
+func (stubEditor) Delete(string) (catalog.Catalog, timeline.Log, error) {
+	return catalog.New(nil, nil), timeline.Log{}, nil
+}
+
 // The view builds over the headless model and attaches to a window. The model
 // itself is covered by internal/desktop; this is the adapter smoke test.
 func TestNewContentBuildsOverTheModel(t *testing.T) {
@@ -31,7 +45,7 @@ func TestNewContentBuildsOverTheModel(t *testing.T) {
 	)
 
 	window := test.NewWindow(nil)
-	content := NewContent(model, window)
+	content := NewContent(model, window, stubEditor{})
 	if content == nil {
 		t.Fatal("NewContent returned nil")
 	}

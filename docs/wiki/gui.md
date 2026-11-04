@@ -15,14 +15,16 @@ crower fyne
 ```
 
 All three read the same `crower.yaml`, so a command created in the CLI appears
-in each, and anything done there lands in the history.
+in each, and anything done there lands in the history. The Fyne window can
+create, edit and delete commands with the same catalog rules and history notes
+as the CLI.
 
 > [!NOTE]
 > `desktop` needs a graphical session; in a terminal-only environment use `gui`.
-> `fyne` exists only in the `crower_fyne_<version>_linux_amd64` and
-> `crower_fyne_<version>_windows_amd64` archives; the default archive keeps the
-> cgo-free `desktop`. The windows are not exercised by CI — see
-> **[🧪 Verifying claims](Verifying-claims)**.
+> `fyne` exists only in the `crower_fyne_<version>_linux_amd64`,
+> `_windows_amd64`, `_darwin_arm64` and `_darwin_amd64` archives; the default
+> archive keeps the cgo-free `desktop`. The windows are not exercised by CI —
+> see **[🧪 Verifying claims](Verifying-claims)**.
 
 ## 🔗 Related
 

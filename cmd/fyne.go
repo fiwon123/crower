@@ -24,7 +24,7 @@ The default crower binary ships the cgo-free desktop instead.`,
 			return err
 		}
 
-		fyneui.Run(cfg.Catalog(), cfg.History, newExecutor(cfg))
+		fyneui.Run(cfg.Catalog(), cfg.History, newExecutor(cfg), newFyneEditor(cfg))
 		return nil
 	},
 }

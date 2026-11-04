@@ -39,10 +39,10 @@ A terminal file manager and command-alias manager with undoable history and per-
 | 🐧 Linux arm64 | `crower_vX.Y.Z_linux_arm64.tar.gz` | `crower_gui_vX.Y.Z_linux_arm64.tar.gz` | — |
 | 🪟 Windows amd64 | `crower_vX.Y.Z_windows_amd64.zip` | `crower_gui_vX.Y.Z_windows_amd64.zip` | `crower_fyne_vX.Y.Z_windows_amd64.zip` |
 | 🪟 Windows arm64 | `crower_vX.Y.Z_windows_arm64.zip` | `crower_gui_vX.Y.Z_windows_arm64.zip` | — |
-| 🍎 macOS Intel | `crower_vX.Y.Z_darwin_amd64.tar.gz` | `crower_gui_vX.Y.Z_darwin_amd64.tar.gz` | — |
-| 🍎 macOS Apple Silicon | `crower_vX.Y.Z_darwin_arm64.tar.gz` | `crower_gui_vX.Y.Z_darwin_arm64.tar.gz` | — |
+| 🍎 macOS Intel | `crower_vX.Y.Z_darwin_amd64.tar.gz` | `crower_gui_vX.Y.Z_darwin_amd64.tar.gz` | `crower_fyne_vX.Y.Z_darwin_amd64.tar.gz` |
+| 🍎 macOS Apple Silicon | `crower_vX.Y.Z_darwin_arm64.tar.gz` | `crower_gui_vX.Y.Z_darwin_arm64.tar.gz` | `crower_fyne_vX.Y.Z_darwin_arm64.tar.gz` |
 
-Each archive includes `crower`, the `cr` alias, README and licenses. The CLI archives also include the `add_to_path` installer. The Fyne archives are a separate CGO build for Linux/Windows amd64 and add `crower fyne`; the other archives keep the cgo-free desktop.
+Each archive includes `crower`, the `cr` alias, README and licenses. The CLI archives also include the `add_to_path` installer. The Fyne archives are a separate CGO build for Linux/Windows amd64 and macOS arm64/Intel and add `crower fyne`; the other archives keep the cgo-free desktop.
 
 ## ⚙️ Install
 
