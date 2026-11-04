@@ -31,6 +31,11 @@ crower update --last -e "make test"          # edit what you just ran
 > Every update appends to the history, so the previous text is still reachable
 > with [`revert`](revert).
 
+> [!NOTE]
+> `Description`, `Params`, `Shell`, `Cwd`, `Env` and `Timeout` are part of the
+> command schema, but `update` has no flags for them yet: edit the configuration
+> file or re-import a pack. See [`execute`](execute#-execution-target).
+
 ## 🔗 Related
 
 [`create`](create) · [`delete`](delete) · [`list`](list) · **[📖 Commands](How-to-Use)**

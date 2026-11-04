@@ -28,6 +28,22 @@ shell the command meant, not the requirement that it exists.
 under a secret-looking key is refused, because a pack is a file people commit
 and share.
 
+A whole pack can describe itself:
+
+```toml
+[deploy]
+Description = "Ship the API"
+Exec        = "rsync -az ./ {1}:/srv/api && ssh {1} 'systemctl restart api'"
+Shell       = "sh"
+Cwd         = "~/projects/api"
+Env         = { STAGE = "prod", TOKEN = "${DEPLOY_TOKEN}" }
+Timeout     = "120s"
+Params      = ["host"]
+AllAlias    = ["d"]
+```
+
+A `Steps` command inherits the same target for every step.
+
 ## 📥 Import
 
 ```bash
