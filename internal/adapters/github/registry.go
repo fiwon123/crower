@@ -123,6 +123,8 @@ func (r *Registry) Pack(name string) ([]catalog.Command, string, error) {
 			Params:      value.Params,
 			Shell:       value.Shell,
 			Cwd:         value.Cwd,
+			Env:         value.Env,
+			Timeout:     value.Timeout,
 		})
 	}
 

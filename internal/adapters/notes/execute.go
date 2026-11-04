@@ -30,6 +30,14 @@ func ExecuteCommandNote(command catalog.Command, params []string) string {
 		builder.AddCommandShell(command.Shell)
 	}
 
+	if len(command.Env) > 0 {
+		builder.AddCommandEnv(command.Env)
+	}
+
+	if command.Timeout != "" {
+		builder.AddCommandTimeout(command.Timeout)
+	}
+
 	return builder.
 		AddCrowerExec("execute", append([]string{command.Name}, params...)).
 		Build()
@@ -53,6 +61,14 @@ func ExecuteLastNote(op operation.Operation, command catalog.Command, params []s
 
 	if command.Shell != "" {
 		builder.AddCommandShell(command.Shell)
+	}
+
+	if len(command.Env) > 0 {
+		builder.AddCommandEnv(command.Env)
+	}
+
+	if command.Timeout != "" {
+		builder.AddCommandTimeout(command.Timeout)
 	}
 
 	switch op {

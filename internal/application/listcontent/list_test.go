@@ -162,7 +162,7 @@ func TestListCommands(t *testing.T) {
 	h.state.commands = catalog.New(
 		[]string{"greet", "build"},
 		[]catalog.Command{
-			{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi", Description: "Say hi", Params: []string{"name"}, Shell: "pwsh", Cwd: "~/api"},
+			{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi", Description: "Say hi", Params: []string{"name"}, Shell: "pwsh", Cwd: "~/api", Env: map[string]string{"STAGE": "prod"}, Timeout: "30s"},
 			{Name: "build", Exec: "go build ./..."},
 		},
 	)
@@ -194,6 +194,10 @@ func TestListCommands(t *testing.T) {
 
 	if payload.Commands[0].Shell != "pwsh" || payload.Commands[0].Cwd != "~/api" {
 		t.Errorf("target = %+v, want the shell and cwd", payload.Commands[0])
+	}
+
+	if payload.Commands[0].Env["STAGE"] != "prod" || payload.Commands[0].Timeout != "30s" {
+		t.Errorf("target = %+v, want the env and timeout", payload.Commands[0])
 	}
 
 	// An empty alias list encodes as [] rather than null.

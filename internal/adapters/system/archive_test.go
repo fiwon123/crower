@@ -93,7 +93,7 @@ func TestArchiverExtractsATar(t *testing.T) {
 	}
 
 	archive := filepath.Join(dir, "a.tar")
-	if _, err := system.NewRunner().Run("tar -cf "+shell.Quote(archive)+" -C "+shell.Quote(dir)+" content.txt", "", ""); err != nil {
+	if _, err := system.NewRunner().Run("tar -cf "+shell.Quote(archive)+" -C "+shell.Quote(dir)+" content.txt", system.Target{}); err != nil {
 		t.Fatalf("build the tar: %v", err)
 	}
 

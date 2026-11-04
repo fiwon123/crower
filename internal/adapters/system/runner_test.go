@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -35,7 +36,7 @@ func TestNestedDepthIsZeroWithoutTheVariable(t *testing.T) {
 func TestRunNestedRefusesToGoTooDeep(t *testing.T) {
 	t.Setenv(nestedDepthEnv, strconv.Itoa(maxExecDepth))
 
-	_, err := NewRunner().RunNested("crower list", "", "")
+	_, err := NewRunner().RunNested("crower list", Target{})
 	if err == nil {
 		t.Fatal("RunNested() at the maximum depth returned no error")
 	}
@@ -133,5 +134,129 @@ func TestExpandHomeLeavesAnotherUserAlone(t *testing.T) {
 
 	if got != "~other/x" {
 		t.Errorf("expandHome(\"~other/x\") = %q, want it unchanged", got)
+	}
+}
+
+// A literal value is accepted unless its key looks like a credential.
+func TestResolveEnvValueLiteral(t *testing.T) {
+	got, err := resolveEnvValue("STAGE", "prod")
+	if err != nil || got != "prod" {
+		t.Fatalf("resolveEnvValue = %q, %v; want prod and no error", got, err)
+	}
+}
+
+// "${VAR}" reads the process environment at execution time.
+func TestResolveEnvValueReference(t *testing.T) {
+	t.Setenv("CROWER_TEST_SOURCE", "from-environment")
+
+	got, err := resolveEnvValue("TOKEN", "${CROWER_TEST_SOURCE}")
+	if err != nil || got != "from-environment" {
+		t.Fatalf("resolveEnvValue = %q, %v; want the environment value", got, err)
+	}
+}
+
+// A reference to an unset variable is an error, not an empty value: a command
+// must not run with a missing credential and call it success.
+func TestResolveEnvValueRejectsAnUnsetReference(t *testing.T) {
+	_, err := resolveEnvValue("TOKEN", "${CROWER_TEST_UNSET_XYZ}")
+	if !errors.Is(err, crerrors.ErrUnsetEnvVar) {
+		t.Fatalf("error = %v, want ErrUnsetEnvVar", err)
+	}
+}
+
+// A literal under a secret-looking key is refused; a reference is the way to
+// carry one.
+func TestResolveEnvValueRejectsASecretLiteral(t *testing.T) {
+	tests := []struct {
+		name string
+		key  string
+	}{
+		{"token", "API_TOKEN"},
+		{"secret", "CLIENT_SECRET"},
+		{"password", "DB_PASSWORD"},
+		{"passwd", "PASSWD"},
+		{"credential", "AWS_CREDENTIAL"},
+		{"key suffix", "API_KEY"},
+		{"bare key", "KEY"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if _, err := resolveEnvValue(tt.key, "literal"); !errors.Is(err, crerrors.ErrSecretEnvValue) {
+				t.Fatalf("error = %v, want ErrSecretEnvValue", err)
+			}
+		})
+	}
+}
+
+// Not every key with KEY in it is a secret: a keyboard layout is not.
+func TestResolveEnvValueAllowsAnOrdinaryKey(t *testing.T) {
+	if _, err := resolveEnvValue("KEYBOARD_LAYOUT", "us"); err != nil {
+		t.Fatalf("resolveEnvValue: %v", err)
+	}
+}
+
+// Only the exact "${VAR}" form is a reference.
+func TestEnvReference(t *testing.T) {
+	tests := []struct {
+		value string
+		name  string
+		ok    bool
+	}{
+		{"${TOKEN}", "TOKEN", true},
+		{"${_A1}", "_A1", true},
+		{"${}", "", false},
+		{"${1BAD}", "", false},
+		{"${A-B}", "", false},
+		{"prefix${TOKEN}", "", false},
+		{"${TOKEN}suffix", "", false},
+		{"plain", "", false},
+	}
+
+	for _, tt := range tests {
+		name, ok := envReference(tt.value)
+		if ok != tt.ok || name != tt.name {
+			t.Errorf("envReference(%q) = %q, %v; want %q, %v", tt.value, name, ok, tt.name, tt.ok)
+		}
+	}
+}
+
+// buildEnv replaces a process value rather than appending a duplicate, and the
+// result is sorted so the child environment is deterministic.
+func TestBuildEnvOverridesAndSorts(t *testing.T) {
+	t.Setenv("CROWER_TEST_ORDER", "process")
+
+	env, err := buildEnv(map[string]string{"CROWER_TEST_ORDER": "override", "CROWER_TEST_A": "1"})
+	if err != nil {
+		t.Fatalf("buildEnv: %v", err)
+	}
+
+	count := 0
+
+	for _, entry := range env {
+		if strings.HasPrefix(entry, "CROWER_TEST_ORDER=") {
+			count++
+
+			if entry != "CROWER_TEST_ORDER=override" {
+				t.Errorf("entry = %q, want the override", entry)
+			}
+		}
+	}
+
+	if count != 1 {
+		t.Errorf("CROWER_TEST_ORDER appears %d times, want once", count)
+	}
+
+	if !slices.IsSorted(env) {
+		t.Errorf("environment is not sorted: %v", env)
+	}
+}
+
+// A malformed or non-positive timeout is refused before anything runs.
+func TestTimeoutContextRejectsBadDurations(t *testing.T) {
+	for _, raw := range []string{"soon", "0s", "-1s", "5"} {
+		if _, _, err := timeoutContext(raw); !errors.Is(err, crerrors.ErrInvalidTimeout) {
+			t.Errorf("timeoutContext(%q) error = %v, want ErrInvalidTimeout", raw, err)
+		}
 	}
 }

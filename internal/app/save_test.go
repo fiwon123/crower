@@ -220,14 +220,16 @@ func TestCommitWritesSnapshotIndexAndCommandFile(t *testing.T) {
 // Commit rewrites the whole command map through toData, so a field it forgets
 // is lost by every create, update, delete and restore. Pin the target fields on
 // the path a user's data actually takes: in memory, in the file, and back.
-func TestCommitKeepsShellAndCwd(t *testing.T) {
+func TestCommitKeepsTargetFields(t *testing.T) {
 	cfg := newTestConfig(t)
 
 	commands := catalog.New(nil, []catalog.Command{{
-		Name:  "deploy",
-		Exec:  "pwd",
-		Shell: "sh",
-		Cwd:   "~/projects/api",
+		Name:    "deploy",
+		Exec:    "pwd",
+		Shell:   "sh",
+		Cwd:     "~/projects/api",
+		Env:     map[string]string{"STAGE": "prod"},
+		Timeout: "30s",
 	}})
 
 	if err := cfg.Commit(commands, operation.Create, "deploy", "main_operation=create"); err != nil {
@@ -239,11 +241,19 @@ func TestCommitKeepsShellAndCwd(t *testing.T) {
 		t.Fatalf("stored = %+v, want the shell and cwd kept", stored)
 	}
 
+	if stored.Env["STAGE"] != "prod" || stored.Timeout != "30s" {
+		t.Fatalf("stored = %+v, want the env and timeout kept", stored)
+	}
+
 	reloaded := newTestConfigAt(t, cfg.ConfigFile())
 
 	back := reloaded.AllCommandsByName.Get("deploy")
 	if back == nil || back.Shell != "sh" || back.Cwd != "~/projects/api" {
 		t.Errorf("reloaded = %+v, want the shell and cwd on disk", back)
+	}
+
+	if back.Env["STAGE"] != "prod" || back.Timeout != "30s" {
+		t.Errorf("reloaded = %+v, want the env and timeout on disk", back)
 	}
 }
 

@@ -75,7 +75,7 @@ silently ignored would report success without honouring it.
 
 ---
 
-`crower list --json` rows carry `description`, `params`, `shell` and `cwd` when the command declares them. The first two are metadata; the last two say how it runs.
+`crower list --json` rows carry `description`, `params`, `shell`, `cwd`, `env` and `timeout` when the command declares them. The first two are metadata; the rest say how it runs.
 
 ## ➕ crower create
 
@@ -218,6 +218,13 @@ working directory, and a leading `~` is the user's home. Every step of a Steps
 command inherits both. An unknown shell, or a folder that does not exist, fails
 before anything runs. Set both in the configuration file or in a pack; `create`
 and `update` have no flags for them yet.
+
+`Env` merges entries over the process environment. A value that is exactly
+`${VAR}` reads `VAR` from the environment, and an unset variable is an error
+rather than an empty value. A literal under a secret-looking key (`*TOKEN*`,
+`*SECRET*`, `*PASSWORD*`, `*_KEY`, …) is refused: a pack carries placeholders,
+never secrets. `Timeout` is a Go duration (`120s`, `2m`) applied to **each**
+step; an overrun kills the step and the error names the limit.
 
 ## 📂 crower open
 

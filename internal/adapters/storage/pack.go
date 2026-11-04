@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"maps"
 
 	"github.com/fiwon123/crower/internal/adapters/storage/command"
 	"github.com/fiwon123/crower/internal/domain/catalog"
@@ -34,6 +35,8 @@ func (p *Packs) Write(path string, commands []catalog.Command) error {
 			Params:      item.Params,
 			Shell:       item.Shell,
 			Cwd:         item.Cwd,
+			Env:         maps.Clone(item.Env),
+			Timeout:     item.Timeout,
 		}
 	}
 
@@ -73,6 +76,8 @@ func fromPack(pack map[string]command.Data) []catalog.Command {
 			Params:      value.Params,
 			Shell:       value.Shell,
 			Cwd:         value.Cwd,
+			Env:         value.Env,
+			Timeout:     value.Timeout,
 		})
 	}
 

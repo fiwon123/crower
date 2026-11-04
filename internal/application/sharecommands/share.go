@@ -10,6 +10,7 @@ package sharecommands
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -246,6 +247,8 @@ func (u *UseCase) importPack(pack []catalog.Command, overwrite bool) error {
 			Params:      imported.Params,
 			Shell:       imported.Shell,
 			Cwd:         imported.Cwd,
+			Env:         maps.Clone(imported.Env),
+			Timeout:     imported.Timeout,
 		})
 
 		stagedNames[key] = true

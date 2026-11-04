@@ -39,6 +39,28 @@ var ErrUnknownShell = stderrors.New("unknown shell")
 // directory. A command that names one must fail before anything runs.
 var ErrInvalidWorkDir = stderrors.New("invalid working directory")
 
+// ErrInvalidTimeout reports a timeout that is not a positive duration. A zero
+// or negative timeout would kill every step immediately, so it is refused
+// rather than obeyed.
+var ErrInvalidTimeout = stderrors.New("invalid timeout")
+
+// ErrInvalidEnv reports an environment entry that cannot be handed to a
+// process: an empty key, or a key or value carrying "=" or NUL.
+var ErrInvalidEnv = stderrors.New("invalid environment entry")
+
+// ErrSecretEnvValue reports a literal value under a key that looks like a
+// secret. The portable schema accepts a reference ("${VAR}") there, never the
+// secret itself: a pack is a file people commit and share.
+var ErrSecretEnvValue = stderrors.New("secret-looking environment value")
+
+// ErrUnsetEnvVar reports a "${VAR}" reference to a variable the process
+// environment does not define. Passing an empty value would make the command
+// run with a missing credential instead of saying so.
+var ErrUnsetEnvVar = stderrors.New("environment variable is not set")
+
+// ErrTimeout reports a step killed because it exceeded its command's timeout.
+var ErrTimeout = stderrors.New("step timed out")
+
 // NotEnoughArgs reports a command that was run without the arguments it needs.
 // what names the missing input, so the message says what to add.
 func NotEnoughArgs(what string) error {
