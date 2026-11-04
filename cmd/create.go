@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"path/filepath"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
@@ -10,7 +9,6 @@ import (
 	"github.com/fiwon123/crower/internal/application/createcommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/fiwon123/crower/pkg/utils"
 	"github.com/spf13/cobra"
@@ -166,32 +164,12 @@ func (s createSession) LastOperation(op operation.Operation) (createcommand.Last
 // CreateName asks for the new command's name. The text is the one create has
 // always shown; the update form is a different question.
 func (s createSession) CreateName() (string, error) {
-	value, err := helper.GetUserInput("New Name ", helper.IsValidInput, s.cfg)
-	if err != nil {
-		return "", err
-	}
-
-	name, ok := value.(string)
-	if !ok {
-		return "", fmt.Errorf("create name: expected a string, got %T", value)
-	}
-
-	return name, nil
+	return s.prompt().Ask("New Name ")
 }
 
 // CreateExec asks for the line the new command runs.
 func (s createSession) CreateExec() (string, error) {
-	value, err := helper.GetUserInput("New Exec ", helper.IsValidInput, s.cfg)
-	if err != nil {
-		return "", err
-	}
-
-	exec, ok := value.(string)
-	if !ok {
-		return "", fmt.Errorf("create exec: expected a string, got %T", value)
-	}
-
-	return exec, nil
+	return s.prompt().Ask("New Exec ")
 }
 
 // File creates one file with the host's own tool.

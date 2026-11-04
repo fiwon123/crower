@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/fiwon123/crower/internal/adapters/output"
 	"github.com/fiwon123/crower/internal/domain/timeline"
 
@@ -9,7 +8,6 @@ import (
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/application/restorecommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
-	"github.com/fiwon123/crower/internal/helper"
 
 	"github.com/spf13/cobra"
 )
@@ -105,14 +103,9 @@ func (s restoreSession) HistoryTable() string {
 
 // ChooseHistoryEntry asks which history row to restore.
 func (s restoreSession) ChooseHistoryEntry() (restorecommand.Entry, error) {
-	value, err := helper.GetUserInput("Select Row", helper.IsValidContentKey, s.cfg)
+	content, err := s.prompt().ChooseHistoryEntry()
 	if err != nil {
 		return restorecommand.Entry{}, err
-	}
-
-	content, ok := value.(timeline.Content)
-	if !ok {
-		return restorecommand.Entry{}, fmt.Errorf("selected row is not a history entry")
 	}
 
 	return restorecommand.Entry{

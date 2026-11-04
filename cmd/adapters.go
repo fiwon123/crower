@@ -6,10 +6,10 @@ import (
 	"github.com/fiwon123/crower/internal/adapters/github"
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/output"
+	"github.com/fiwon123/crower/internal/adapters/prompt"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
-	"github.com/fiwon123/crower/internal/helper"
 )
 
 // legacySession adapts the pre-refactor app.Config to the ports the new use
@@ -96,39 +96,34 @@ func (s legacySession) Table(commands catalog.Catalog) string {
 	return output.CommandsTable(commands)
 }
 
+// prompt builds the terminal prompter over the current state.
+func (s legacySession) prompt() *prompt.Prompt {
+	return prompt.New(s.cfg.ReadLine, s.cfg.Logger.Info, s.cfg.NoInput, s.cfg.Catalog(), s.cfg.History)
+}
+
 // Confirm asks a yes/no question on the terminal.
 func (s legacySession) Confirm(question string) (bool, error) {
-	return helper.GetUserConfirmation(question, s.cfg)
+	return s.prompt().Confirm(question)
 }
 
 // ChooseCommand asks which command to act on, by row key.
 func (s legacySession) ChooseCommand() (string, error) {
-	value, err := helper.GetUserInput("Select Row", helper.IsValidInputKey, s.cfg)
-	if err != nil {
-		return "", err
-	}
-
-	key, ok := value.(string)
-	if !ok {
-		return "", fmt.Errorf("select row: expected a name, got %T", value)
-	}
-
-	return key, nil
+	return s.prompt().ChooseCommand()
 }
 
 // NewName asks for a required name.
 func (s legacySession) NewName() (string, error) {
-	return helper.InputName(s.cfg)
+	return s.prompt().Ask("Add new name: ")
 }
 
 // NewAliases asks for aliases until the user enters an empty line.
 func (s legacySession) NewAliases() ([]string, error) {
-	return helper.InputAlias(s.cfg)
+	return s.prompt().Aliases()
 }
 
 // NewExec asks for a required command line.
 func (s legacySession) NewExec() (string, error) {
-	return helper.InputExec(s.cfg)
+	return s.prompt().Ask("Add new exec: ")
 }
 
 // Record appends a history entry and persists the index.

@@ -11,7 +11,6 @@ import (
 	"github.com/fiwon123/crower/internal/application/deletecommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
-	"github.com/fiwon123/crower/internal/helper"
 	"github.com/fiwon123/crower/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -143,14 +142,9 @@ func (s deleteSession) HistoryTable() string {
 // The note is decoded here: the escaping is a storage detail, and the use case
 // shows what the user is about to lose.
 func (s deleteSession) ChooseHistoryEntry() (deletecommand.Entry, error) {
-	value, err := helper.GetUserInput("Select Row", helper.IsValidContentKey, s.cfg)
+	content, err := s.prompt().ChooseHistoryEntry()
 	if err != nil {
 		return deletecommand.Entry{}, err
-	}
-
-	content, ok := value.(timeline.Content)
-	if !ok {
-		return deletecommand.Entry{}, fmt.Errorf("selected row is not a history entry")
 	}
 
 	return deletecommand.Entry{
