@@ -412,6 +412,43 @@ crower desktop
 
 ---
 
+## 🗂️ crower setup
+
+```bash
+crower setup list                 # the default setup and every named one
+crower setup new streamer         # create ~/crower/setups/streamer/
+crower setup use streamer         # make it the default for future runs
+crower setup show                 # active setup, config path, command count
+crower setup delete gaming --force
+```
+
+Each setup keeps its own commands and its own history. The default setup keeps
+`~/crower/crower.yaml`; nothing migrates.
+
+### crower setup list
+
+Prints `default` and every folder under `~/crower/setups/`, marking the active
+one.
+
+### crower setup new
+
+Creates an empty named setup. The name must be a slug (letters, digits, `-`, `_`,
+`.`).
+
+### crower setup use
+
+Persists the default setup for future runs (the same as `--setup` and
+`CROWER_SETUP`). The setup must exist.
+
+### crower setup show
+
+Prints the active setup, its configuration path and how many commands it holds.
+
+### crower setup delete
+
+Removes a named setup and its history. The active setup is protected unless
+`--force` is passed; the default setup is not a folder and is never deleted here.
+
 ## 🩺 crower doctor
 
 ```bash

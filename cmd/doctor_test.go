@@ -19,7 +19,7 @@ func TestDoctorJSON(t *testing.T) {
 		t.Fatalf("not JSON: %v (%q)", err, stdout)
 	}
 
-	for _, key := range []string{"config_file", "config_folder", "config_writable", "commands", "history", "update_check", "shell", "editor", "terminal", "goos", "goarch"} {
+	for _, key := range []string{"setup", "config_file", "config_folder", "config_writable", "commands", "history", "update_check", "shell", "editor", "terminal", "goos", "goarch"} {
 		if _, ok := report[key]; !ok {
 			t.Errorf("report is missing %q: %v", key, report)
 		}

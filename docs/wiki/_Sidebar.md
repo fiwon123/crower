@@ -27,6 +27,7 @@
 - [reset](reset)
 - [share / export / import](share)
 - [gui / desktop](gui)
+- [setup](setup)
 - [init](init)
 - [doctor](doctor)
 
