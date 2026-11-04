@@ -7,7 +7,6 @@ import (
 	"github.com/fiwon123/crower/internal/application/executecommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
-	"github.com/fiwon123/crower/internal/legacy/listdom"
 
 	"github.com/spf13/cobra"
 )
@@ -73,7 +72,7 @@ type executeSession struct {
 // newExecuteSession wires the configuration and the shell runner.
 func newExecuteSession(cfg *app.Config) executeSession {
 	return executeSession{
-		legacySession: newLegacySession(cfg, listdom.NewHandler(cfg).CommandsTable),
+		legacySession: newLegacySession(cfg),
 		runner:        system.NewRunner(),
 	}
 }

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/application/resetcommands"
-	"github.com/fiwon123/crower/internal/legacy/listdom"
 
 	"github.com/spf13/cobra"
 )
@@ -25,8 +24,7 @@ and "crower revert" can bring the commands back.
 			return err
 		}
 
-		table := listdom.NewHandler(cfg).CommandsTable
-		session := newLegacySession(cfg, table)
+		session := newLegacySession(cfg)
 
 		return resetcommands.New(session, session, session, session).Run()
 	},

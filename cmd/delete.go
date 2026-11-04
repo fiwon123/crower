@@ -12,7 +12,6 @@ import (
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/helper"
-	"github.com/fiwon123/crower/internal/legacy/listdom"
 	"github.com/fiwon123/crower/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -84,7 +83,7 @@ With no arguments crower asks which command to delete.`,
 			request.Key = args[0]
 		}
 
-		session := newDeleteSession(cfg, listdom.NewHandler(cfg).CommandsTable)
+		session := newDeleteSession(cfg)
 
 		return deletecommand.New(session, session, session, session, session, session, session).Run(request)
 	},
@@ -106,9 +105,9 @@ type deleteSession struct {
 
 // newDeleteSession wires the configuration, the renderer and the two platform
 // adapters delete needs.
-func newDeleteSession(cfg *app.Config, table func() string) deleteSession {
+func newDeleteSession(cfg *app.Config) deleteSession {
 	return deleteSession{
-		legacySession: newLegacySession(cfg, table),
+		legacySession: newLegacySession(cfg),
 		remover:       system.NewRemover(),
 		environment:   system.NewEnvironment(),
 	}

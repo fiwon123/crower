@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"github.com/fiwon123/crower/internal/application/reverthistory"
-	"github.com/fiwon123/crower/internal/legacy/listdom"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +31,7 @@ The argument is how many history entries to roll back. "crower list
 			return missingArgs(cmd, "the number of steps to revert")
 		}
 
-		session := newLegacySession(cfg, listdom.NewHandler(cfg).CommandsTable)
+		session := newLegacySession(cfg)
 
 		return reverthistory.New(session, session, session, session).Run(args)
 	},

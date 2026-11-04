@@ -1,65 +1,58 @@
-package listdom
+package notes
 
 import (
 	"github.com/fiwon123/crower/internal/data/note"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
-// Create a new list note
-func newListCommandsNote() string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// ListCommandsNote renders the history note for `list`.
+func ListCommandsNote() string {
+	return note.New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.Command).
 		AddCrowerExec("list", nil).
 		Build()
 }
 
-func newListProcessNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// ListProcessNote renders the history note for `list --process`.
+func ListProcessNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.Process).
 		AddCrowerExec("list --process", args).
 		Build()
 }
 
-func newListHistoriesNote() string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// ListHistoryNote renders the history note for `list --history`.
+func ListHistoryNote() string {
+	return note.New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.History).
 		AddCrowerExec("list --history", nil).
 		Build()
 }
 
-func newListFolderNote(args []string) string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// ListFolderNote renders the history note for `list --folder`.
+func ListFolderNote(args []string) string {
+	return note.New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.Folder).
 		AddCrowerExec("list --folder", args).
 		Build()
 }
 
-func newListSystemNote() string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// ListSystemNote renders the history note for `list --system`.
+func ListSystemNote() string {
+	return note.New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.System).
 		AddCrowerExec("list --system", nil).
 		Build()
 }
 
-func newListSystemPathNote() string {
-	noteBuilder := note.New()
-
-	return noteBuilder.
+// ListPathNote renders the history note for `list --syspath`.
+func ListPathNote() string {
+	return note.New().
 		AddMainOperation(operation.List).
 		AddSubOperation(operation.SysPath).
 		AddCrowerExec("list --syspath", nil).

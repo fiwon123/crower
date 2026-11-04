@@ -6,7 +6,6 @@ import (
 
 	"github.com/fiwon123/crower/internal/application/checkrelease"
 	"github.com/fiwon123/crower/internal/application/executecommand"
-	"github.com/fiwon123/crower/internal/legacy/listdom"
 	"github.com/fiwon123/crower/internal/legacy/upgradedom"
 
 	"github.com/spf13/cobra"
@@ -80,7 +79,7 @@ Every command has its own help: crower <command> --help.`,
 
 		switch {
 		case checkNewVersion:
-			session := newLegacySession(cfg, listdom.NewHandler(cfg).CommandsTable)
+			session := newLegacySession(cfg)
 			return checkrelease.New(latestTag{}, session, session, session).Run(Version)
 
 		case upgradeFlag:

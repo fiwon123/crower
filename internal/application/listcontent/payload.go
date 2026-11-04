@@ -1,25 +1,16 @@
-package listdom
+// Package listcontent renders the six things `list` can report: the managed
+// commands, the history, the running processes, a folder, the environment
+// variables and PATH.
+//
+// Each mode has a text rendering for a person and a payload for `--json`. Both
+// go through the Output port, and the payload types live here because they are
+// the operation's result contract: the JSON keys are what a script reads.
+package listcontent
 
 import (
-	"fmt"
 	"os"
 	"strings"
-
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/note"
-	"github.com/fiwon123/crower/pkg/utils"
 )
-
-// The JSON results `list --json` emits.
-//
-// These are their own types, not tags added to the stored structs: history is
-// persisted as JSON and the command map as TOML under their field names, so an
-// output tag there would rename the on-disk keys and make every existing
-// configuration and history file unreadable.
-//
-// Every collection is built with make, so an empty result encodes as [] and a
-// script never has to special-case null.
 
 // CommandRow is one row of the command table.
 type CommandRow struct {
@@ -32,31 +23,6 @@ type CommandRow struct {
 // CommandsResult is the result of `list` and `list --json`.
 type CommandsResult struct {
 	Commands []CommandRow `json:"commands"`
-}
-
-func commandsPayload(orderKeys []string, all command.MapData) CommandsResult {
-	rows := make([]CommandRow, 0, len(orderKeys))
-
-	for i, key := range orderKeys {
-		single := all.Get(key)
-		if single == nil {
-			continue
-		}
-
-		aliases := single.AllAlias
-		if aliases == nil {
-			aliases = []string{}
-		}
-
-		rows = append(rows, CommandRow{
-			Row:     i,
-			Name:    single.Name,
-			Aliases: aliases,
-			Exec:    single.Exec,
-		})
-	}
-
-	return CommandsResult{Commands: rows}
 }
 
 // HistoryRow is one recorded operation.
@@ -77,54 +43,16 @@ type HistoryResult struct {
 	History []HistoryRow `json:"history"`
 }
 
-// historyPayload renders the history newest first, the order the table prints.
-func historyPayload(rows []history.Content) HistoryResult {
-	payload := HistoryResult{History: make([]HistoryRow, 0, len(rows))}
-
-	for i := len(rows) - 1; i >= 0; i-- {
-		row := rows[i]
-		payload.History = append(payload.History, HistoryRow{
-			Version:   row.Version,
-			File:      row.File,
-			Timestamp: row.Timestemp,
-			Operation: string(row.Operation),
-			Command:   row.CommandName,
-			Note:      note.Display(row.Note),
-		})
-	}
-
-	return payload
+// ProcessRow is one running process.
+type ProcessRow struct {
+	PID  int32  `json:"pid"`
+	Name string `json:"name"`
+	Path string `json:"path"`
 }
 
 // ProcessesResult is the result of `list --process --json`.
 type ProcessesResult struct {
-	Processes []utils.ProcessInfo `json:"processes"`
-}
-
-func processesPayload(rows []utils.ProcessInfo) ProcessesResult {
-	if rows == nil {
-		rows = []utils.ProcessInfo{}
-	}
-
-	return ProcessesResult{Processes: rows}
-}
-
-// processTable renders the process table `list --process` prints.
-func processTable(rows []utils.ProcessInfo) string {
-	const (
-		titleLayout   = "%-8s %-30s %s\n"
-		contentLayout = "%-8d %-30s %s\n"
-	)
-
-	var builder strings.Builder
-	fmt.Fprintf(&builder, titleLayout, "PID", "Name", "Path")
-	builder.WriteString("-------------------------------------------------------------\n")
-
-	for _, row := range rows {
-		fmt.Fprintf(&builder, contentLayout, row.PID, row.Name, row.Path)
-	}
-
-	return builder.String()
+	Processes []ProcessRow `json:"processes"`
 }
 
 // FolderEntry is one entry of a directory listing.
@@ -134,9 +62,16 @@ type FolderEntry struct {
 	Size     int64  `json:"size"`
 	Mode     string `json:"mode"`
 	Modified string `json:"modified"`
+
 	// Error is set when the OS would not report the metadata of an entry --
 	// a dangling symlink is still a directory entry.
 	Error string `json:"error,omitempty"`
+}
+
+// FolderResult is the result of `list --folder --json`.
+type FolderResult struct {
+	Folder  string        `json:"folder"`
+	Entries []FolderEntry `json:"entries"`
 }
 
 // Variable is one system variable and its OS path-list entries.

@@ -1,7 +1,11 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/legacy/listdom"
+	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/system"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/listcontent"
+	"github.com/fiwon123/crower/internal/data/note"
 
 	"github.com/spf13/cobra"
 )
@@ -35,23 +39,137 @@ saved.
 			return err
 		}
 
-		core := listdom.NewCore(cfg)
+		request := listcontent.Request{Args: args}
 
 		switch {
 		case processFlag:
-			return core.ListProcess(args)
+			request.Mode = listcontent.ModeProcess
 		case historyFlag:
-			return core.ListHistory()
+			request.Mode = listcontent.ModeHistory
 		case folderFlag:
-			return core.ListFolder(args)
+			request.Mode = listcontent.ModeFolder
 		case systemFlag:
-			return core.ListSystem()
+			request.Mode = listcontent.ModeSystem
 		case sysPathFlag:
-			return core.ListSysPath()
+			request.Mode = listcontent.ModePath
+		default:
+			request.Mode = listcontent.ModeCommands
 		}
 
-		return core.ListCommands()
+		session := newListSession(cfg)
+
+		return listcontent.New(session, session, session, session, session, session, session).Run(request)
 	},
+}
+
+// listSession adapts the configuration to the ports the list use case declares.
+//
+// It embeds legacySession for the catalog, the command table, the diagnostics
+// stream and the history entry, and adds what only list needs: the result
+// stream and its format, the history rows, and the platform listings.
+type listSession struct {
+	legacySession
+
+	listings *system.Listings
+}
+
+// newListSession wires the configuration and the platform listings.
+func newListSession(cfg *app.Config) listSession {
+	return listSession{
+		legacySession: newLegacySession(cfg),
+		listings:      system.NewListings(),
+	}
+}
+
+// Emit writes the text, or the payload when --json was asked for.
+func (s listSession) Emit(text string, payload any) error {
+	return s.cfg.Result(text, payload)
+}
+
+// Structured reports whether the result is requested as JSON.
+func (s listSession) Structured() bool {
+	return s.cfg.Format == app.FormatJSON
+}
+
+// HistoryTable renders the operation log.
+func (s listSession) HistoryTable() string {
+	return s.cfg.History.GetList()
+}
+
+// HistoryRows returns the log newest first for a structured result.
+//
+// The note is decoded here: the escaping is a storage detail.
+func (s listSession) HistoryRows() []listcontent.HistoryRow {
+	rows := make([]listcontent.HistoryRow, 0, len(s.cfg.History.AllData))
+
+	for i := len(s.cfg.History.AllData) - 1; i >= 0; i-- {
+		entry := s.cfg.History.AllData[i]
+		rows = append(rows, listcontent.HistoryRow{
+			Version:   entry.Version,
+			File:      entry.File,
+			Timestamp: entry.Timestemp,
+			Operation: string(entry.Operation),
+			Command:   entry.CommandName,
+			Note:      note.Display(entry.Note),
+		})
+	}
+
+	return rows
+}
+
+// List reports the running processes, optionally filtered.
+func (s listSession) List(partName string) ([]listcontent.ProcessRow, error) {
+	return s.listings.Processes(partName)
+}
+
+// FolderText runs the platform's folder listing.
+func (s listSession) FolderText(path string) (string, error) {
+	return s.listings.FolderText(path)
+}
+
+// FolderEntries reads the directory behind a structured listing.
+func (s listSession) FolderEntries(path string) ([]listcontent.FolderEntry, error) {
+	return s.listings.FolderEntries(path)
+}
+
+// Variables returns the raw environment listing.
+func (s listSession) Variables() (string, error) {
+	return s.listings.Variables()
+}
+
+// Path returns the raw PATH value.
+func (s listSession) Path() (string, error) {
+	return s.listings.Path()
+}
+
+// ListCommandsNote is the history note for `list`.
+func (s listSession) ListCommandsNote() string {
+	return notes.ListCommandsNote()
+}
+
+// ListProcessNote is the history note for `list --process`.
+func (s listSession) ListProcessNote(args []string) string {
+	return notes.ListProcessNote(args)
+}
+
+// ListHistoryNote is the history note for `list --history`.
+func (s listSession) ListHistoryNote() string {
+	return notes.ListHistoryNote()
+}
+
+// ListFolderNote is the history note for `list --folder`.
+func (s listSession) ListFolderNote(args []string) string {
+	return notes.ListFolderNote(args)
+}
+
+// ListSystemNote is the history note for `list --system`.
+func (s listSession) ListSystemNote() string {
+	return notes.ListSystemNote()
+}
+
+// ListPathNote is the history note for `list --syspath`.
+func (s listSession) ListPathNote() string {
+	return notes.ListPathNote()
 }
 
 func init() {

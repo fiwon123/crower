@@ -4,7 +4,6 @@ import (
 	"github.com/fiwon123/crower/internal/application/updatecommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
-	"github.com/fiwon123/crower/internal/legacy/listdom"
 
 	"github.com/spf13/cobra"
 )
@@ -41,7 +40,7 @@ With no field given, crower asks for each one.`,
 			return err
 		}
 
-		session := newLegacySession(cfg, listdom.NewHandler(cfg).CommandsTable)
+		session := newLegacySession(cfg)
 
 		request := updatecommand.Request{
 			Changes: catalog.Changes{

@@ -5,6 +5,7 @@ import (
 
 	"github.com/fiwon123/crower/internal/adapters/github"
 	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/output"
 	"github.com/fiwon123/crower/internal/app"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
@@ -24,14 +25,12 @@ import (
 // when app.Config becomes a session constructed here and the real storage and
 // output adapters are supplied instead.
 type legacySession struct {
-	cfg   *app.Config
-	table func() string
+	cfg *app.Config
 }
 
-// newLegacySession wires the configuration and the renderer the legacy core
-// still owns.
-func newLegacySession(cfg *app.Config, table func() string) legacySession {
-	return legacySession{cfg: cfg, table: table}
+// newLegacySession wires the configuration.
+func newLegacySession(cfg *app.Config) legacySession {
+	return legacySession{cfg: cfg}
 }
 
 // Commands is the current command set.
@@ -81,9 +80,9 @@ func (s legacySession) Debug(message string, data ...any) {
 	s.cfg.Logger.Debug(message, data...)
 }
 
-// Table renders the current command table.
-func (s legacySession) Table(catalog.Catalog) string {
-	return s.table()
+// Table renders the command table from the catalog it is given.
+func (s legacySession) Table(commands catalog.Catalog) string {
+	return output.CommandsTable(commands)
 }
 
 // Confirm asks a yes/no question on the terminal.
