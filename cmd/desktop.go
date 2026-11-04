@@ -1,37 +1,50 @@
 package cmd
 
 import (
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/executecommand"
 	"github.com/fiwon123/crower/internal/desktop"
-	"github.com/fiwon123/crower/internal/gui"
+	"github.com/fiwon123/crower/internal/tui"
 
 	"github.com/spf13/cobra"
 )
 
+// newExecutor builds the use case the terminal and desktop interfaces run
+// through. They own their own interaction, so they use its Execute entry point,
+// which neither prompts nor records history.
+func newExecutor(cfg *app.Config) *executecommand.UseCase {
+	session := newExecuteSession(cfg)
+
+	return executecommand.New(session, session, session, session, session)
+}
+
 var desktopCmd = &cobra.Command{
-	Use:   "desktop",
-	Short: "Launch native desktop window UI",
-	Long:  "Launch a native window UI for crower (cgo-free)",
+	Use:     "desktop",
+	Short:   "Open the native desktop window.",
+	Long:    `Open a native window UI (cgo-free).`,
+	Example: `	crower desktop`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
 			return err
 		}
 
-		return desktop.Run(cfg)
+		return desktop.Run(cfg.Catalog(), cfg.History, newExecutor(cfg))
 	},
 }
 
 var guiCmd = &cobra.Command{
-	Use:   "gui",
-	Short: "Launch interactive TUI GUI",
-	Long:  "Launch an interactive terminal-based GUI for crower",
+	Use:     "gui",
+	Short:   "Open the terminal UI.",
+	Long:    `Open an interactive terminal UI.`,
+	Example: `	crower gui`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
 			return err
 		}
 
-		return gui.NewTUI(cfg).Run()
+		return tui.NewTUI(cfg.Catalog(), cfg.History, newExecutor(cfg)).Run()
 	},
 }
 

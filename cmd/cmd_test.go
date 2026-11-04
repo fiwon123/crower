@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"encoding/json"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -1397,5 +1398,219 @@ func TestListHistoryShowsTheCommandColumn(t *testing.T) {
 
 	if !strings.Contains(stdout, "Command") {
 		t.Errorf("history has no Command column: %q", stdout)
+	}
+}
+
+// reset shows what it will erase, asks, and on a yes leaves no command behind.
+func TestResetErasesEveryCommand(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	for _, name := range []string{"greet", "build"} {
+		if _, _, err := runWith(t, cfgPath, "", "create", name, "echo "+name); err != nil {
+			t.Fatalf("create %s: %v", name, err)
+		}
+	}
+
+	stdout, stderr, err := runWith(t, cfgPath, "y\n", "reset")
+	if err != nil {
+		t.Fatalf("reset returned an error: %v", err)
+	}
+
+	if stdout != "" {
+		t.Errorf("reset wrote a result: %q", stdout)
+	}
+
+	for _, want := range []string{"Name", "greet", "All commands will be erased...", "[Y]es/[N]o", "reset all commands"} {
+		if !strings.Contains(stderr, want) {
+			t.Errorf("the diagnostics stream does not contain %q: %q", want, stderr)
+		}
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "list")
+	if err != nil {
+		t.Fatalf("list returned an error: %v", err)
+	}
+
+	for _, name := range []string{"greet", "build"} {
+		if strings.Contains(stdout, name) {
+			t.Errorf("list still shows %q after a reset:\n%s", name, stdout)
+		}
+	}
+}
+
+// Declining keeps every command and is not a failure.
+func TestDecliningResetKeepsTheCommands(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	_, stderr, err := runWith(t, cfgPath, "n\n", "reset")
+	if err != nil {
+		t.Fatalf("a declined reset returned an error: %v", err)
+	}
+
+	if !strings.Contains(stderr, "Cancelling reset...") {
+		t.Errorf("the decline was not reported: %q", stderr)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list")
+	if err != nil {
+		t.Fatalf("list returned an error: %v", err)
+	}
+
+	if !strings.Contains(stdout, "greet") {
+		t.Errorf("the command was erased by a decline:\n%s", stdout)
+	}
+}
+
+// --no-input must fail the question rather than wait for an answer.
+func TestResetNoInputFails(t *testing.T) {
+	if _, _, err := run(t, "reset", "--no-input"); err == nil {
+		t.Fatal("reset --no-input returned no error, so it would wait")
+	}
+}
+
+// restore has to write the command it restores to the configuration file, not
+// only to the map this process holds: Save() writes the history snapshot and
+// index, and nothing else writes the command file (#247).
+func TestRestoreWritesTheCommandFile(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo one"); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	// update --exec still offers the other fields, so answer them.
+	if _, _, err := runWith(t, cfgPath, "n\nn\ny\n", "update", "greet", "--exec", "echo two"); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	if got := configExec(t, cfgPath); got != "echo two" {
+		t.Fatalf("exec after update = %q, want echo two", got)
+	}
+
+	// The history lists the newest entry first: row 1 is the create.
+	stdout, stderr, err := runWith(t, cfgPath, "1\ny\n", "restore", "greet")
+	if err != nil {
+		t.Fatalf("restore: %v", err)
+	}
+
+	if stdout != "" {
+		t.Errorf("restore wrote a result: %q", stdout)
+	}
+
+	if !strings.Contains(stderr, "restored command:") {
+		t.Errorf("restore reported nothing: %q", stderr)
+	}
+
+	if got := configExec(t, cfgPath); got != "echo one" {
+		t.Errorf("exec after restore = %q, want the restored value echo one", got)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "list")
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if !strings.Contains(stdout, "echo one") {
+		t.Errorf("list does not show the restored command:\n%s", stdout)
+	}
+}
+
+// configExec reads the exec of the one command in a test configuration.
+func configExec(t *testing.T, path string) string {
+	t.Helper()
+
+	body, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read config: %v", err)
+	}
+
+	for _, line := range strings.Split(string(body), "\n") {
+		if value, ok := strings.CutPrefix(strings.TrimSpace(line), "Exec = "); ok {
+			return strings.Trim(value, `"`)
+		}
+	}
+
+	return ""
+}
+
+// delete --history drops the chosen entry and its snapshot, and rewrites only
+// the index: the command set is untouched, so the command file must not be
+// rewritten either.
+func TestDeleteHistoryEntry(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "", "list"); err != nil {
+		t.Fatalf("list returned an error: %v", err)
+	}
+
+	commandsBefore, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatalf("read the command file: %v", err)
+	}
+
+	// Rows are newest first, so row 1 is the create entry (version 1).
+	_, stderr, err := runWith(t, cfgPath, "1\ny\n", "delete", "--history")
+	if err != nil {
+		t.Fatalf("delete --history returned an error: %v", err)
+	}
+
+	if !strings.Contains(stderr, "history entry deleted") {
+		t.Errorf("diagnostics = %q, want the success line", stderr)
+	}
+
+	index, err := os.ReadFile(filepath.Join(dir, "historyhelper.json"))
+	if err != nil {
+		t.Fatalf("read the history index: %v", err)
+	}
+
+	var history timeline.Log
+	if err := json.Unmarshal(index, &history); err != nil {
+		t.Fatalf("decode the history index: %v", err)
+	}
+
+	for _, entry := range history.AllData {
+		if entry.Version == 1 {
+			t.Errorf("version 1 is still in the index: %+v", entry)
+		}
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "history", "00001.yaml")); !os.IsNotExist(err) {
+		t.Errorf("snapshot 00001.yaml: err = %v, want it gone", err)
+	}
+
+	commandsAfter, err := os.ReadFile(cfgPath)
+	if err != nil {
+		t.Fatalf("read the command file: %v", err)
+	}
+
+	if !bytes.Equal(commandsBefore, commandsAfter) {
+		t.Errorf("the command file changed:\nbefore: %q\nafter:  %q", commandsBefore, commandsAfter)
+	}
+}
+
+// A declined history delete removes nothing.
+func TestDeleteHistoryEntryDeclined(t *testing.T) {
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "greet", "echo hello"); err != nil {
+		t.Fatalf("create returned an error: %v", err)
+	}
+
+	if _, _, err := runWith(t, cfgPath, "0\nn\n", "delete", "--history"); err != nil {
+		t.Fatalf("delete --history returned an error: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(dir, "history", "00001.yaml")); err != nil {
+		t.Errorf("snapshot 00001.yaml = %v, want it kept", err)
 	}
 }

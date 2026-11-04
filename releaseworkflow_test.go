@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/domain/upgradedom"
+	"github.com/fiwon123/crower/internal/adapters/update"
 )
 
 // The release workflow names a runner label for every row of its build matrix.
@@ -394,7 +394,7 @@ func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
 	downloads := strings.ReplaceAll(readRepositoryFile(t, releaseWorkflowPath), "${TAG}", "v1.2.3")
 
 	for _, target := range targets {
-		asset, err := upgradedom.AssetName(target.goos, target.goarch, "v1.2.3")
+		asset, err := update.AssetName(target.goos, target.goarch, "v1.2.3")
 		if err != nil {
 			t.Errorf("%s/%s: AssetName error = %v", target.goos, target.goarch, err)
 			continue

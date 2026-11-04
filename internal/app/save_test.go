@@ -7,9 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 
 	"github.com/fiwon123/crower/pkg/utils"
 )
@@ -81,12 +82,12 @@ func TestSaveCommandsWritesTheCommandMap(t *testing.T) {
 func TestDeleteHistoryBackup(t *testing.T) {
 	cfg := newTestConfig(t)
 
-	cfg.History.Add(operations.List, "", "note")
+	cfg.History.Add(operation.List, "", "note")
 	if err := cfg.Save(); err != nil {
 		t.Fatalf("Save: %v", err)
 	}
 
-	snapshot := filepath.Join(cfg.historyFolderPath, cfg.History.GetLast().File)
+	snapshot := filepath.Join(cfg.historyFiles.Folder(), cfg.History.GetLast().File)
 	if _, err := os.Stat(snapshot); err != nil {
 		t.Fatalf("Save did not write the snapshot: %v", err)
 	}
@@ -119,8 +120,8 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 	dir := t.TempDir()
 	cfgPath := filepath.Join(dir, "crower.yaml")
 
-	legacy := history.New(filepath.Join(dir, "history"))
-	legacy.Add(operations.Create, "", "main_operation=create;sub_operation=command;command_name=greet;command_exec=echo hi")
+	legacy := timeline.Log{}
+	legacy.Add(operation.Create, "", "main_operation=create;sub_operation=command;command_name=greet;command_exec=echo hi")
 
 	if err := utils.WriteJson(legacy, filepath.Join(dir, "historyhelper.json")); err != nil {
 		t.Fatalf("write legacy history: %v", err)
@@ -131,7 +132,7 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 		t.Fatalf("InitApp: %v", err)
 	}
 
-	last := cfg.GetLast(operations.Create)
+	last := cfg.GetLast(operation.Create)
 	if last == nil {
 		t.Fatal("the legacy entry did not survive the load")
 	}
@@ -146,9 +147,9 @@ func TestNewAppBackfillsTheCommandNameFromTheNote(t *testing.T) {
 func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
 	dir := t.TempDir()
 
-	legacy := history.New(filepath.Join(dir, "history"))
-	legacy.Add(operations.Create, "", `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_name=greet"`)
-	legacy.Add(operations.Execute, "real", "main_operation=execute;sub_operation=command;command_name=other")
+	legacy := timeline.Log{}
+	legacy.Add(operation.Create, "", `main_operation=create;sub_operation=file;crower_exec=crower create --file "x;command_name=greet"`)
+	legacy.Add(operation.Execute, "real", "main_operation=execute;sub_operation=command;command_name=other")
 
 	if err := utils.WriteJson(legacy, filepath.Join(dir, "historyhelper.json")); err != nil {
 		t.Fatalf("write legacy history: %v", err)
@@ -165,5 +166,81 @@ func TestNewAppDoesNotBackfillAFileNote(t *testing.T) {
 
 	if got := cfg.History.AllData[1].CommandName; got != "real" {
 		t.Errorf("stored name = %q, want it left alone", got)
+	}
+}
+
+// Commit is the one unit of work a command-changing operation uses: the
+// snapshot, the index and the command file all describe the same new state.
+func TestCommitWritesSnapshotIndexAndCommandFile(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	commands := catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+
+	if err := cfg.Commit(commands, operation.Create, "greet", "main_operation=create"); err != nil {
+		t.Fatalf("Commit: %v", err)
+	}
+
+	if cfg.AllCommandsByName.Get("greet") == nil {
+		t.Error("the running configuration does not hold the committed command")
+	}
+
+	configBody, err := os.ReadFile(cfg.ConfigFile())
+	if err != nil {
+		t.Fatalf("read command file: %v", err)
+	}
+
+	if !strings.Contains(string(configBody), "greet") {
+		t.Errorf("command file = %q, want the committed command", configBody)
+	}
+
+	indexBody, err := os.ReadFile(filepath.Join(filepath.Dir(cfg.ConfigFile()), "historyhelper.json"))
+	if err != nil {
+		t.Fatalf("read history index: %v", err)
+	}
+
+	if !strings.Contains(string(indexBody), `"Version": 1`) {
+		t.Errorf("history index = %q, want the new entry", indexBody)
+	}
+
+	entry := cfg.History.GetLast()
+	if entry == nil {
+		t.Fatal("Commit did not add a history entry")
+	}
+
+	snapshot, err := cfg.historyFiles.ReadSnapshot(entry.File)
+	if err != nil {
+		t.Fatalf("read snapshot: %v", err)
+	}
+
+	if got := snapshot["greet"].Name; got != "greet" {
+		t.Errorf("snapshot command = %q, want greet", got)
+	}
+}
+
+// The second commit starts from what the first wrote: the history version and
+// the snapshot name advance together, and nothing is left half-written.
+func TestCommitTwice(t *testing.T) {
+	cfg := newTestConfig(t)
+
+	first := catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo one"}})
+	if err := cfg.Commit(first, operation.Create, "greet", "one"); err != nil {
+		t.Fatalf("first Commit: %v", err)
+	}
+
+	second, err := first.Add(catalog.Command{Name: "build", Exec: "go build"})
+	if err != nil {
+		t.Fatalf("Add: %v", err)
+	}
+
+	if err := cfg.Commit(second, operation.Create, "build", "two"); err != nil {
+		t.Fatalf("second Commit: %v", err)
+	}
+
+	if got := cfg.History.GetLast(); got == nil || got.Version != 2 {
+		t.Fatalf("last entry = %+v, want version 2", got)
+	}
+
+	if _, err := os.Stat(filepath.Join(cfg.ConfigFolder(), "history", "00002.yaml")); err != nil {
+		t.Errorf("snapshot 00002.yaml: %v", err)
 	}
 }

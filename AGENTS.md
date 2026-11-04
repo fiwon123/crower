@@ -36,26 +36,32 @@ the last operation.
 ```text
 cmd/<operation>.go            cobra command: flags and argument parsing
   ↓
-internal/domain/<op>dom/      core.go (the operation) + handler.go (the rules) + notes.go
+internal/application/<verb>/  use cases: the flow, with ports it declares itself
   ↓
-internal/data/                history, notes, operations, command map, state
+internal/domain/              the model: catalog aggregate, operation enum
   ↓
-internal/app/                 configuration and application wiring
+internal/adapters/            storage, output, shell, prompt (the technology)
+
+internal/data/ + internal/app/  storage shapes and wiring (Phase 5 work)
 ```
 
-Each `internal/domain/<op>dom` package owns its own operation, its own history,
-and its own notes. A new operation is a new package, not a new branch in a
-shared handler.
+A use case is a package under `internal/application/`, and it declares the
+interfaces it needs. The model under `internal/domain/` depends on the standard
+library only. Every operation has been ported (#215): `internal/legacy/` is gone,
+and the remaining `internal/data`/`internal/app` shapes are Phase 5 work.
 
-`internal/shell` is the one thing the domains share below that line: the
-platform's shell invocation (`sh -c` / `cmd /c`). A domain that needs to run a
-shell line depends on it, never on another operation.
+`internal/shell` is the one thing the rings share below that line: the
+platform's shell invocation (`sh -c` / `cmd /c`) and its quoting. An adapter
+that needs to run a shell line depends on it, never on another adapter; it
+stays the shared floor through Phase 5 rather than being absorbed.
 
 ## Project Structure
 
 ```text
 cmd/                 cobra commands, one file per operation
-internal/domain/     one package per operation (core, handler, notes)
+internal/domain/     the model: catalog aggregate, operation enum (stdlib only)
+internal/application/ use cases, one package per verb, with their own ports
+internal/adapters/   storage, output, shell, prompt — the technology side
 internal/data/       history, notes, operations, command map, state
 internal/app/        configuration and application wiring
 internal/errors/     error types shared across layers
@@ -121,7 +127,7 @@ behaviour. A green run proves gofmt, vet, and build — and nothing about
 behaviour.
 
 There is **no known-failing baseline.** Every test gets its own fixture
-directory from `internal/helper.InitCrowerTests` (`os.MkdirTemp`), so parallel
+directory from `internal/testutil.New(t)` (`t.TempDir`), so parallel
 packages cannot race over a shared path. The failure that used to live in
 `opendom`, `deletedom` and `movedom` was fixed in #47, which closed #46. A red
 run is a regression until proven otherwise — do not discount it, and never

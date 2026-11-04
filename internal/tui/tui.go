@@ -1,0 +1,163 @@
+package tui
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/timeline"
+)
+
+// Executor runs a managed command for the interface.
+//
+// It is declared here, at the point of use, so this package does not depend on
+// the use case or its adapters; the command layer supplies one.
+type Executor interface {
+	// Execute runs key with params and returns the output and the command's
+	// name.
+	Execute(key string, params []string) (string, string, error)
+}
+
+// TUI is the menu interface.
+//
+// It takes the catalogue and the timeline as values: the interface renders
+// them, it does not own them, and it never touches the composition root.
+type TUI struct {
+	commands catalog.Catalog
+	history  timeline.Log
+	exec     Executor
+	reader   *bufio.Reader
+}
+
+// NewTUI builds the menu over the current command set and history.
+func NewTUI(commands catalog.Catalog, history timeline.Log, exec Executor) *TUI {
+	return &TUI{
+		commands: commands,
+		history:  history,
+		exec:     exec,
+		reader:   bufio.NewReader(os.Stdin),
+	}
+}
+
+func (t *TUI) Run() error {
+	for {
+		fmt.Println("\n╔═══════════════════════════════════════╗")
+		fmt.Println("║           CROWER - TUI GUI           ║")
+		fmt.Println("╚═══════════════════════════════════════╝")
+		fmt.Println("\n1. List Commands")
+		fmt.Println("2. Run Command")
+		fmt.Println("3. Run Command with Parameters")
+		fmt.Println("4. View History")
+		fmt.Println("5. Export Commands")
+		fmt.Println("6. Exit")
+		fmt.Print("\nSelect option: ")
+
+		input, _ := t.reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		switch input {
+		case "1":
+			t.listCommands()
+		case "2":
+			t.runCommand(false)
+		case "3":
+			t.runCommand(true)
+		case "4":
+			t.viewHistory()
+		case "5":
+			t.exportCommands()
+		case "6":
+			fmt.Println("Goodbye!")
+			return nil
+		default:
+			fmt.Println("Invalid option")
+		}
+	}
+}
+
+func (t *TUI) listCommands() {
+	fmt.Println("\n=== Commands ===")
+	commands := t.commands.Commands()
+	if len(commands) == 0 {
+		fmt.Println("No commands found")
+		return
+	}
+
+	for i, command := range commands {
+		fmt.Printf("%d. %s - %s\n", i+1, command.Name, command.Exec)
+		if len(command.Aliases) > 0 {
+			fmt.Printf("   Aliases: %v\n", command.Aliases)
+		}
+	}
+}
+
+func (t *TUI) runCommand(withParams bool) {
+	t.listCommands()
+	fmt.Print("\nEnter command name/number: ")
+	input, _ := t.reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+
+	names := t.commands.Names()
+
+	var cmdName string
+	if idx, err := strconv.Atoi(input); err == nil && idx > 0 && idx <= len(names) {
+		cmdName = names[idx-1]
+	} else {
+		cmdName = input
+	}
+
+	var params []string
+	if withParams {
+		fmt.Print("Enter parameters (space separated): ")
+		pinput, _ := t.reader.ReadString('\n')
+		pinput = strings.TrimSpace(pinput)
+		if pinput != "" {
+			params = strings.Fields(pinput)
+		}
+	}
+
+	fmt.Println("\n--- Executing ---")
+	out, name, err := t.exec.Execute(cmdName, params)
+	if name != "" {
+		fmt.Printf("Command: %s\n", name)
+	}
+	if out != "" {
+		fmt.Println(out)
+	}
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+	}
+	fmt.Println("--- Done ---")
+	fmt.Print("\nPress Enter to continue...")
+	t.reader.ReadString('\n')
+}
+
+func (t *TUI) viewHistory() {
+	fmt.Println("\n=== History ===")
+	if len(t.history.AllData) == 0 {
+		fmt.Println("No history")
+		return
+	}
+	for i, h := range t.history.AllData {
+		fmt.Printf("%d. [%s] %s - %s\n", i+1, h.Operation, h.CommandName, h.Timestemp)
+	}
+	fmt.Print("\nPress Enter to continue...")
+	t.reader.ReadString('\n')
+}
+
+func (t *TUI) exportCommands() {
+	fmt.Print("\nExport to file (default: crower-export.toml): ")
+	input, _ := t.reader.ReadString('\n')
+	input = strings.TrimSpace(input)
+	if input == "" {
+		input = "crower-export.toml"
+	}
+	// Use sharedom logic would be better but keep it simple
+	fmt.Printf("Export functionality available via 'crower export' command\n")
+	fmt.Printf("Would export to: %s\n", input)
+	fmt.Print("\nPress Enter to continue...")
+	t.reader.ReadString('\n')
+}

@@ -1,40 +1,37 @@
 package desktop
 
 import (
-	"io"
-	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/fiwon123/crower/internal/app"
-	command "github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/operations"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/operation"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
-func testApp(t *testing.T) *app.Config {
+// stubExecutor stands in for the command layer's executor: these tests are
+// about the model's state, not about running anything.
+type stubExecutor struct{}
+
+func (stubExecutor) Execute(string, []string) (string, string, error) {
+	return "", "", nil
+}
+
+// testModel builds the model over one command and an empty history.
+func testModel(t *testing.T) *Model {
 	t.Helper()
 
-	a, err := app.NewApp(
-		filepath.Join(t.TempDir(), "crower.yaml"),
-		[]string{},
-		command.NewMapData(),
-		command.NewMapData(),
-		app.Options{Streams: app.Streams{In: strings.NewReader(""), Out: io.Discard, Err: io.Discard}},
-	)
-	if err != nil {
-		t.Fatalf("NewApp: %v", err)
-	}
+	commands := catalog.New(nil, []catalog.Command{{Name: "hello", Exec: "echo hello"}})
 
-	c := command.New("hello", nil, "echo hello")
-	a.AllCommandsByName.Add("hello", c)
-	a.OrderKeys = append(a.OrderKeys, "hello")
+	return NewModel(commands, timeline.Log{}, stubExecutor{})
+}
 
-	return a
+func modelWithCommands(commands []catalog.Command, history timeline.Log) *Model {
+	return NewModel(catalog.New(nil, commands), history, stubExecutor{})
 }
 
 func TestNewModel(t *testing.T) {
-	a := testApp(t)
-	m := NewModel(a)
+	m := testModel(t)
 	if m.State != ViewList {
 		t.Fatalf("want list state")
 	}
@@ -44,10 +41,15 @@ func TestNewModel(t *testing.T) {
 }
 
 func TestMove(t *testing.T) {
-	a := testApp(t)
-	a.AllCommandsByName.Add("b", command.New("b", nil, "echo b"))
-	a.OrderKeys = append(a.OrderKeys, "b")
-	m := NewModel(a)
+	commands := catalog.New(
+		[]string{"hello", "b"},
+		[]catalog.Command{
+			{Name: "hello", Exec: "echo hello"},
+			{Name: "b", Exec: "echo b"},
+		},
+	)
+
+	m := NewModel(commands, timeline.Log{}, stubExecutor{})
 	m.Move(1)
 	if m.Selected() != "b" {
 		t.Fatalf("want b")
@@ -59,10 +61,10 @@ func TestMove(t *testing.T) {
 }
 
 func TestFilter(t *testing.T) {
-	a := testApp(t)
-	a.AllCommandsByName.Add("build", command.New("build", nil, "make build"))
-	a.OrderKeys = append(a.OrderKeys, "build")
-	m := NewModel(a)
+	m := modelWithCommands([]catalog.Command{
+		{Name: "hello", Exec: "echo hello"},
+		{Name: "build", Exec: "make build"},
+	}, timeline.Log{})
 	m.Filter = "bui"
 	keys := m.FilteredKeys()
 	if len(keys) != 1 || keys[0] != "build" {
@@ -73,11 +75,11 @@ func TestFilter(t *testing.T) {
 // The history screen names the command an entry touched, and shows a dash for
 // an operation that touched no command.
 func TestHistoryTextShowsTheCommand(t *testing.T) {
-	a := testApp(t)
-	a.History.Add(operations.Create, "greet", "note")
-	a.History.Add(operations.Copy, "", "note")
+	var history timeline.Log
+	history.Add(operation.Create, "greet", "note")
+	history.Add(operation.Copy, "", "note")
 
-	m := NewModel(a)
+	m := modelWithCommands([]catalog.Command{{Name: "hello", Exec: "echo hello"}}, history)
 	text := m.historyText()
 
 	if !strings.Contains(text, "[create] greet") {

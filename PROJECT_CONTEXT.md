@@ -43,16 +43,19 @@ package rather than a new branch in a shared handler.
 ```text
 cmd/<operation>.go            cobra command: flags and argument parsing
   ↓
-internal/domain/<op>dom/      core.go (the operation) + handler.go (the rules) + notes.go
+internal/application/<verb>/  use cases: the flow, with ports it declares itself
   ↓
-internal/data/                history, notes, operations, command map, state
+internal/domain/              the model: catalog aggregate, operation enum
   ↓
-internal/app/                 configuration and application wiring
+internal/adapters/            storage, output, shell, prompt (the technology)
+
+internal/data/ + internal/app/  storage shapes and wiring (Phase 5 work)
 ```
 
-Each `internal/domain/<op>dom` package follows the same shape: `core.go` does
-the work, `handler.go` validates and orchestrates it, `input.go` holds the
-prompts, and `notes.go` carries the per-item documentation.
+A use case is a package under `internal/application/`, and it declares the
+interfaces it needs (consumer-owned ports). The model under `internal/domain/`
+depends on the standard library only. Every operation has been ported (#215):
+`internal/legacy/` is gone; `internal/data`/`internal/app` are Phase 5 work.
 
 `internal/shell` is the shared floor: the platform's shell invocation. A domain
 depends on it to run `ls`, `cp` or `xdg-open`, never on another operation.
@@ -64,7 +67,7 @@ depends on it to run `ls`, `cp` or `xdg-open`, never on another operation.
 - **Cobra with a flat command set** — `crower <operation>`, no nested verb groups, so every operation is discoverable from `--help`. (2026-02)
 - **The `cr` short alias ships next to the `crower` binary** — a name typed many times a day should be short. (2026-02)
 - **The release archive carries the README and the licenses** — a download has to be usable and lawful without the repository. (2026-02)
-- **The shell runner is infrastructure, not an operation** — `internal/shell` owns `sh -c`/`cmd /c`, so `list`, `copy` or `open` do not import the `execute` operation to run a command. (2026-11)
+- **The shell runner is infrastructure, not an operation** — `internal/shell` owns `sh -c`/`cmd /c`, so `list`, `copy` or `open` do not import the `execute` operation to run a command. It stays the shared floor below every adapter rather than being absorbed into `adapters/system`: quoting and running a line is the one thing storage, output, notes, github, system and update would all otherwise duplicate. (2026-11)
 
 ## Topology
 
@@ -77,7 +80,9 @@ There is one component: the repository root *is* the Go module.
 
 ```text
 cmd/                 cobra commands, one file per operation
-internal/domain/     one package per operation (core, handler, notes)
+internal/domain/     the model: catalog aggregate, operation enum (stdlib only)
+internal/application/ use cases, one package per verb, with their own ports
+internal/adapters/   storage, output, shell, prompt — the technology side
 internal/data/       history, notes, operations, command map, state
 internal/app/        configuration and application wiring
 internal/errors/     error types shared across layers
@@ -113,10 +118,12 @@ scripts/             add_to_path installers
 
 - The `cr` alias is the same binary under a second name; both are shipped in
   the release archive.
-- `internal/helper.InitCrowerTests` gives each test its own directory under the
-  system temporary directory (`os.MkdirTemp`), so parallel packages cannot race
-  over a shared fixture path — the failure that used to affect `opendom`,
-  `deletedom` and `movedom` (#46, fixed in #47).
+- `internal/testutil.New(t)` gives each test its own directory under the
+  system temporary directory (`t.TempDir`, removed when the test ends), so
+  parallel packages cannot race over a shared fixture path — the failure that
+  used to affect `opendom`, `deletedom` and `movedom` (#46, fixed in #47).
+  It replaced `internal/helper.InitCrowerTests`, which used `os.MkdirTemp` and
+  never cleaned up.
 - Windows uses `cmd` to execute commands, Linux uses `sh`.
 - The config file is TOML and lives under the user's home directory. It is
   never committed.

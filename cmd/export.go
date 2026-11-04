@@ -1,15 +1,22 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/domain/sharedom"
+	"github.com/fiwon123/crower/internal/adapters/github"
+	"github.com/fiwon123/crower/internal/adapters/storage"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/sharecommands"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 
 	"github.com/spf13/cobra"
 )
 
 var exportCmd = &cobra.Command{
 	Use:   "export [name]",
-	Short: "Export commands to a file",
-	Long:  "Export a command or all commands to a TOML file for sharing",
+	Short: "Export commands to a file.",
+	Long:  `Export one command, or all of them, to a TOML file for sharing.`,
+	Example: `	crower export
+	crower export greet
+	crower export --out ./commands.toml`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
@@ -26,14 +33,17 @@ var exportCmd = &cobra.Command{
 			return err
 		}
 
-		return sharedom.NewCore(cfg).Export(name, out)
+		return newShareUseCase(cfg).Export(name, out)
 	},
 }
 
 var importCmd = &cobra.Command{
 	Use:   "import <file>",
-	Short: "Import commands from a file",
-	Long:  "Import commands from a TOML file",
+	Short: "Import commands from a file.",
+	Long: `Import commands from a TOML file. --overwrite replaces a command that
+already exists with the same name.`,
+	Example: `	crower import ./commands.toml
+	crower import ./commands.toml --overwrite`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return missingArgs(cmd, "a file to import")
@@ -49,32 +59,38 @@ var importCmd = &cobra.Command{
 			return err
 		}
 
-		return sharedom.NewCore(cfg).Import(args[0], overwrite)
+		return newShareUseCase(cfg).Import(args[0], overwrite)
 	},
 }
 
 var shareCmd = &cobra.Command{
 	Use:   "share",
-	Short: "Share commands via registry",
-	Long:  "List and pull commands from a registry",
+	Short: "Share commands through a registry.",
+	Long:  `List the packs a registry publishes, and pull one into the command set.`,
+	Example: `	crower share list
+	crower share pull tools`,
 }
 
 var shareListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List available packs in registry",
+	Use:     "list",
+	Short:   "List the packs available in the registry.",
+	Long:    `List the packs available in the registry.`,
+	Example: `	crower share list`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
 			return err
 		}
 
-		return sharedom.NewCore(cfg).List()
+		return newShareUseCase(cfg).List()
 	},
 }
 
 var sharePullCmd = &cobra.Command{
-	Use:   "pull <name>",
-	Short: "Pull a pack from registry",
+	Use:     "pull <name>",
+	Short:   "Pull a pack from the registry.",
+	Long:    `Pull a pack from the registry into the command set.`,
+	Example: `	crower share pull tools`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(args) == 0 {
 			return missingArgs(cmd, "a pack name")
@@ -85,8 +101,53 @@ var sharePullCmd = &cobra.Command{
 			return err
 		}
 
-		return sharedom.NewCore(cfg).Pull(args[0])
+		return newShareUseCase(cfg).Pull(args[0])
 	},
+}
+
+// shareSession adapts the configuration to the ports the share use case
+// declares.
+type shareSession struct {
+	legacySession
+
+	packs    *storage.Packs
+	registry *github.Registry
+}
+
+// newShareSession wires the configuration, the pack files and the registry.
+func newShareSession(cfg *app.Config) shareSession {
+	return shareSession{
+		legacySession: newLegacySession(cfg),
+		packs:         storage.NewPacks(),
+		registry:      github.NewRegistry(),
+	}
+}
+
+// Write stores a pack at path.
+func (s shareSession) Write(path string, commands []catalog.Command) error {
+	return s.packs.Write(path, commands)
+}
+
+// Read loads the pack at path.
+func (s shareSession) Read(path string) ([]catalog.Command, error) {
+	return s.packs.Read(path)
+}
+
+// Index returns the registry's packs.
+func (s shareSession) Index() ([]sharecommands.Pack, error) {
+	return s.registry.Index()
+}
+
+// Pack fetches one registry pack.
+func (s shareSession) Pack(name string) ([]catalog.Command, string, error) {
+	return s.registry.Pack(name)
+}
+
+// newShareUseCase builds the use case over the configuration.
+func newShareUseCase(cfg *app.Config) *sharecommands.UseCase {
+	session := newShareSession(cfg)
+
+	return sharecommands.New(session, session, session, session, session)
 }
 
 func init() {

@@ -1,8 +1,11 @@
 <div align="center">
 
-# 📖 Command reference
+# 🗂️ Command map
 
-**Every command, one line each. `crower <command> --help` has the full story.**
+**Every command, one line each.**
+
+**Flags, examples, exit codes and the scripting contract** are in the
+**[command reference](Command-Reference)**.
 
 </div>
 

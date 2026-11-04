@@ -1,22 +1,20 @@
 package app
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"strings"
+
+	"github.com/fiwon123/crower/internal/adapters/output"
 )
 
 // Format is how an operation with a structured result renders it.
-type Format string
+type Format = output.Format
 
 const (
-	// FormatText writes the rendering the operation built for a person. It is
-	// the default, and it is the only format the CLI had before --json.
-	FormatText Format = "text"
+	// FormatText writes the rendering the operation built for a person.
+	FormatText = output.FormatText
 
 	// FormatJSON writes one JSON object for a script to read.
-	FormatJSON Format = "json"
+	FormatJSON = output.FormatJSON
 )
 
 // Result writes one operation result in the configured format.
@@ -33,34 +31,21 @@ const (
 func (a *Config) Result(text string, payload any) error {
 	switch a.Format {
 	case FormatJSON:
-		return a.writeJSON(payload)
+		line, err := output.EncodeJSON(payload)
+		if err != nil {
+			return err
+		}
+
+		a.Logger.Out(line)
+		return nil
+
 	case FormatText, "":
 		a.Logger.Out(text)
 		return nil
+
 	default:
 		// A format nobody implements must not fall through to text: the
 		// caller asked for something specific and would read the wrong result.
 		return fmt.Errorf("unknown result format %q", a.Format)
 	}
-}
-
-// writeJSON encodes payload as one line on the result stream.
-func (a *Config) writeJSON(payload any) error {
-	var buffer bytes.Buffer
-
-	encoder := json.NewEncoder(&buffer)
-	// A path is data, not HTML. Without this, `a&b` is encoded as
-	// `a\u0026b`: valid JSON, and a value a script cannot match against the
-	// path it passed in.
-	encoder.SetEscapeHTML(false)
-
-	if err := encoder.Encode(payload); err != nil {
-		return fmt.Errorf("encode json result: %w", err)
-	}
-
-	// Encoder terminates the object; Out adds the newline a result is expected
-	// to end with, so one result stays exactly one line.
-	a.Logger.Out(strings.TrimRight(buffer.String(), "\n"))
-
-	return nil
 }

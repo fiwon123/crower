@@ -1,7 +1,10 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/domain/extractdom"
+	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/system"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/extractcontent"
 
 	"github.com/spf13/cobra"
 )
@@ -11,20 +14,17 @@ var outDirFlag string
 // Cmd represents the extract command
 var extractCmd = &cobra.Command{
 	Use:   "extract <archive...>",
-	Short: "extract compressed files (.zip, .tar, .tar.gz, .7z, .rar...)",
-	Long: `extract compressed files (.zip, .tar, .tar.gz, .7z, .rar...)
+	Short: "Extract compressed files (.zip, .tar, .tar.gz, .7z, .rar...).",
+	Long: `Extract compressed files (.zip, .tar, .tar.gz, .7z, .rar...).
 
-Type 'crower/cr extract "FILE_PATH"' to extract all content to the current folder
-You can specify out to change output folder: 'crower/cr extract "COMPRESSED_FILE_PATH" --out/-o "OUTPUT_FOLDER_PATH"'
-If you have more than 1 compressed file to extract you can put * as the name file
+By default the content goes to the archive's own folder; --out changes it.
 
-Examples:
-	crower extract "C:\Users\Test\Desktop\Test\files.zip"
-	crower extract "C:\Users\Test\Desktop\Test\files.zip" -o "C:\Users\Test\Desktop\Out\"
-	crower extract "C:\Users\Test\Desktop\Test\*.zip"
-	crower extract "C:\Users\Test\Desktop\Test\*.zip" -o "C:\Users\Test\Desktop\Out\"
-
-	`,
+	crower extract files.zip
+	crower extract files.zip --out ./build
+	crower extract "*.zip"`,
+	Example: `	crower extract files.zip
+	crower extract files.zip --out ./build
+	crower extract "*.zip" --out ./build`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
@@ -35,8 +35,38 @@ Examples:
 			return missingArgs(cmd, "compressed file paths")
 		}
 
-		return extractdom.NewCore(cfg).Extract(args, outDirFlag)
+		session := newExtractSession(cfg)
+
+		return extractcontent.New(session, session, session, session).Run(
+			extractcontent.Request{Args: args, OutDir: outDirFlag},
+		)
 	},
+}
+
+// extractSession adapts the configuration to the ports the extract use case
+// declares.
+type extractSession struct {
+	legacySession
+
+	archives *system.Archiver
+}
+
+// newExtractSession wires the configuration and the platform archiver.
+func newExtractSession(cfg *app.Config) extractSession {
+	return extractSession{
+		legacySession: newLegacySession(cfg),
+		archives:      system.NewArchiver(),
+	}
+}
+
+// Extract expands one archive.
+func (s extractSession) Extract(ext, archive, outDir string) (string, error) {
+	return s.archives.Extract(ext, archive, outDir)
+}
+
+// ExtractNote is the history note for the extraction.
+func (s extractSession) ExtractNote(out string, args []string) string {
+	return notes.ExtractNote(out, args)
 }
 
 func init() {

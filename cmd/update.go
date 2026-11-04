@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/internal/domain/listdom"
-	"github.com/fiwon123/crower/internal/domain/updatedom"
+	"github.com/fiwon123/crower/internal/application/updatecommand"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/operation"
 
 	"github.com/spf13/cobra"
 )
@@ -17,44 +17,53 @@ var execute bool
 // Cmd represents the update command
 var updateCmd = &cobra.Command{
 	Use:   "update [command]",
-	Short: "update commands",
-	Long: `update commands
+	Short: "Change a command's name, aliases or exec.",
+	Long: `Change a command's name, aliases or exec.
 
-update command:
-	- Use interactive input just typing 'crower update' without arguments
-	- Use argument key (command name or command alias) 'crower update "COMMAND_KEY"'
-	- using flags --last (update), --create or --execute to update last operation flag
+	crower update greet --exec "echo hi"
+	crower update greet --name hello --alias hi
 
-Examples:
-	crower update
-	crower update com_name
-	crower update com_alias
+The command is found by name or by alias. The last touched command can be
+updated instead:
 	crower update --last
 	crower update --create
 	crower update --execute
-	crower update com_name --name "test" --exec "echo t"
-`,
+
+With no field given, crower asks for each one.`,
+	Example: `	crower update greet --exec "echo hi"
+	crower update hi --name hello
+	crower update --last
+	crower update --create`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
 			return err
 		}
 
-		listHandler := listdom.NewHandler(cfg)
-		core := updatedom.NewCore(cfg, listHandler)
+		session := newLegacySession(cfg)
+
+		request := updatecommand.Request{
+			Changes: catalog.Changes{
+				Name:    name,
+				Aliases: allAlias,
+				Exec:    exec,
+			},
+		}
+
+		if len(args) != 0 {
+			request.Key = args[0]
+		}
 
 		switch {
 		case last:
-			return core.UpdateLast(operations.Update, name, allAlias, exec)
+			request.Last = operation.Update
 		case create:
-			return core.UpdateLast(operations.Create, name, allAlias, exec)
+			request.Last = operation.Create
 		case execute:
-			return core.UpdateLast(operations.Execute, name, allAlias, exec)
-		case len(args) > 0:
-			return core.UpdateCommand(args, name, allAlias, exec)
+			request.Last = operation.Execute
 		}
 
-		return missingArgs(cmd, "a command name or alias")
+		return updatecommand.New(session, session, session, session).Run(request)
 	},
 }
 

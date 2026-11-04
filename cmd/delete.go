@@ -1,10 +1,16 @@
 package cmd
 
 import (
-	"github.com/fiwon123/crower/internal/data/operations"
-	"github.com/fiwon123/crower/internal/domain/deletedom"
-	"github.com/fiwon123/crower/internal/domain/listdom"
+	"fmt"
+	"github.com/fiwon123/crower/internal/adapters/output"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 
+	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/system"
+	"github.com/fiwon123/crower/internal/app"
+	"github.com/fiwon123/crower/internal/application/deletecommand"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/pkg/utils"
 
 	"github.com/spf13/cobra"
@@ -15,66 +21,203 @@ var historyFlagDelete bool
 // Cmd represents the delete command
 var deleteCmd = &cobra.Command{
 	Use:   "delete [command]",
-	Short: "delete command, file or folder",
-	Long: `delete command, file or folder
+	Short: "Delete a command, a file or a folder.",
+	Long: `Delete a command, a file or a folder.
 
-delete commands:
-	- Use interactive input just typing 'crower delete' without arguments
-	- Using either 'crower delete "COMMAND_NAME"' or 'crower delete "COMMAND_ALIAS"'
-	- using flags --create, --update or --execute to delete last operation flag
+A command is found by name or by alias:
+	crower delete greet
+	crower delete hi
 
-delete file:
-	- Using 'crower delete "FILE_PATH"'
-	- Using flag --file for multiple paths 'crower delete --file "FILE_PATH_1" "FILE_PATH_2" "FILE_PATH_3"'
+The last operation can be undone instead:
+	crower delete --create
+	crower delete --update
+	crower delete --execute
+	crower delete --history
 
-delete folder:
-	- Using 'crower delete "FOLDER_PATH"'
-	- Using flag --folder for multiple paths 'crower delete --folder "FOLDER_PATH_1" "FOLDER_PATH_2" "FOLDER_PATH_3"'
+A file or a folder is deleted at the path you give:
+	crower delete --file notes.txt
+	crower delete --folder reports
 
-Example:
-	crower delete
-	crower delete com_name
-	crower delete com_alias
-	crower delete --file "C:\Users\Test\Desktop\Test\new_file.txt"
-	crower delete --file "C:\Users\Test\Desktop\Test\new_file_1.txt" "C:\Users\Test\Desktop\Test\new_file_2.txt"
-	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder"
-	crower delete --folder "C:\Users\Test\Desktop\Test\new_folder_1" "C:\Users\Test\Desktop\Test\new_folder_2"`,
+With no arguments crower asks which command to delete.`,
+	Example: `	crower delete
+	crower delete greet
+	crower delete --file notes.txt
+	crower delete --folder reports
+	crower delete --create`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newApp(cmd)
 		if err != nil {
 			return err
 		}
 
-		listHandler := listdom.NewHandler(cfg)
-		core := deletedom.NewCore(cfg, listHandler)
+		request := deletecommand.Request{Mode: deletecommand.ModeCommand, Args: args}
 
+		// The flags decide which job this run is; the use case owns what each
+		// job does. A positional path keeps the old convenience of deleting a
+		// file or folder without a flag.
 		switch {
 		case createFlag:
-			return core.DeleteLast(operations.Create)
+			request.Mode, request.Last = deletecommand.ModeLast, operation.Create
 		case updateFlag:
-			return core.DeleteLast(operations.Update)
+			request.Mode, request.Last = deletecommand.ModeLast, operation.Update
 		case executeFlag:
-			return core.DeleteLast(operations.Execute)
+			request.Mode, request.Last = deletecommand.ModeLast, operation.Execute
 		case fileFlag:
-			return core.DeleteFile(args)
+			request.Mode = deletecommand.ModeFile
 		case folderFlag:
-			return core.DeleteFolder(args)
+			request.Mode = deletecommand.ModeFolder
 		case systemFlag:
-			return core.DeleteSystemVariable(args)
+			request.Mode = deletecommand.ModeSystemVariable
 		case sysPathFlag:
-			return core.DeleteSystemPathVariable(args)
+			request.Mode = deletecommand.ModeSystemPath
 		case historyFlagDelete:
-			return core.DeleteHistoryContent(args)
+			request.Mode = deletecommand.ModeHistory
 		case len(args) == 0:
-			return core.Delete(args)
+			request.Mode = deletecommand.ModeCommand
 		case utils.IsValidFilePath(args[0]):
-			return core.DeleteFile(args)
+			request.Mode = deletecommand.ModeFile
 		case utils.IsValidFolderPath(args[0]):
-			return core.DeleteFolder(args)
+			request.Mode = deletecommand.ModeFolder
+		default:
+			request.Key = args[0]
 		}
 
-		return core.Delete(args)
+		session := newDeleteSession(cfg)
+
+		return deletecommand.New(session, session, session, session, session, session, session).Run(request)
 	},
+}
+
+// deleteSession adapts the configuration to the ports the delete use case
+// declares.
+//
+// It embeds legacySession for the ports delete shares with every other use case
+// -- the catalog, the diagnostics stream, the two prompts -- and adds the four
+// this operation needs: the platform remover, the environment editor, the
+// history log, and the delete notes.
+type deleteSession struct {
+	legacySession
+
+	remover     *system.Remover
+	environment *system.Environment
+}
+
+// newDeleteSession wires the configuration, the renderer and the two platform
+// adapters delete needs.
+func newDeleteSession(cfg *app.Config) deleteSession {
+	return deleteSession{
+		legacySession: newLegacySession(cfg),
+		remover:       system.NewRemover(),
+		environment:   system.NewEnvironment(),
+	}
+}
+
+// File deletes one file with the host's own tool.
+func (s deleteSession) File(path string) error {
+	return s.remover.File(path)
+}
+
+// Folder deletes one folder with the host's own tool.
+func (s deleteSession) Folder(path string) error {
+	return s.remover.Folder(path)
+}
+
+// Variable drops one variable from the file the shell reads at start.
+func (s deleteSession) Variable(name string) (string, error) {
+	return s.environment.Variable(name)
+}
+
+// VariablePath drops one entry from PATH.
+func (s deleteSession) VariablePath(path string) (string, error) {
+	return s.environment.VariablePath(path)
+}
+
+// HistoryTable renders the operation log.
+func (s deleteSession) HistoryTable() string {
+	return output.HistoryTable(s.cfg.History)
+}
+
+// ChooseHistoryEntry asks which history row to drop.
+//
+// The note is decoded here: the escaping is a storage detail, and the use case
+// shows what the user is about to lose.
+func (s deleteSession) ChooseHistoryEntry() (deletecommand.Entry, error) {
+	content, err := s.prompt().ChooseHistoryEntry()
+	if err != nil {
+		return deletecommand.Entry{}, err
+	}
+
+	return deletecommand.Entry{
+		Version: content.Version,
+		File:    content.File,
+		Note:    notes.Display(content.Note),
+	}, nil
+}
+
+// RemoveHistoryEntry drops one entry and the snapshot it points at, and
+// rewrites only the index: the command set did not change.
+func (s deleteSession) RemoveHistoryEntry(entry deletecommand.Entry) (string, error) {
+	content, found := s.historyEntry(entry.Version)
+	if !found {
+		return "", fmt.Errorf("history entry %s not found", entry.File)
+	}
+
+	if !s.cfg.History.RemoveContent(content) {
+		return "", fmt.Errorf("history entry %s not found", entry.File)
+	}
+
+	if err := s.cfg.DeleteHistoryBackup(content.File); err != nil {
+		return "", fmt.Errorf("delete history backup %s: %w", content.File, err)
+	}
+
+	if err := s.cfg.SaveOnlyHistory(); err != nil {
+		return "", err
+	}
+
+	return "history entry deleted", nil
+}
+
+// historyEntry finds the stored row the selected entry came from. The version
+// is the identity RemoveContent matches on; the file is what the snapshot is
+// called.
+func (s deleteSession) historyEntry(version int) (timeline.Content, bool) {
+	for _, content := range s.cfg.History.AllData {
+		if content.Version == version {
+			return content, true
+		}
+	}
+
+	return timeline.Content{}, false
+}
+
+// DeleteCommand is the history note for a deleted command.
+func (s deleteSession) DeleteCommand(command catalog.Command, args []string) string {
+	return notes.DeleteCommandNote(command, args)
+}
+
+// DeleteLast is the history note for a `--last` delete.
+func (s deleteSession) DeleteLast(op operation.Operation, command catalog.Command) string {
+	return notes.DeleteLastNote(op, command)
+}
+
+// DeleteFile is the history note for a deleted file.
+func (s deleteSession) DeleteFile(args []string) string {
+	return notes.DeleteFileNote(args)
+}
+
+// DeleteFolder is the history note for a deleted folder.
+func (s deleteSession) DeleteFolder(args []string) string {
+	return notes.DeleteFolderNote(args)
+}
+
+// DeleteSystemVariable is the history note for `delete --system`.
+func (s deleteSession) DeleteSystemVariable(args []string) string {
+	return notes.DeleteSystemVariableNote(args)
+}
+
+// DeleteSystemPath is the history note for `delete --syspath`.
+func (s deleteSession) DeleteSystemPath(args []string) string {
+	return notes.DeleteSystemPathNote(args)
 }
 
 func init() {

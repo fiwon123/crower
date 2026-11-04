@@ -4,9 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fiwon123/crower/internal/app"
-	"github.com/fiwon123/crower/internal/domain/executedom"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 )
+
+// Executor runs a managed command for the window.
+//
+// It is declared here, at the point of use, so this package depends on neither
+// the use case nor its adapters; the command layer supplies one.
+type Executor interface {
+	// Execute runs key with params and returns the output and the command's
+	// name.
+	Execute(key string, params []string) (string, string, error)
+}
 
 type ViewState int
 
@@ -19,12 +29,13 @@ const (
 )
 
 type Model struct {
-	App    *app.Config
-	Exec   *executedom.Handler
-	State  ViewState
-	Keys   []string
-	Index  int
-	Filter string
+	Commands catalog.Catalog
+	History  timeline.Log
+	Exec     Executor
+	State    ViewState
+	Keys     []string
+	Index    int
+	Filter   string
 
 	// run
 	SelectedKey string
@@ -37,14 +48,15 @@ type Model struct {
 	LastCmd string
 }
 
-func NewModel(a *app.Config) *Model {
-	m := &Model{
-		App:   a,
-		Exec:  executedom.NewHandler(a),
-		State: ViewList,
-		Keys:  append([]string(nil), a.OrderKeys...),
+// NewModel builds the window over the current command set and history.
+func NewModel(commands catalog.Catalog, history timeline.Log, exec Executor) *Model {
+	return &Model{
+		Commands: commands,
+		History:  history,
+		Exec:     exec,
+		State:    ViewList,
+		Keys:     commands.Names(),
 	}
-	return m
 }
 
 func (m *Model) FilteredKeys() []string {
@@ -123,11 +135,11 @@ func (m *Model) SubmitParams() {
 }
 
 func (m *Model) execute() {
-	out, cmd, err := m.Exec.Execute(m.SelectedKey, m.Params)
+	out, name, err := m.Exec.Execute(m.SelectedKey, m.Params)
 	m.LastOut = out
 	m.LastErr = err
-	if cmd != nil {
-		m.LastCmd = cmd.Name
+	if name != "" {
+		m.LastCmd = name
 	} else {
 		m.LastCmd = m.SelectedKey
 	}
@@ -141,12 +153,12 @@ func (m *Model) historyText() string {
 
 	sb.WriteString("[HISTORY] Enter/Esc=back\n\n")
 
-	if len(m.App.History.AllData) == 0 {
+	if len(m.History.AllData) == 0 {
 		sb.WriteString("No history\n")
 		return sb.String()
 	}
 
-	for i, entry := range m.App.History.AllData {
+	for i, entry := range m.History.AllData {
 		if i > 20 {
 			break
 		}

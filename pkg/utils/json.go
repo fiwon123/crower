@@ -31,7 +31,7 @@ func WriteJson(input any, filePath string) error {
 		return fmt.Errorf("Error enconding file path: %v", err)
 	}
 
-	if err := os.WriteFile(filePath, buf, 0644); err != nil {
+	if err := writeFileAtomic(filePath, buf); err != nil {
 		return fmt.Errorf("Error writing json file: %v", err)
 	}
 

@@ -2,22 +2,22 @@ package app
 
 import (
 	"bufio"
-	"fmt"
+	"github.com/fiwon123/crower/internal/domain/timeline"
 	"io"
 	"path/filepath"
 
-	"github.com/fiwon123/crower/internal/data/command"
-	"github.com/fiwon123/crower/internal/data/history"
-	"github.com/fiwon123/crower/internal/data/note"
+	"github.com/fiwon123/crower/internal/adapters/notes"
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
+
+	"github.com/fiwon123/crower/internal/adapters/storage"
 
 	"github.com/fiwon123/crower/pkg/logger"
-	"github.com/fiwon123/crower/pkg/utils"
 )
 
 // Config is everything one crower run needs: where its state lives, what it
 // reads, and where its output goes.
 type Config struct {
-	History            history.Data
+	History            timeline.Log
 	Logger             logger.Logger
 	OrderKeys          []string
 	AllCommandsByAlias command.MapData
@@ -25,10 +25,10 @@ type Config struct {
 
 	// Where the run's state lives. They are private because a domain should
 	// not know the storage layout: it records through Save/SaveCommands and
-	// reads the paths through ConfigFile/ConfigFolder.
-	cfgFilePath       string
-	historyFilePath   string
-	historyFolderPath string
+	// reads the paths through ConfigFile/ConfigFolder. The formats themselves
+	// belong to internal/adapters/storage.
+	commands     *storage.CommandFile
+	historyFiles *storage.HistoryFiles
 
 	// NoInput reports that prompts must fail rather than read stdin.
 	NoInput bool
@@ -46,13 +46,13 @@ type Config struct {
 // It is read-only on purpose: writing it is this package's job (SaveCommands,
 // RevertTo), so a domain does not have to know the format or the location.
 func (app *Config) ConfigFile() string {
-	return app.cfgFilePath
+	return app.commands.Path()
 }
 
 // ConfigFolder is the folder the configuration lives in, which is also where
 // `create --script` keeps its scripts.
 func (app *Config) ConfigFolder() string {
-	return filepath.Dir(app.cfgFilePath)
+	return app.commands.Folder()
 }
 
 // NewApp builds the run from an already-read configuration.
@@ -73,31 +73,26 @@ func NewApp(
 ) (*Config, error) {
 	opts = opts.withDefaults()
 
-	folderPath := filepath.Dir(cfgFilePath)
+	commands := storage.NewCommandFile(cfgFilePath)
+	historyFiles := storage.NewHistoryFiles(commands.Folder())
 
-	historyFilePath := filepath.Join(folderPath, "historyhelper.json")
-	if err := utils.CreateFileIfNotExists(historyFilePath); err != nil {
-		return nil, fmt.Errorf("prepare history file %s: %w", historyFilePath, err)
+	if err := historyFiles.Ensure(); err != nil {
+		return nil, err
 	}
 
-	historyFolderPath := filepath.Join(folderPath, "history")
-	if err := utils.CreateFolderIfNotExists(historyFolderPath); err != nil {
-		return nil, fmt.Errorf("prepare history folder %s: %w", historyFolderPath, err)
-	}
+	logPath := filepath.Join(commands.Folder(), "crower.log")
 
-	logPath := filepath.Join(folderPath, "crower.log")
-
-	var history history.Data
-	if err := utils.ReadJson(historyFilePath, &history); err != nil {
-		return nil, fmt.Errorf("read history %s: %w", historyFilePath, err)
+	historyData, err := historyFiles.Load()
+	if err != nil {
+		return nil, err
 	}
 
 	// Entries written before the name was stored on the entry itself carry it
 	// only inside the note. Resolve it on load so `--last` and the history view
 	// work on a file from an older build.
-	for i := range history.AllData {
-		if history.AllData[i].CommandName == "" {
-			history.AllData[i].CommandName = note.CommandName(history.AllData[i].Note)
+	for i := range historyData.AllData {
+		if historyData.AllData[i].CommandName == "" {
+			historyData.AllData[i].CommandName = notes.CommandName(historyData.AllData[i].Note)
 		}
 	}
 
@@ -107,10 +102,9 @@ func NewApp(
 	}
 
 	cfg := &Config{
-		History:            history,
-		cfgFilePath:        cfgFilePath,
-		historyFilePath:    historyFilePath,
-		historyFolderPath:  historyFolderPath,
+		History:            historyData,
+		commands:           commands,
+		historyFiles:       historyFiles,
 		Logger:             *log,
 		OrderKeys:          orderKeys,
 		AllCommandsByAlias: allAliases,

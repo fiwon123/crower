@@ -39,13 +39,14 @@ cr docker-ps
 | --- | --- |
 | install it | **[📦 Installation](How-to-Install)** |
 | create my first shortcut | **[⚡ Quick start](Quick-Start)** |
-| look up a command or flag | **[📖 Command reference](How-to-Use)** |
+| look up a command or flag | **[📖 Command reference](Command-Reference)** |
 | copy a recipe into my shell | **[🍳 Recipes](Recipes)** |
 | call crower from a script | **[🧩 Scripting](Scripting)** |
 | share commands with my team | **[🤝 Sharing](Sharing)** |
 | find where my data lives | **[⚙️ Configuration](Configuration)** |
 | fix something | **[🚑 Troubleshooting](Troubleshooting)** |
 | build or release it | **[🛠️ Development](Development)** |
+| understand the code layout | **[🏛️ Architecture](Architecture)** |
 | help prove a claim | **[🧪 Verifying claims](Verifying-claims)** |
 
 ## ✨ What it does
