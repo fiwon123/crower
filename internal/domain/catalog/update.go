@@ -21,6 +21,11 @@ type Changes struct {
 	Name    string
 	Aliases []string
 	Exec    string
+
+	// ClearAliases distinguishes "set the alias list to empty" from "leave it
+	// alone": an empty Aliases slice means not supplied, so a caller that needs
+	// to remove every alias sets this instead.
+	ClearAliases bool
 }
 
 // UpdateResult is a change that has not been stored yet.
@@ -79,7 +84,7 @@ func (c Catalog) Update(key string, changes Changes) (UpdateResult, error) {
 	}
 
 	updated := old.clone()
-	aliasesSupplied := len(changes.Aliases) > 0
+	aliasesSupplied := len(changes.Aliases) > 0 || changes.ClearAliases
 
 	changed := 0
 

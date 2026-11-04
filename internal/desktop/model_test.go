@@ -72,6 +72,23 @@ func TestFilter(t *testing.T) {
 	}
 }
 
+func TestReloadReplacesTheSetAndResetsTheSelection(t *testing.T) {
+	m := testModel(t)
+	m.Filter = "hello"
+	m.Index = 3
+
+	commands := catalog.New(nil, []catalog.Command{{Name: "build", Exec: "make"}})
+	m.Reload(commands, timeline.Log{})
+
+	if got := m.Selected(); got != "build" {
+		t.Errorf("Selected() = %q, want build", got)
+	}
+
+	if m.Filter != "" || m.Index != 0 {
+		t.Errorf("filter/index = %q/%d, want reset", m.Filter, m.Index)
+	}
+}
+
 // The history screen names the command an entry touched, and shows a dash for
 // an operation that touched no command.
 func TestHistoryTextShowsTheCommand(t *testing.T) {
