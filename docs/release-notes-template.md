@@ -23,8 +23,12 @@ result under ~60 lines and keep the section order.
   `crower_gui_vX.Y.Z_<os>_<arch>` is the Fyne app `crower-gui`, for Linux and
   Windows amd64 plus macOS Apple Silicon and Intel. The other two platforms get
   the CLI only.
-- **Draft first.** The workflow creates a draft with the operational sections.
-  Add Highlights and Fixes while it is a draft, then publish.
+- **Draft first.** The workflow creates a draft with Highlights, Fixes and the
+  operational sections already in place. Highlights and Fixes come from the
+  PRs merged into `dev` (labels `enhancement` and `bug`); rewrite a line if a
+  title needs a sentence, then publish. `internal/tools/bodycheck` refuses a
+  body that drifts from this order, so the dispatch fails before the draft
+  exists.
 
 ## Template
 

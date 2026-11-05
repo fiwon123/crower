@@ -423,6 +423,11 @@ gh workflow run release.yml --ref main -f version=v0.6.0
   shields.io badges; professional and under ~60 lines; the full PR list is a
   compare link. Copy asset names, the commit and the checksum file from the
   published release before writing them down.
+- **The generator enforces the style.** The workflow derives Highlights and
+  Fixes from the PRs merged into `dev` (`enhancement` and `bug`), then runs
+  `internal/tools/bodycheck` on the generated body; a missing section, a badge
+  or a repeated title fails the dispatch before the draft exists. An unedited
+  draft therefore already has the house shape.
 - The workflow itself is not covered by CI. Its first real proof is a run, and a
   run whose jobs never executed proves nothing — which is also why a build job
   stuck on a retired runner label used to leave no draft at all (#121).

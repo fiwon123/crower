@@ -81,9 +81,10 @@ publish it by hand, or pass the `publish` input.
 
 The published body follows `docs/release-notes-template.md` and ends with a
 compare link, not a pasted PR list: `generate-notes` cannot see squash-merged
-feature commits, and a pasted list goes stale. `scripts/release-notes.sh` prints
-the PRs merged into `dev` for the release manager to turn into Highlights and
-Fixes while the release is a draft.
+feature commits, and a pasted list goes stale. Highlights and Fixes are built
+from the PRs merged into `dev` (`enhancement` and `bug`), and
+`internal/tools/bodycheck` refuses a body that drops a section or reintroduces
+a badge, so the dispatch fails before the draft exists.
 
 ## 🧪 What a green run proves
 

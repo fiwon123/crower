@@ -352,6 +352,12 @@ jobs:
           ref: ${{ needs.prepare.outputs.tag }}
           fetch-depth: 0
 
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
       - name: Download all artifacts
         uses: actions/download-artifact@v8
         with:
@@ -370,9 +376,10 @@ jobs:
         id: notes
         # The body follows docs/release-notes-template.md: section emoji,
         # platform icons and a CLI/GUI table, with a compare link as the
-        # changelog. The release manager adds Highlights and Fixes while the
-        # release is still a draft.
+        # changelog. Highlights and Fixes come from the PRs merged into `dev`,
+        # so an unedited draft already has the house shape.
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           TAG: ${{ needs.prepare.outputs.tag }}
           COMMIT: ${{ needs.prepare.outputs.commit }}
@@ -382,6 +389,22 @@ jobs:
           cat > notes.md <<'EOF'
           A terminal file manager and command-alias manager with undoable history and per-item notes.
 
+          EOF
+
+          # Highlights and Fixes are the PRs merged into `dev` in this window,
+          # labelled `enhancement` and `bug`. `releasehighlights` drops the
+          # conventional-commit prefix and capitalises the title; the release
+          # manager may still rewrite a line in the draft.
+          if [ -n "$PREV" ]; then
+            PREV_AT="$(gh api "repos/${REPO}/commits/${PREV}" --jq '.commit.committer.date')"
+            END_AT="$(gh api "repos/${REPO}/commits/${COMMIT}" --jq '.commit.committer.date')"
+            gh pr list --repo "$REPO" --state merged --base dev --limit 200 \
+              --search "merged:>=${PREV_AT}" \
+              --json number,title,url,labels,mergedAt \
+              | go run ./internal/tools/releasehighlights "${PREV_AT}" "${END_AT}" >> notes.md
+          fi
+
+          cat >> notes.md <<'EOF'
           ## 📦 Downloads
 
           | Platform | CLI | GUI |
@@ -424,17 +447,22 @@ jobs:
 
           ## 📝 Changelog
           EOF
-          sed -i "s|@TAG@|${TAG}|g; s|@REPO@|${REPO}|g; s|@COMMIT@|${COMMIT}|g" notes.md
 
           # The published body carries a compare link, not a pasted PR list: the
-          # list is long, goes stale, and reads worse than the link. The
-          # `scripts/release-notes.sh` helper prints it for the release manager
-          # when writing the Highlights and Fixes sections of the draft.
+          # list is long, goes stale, and reads worse than the link.
           if [ -z "$PREV" ]; then
             echo "_Initial release or first tagged version._" >> notes.md
           else
             printf '\n[`%s...%s`](https://github.com/%s/compare/%s...%s)\n' "$PREV" "$TAG" "$REPO" "$PREV" "$TAG" >> notes.md
           fi
+
+          sed -i "s|@TAG@|${TAG}|g; s|@REPO@|${REPO}|g; s|@COMMIT@|${COMMIT}|g" notes.md
+
+      - name: Check the release-body shape
+        # A generator change that drops a section or reintroduces a badge fails
+        # here, before the draft exists. The gate is the one in
+        # docs/release-notes-template.md and internal/tools/bodycheck.
+        run: go run ./internal/tools/bodycheck notes.md
 
       # A draft is the default so the artifacts can be inspected — and rebuilt by
       # re-running — before anyone can download them. A published release is
