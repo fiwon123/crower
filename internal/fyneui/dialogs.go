@@ -27,13 +27,13 @@ const (
 // showCreate asks for the editable fields and adds the command through the
 // Editor port. A rule error is shown and the set is left alone.
 func (u *ui) showCreate() {
-	name := widget.NewEntry()
-	aliases := widget.NewEntry()
+	name := newScrollFreeEntry()
+	aliases := newScrollFreeEntry()
 
-	icon := widget.NewEntry()
+	icon := newScrollFreeEntry()
 	icon.SetPlaceHolder("🚀")
 
-	group := widget.NewEntry()
+	group := newScrollFreeEntry()
 	group.SetPlaceHolder("deploy")
 
 	exec := newExecEntry()
@@ -92,17 +92,17 @@ func (u *ui) showEditFor(key string) {
 		return
 	}
 
-	name := widget.NewEntry()
+	name := newScrollFreeEntry()
 	name.SetText(command.Name)
 
-	aliases := widget.NewEntry()
+	aliases := newScrollFreeEntry()
 	aliases.SetText(strings.Join(command.Aliases, ", "))
 
-	icon := widget.NewEntry()
+	icon := newScrollFreeEntry()
 	icon.SetText(command.Icon)
 	icon.SetPlaceHolder("🚀")
 
-	group := widget.NewEntry()
+	group := newScrollFreeEntry()
 	group.SetText(command.Group)
 	group.SetPlaceHolder("deploy")
 
@@ -114,19 +114,19 @@ func (u *ui) showEditFor(key string) {
 	description.SetMinRowsVisible(2)
 	description.SetPlaceHolder("what the command is for")
 
-	params := widget.NewEntry()
+	params := newScrollFreeEntry()
 	params.SetText(strings.Join(command.Params, ", "))
 	params.SetPlaceHolder("env, region")
 
-	cwd := widget.NewEntry()
+	cwd := newScrollFreeEntry()
 	cwd.SetText(command.Cwd)
 	cwd.SetPlaceHolder("~/src/app")
 
-	shell := widget.NewEntry()
+	shell := newScrollFreeEntry()
 	shell.SetText(command.Shell)
 	shell.SetPlaceHolder("sh, pwsh or cmd")
 
-	timeout := widget.NewEntry()
+	timeout := newScrollFreeEntry()
 	timeout.SetText(command.Timeout)
 	timeout.SetPlaceHolder("120s")
 
@@ -273,7 +273,7 @@ func newExecEntry() *widget.Entry {
 func (u *ui) askParams(key string, command catalog.Command) {
 	u.model.StartRunKey(key, true)
 
-	input := widget.NewEntry()
+	input := newScrollFreeEntry()
 	input.SetPlaceHolder(paramsHint(command))
 
 	dialog.ShowCustomConfirm("Parameters", "Run", "Cancel", input, func(ok bool) {
