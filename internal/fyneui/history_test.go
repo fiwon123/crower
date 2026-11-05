@@ -4,6 +4,7 @@ package fyneui
 
 import (
 	"image/color"
+	"slices"
 	"strings"
 	"testing"
 
@@ -33,6 +34,32 @@ func historyTestUI(t *testing.T) (*ui, int) {
 	front.historyTab()
 
 	return front, len(history.AllData)
+}
+
+// The history table's cells have to be reachable by the canvas walk for the
+// same reason as the command rows: the cell type embeds a container (#406).
+func TestHistoryCellsArePaintable(t *testing.T) {
+	var history timeline.Log
+	for i := 0; i < 3; i++ {
+		history.Add(operation.Create, "greet", "note")
+	}
+
+	model := desktop.NewModel(
+		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
+		history,
+		stubExecutor{},
+	)
+
+	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
+	window.SetContent(front.content())
+	window.Resize(fyneSize())
+
+	front.tabs.SelectIndex(1)
+	window.Resize(fyneSize())
+
+	if labels := labelsIn(window.Canvas().Content()); !slices.Contains(labels, "greet") {
+		t.Fatalf("the history cell text is not reachable in the rendered tree; labels = %q", labels)
+	}
 }
 
 // Selecting any cell selects the row it belongs to, not the cell, and opens the
