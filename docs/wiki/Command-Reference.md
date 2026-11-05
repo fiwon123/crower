@@ -423,9 +423,9 @@ crower gui
 
 ## 🖼️ crower-gui
 
-The GUI archive contains `crower-gui`, the Fyne desktop application. It is not
-a `crower` subcommand; extract the `crower_gui_*` archive and launch it. The
-CLI archive is cgo-free and has no window.
+Every platform archive contains `crower-gui`, the Fyne desktop application. It
+is not a `crower` subcommand; extract the archive and launch it. The CLI
+binaries are cgo-free and need no display.
 
 ```bash
 crower-gui

@@ -61,7 +61,10 @@ clean:
 release: zip_windows zip_linux
 	@echo "Release ready: $(VERSION)"
 
-# Platform release for CI (cross-compile)
+# Platform release for a CLI-only archive (local use).
+#
+# The release workflow builds one combined archive per platform with
+# release-gui-platform; this target stays for a local CLI-only build.
 #
 # The binary inside the archive is always named $(APP_NAME)$(EXT) /
 # $(APP_NAME_SHORT)$(EXT) — never arch-suffixed. The platform and architecture
@@ -76,35 +79,37 @@ release-platform: $(BUILD_DIR)
 	@$(MAKE) package-cli GOOS=$(GOOS) GOARCH=$(GOARCH)
 	@$(MAKE) verify-release
 
-# Platform release for the Fyne GUI.
+# Platform release for a platform that carries the Fyne GUI.
 #
 # Fyne needs CGO, so this target runs on the target OS runner (Linux, Windows
-# or macOS), not as a cross-compile. The CLI archive comes from
-# release-platform; this one builds only the crower-gui executable.
+# or macOS), not as a cross-compile. It builds the cgo-free `crower`/`cr` pair
+# and `crower-gui`, then packages all three into the one platform archive.
 release-gui-platform: $(BUILD_DIR)
 	mkdir -p $(DIST_DIR) $(GUI_PACKAGE)
-	@echo "Building $(GUI_NAME) with -tags fyne for $(GOOS)/$(GOARCH) with version $(VERSION)"
+	@echo "Building $(APP_NAME), $(APP_NAME_SHORT) and $(GUI_NAME) for $(GOOS)/$(GOARCH) with version $(VERSION)"
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(APP_NAME)$(EXT)
+	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT)
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go build -tags fyne -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(GUI_NAME)$(EXT) ./cmd/crowergui
 	@$(MAKE) package-gui GOOS=$(GOOS) GOARCH=$(GOARCH)
-	@$(MAKE) verify-release
+	@$(MAKE) verify-release GUI=1
 
 # Fail the build if an archive does not carry the names users are told to run.
 # GOOS/GOARCH are pinned to the host: this target inspects archives, so it must
 # run on the machine doing the build rather than be cross-compiled to the
-# archive's target.
+# archive's target. GUI=1 additionally requires crower-gui in every archive.
+ARCHIVEVERIFY_FLAGS := $(if $(filter 1,$(GUI)),-gui,)
+
 verify-release:
-	@GOOS=$$(go env GOHOSTOS) GOARCH=$$(go env GOHOSTARCH) go run ./internal/tools/archiveverify $(DIST_DIR)
+	@GOOS=$$(go env GOHOSTOS) GOARCH=$$(go env GOHOSTARCH) go run ./internal/tools/archiveverify $(ARCHIVEVERIFY_FLAGS) $(DIST_DIR)
 
 ifeq ($(GOOS),windows)
 EXT := .exe
 SCRIPT_EXT := .bat
 CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS)_$(GOARCH).zip
-GUI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_gui_$(VERSION)_$(GOOS)_$(GOARCH).zip
 else
 EXT :=
 SCRIPT_EXT := .sh
 CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
-GUI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_gui_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
 endif
 
 package-cli: $(BUILD_DIR)
@@ -118,13 +123,14 @@ endif
 
 package-gui: $(BUILD_DIR)
 	@mkdir -p $(DIST_DIR) $(GUI_PACKAGE)
-	cp $(BUILD_DIR)/$(GUI_NAME)$(EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE $(GUI_PACKAGE)/
+	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT) $(BUILD_DIR)/$(GUI_NAME)$(EXT) \
+		$(SCRIPTS_DIR)/$(SCRIPT_NAME)$(SCRIPT_EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE $(GUI_PACKAGE)/
 ifeq ($(GOOS),windows)
-	cd $(GUI_PACKAGE) && zip -j $(abspath $(GUI_ARCHIVE)) *
+	cd $(GUI_PACKAGE) && zip -j $(abspath $(CLI_ARCHIVE)) *
 else
-	tar -czvf $(GUI_ARCHIVE) -C $(GUI_PACKAGE) $(GUI_NAME)$(EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE
+	tar -czvf $(CLI_ARCHIVE) -C $(GUI_PACKAGE) $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) $(GUI_NAME)$(EXT) $(SCRIPT_NAME)$(SCRIPT_EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE
 endif
-	@echo "GUI package: $(GUI_ARCHIVE)"
+	@echo "Platform package: $(CLI_ARCHIVE)"
 
 
 # ---------------------------------------------------------------------------

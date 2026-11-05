@@ -18,11 +18,9 @@ result under ~60 lines and keep the section order.
   sections. The full PR list is a compare link, never pasted into the body.
 - **Facts.** Asset names, the commit and the checksum file are copied from the
   published release, not from memory.
-- **Assets.** `crower_vX.Y.Z_<os>_<arch>` is the cgo-free CLI; it ships
-  `crower`, the `cr` alias, README, licenses and `add_to_path`.
-  `crower_gui_vX.Y.Z_<os>_<arch>` is the Fyne app `crower-gui`, for Linux and
-  Windows amd64 plus macOS Apple Silicon and Intel. The other two platforms get
-  the CLI only.
+- **One archive per platform.** `crower_vX.Y.Z_<os>_<arch>` contains `crower`,
+  the `cr` alias and `crower-gui` (the Fyne window), plus README, licenses and
+  the `add_to_path` installer. There is no separate GUI archive.
 - **Draft first.** The workflow creates a draft with Highlights, Fixes and the
   operational sections already in place. Highlights and Fixes come from the
   PRs merged into `dev` (labels `enhancement` and `bug`); rewrite a line if a
@@ -48,16 +46,16 @@ A terminal file manager and command-alias manager with undoable history and per-
 
 ## 📦 Downloads
 
-| Platform | CLI | GUI |
-| --- | --- | --- |
-| 🐧 Linux amd64 | `crower_vX.Y.Z_linux_amd64.tar.gz` | `crower_gui_vX.Y.Z_linux_amd64.tar.gz` |
-| 🐧 Linux arm64 | `crower_vX.Y.Z_linux_arm64.tar.gz` | — |
-| 🪟 Windows amd64 | `crower_vX.Y.Z_windows_amd64.zip` | `crower_gui_vX.Y.Z_windows_amd64.zip` |
-| 🪟 Windows arm64 | `crower_vX.Y.Z_windows_arm64.zip` | — |
-| 🍎 macOS Intel | `crower_vX.Y.Z_darwin_amd64.tar.gz` | `crower_gui_vX.Y.Z_darwin_amd64.tar.gz` |
-| 🍎 macOS Apple Silicon | `crower_vX.Y.Z_darwin_arm64.tar.gz` | `crower_gui_vX.Y.Z_darwin_arm64.tar.gz` |
+| Platform | Archive |
+| --- | --- |
+| 🐧 Linux amd64 | `crower_vX.Y.Z_linux_amd64.tar.gz` |
+| 🐧 Linux arm64 | `crower_vX.Y.Z_linux_arm64.tar.gz` |
+| 🪟 Windows amd64 | `crower_vX.Y.Z_windows_amd64.zip` |
+| 🪟 Windows arm64 | `crower_vX.Y.Z_windows_arm64.zip` |
+| 🍎 macOS Intel | `crower_vX.Y.Z_darwin_amd64.tar.gz` |
+| 🍎 macOS Apple Silicon | `crower_vX.Y.Z_darwin_arm64.tar.gz` |
 
-The CLI archive is cgo-free and ships `crower`, the `cr` alias, README, licenses and the `add_to_path` installer. The GUI archive ships `crower-gui`, the Fyne window over the same configuration, with README and licenses.
+Every archive contains `crower`, the `cr` alias and `crower-gui`, plus README, licenses and the `add_to_path` installer. The CLI is cgo-free; `crower-gui` is the Fyne window over the same configuration.
 
 ## ⚙️ Install
 
@@ -67,7 +65,7 @@ tar -xzf crower_vX.Y.Z_linux_amd64.tar.gz   # .zip on Windows
 crower --version
 ```
 
-`crower gui` opens the terminal menu; `crower-gui` from the GUI archive opens the Fyne window.
+`crower gui` opens the terminal menu; `crower-gui` opens the Fyne window.
 
 ## ⚡ Upgrade
 

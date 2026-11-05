@@ -17,14 +17,16 @@ const validBody = `A terminal file manager and command-alias manager with undoab
 
 ## 📦 Downloads
 
-| Platform | CLI | GUI |
-| --- | --- | --- |
-| 🐧 Linux amd64 | ` + "`crower_v1_linux_amd64.tar.gz`" + ` | ` + "`crower_gui_v1_linux_amd64.tar.gz`" + ` |
-| 🐧 Linux arm64 | ` + "`crower_v1_linux_arm64.tar.gz`" + ` | — |
-| 🪟 Windows amd64 | ` + "`crower_v1_windows_amd64.zip`" + ` | ` + "`crower_gui_v1_windows_amd64.zip`" + ` |
-| 🪟 Windows arm64 | ` + "`crower_v1_windows_arm64.zip`" + ` | — |
-| 🍎 macOS Intel | ` + "`crower_v1_darwin_amd64.tar.gz`" + ` | ` + "`crower_gui_v1_darwin_amd64.tar.gz`" + ` |
-| 🍎 macOS Apple Silicon | ` + "`crower_v1_darwin_arm64.tar.gz`" + ` | ` + "`crower_gui_v1_darwin_arm64.tar.gz`" + ` |
+| Platform | Archive |
+| --- | --- |
+| 🐧 Linux amd64 | ` + "`crower_v1_linux_amd64.tar.gz`" + ` |
+| 🐧 Linux arm64 | ` + "`crower_v1_linux_arm64.tar.gz`" + ` |
+| 🪟 Windows amd64 | ` + "`crower_v1_windows_amd64.zip`" + ` |
+| 🪟 Windows arm64 | ` + "`crower_v1_windows_arm64.zip`" + ` |
+| 🍎 macOS Intel | ` + "`crower_v1_darwin_amd64.tar.gz`" + ` |
+| 🍎 macOS Apple Silicon | ` + "`crower_v1_darwin_arm64.tar.gz`" + ` |
+
+Every archive contains ` + "`crower`" + `, ` + "`cr`" + ` and ` + "`crower-gui`" + `.
 
 ## ⚙️ Install
 

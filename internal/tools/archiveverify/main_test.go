@@ -8,7 +8,7 @@ import (
 func TestCheckNames(t *testing.T) {
 	tests := []struct {
 		name    string
-		path    string
+		gui     bool
 		entries []string
 		wantOK  bool
 		wantMsg string
@@ -64,59 +64,53 @@ func TestCheckNames(t *testing.T) {
 			wantMsg: "unsafe member",
 		},
 		{
-			name:    "gui archive",
-			path:    "crower_gui_v1.2.3_linux_amd64.tar.gz",
-			entries: []string{"crower-gui", "README.md", "LICENSE"},
+			name:    "gui archive with all three",
+			gui:     true,
+			entries: []string{"crower", "cr", "crower-gui", "README.md"},
+			wantOK:  true,
+		},
+		{
+			name:    "gui archive windows",
+			gui:     true,
+			entries: []string{"crower.exe", "cr.exe", "crower-gui.exe"},
 			wantOK:  true,
 		},
 		{
 			name:    "gui archive without the gui binary",
-			path:    "crower_gui_v1.2.3_linux_amd64.tar.gz",
+			gui:     true,
 			entries: []string{"crower", "cr"},
 			wantMsg: "missing \"crower-gui\"",
+		},
+		{
+			name:    "gui archive without the cli pair",
+			gui:     true,
+			entries: []string{"crower-gui"},
+			wantMsg: "missing \"crower\"",
+		},
+		{
+			name:    "cli archive may still carry the gui binary",
+			entries: []string{"crower", "cr", "crower-gui"},
+			wantOK:  true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			path := tt.path
-			if path == "" {
-				path = "crower_v0.0.0_linux_amd64.tar.gz"
-			}
-
-			problems := checkNames(path, tt.entries)
+			problems := checkNames(tt.gui, tt.entries)
 			if tt.wantOK {
 				if len(problems) != 0 {
-					t.Fatalf("checkNames(%v) = %v, want no problems", tt.entries, problems)
+					t.Fatalf("checkNames(%v, %v) = %v, want no problems", tt.gui, tt.entries, problems)
 				}
 				return
 			}
 			if len(problems) == 0 {
-				t.Fatalf("checkNames(%v) passed, want a problem", tt.entries)
+				t.Fatalf("checkNames(%v, %v) passed, want a problem", tt.gui, tt.entries)
 			}
 			joined := strings.Join(problems, "\n")
 			if !strings.Contains(joined, tt.wantMsg) {
-				t.Errorf("checkNames(%v) = %q, want it to mention %q", tt.entries, joined, tt.wantMsg)
+				t.Errorf("checkNames(%v, %v) = %q, want it to mention %q", tt.gui, tt.entries, joined, tt.wantMsg)
 			}
 		})
-	}
-}
-
-func TestIsGUIArchive(t *testing.T) {
-	tests := []struct {
-		path string
-		want bool
-	}{
-		{"crower_v0.0.0_linux_amd64.tar.gz", false},
-		{"crower_gui_v0.0.0_linux_amd64.tar.gz", true},
-		{"crower_gui_v0.0.0_windows_amd64.zip", true},
-		{"crower_v0.0.0_windows_amd64.zip", false},
-	}
-
-	for _, tt := range tests {
-		if got := isGUIArchive(tt.path); got != tt.want {
-			t.Errorf("isGUIArchive(%q) = %v, want %v", tt.path, got, tt.want)
-		}
 	}
 }
 
@@ -126,6 +120,7 @@ func TestIsUnsafePath(t *testing.T) {
 		want  bool
 	}{
 		{"crower", false},
+		{"crower-gui", false},
 		{"README.md", false},
 		{"add_to_path.sh", false},
 		{"../README.md", true},
@@ -154,6 +149,7 @@ func TestIsArchSuffixed(t *testing.T) {
 		{"cr_darwin_arm64", true},
 		{"crower", false},
 		{"cr", false},
+		{"crower-gui", false},
 		{"crower.exe", false},
 		{"README.md", false},
 		{"add_to_path.sh", false},
