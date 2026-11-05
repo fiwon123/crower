@@ -33,6 +33,7 @@ This command is the entrypoint of the crower-gui executable, built with
 			Reverter: newFyneReverter(cfg),
 			Updater:  newFyneUpdater(cfg, Version),
 			Tools:    newFyneTools(cfg),
+			Groups:   newFyneGroups(cfg),
 		})
 		return nil
 	},
