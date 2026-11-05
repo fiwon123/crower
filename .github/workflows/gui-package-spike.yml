@@ -1,0 +1,109 @@
+name: GUI package spike
+
+# Throwaway verification for the Fyne GUI release (#350). Mirrors the release
+# `gui` job on all four platforms; removed before the PR.
+on:
+  push:
+    branches: [feat/350-fyne-gui-assets]
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: GUI Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Install X11/GL and Wayland headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
+      - name: Build and package
+        env:
+          VERSION: v0.0.0-test
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: '1'
+        run: make release-gui-platform
+      - name: Members and provenance
+        run: |
+          tar -tzf build/dist/crower_gui_v0.0.0-test_linux_amd64.tar.gz
+          go version -m build/crower-gui | grep -E 'vcs.revision|vcs.modified'
+
+  windows:
+    name: GUI Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Build and package
+        shell: pwsh
+        env:
+          VERSION: v0.0.0-test
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:CGO_ENABLED = '1'
+          $env:GOOS = 'windows'
+          $env:GOARCH = 'amd64'
+          New-Item -ItemType Directory -Force build/dist, build/gui-package | Out-Null
+          go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower-gui.exe ./cmd/crowergui
+          Copy-Item build/crower-gui.exe, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/gui-package/
+          Push-Location build/gui-package
+          Compress-Archive -Path * -DestinationPath "../dist/crower_gui_${env:VERSION}_windows_amd64.zip" -Force
+          Pop-Location
+          go run ./internal/tools/archiveverify build/dist
+      - name: Provenance and members
+        shell: pwsh
+        run: |
+          go version -m build/crower-gui.exe | Select-String 'vcs.revision|vcs.modified'
+          Get-ChildItem build/dist | Select-Object Name,Length
+
+  macos-arm64:
+    name: GUI macOS arm64
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Build and package
+        env:
+          VERSION: v0.0.0-test
+          GOOS: darwin
+          GOARCH: arm64
+          CGO_ENABLED: '1'
+        run: make release-gui-platform
+      - name: Members and provenance
+        run: |
+          tar -tzf build/dist/crower_gui_v0.0.0-test_darwin_arm64.tar.gz
+          go version -m build/crower-gui | grep -E 'vcs.revision|vcs.modified'
+
+  macos-amd64:
+    name: GUI macOS Intel
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Build and package
+        env:
+          VERSION: v0.0.0-test
+          GOOS: darwin
+          GOARCH: amd64
+          CGO_ENABLED: '1'
+        run: make release-gui-platform
+      - name: Members and provenance
+        run: |
+          tar -tzf build/dist/crower_gui_v0.0.0-test_darwin_amd64.tar.gz
+          go version -m build/crower-gui | grep -E 'vcs.revision|vcs.modified'
