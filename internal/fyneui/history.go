@@ -94,13 +94,15 @@ func (u *ui) historyTab() fyne.CanvasObject {
 	header := widget.NewLabel("Every recorded operation, newest first. Restoring an entry puts the command set back to what that entry recorded and drops the newer ones.")
 	header.Wrapping = fyne.TextWrapWord
 
-	return container.NewBorder(
+	u.historyRoot = container.NewBorder(
 		header,
 		container.NewVBox(u.historyToggle, u.historyBody),
 		nil,
 		nil,
 		u.table,
 	)
+
+	return u.historyRoot
 }
 
 // historyCellView is one table cell: a label over a background the row
@@ -167,8 +169,11 @@ func (u *ui) refreshHistory() {
 	u.clearHistoryDetail()
 }
 
-// setHistoryDetailVisible is the Details toggle below the table: an invisible
-// child is skipped by Fyne's layouts, so collapsing gives the height to the log.
+// setHistoryDetailVisible is the Details toggle below the table.
+//
+// As on the Commands tab, showing a panel that was hidden at build time needs the
+// tab root to lay out again: Fyne's layouts skip invisible children, so without
+// the refresh the panel would keep the zero size it was never given.
 func (u *ui) setHistoryDetailVisible(visible bool) {
 	u.historyDetailShown = visible
 
@@ -180,6 +185,10 @@ func (u *ui) setHistoryDetailVisible(visible bool) {
 		u.historyBody.Show()
 	} else {
 		u.historyBody.Hide()
+	}
+
+	if u.historyRoot != nil {
+		u.historyRoot.Refresh()
 	}
 }
 

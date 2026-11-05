@@ -109,6 +109,12 @@ type ui struct {
 	// Commands tab changes the setup selector's labels, so both need it.
 	tabs *container.AppTabs
 
+	// commandsRoot and historyRoot are the tab contents. Showing a panel that
+	// was hidden at build time needs a layout pass from the root: Fyne's
+	// layouts skip invisible children, so the panel has no size until then.
+	commandsRoot *fyne.Container
+	historyRoot  *fyne.Container
+
 	list               *widget.List
 	detail             *widget.Label
 	detailBody         *fyne.Container
@@ -279,13 +285,15 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 
 	detail := container.NewVBox(u.detailToggle, u.detailBody)
 
-	return container.NewBorder(
+	u.commandsRoot = container.NewBorder(
 		container.NewVBox(filter, controls),
 		container.NewVBox(detail, toolbar),
 		nil,
 		nil,
 		u.list,
 	)
+
+	return u.commandsRoot
 }
 
 // allGroupsLabel is the group filter's "no filter" entry.
@@ -565,8 +573,12 @@ func (u *ui) selectRow(id widget.ListItemID) {
 	u.setDetailVisible(true)
 }
 
-// setDetailVisible is the Details toggle: Fyne's layouts skip an invisible
-// child, so collapsing the panel gives its height back to the list.
+// setDetailVisible is the Details toggle.
+//
+// Showing or hiding is not enough on its own: Fyne's layouts skip an invisible
+// child, so a panel hidden at build time has no size, and making it visible does
+// not re-run the parent's layout. Refreshing the tab root lays the whole chain
+// out again, which is what gives the panel a height to draw its text in.
 func (u *ui) setDetailVisible(visible bool) {
 	u.detailShown = visible
 
@@ -578,6 +590,10 @@ func (u *ui) setDetailVisible(visible bool) {
 		u.detailBody.Show()
 	} else {
 		u.detailBody.Hide()
+	}
+
+	if u.commandsRoot != nil {
+		u.commandsRoot.Refresh()
 	}
 }
 
