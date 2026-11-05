@@ -66,3 +66,9 @@ jobs:
           echo "binary: $BIN"
           go version -m "$BIN"
           file "$BIN"
+          if strings "$BIN" | grep -qF 'v0.0.0-test'; then
+            echo "version string embedded: yes"
+          else
+            echo "::error::version string is missing from $BIN"
+            exit 1
+          fi
