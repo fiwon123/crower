@@ -19,8 +19,9 @@ import (
 // a shell line, and editing one in a three-line box is the complaint this
 // answers.
 const (
-	dialogWidth  float32 = 760
-	dialogHeight float32 = 560
+	dialogWidth      float32 = 760
+	dialogHeight     float32 = 560
+	editDialogHeight float32 = 680
 )
 
 // showCreate asks for the editable fields and adds the command through the
@@ -108,47 +109,109 @@ func (u *ui) showEditFor(key string) {
 	exec := newExecEntry()
 	exec.SetText(command.Exec)
 
+	description := widget.NewMultiLineEntry()
+	description.SetText(command.Description)
+	description.SetMinRowsVisible(2)
+	description.SetPlaceHolder("what the command is for")
+
+	params := widget.NewEntry()
+	params.SetText(strings.Join(command.Params, ", "))
+	params.SetPlaceHolder("env, region")
+
+	cwd := widget.NewEntry()
+	cwd.SetText(command.Cwd)
+	cwd.SetPlaceHolder("~/src/app")
+
+	shell := widget.NewEntry()
+	shell.SetText(command.Shell)
+	shell.SetPlaceHolder("sh, pwsh or cmd")
+
+	timeout := widget.NewEntry()
+	timeout.SetText(command.Timeout)
+	timeout.SetPlaceHolder("120s")
+
 	items := []*widget.FormItem{
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
 		widget.NewFormItem("Icon", icon),
 		widget.NewFormItem("Group", group),
 		widget.NewFormItem("Exec", exec),
+		widget.NewFormItem("Description", description),
+		widget.NewFormItem("Params", params),
+		widget.NewFormItem("Cwd", cwd),
+		widget.NewFormItem("Shell", shell),
+		widget.NewFormItem("Timeout", timeout),
 	}
-
-	// The command's other fields are shown but not editable here: changing them
-	// is a schema change with its own phase, and a field that silently did
-	// nothing would be worse than a read-only line.
-	items = append(items, metadataItems(command)...)
 
 	form := dialog.NewForm("Edit command", "Save", "Cancel", items, func(ok bool) {
 		if !ok {
 			return
 		}
 
-		u.applyEdit(key, name.Text, aliases.Text, icon.Text, group.Text, exec.Text)
+		u.applyEdit(key, commandForm{
+			Name:        name.Text,
+			Aliases:     aliases.Text,
+			Icon:        icon.Text,
+			Group:       group.Text,
+			Exec:        exec.Text,
+			Description: description.Text,
+			Params:      params.Text,
+			Cwd:         cwd.Text,
+			Shell:       shell.Text,
+			Timeout:     timeout.Text,
+		})
 	}, u.window)
 
-	form.Resize(fyne.NewSize(dialogWidth, dialogHeight))
+	form.Resize(fyne.NewSize(dialogWidth, editDialogHeight))
 	form.Show()
+}
+
+// commandForm is what the edit dialog holds. Every field is always supplied by
+// the dialog, so emptying one clears it on the command -- which is what a user
+// who deletes the text means.
+type commandForm struct {
+	Name        string
+	Aliases     string
+	Icon        string
+	Group       string
+	Exec        string
+	Description string
+	Params      string
+	Cwd         string
+	Shell       string
+	Timeout     string
 }
 
 // applyEdit is the form's submit path, separate from the dialog so a test can
 // exercise it without building the popup.
-func (u *ui) applyEdit(key, nameText, aliasesText, iconText, groupText, execText string) bool {
-	aliasList := splitAliases(aliasesText)
-	iconText = strings.TrimSpace(iconText)
-	groupText = strings.TrimSpace(groupText)
+func (u *ui) applyEdit(key string, form commandForm) bool {
+	aliasList := splitAliases(form.Aliases)
+	iconText := strings.TrimSpace(form.Icon)
+	groupText := strings.TrimSpace(form.Group)
+
+	description := strings.TrimSpace(form.Description)
+	paramsList := splitList(form.Params)
+	cwd := strings.TrimSpace(form.Cwd)
+	shellText := strings.TrimSpace(form.Shell)
+	timeout := strings.TrimSpace(form.Timeout)
 
 	changes := catalog.Changes{
-		Name:         strings.TrimSpace(nameText),
+		Name:         strings.TrimSpace(form.Name),
 		Aliases:      aliasList,
-		Exec:         strings.TrimSpace(execText),
+		Exec:         strings.TrimSpace(form.Exec),
 		Icon:         iconText,
 		Group:        groupText,
 		ClearAliases: len(aliasList) == 0,
 		ClearIcon:    iconText == "",
 		ClearGroup:   groupText == "",
+
+		// The pointer fields say "the dialog supplied this", so an emptied
+		// field clears the stored value.
+		Description: &description,
+		Params:      &paramsList,
+		Cwd:         &cwd,
+		Shell:       &shellText,
+		Timeout:     &timeout,
 	}
 
 	if changes.Name == "" || changes.Exec == "" {
@@ -202,40 +265,6 @@ func newExecEntry() *widget.Entry {
 	exec.SetPlaceHolder("echo hello")
 
 	return exec
-}
-
-// metadataItems renders the fields the dialog cannot change yet, so what the
-// command carries is visible while editing it.
-func metadataItems(command catalog.Command) []*widget.FormItem {
-	items := make([]*widget.FormItem, 0, 5)
-
-	add := func(label, value string) {
-		text := widget.NewLabel(value)
-		text.Wrapping = fyne.TextWrapWord
-		items = append(items, widget.NewFormItem(label, text))
-	}
-
-	if command.Description != "" {
-		add("About", command.Description)
-	}
-
-	if len(command.Params) > 0 {
-		add("Params", strings.Join(command.Params, ", "))
-	}
-
-	if command.Cwd != "" {
-		add("Cwd", command.Cwd)
-	}
-
-	if command.Shell != "" {
-		add("Shell", command.Shell)
-	}
-
-	if command.Timeout != "" {
-		add("Timeout", command.Timeout)
-	}
-
-	return items
 }
 
 func (u *ui) askParams() {
