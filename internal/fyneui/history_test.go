@@ -63,6 +63,40 @@ func TestHistorySelectsTheWholeRow(t *testing.T) {
 	}
 }
 
+// Selecting a row must give the history panel a height, not only make it
+// visible: Fyne's layouts skip an invisible child, so a panel hidden at build
+// time has no size until the tab lays out again.
+func TestSelectingAHistoryRowSizesTheDetailPanel(t *testing.T) {
+	var history timeline.Log
+	for i := 0; i < 3; i++ {
+		history.Add(operation.Create, "greet", "note")
+	}
+
+	model := desktop.NewModel(
+		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
+		history,
+		stubExecutor{},
+	)
+
+	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
+	window.SetContent(front.content())
+	window.Resize(fyneSize())
+
+	if size := front.historyBody.Size(); size.Height != 0 {
+		t.Fatalf("the panel already has a size before a selection: %v", size)
+	}
+
+	front.table.OnSelected(widget.TableCellID{Row: 0, Col: 1})
+
+	if !front.historyBody.Visible() {
+		t.Fatal("selecting a row did not open the panel")
+	}
+
+	if size := front.historyBody.Size(); size.Height == 0 {
+		t.Fatalf("panel size = %v, want the tab to lay it out", size)
+	}
+}
+
 // Unselecting closes the panel again, so the table keeps the height.
 func TestHistoryUnselectClosesTheDetail(t *testing.T) {
 	front, _ := historyTestUI(t)
