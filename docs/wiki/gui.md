@@ -55,7 +55,9 @@ ignores the file). The filter then reads `🚀 deploy` instead of a bare name.
 
 The **Setup** list beside it switches between the named setups the CLI creates
 with `crower setup new`; **New…** and **Delete…** manage them without leaving the
-window (the default and the active setup cannot be deleted). Switching reloads
+window (the default and the active setup cannot be deleted). Each entry says how
+many commands it holds — `work (12)` — so switching to an empty setup is a
+choice rather than a surprise. Switching reloads
 the commands, the history and the group icons without restarting, and saves the
 choice the way `crower setup use` does — so the next `crower` run opens the same
 setup.

@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
+	"github.com/fiwon123/crower/internal/adapters/storage"
 	"github.com/fiwon123/crower/internal/desktop"
 	"github.com/fiwon123/crower/internal/session"
 )
@@ -59,6 +61,32 @@ func (s fyneSetups) Switch(name string) (desktop.State, error) {
 	}
 
 	return desktop.State{Catalog: s.cfg.Catalog(), History: s.cfg.History}, nil
+}
+
+// Commands counts the commands a setup holds.
+//
+// It checks for the file first: the command loader prepares a missing file so a
+// first run starts clean, which would create a setup merely by looking at it.
+func (s fyneSetups) Commands(name string) (int, error) {
+	path, err := resolveConfigPath("", name)
+	if err != nil {
+		return 0, err
+	}
+
+	if _, err := os.Stat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return 0, nil
+		}
+
+		return 0, err
+	}
+
+	file, _, err := storage.NewCommandFile(path).Load()
+	if err != nil {
+		return 0, err
+	}
+
+	return len(file), nil
 }
 
 // Create makes an empty named setup, the way `crower setup new` does.
