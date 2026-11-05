@@ -23,6 +23,7 @@ The window is split into tabs:
 | --- | --- |
 | **Commands** | The list, with a filter, a detail line, and **Run**, **Run with params**, **Edit** and **Delete** on every row |
 | **History** | Every recorded operation as a table, newest first, with a **Restore this state** action |
+| **Tools** | Copy, move, search, extract and open, with their result below |
 | **About** | Logo, version, description, the repository link, and the update controls |
 
 Delete and restore both ask first. Restoring puts the command set back to what a
@@ -33,7 +34,13 @@ The About tab checks GitHub for a newer release when the window opens and
 reports what it finds. **Install latest** and **Restore previous** always ask
 first, then install through the same checksum-verified path as
 `crower --upgrade`, and offer **Restart now** — the window starts the new binary
-and closes. The Tools tab arrives in a later release.
+and closes.
+
+The Tools tab runs the file operations through the same use cases as the CLI
+commands, and every run lands in the History tab. A copy or move takes one path
+per line and a destination; a search takes a term, a folder (default `.`) and
+what to look in; extract takes archive paths and an optional destination; open
+takes paths and hands them to the platform's default application.
 
 > [!NOTE]
 > `crower-gui` needs a graphical session; in a terminal-only environment use

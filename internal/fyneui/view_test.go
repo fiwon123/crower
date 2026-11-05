@@ -148,27 +148,34 @@ func newTestUIWithUpdater(t *testing.T, model *desktop.Model, editor Editor, rev
 		editor:     editor,
 		reverter:   reverter,
 		updater:    updater,
+		tools:      &stubTools{},
 		historyRow: -1,
 	}
 
 	return front, window
 }
 
-// The window is tab based: Commands, History and About today, with Tools and
-// the setup switcher adding their own tabs.
+// The window is tab based: Commands, History, Tools and About today, with the
+// setup switcher adding its own tab.
 func TestNewContentBuildsTheTabs(t *testing.T) {
 	window := testWindow(t)
 	model := testModel()
 	updater := &stubUpdater{current: "v0.0.0-test"}
 
-	content := NewContent(model, window, stubEditor{}, stubReverter{}, updater)
+	content := NewContent(model, window, Deps{
+		Exec:     stubExecutor{},
+		Editor:   stubEditor{},
+		Reverter: stubReverter{},
+		Updater:  updater,
+		Tools:    &stubTools{},
+	})
 
 	tabs, ok := content.(*container.AppTabs)
 	if !ok {
 		t.Fatalf("content = %T, want tabs", content)
 	}
 
-	want := []string{"Commands", "History", "About"}
+	want := []string{"Commands", "History", "Tools", "About"}
 	if len(tabs.Items) != len(want) {
 		t.Fatalf("got %d tabs, want %d", len(tabs.Items), len(want))
 	}

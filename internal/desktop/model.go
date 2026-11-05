@@ -72,6 +72,13 @@ func (m *Model) Reload(commands catalog.Catalog, history timeline.Log) {
 	m.Filter = ""
 }
 
+// ReplaceHistory swaps the log after an operation that changed it without
+// changing the command set -- a copy, a search or an extract started from the
+// window's tools. The list is unaffected, so it keeps its selection.
+func (m *Model) ReplaceHistory(history timeline.Log) {
+	m.History = history
+}
+
 func (m *Model) FilteredKeys() []string {
 	if m.Filter == "" {
 		return m.Keys
