@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -57,7 +58,7 @@ func findLabelText(object fyne.CanvasObject, want string) bool {
 				return true
 			}
 		}
-	case *widget.Scroll:
+	case *container.Scroll:
 		if typed.Content != nil {
 			return findLabelText(typed.Content, want)
 		}
