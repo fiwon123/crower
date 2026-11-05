@@ -150,6 +150,26 @@ func TestHistoryRowsKeepAnUnparseableTimestamp(t *testing.T) {
 	}
 }
 
+// A tools operation changes the log but not the command set, so it replaces
+// the history and leaves the list and its selection alone.
+func TestReplaceHistoryKeepsTheCommandSet(t *testing.T) {
+	m := testModel(t)
+	m.Index = 0
+
+	var history timeline.Log
+	history.Add(operation.Copy, "", "note")
+
+	m.ReplaceHistory(history)
+
+	if len(m.History.AllData) != 1 {
+		t.Fatalf("history = %+v, want the new log", m.History.AllData)
+	}
+
+	if got := m.Selected(); got != "hello" {
+		t.Errorf("Selected() = %q, want the command set untouched", got)
+	}
+}
+
 func TestFilter(t *testing.T) {
 	m := modelWithCommands([]catalog.Command{
 		{Name: "hello", Exec: "echo hello"},
