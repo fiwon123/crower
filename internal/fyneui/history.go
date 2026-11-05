@@ -108,11 +108,15 @@ func (u *ui) historyTab() fyne.CanvasObject {
 // historyCellView is one table cell: a label over a background the row
 // selection tints. widget.Table recycles cells, so UpdateCell re-points the
 // label and the tint on every pass.
+//
+// Like commandRow, it is a widget holding a container: a struct that embeds a
+// container is opaque to the canvas walk and paints nothing (#406).
 type historyCellView struct {
-	*fyne.Container
+	widget.BaseWidget
 
 	bg    *canvas.Rectangle
 	label *widget.Label
+	body  *fyne.Container
 }
 
 func newHistoryCell() *historyCellView {
@@ -121,9 +125,14 @@ func newHistoryCell() *historyCellView {
 		label: widget.NewLabel(""),
 	}
 
-	cell.Container = container.NewMax(cell.bg, cell.label)
+	cell.body = container.NewMax(cell.bg, cell.label)
+	cell.ExtendBaseWidget(cell)
 
 	return cell
+}
+
+func (c *historyCellView) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(c.body)
 }
 
 func (c *historyCellView) setSelected(selected bool) {
