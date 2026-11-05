@@ -112,11 +112,19 @@ func (m *Model) Selected() string {
 }
 
 func (m *Model) StartRun(withParams bool) {
-	sel := m.Selected()
-	if sel == "" {
+	m.StartRunKey(m.Selected(), withParams)
+}
+
+// StartRunKey runs key, or records it as the selection when withParams is set.
+//
+// The list's per-row buttons carry their own key, so they must not depend on
+// where the selection happens to be: a row's Run button runs that row even
+// when nothing was tapped first.
+func (m *Model) StartRunKey(key string, withParams bool) {
+	if key == "" {
 		return
 	}
-	m.SelectedKey = sel
+	m.SelectedKey = key
 	m.Params = nil
 	m.ParamInput = ""
 	if withParams {

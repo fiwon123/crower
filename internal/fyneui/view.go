@@ -12,7 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/desktop"
@@ -28,243 +28,260 @@ type Editor interface {
 	Delete(key string) (catalog.Catalog, timeline.Log, error)
 }
 
+// Reverter restores the command set an older history entry recorded and
+// returns the refreshed set and history.
+//
+// It is declared here, at the point of use: the window confirms the restore
+// itself, so it needs the state change and not the use case's prompt.
+type Reverter interface {
+	Revert(steps int) (catalog.Catalog, timeline.Log, error)
+}
+
 // Run opens the Fyne window and blocks until it closes.
-func Run(commands catalog.Catalog, history timeline.Log, exec desktop.Executor, editor Editor) {
+func Run(commands catalog.Catalog, history timeline.Log, exec desktop.Executor, editor Editor, reverter Reverter) {
 	model := desktop.NewModel(commands, history, exec)
 
 	a := app.New()
 	a.SetIcon(logoResource())
 
 	window := a.NewWindow("crower")
-	window.SetContent(NewContent(model, window, editor))
-	window.Resize(fyne.NewSize(720, 520))
+	window.SetContent(NewContent(model, window, editor, reverter))
+	window.Resize(fyne.NewSize(960, 640))
 	window.ShowAndRun()
 }
 
+// ui is the widget set the tabs share. Reloading after an edit has to refresh
+// both the command list and the history table, so both live here instead of
+// being captured by one tab.
+type ui struct {
+	model    *desktop.Model
+	window   fyne.Window
+	editor   Editor
+	reverter Reverter
+
+	list          *widget.List
+	detail        *widget.Label
+	table         *widget.Table
+	historyDetail *widget.Label
+	revert        *widget.Button
+
+	// historyRows is the table's snapshot: rebuild it on reload or tab open
+	// rather than recomputing the whole log for every cell.
+	historyRows []desktop.HistoryRow
+	historyRow  int
+}
+
 // NewContent builds the window content over the headless model.
-func NewContent(model *desktop.Model, window fyne.Window, editor Editor) fyne.CanvasObject {
-	keys := widget.NewLabel("")
-	keys.Wrapping = fyne.TextWrapWord
+func NewContent(model *desktop.Model, window fyne.Window, editor Editor, reverter Reverter) fyne.CanvasObject {
+	front := &ui{
+		model:      model,
+		window:     window,
+		editor:     editor,
+		reverter:   reverter,
+		historyRow: -1,
+	}
 
-	list := widget.NewList(
-		func() int { return len(model.FilteredKeys()) },
-		func() fyne.CanvasObject { return widget.NewLabel("") },
-		func(id widget.ListItemID, object fyne.CanvasObject) {
-			filtered := model.FilteredKeys()
-			if int(id) >= len(filtered) {
-				return
-			}
-
-			object.(*widget.Label).SetText(filtered[id])
-		},
+	tabs := container.NewAppTabs(
+		container.NewTabItem("Commands", front.commandsTab()),
+		container.NewTabItem("History", front.historyTab()),
 	)
 
-	list.OnSelected = func(id widget.ListItemID) {
-		model.Index = int(id)
-		selected := model.Selected()
-		if selected == "" {
-			keys.SetText("")
-			return
+	// The table is built from the model, so a command edit changes it. Refresh
+	// when the tab is opened instead of refreshing a hidden table on every
+	// keystroke.
+	tabs.OnSelected = func(item *container.TabItem) {
+		if item.Text == "History" {
+			front.refreshHistory()
 		}
-
-		command, found := model.Commands.Get(selected)
-		if !found {
-			keys.SetText(selected)
-			return
-		}
-
-		keys.SetText(fmt.Sprintf("%s\n%s", command.Name, command.Exec))
 	}
+
+	return tabs
+}
+
+// commandsTab is the command list with its filter and per-row actions.
+func (u *ui) commandsTab() fyne.CanvasObject {
+	u.detail = widget.NewLabel("")
+	u.detail.Wrapping = fyne.TextWrapWord
+
+	u.list = widget.NewList(
+		func() int { return len(u.model.FilteredKeys()) },
+		func() fyne.CanvasObject { return newCommandRow() },
+		func(id widget.ListItemID, object fyne.CanvasObject) { u.updateRow(id, object) },
+	)
+
+	u.list.OnSelected = func(id widget.ListItemID) { u.selectRow(id) }
+	u.list.OnUnselected = func(widget.ListItemID) { u.detail.SetText("") }
 
 	filter := widget.NewEntry()
 	filter.SetPlaceHolder("Filter commands")
 	filter.OnChanged = func(string) {
-		model.Filter = filter.Text
-		model.Index = 0
-		list.Refresh()
-		list.UnselectAll()
+		u.model.Filter = filter.Text
+		u.model.Index = 0
+		u.list.Refresh()
+		u.list.UnselectAll()
+		u.detail.SetText("")
 	}
 
-	run := widget.NewButton("Run", func() {
-		model.StartRun(false)
-		showOutput(model, window)
-	})
-
-	params := widget.NewButton("Run with params…", func() {
-		model.StartRun(true)
-		askParams(model, window)
-	})
-
-	newCommand := widget.NewButton("New", func() {
-		showCreate(model, editor, window, list)
-	})
-
-	edit := widget.NewButton("Edit", func() {
-		showEdit(model, editor, window, list)
-	})
-
-	deleteCommand := widget.NewButton("Delete", func() {
-		showDelete(model, editor, window, list)
-	})
-
-	history := widget.NewButton("History", func() {
-		showText("History", model.HistoryText(), window)
-	})
-
-	quit := widget.NewButton("Quit", func() { window.Close() })
-
-	buttons := container.NewVBox(
-		container.NewHBox(newCommand, edit, deleteCommand),
-		container.NewHBox(run, params, history, quit),
+	toolbar := container.NewHBox(
+		widget.NewButtonWithIcon("New", theme.ContentAddIcon(), u.showCreate),
+		widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() { u.runSelected(false) }),
+		widget.NewButtonWithIcon("Run with params…", theme.MediaFastForwardIcon(), func() { u.runSelected(true) }),
+		widget.NewButton("Quit", u.window.Close),
 	)
 
-	return container.NewBorder(
-		container.NewVBox(filter, keys),
-		buttons,
+	return container.NewBorder(container.NewVBox(filter, u.detail), toolbar, nil, nil, u.list)
+}
+
+// commandRow is one list row: the command name on the left, its actions on the
+// right. widget.List recycles templates, so updateRow re-points every button at
+// the row's own key on each update.
+type commandRow struct {
+	*fyne.Container
+
+	name   *widget.Label
+	run    *widget.Button
+	params *widget.Button
+	edit   *widget.Button
+	remove *widget.Button
+}
+
+func newCommandRow() *commandRow {
+	row := &commandRow{
+		name:   widget.NewLabel(""),
+		run:    widget.NewButtonWithIcon("", theme.MediaPlayIcon(), nil),
+		params: widget.NewButtonWithIcon("", theme.MediaFastForwardIcon(), nil),
+		edit:   widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), nil),
+		remove: widget.NewButtonWithIcon("", theme.DeleteIcon(), nil),
+	}
+
+	row.run.Importance = widget.LowImportance
+	row.params.Importance = widget.LowImportance
+	row.edit.Importance = widget.LowImportance
+	row.remove.Importance = widget.DangerImportance
+
+	row.Container = container.NewBorder(
 		nil,
 		nil,
-		list,
+		nil,
+		container.NewHBox(row.run, row.params, row.edit, row.remove),
+		row.name,
 	)
+
+	return row
 }
 
-// showCreate asks for the three fields and adds the command through the Editor
-// port. A rule error is shown and the set is left alone.
-func showCreate(model *desktop.Model, editor Editor, window fyne.Window, list *widget.List) {
-	name := widget.NewEntry()
-	aliases := widget.NewEntry()
-	exec := widget.NewEntry()
-
-	items := []*widget.FormItem{
-		widget.NewFormItem("Name", name),
-		widget.NewFormItem("Aliases", aliases),
-		widget.NewFormItem("Exec", exec),
-	}
-
-	dialog.NewForm("New command", "Create", "Cancel", items, func(ok bool) {
-		if !ok {
-			return
-		}
-
-		applyCreate(model, editor, name.Text, aliases.Text, exec.Text, list, window)
-	}, window).Show()
-}
-
-// applyCreate is the form's submit path, separate from the dialog so a test
-// can exercise it without building the popup.
-func applyCreate(model *desktop.Model, editor Editor, nameText, aliasesText, execText string, list *widget.List, window fyne.Window) bool {
-	nameText = strings.TrimSpace(nameText)
-	execText = strings.TrimSpace(execText)
-
-	if nameText == "" || execText == "" {
-		showError("Name and exec are required.", window)
-		return false
-	}
-
-	commands, history, err := editor.Create(nameText, splitAliases(aliasesText), execText)
-	if err != nil {
-		showError(err.Error(), window)
-		return false
-	}
-
-	reload(model, commands, history, list)
-	return true
-}
-
-// showDelete asks for confirmation and removes the selected command.
-func showDelete(model *desktop.Model, editor Editor, window fyne.Window, list *widget.List) {
-	key := model.Selected()
-	if key == "" {
+func (u *ui) updateRow(id widget.ListItemID, object fyne.CanvasObject) {
+	row, ok := object.(*commandRow)
+	if !ok {
 		return
 	}
 
-	dialog.ShowConfirm("Delete command", "Delete "+key+"?", func(ok bool) {
-		if !ok {
-			return
-		}
-
-		applyDelete(model, editor, key, list, window)
-	}, window)
-}
-
-// applyDelete is the confirmation's submit path.
-func applyDelete(model *desktop.Model, editor Editor, key string, list *widget.List, window fyne.Window) bool {
-	commands, history, err := editor.Delete(key)
-	if err != nil {
-		showError(err.Error(), window)
-		return false
-	}
-
-	reload(model, commands, history, list)
-	return true
-}
-
-// showEdit asks for the three editable fields and applies the change through
-// the Editor port. A rule error is shown and the set is left alone.
-func showEdit(model *desktop.Model, editor Editor, window fyne.Window, list *widget.List) {
-	key := model.Selected()
-	if key == "" {
+	keys := u.model.FilteredKeys()
+	if int(id) >= len(keys) {
+		row.name.SetText("")
 		return
 	}
 
-	command, found := model.Commands.Get(key)
+	key := keys[id]
+	row.name.SetText(key)
+
+	row.run.OnTapped = func() { u.runKey(key, false) }
+	row.params.OnTapped = func() { u.runKey(key, true) }
+	row.edit.OnTapped = func() { u.showEditFor(key) }
+	row.remove.OnTapped = func() { u.showDeleteFor(key) }
+}
+
+func (u *ui) selectRow(id widget.ListItemID) {
+	u.model.Index = int(id)
+
+	selected := u.model.Selected()
+	if selected == "" {
+		u.detail.SetText("")
+		return
+	}
+
+	command, found := u.model.Commands.Get(selected)
 	if !found {
+		u.detail.SetText(selected)
 		return
 	}
 
-	name := widget.NewEntry()
-	name.SetText(command.Name)
-
-	aliases := widget.NewEntry()
-	aliases.SetText(strings.Join(command.Aliases, ", "))
-
-	exec := widget.NewEntry()
-	exec.SetText(command.Exec)
-
-	items := []*widget.FormItem{
-		widget.NewFormItem("Name", name),
-		widget.NewFormItem("Aliases", aliases),
-		widget.NewFormItem("Exec", exec),
-	}
-
-	dialog.NewForm("Edit command", "Save", "Cancel", items, func(ok bool) {
-		if !ok {
-			return
-		}
-
-		applyEdit(model, editor, key, name.Text, aliases.Text, exec.Text, list, window)
-	}, window).Show()
+	u.detail.SetText(describe(command))
 }
 
-// applyEdit is the form's submit path, separate from the dialog so a test can
-// exercise it without building the popup.
-func applyEdit(model *desktop.Model, editor Editor, key, nameText, aliasesText, execText string, list *widget.List, window fyne.Window) bool {
-	aliasList := splitAliases(aliasesText)
-	changes := catalog.Changes{
-		Name:         strings.TrimSpace(nameText),
-		Aliases:      aliasList,
-		Exec:         strings.TrimSpace(execText),
-		ClearAliases: len(aliasList) == 0,
+// describe is the detail line: what the command runs, plus the metadata that
+// does not fit on a row.
+func describe(command catalog.Command) string {
+	lines := []string{command.Name, command.Exec}
+
+	if len(command.Aliases) > 0 {
+		lines = append(lines, "aliases: "+strings.Join(command.Aliases, ", "))
 	}
 
-	if changes.Name == "" || changes.Exec == "" {
-		showError("Name and exec are required.", window)
-		return false
+	if command.Description != "" {
+		lines = append(lines, "about: "+command.Description)
 	}
 
-	commands, history, err := editor.Update(key, changes)
-	if err != nil {
-		showError(err.Error(), window)
-		return false
+	if len(command.Params) > 0 {
+		lines = append(lines, "params: "+strings.Join(command.Params, ", "))
 	}
 
-	reload(model, commands, history, list)
-	return true
+	if command.Cwd != "" {
+		lines = append(lines, "cwd: "+command.Cwd)
+	}
+
+	if command.Shell != "" {
+		lines = append(lines, "shell: "+command.Shell)
+	}
+
+	if command.Timeout != "" {
+		lines = append(lines, "timeout: "+command.Timeout)
+	}
+
+	if len(command.Steps) > 0 {
+		lines = append(lines, fmt.Sprintf("%d steps", len(command.Steps)))
+	}
+
+	return strings.Join(lines, "\n")
 }
 
-func reload(model *desktop.Model, commands catalog.Catalog, history timeline.Log, list *widget.List) {
-	model.Reload(commands, history)
-	list.Refresh()
-	list.UnselectAll()
+func (u *ui) runSelected(withParams bool) {
+	u.runKey(u.model.Selected(), withParams)
+}
+
+// runKey runs one command: the row's key when a row button asked, the
+// selection when the toolbar did.
+func (u *ui) runKey(key string, withParams bool) {
+	if key == "" {
+		return
+	}
+
+	u.model.StartRunKey(key, withParams)
+
+	if withParams {
+		u.askParams()
+		return
+	}
+
+	u.showOutput()
+}
+
+// reload replaces the model state after an edit and refreshes every view built
+// from it. The widgets are optional so a test can exercise the submit paths
+// without a window.
+func (u *ui) reload(commands catalog.Catalog, history timeline.Log) {
+	u.model.Reload(commands, history)
+
+	if u.list != nil {
+		u.list.Refresh()
+		u.list.UnselectAll()
+	}
+
+	if u.detail != nil {
+		u.detail.SetText("")
+	}
+
+	u.refreshHistory()
 }
 
 func splitAliases(text string) []string {
@@ -278,55 +295,4 @@ func splitAliases(text string) []string {
 	}
 
 	return aliases
-}
-
-func showError(message string, window fyne.Window) {
-	dialog.ShowError(fmt.Errorf("%s", message), window)
-}
-
-func askParams(model *desktop.Model, window fyne.Window) {
-	input := widget.NewEntry()
-	input.SetPlaceHolder("space-separated parameters")
-
-	dialog.ShowCustomConfirm("Parameters", "Run", "Cancel", input, func(ok bool) {
-		if !ok {
-			model.State = desktop.ViewList
-			return
-		}
-
-		model.ParamInput = input.Text
-		model.SubmitParams()
-		showOutput(model, window)
-	}, window)
-}
-
-func showOutput(model *desktop.Model, window fyne.Window) {
-	text := model.LastOut
-	if model.LastErr != nil {
-		if text != "" && text[len(text)-1] != '\n' {
-			text += "\n"
-		}
-
-		text += "error: " + model.LastErr.Error()
-	}
-
-	if text == "" {
-		text = "(no output)"
-	}
-
-	title := "Output"
-	if model.LastCmd != "" {
-		title += " — " + model.LastCmd
-	}
-
-	showText(title, text, window)
-}
-
-func showText(title, text string, window fyne.Window) {
-	label := widget.NewLabel(text)
-	label.Wrapping = fyne.TextWrapWord
-
-	content := container.NewVScroll(label)
-
-	dialog.NewCustom(title, "Close", content, window).Show()
 }

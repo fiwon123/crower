@@ -4,14 +4,17 @@ package fyneui
 
 import (
 	"errors"
+	"strings"
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/desktop"
 	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
@@ -19,6 +22,17 @@ type stubExecutor struct{}
 
 func (stubExecutor) Execute(string, []string) (string, string, error) {
 	return "", "", nil
+}
+
+// recordingExecutor records which command each run asked for.
+type recordingExecutor struct {
+	keys []string
+}
+
+func (e *recordingExecutor) Execute(key string, _ []string) (string, string, error) {
+	e.keys = append(e.keys, key)
+
+	return "ok", key, nil
 }
 
 type stubEditor struct{}
@@ -75,6 +89,30 @@ func (e *recordingEditor) Delete(key string) (catalog.Catalog, timeline.Log, err
 	return e.next, e.history, nil
 }
 
+type stubReverter struct{}
+
+func (stubReverter) Revert(int) (catalog.Catalog, timeline.Log, error) {
+	return catalog.New(nil, nil), timeline.Log{}, nil
+}
+
+// recordingReverter records the step count the window asked for.
+type recordingReverter struct {
+	steps   []int
+	next    catalog.Catalog
+	history timeline.Log
+	err     error
+}
+
+func (r *recordingReverter) Revert(steps int) (catalog.Catalog, timeline.Log, error) {
+	r.steps = append(r.steps, steps)
+
+	if r.err != nil {
+		return catalog.Catalog{}, timeline.Log{}, r.err
+	}
+
+	return r.next, r.history, nil
+}
+
 func testModel() *desktop.Model {
 	return desktop.NewModel(
 		catalog.New(nil, []catalog.Command{{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi"}}),
@@ -92,84 +130,158 @@ func testWindow(t *testing.T) fyne.Window {
 	return test.NewWindow(nil)
 }
 
-func listFor(model *desktop.Model) *widget.List {
-	return widget.NewList(
-		func() int { return len(model.FilteredKeys()) },
-		func() fyne.CanvasObject { return widget.NewLabel("") },
-		func(widget.ListItemID, fyne.CanvasObject) {},
-	)
-}
+// newTestUI builds the window's state without the tab container, so a test can
+// reach the widgets each tab owns.
+func newTestUI(t *testing.T, model *desktop.Model, editor Editor, reverter Reverter) (*ui, fyne.Window) {
+	t.Helper()
 
-func findButton(object fyne.CanvasObject, label string) *widget.Button {
-	if button, ok := object.(*widget.Button); ok && button.Text == label {
-		return button
-	}
-
-	if container, ok := object.(*fyne.Container); ok {
-		for _, child := range container.Objects {
-			if button := findButton(child, label); button != nil {
-				return button
-			}
-		}
-	}
-
-	return nil
-}
-
-// The view builds over the headless model and attaches to a window. The model
-// itself is covered by internal/desktop; this is the adapter smoke test.
-func TestNewContentBuildsOverTheModel(t *testing.T) {
 	window := testWindow(t)
+	front := &ui{
+		model:      model,
+		window:     window,
+		editor:     editor,
+		reverter:   reverter,
+		historyRow: -1,
+	}
 
+	return front, window
+}
+
+// The window is tab based: Commands and History today, with the remaining
+// phases adding their own tabs.
+func TestNewContentBuildsTheTabs(t *testing.T) {
+	window := testWindow(t)
 	model := testModel()
-	content := NewContent(model, window, stubEditor{})
-	if content == nil {
-		t.Fatal("NewContent returned nil")
+
+	content := NewContent(model, window, stubEditor{}, stubReverter{})
+
+	tabs, ok := content.(*container.AppTabs)
+	if !ok {
+		t.Fatalf("content = %T, want tabs", content)
+	}
+
+	if len(tabs.Items) != 2 {
+		t.Fatalf("got %d tabs, want 2", len(tabs.Items))
+	}
+
+	if tabs.Items[0].Text != "Commands" || tabs.Items[1].Text != "History" {
+		t.Errorf("tabs = %q, %q; want Commands, History", tabs.Items[0].Text, tabs.Items[1].Text)
 	}
 
 	window.SetContent(content)
-	window.Resize(fyne.NewSize(720, 520))
+	window.Resize(fyne.NewSize(960, 640))
 
 	if window.Canvas().Content() == nil {
 		t.Fatal("window has no content")
 	}
 }
 
-// Every button that asks a question has to put a dialog on the window. The
-// dialog content itself is exercised by the apply functions below.
-func TestButtonsOpenADialog(t *testing.T) {
-	for _, label := range []string{"New", "Edit", "Delete", "History"} {
-		t.Run(label, func(t *testing.T) {
-			model := testModel()
-			window := testWindow(t)
+// A row's Run button runs that row, not whatever the selection happens to be.
+func TestCommandRowRunsItsOwnCommand(t *testing.T) {
+	exec := &recordingExecutor{}
+	model := desktop.NewModel(
+		catalog.New(nil, []catalog.Command{
+			{Name: "greet", Exec: "echo hi"},
+			{Name: "ship", Exec: "echo ship"},
+		}),
+		timeline.Log{},
+		exec,
+	)
 
-			window.SetContent(NewContent(model, window, &recordingEditor{next: model.Commands}))
-			window.Resize(fyne.NewSize(720, 520))
+	front, _ := newTestUI(t, model, stubEditor{}, stubReverter{})
 
-			button := findButton(window.Canvas().Content(), label)
-			if button == nil {
-				t.Fatalf("no %q button in the window", label)
-			}
+	first := newCommandRow()
+	front.updateRow(0, first)
 
-			test.Tap(button)
+	second := newCommandRow()
+	front.updateRow(1, second)
 
-			if len(window.Canvas().Overlays().List()) == 0 {
-				t.Errorf("%s did not open a dialog", label)
-			}
-		})
+	if first.run.OnTapped == nil || second.run.OnTapped == nil {
+		t.Fatal("a row's run button has no action")
+	}
+
+	first.run.OnTapped()
+	second.run.OnTapped()
+
+	if len(exec.keys) != 2 || exec.keys[0] != "greet" || exec.keys[1] != "ship" {
+		t.Fatalf("executed %v, want [greet ship]", exec.keys)
+	}
+}
+
+// Delete never happens on the first click.
+func TestCommandRowDeleteAsksFirst(t *testing.T) {
+	front, window := newTestUI(t, testModel(), &recordingEditor{next: testModel().Commands}, stubReverter{})
+
+	window.SetContent(front.commandsTab())
+	window.Resize(fyne.NewSize(960, 640))
+
+	row := newCommandRow()
+	front.updateRow(0, row)
+
+	if row.remove.OnTapped == nil {
+		t.Fatal("the delete button has no action")
+	}
+
+	row.remove.OnTapped()
+
+	if len(window.Canvas().Overlays().List()) == 0 {
+		t.Error("delete did not ask for confirmation")
+	}
+}
+
+// Edit opens a dialog rather than changing the command in place.
+func TestCommandRowEditOpensTheDialog(t *testing.T) {
+	front, window := newTestUI(t, testModel(), &recordingEditor{next: testModel().Commands}, stubReverter{})
+
+	window.SetContent(front.commandsTab())
+	window.Resize(fyne.NewSize(960, 640))
+
+	row := newCommandRow()
+	front.updateRow(0, row)
+
+	if row.edit.OnTapped == nil {
+		t.Fatal("the edit button has no action")
+	}
+
+	row.edit.OnTapped()
+
+	if len(window.Canvas().Overlays().List()) == 0 {
+		t.Error("edit did not open a dialog")
+	}
+}
+
+// The detail line carries the metadata that does not fit on a row.
+func TestDescribeShowsTheMetadata(t *testing.T) {
+	text := describe(catalog.Command{
+		Name:        "deploy",
+		Exec:        "make deploy",
+		Aliases:     []string{"d"},
+		Description: "ship to production",
+		Params:      []string{"env"},
+		Cwd:         "~/src/app",
+		Shell:       "sh",
+		Timeout:     "120s",
+	})
+
+	for _, want := range []string{"deploy", "make deploy", "aliases: d", "about: ship to production", "params: env", "cwd: ~/src/app", "shell: sh", "timeout: 120s"} {
+		if !strings.Contains(text, want) {
+			t.Errorf("describe() = %q, want it to contain %q", text, want)
+		}
 	}
 }
 
 func TestApplyEditReloadsTheModel(t *testing.T) {
-	model := testModel()
-	editor := &recordingEditor{next: catalog.New(nil, []catalog.Command{
+	front, _ := newTestUI(t, testModel(), &recordingEditor{next: catalog.New(nil, []catalog.Command{
 		{Name: "ship", Aliases: []string{"s"}, Exec: "echo ship"},
-	})}
-	window := testWindow(t)
+	})}, stubReverter{})
 
-	if !applyEdit(model, editor, "greet", "ship", "s", "echo ship", listFor(model), window) {
+	front.window.SetContent(widget.NewLabel(""))
+
+	if !front.applyEdit("greet", "ship", "s", "echo ship") {
 		t.Fatal("applyEdit returned false")
 	}
+
+	editor := front.editor.(*recordingEditor)
 
 	if len(editor.updates) != 1 || editor.updates[0].Name != "ship" || editor.updates[0].Exec != "echo ship" {
 		t.Fatalf("updates = %+v, want the edited fields", editor.updates)
@@ -179,17 +291,17 @@ func TestApplyEditReloadsTheModel(t *testing.T) {
 		t.Error("ClearAliases = true, want it false for a supplied alias")
 	}
 
-	if got := model.Selected(); got != "ship" {
+	if got := front.model.Selected(); got != "ship" {
 		t.Errorf("Selected() = %q, want the reloaded command", got)
 	}
 }
 
 func TestApplyEditRejectsEmptyFields(t *testing.T) {
-	model := testModel()
-	editor := &recordingEditor{next: model.Commands}
-	window := testWindow(t)
+	editor := &recordingEditor{next: testModel().Commands}
+	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
+	front.window.SetContent(widget.NewLabel(""))
 
-	if applyEdit(model, editor, "greet", " ", " ", " ", listFor(model), window) {
+	if front.applyEdit("greet", " ", " ", " ") {
 		t.Fatal("applyEdit accepted an empty name and exec")
 	}
 
@@ -197,33 +309,33 @@ func TestApplyEditRejectsEmptyFields(t *testing.T) {
 		t.Errorf("updates = %+v, want none", editor.updates)
 	}
 
-	if got := model.Selected(); got != "greet" {
+	if got := front.model.Selected(); got != "greet" {
 		t.Errorf("Selected() = %q, want the set unchanged", got)
 	}
 }
 
 func TestApplyEditReportsAnEditorError(t *testing.T) {
-	model := testModel()
-	editor := &recordingEditor{next: model.Commands, err: errors.New("boom")}
-	window := testWindow(t)
+	editor := &recordingEditor{next: testModel().Commands, err: errors.New("boom")}
+	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
+	front.window.SetContent(widget.NewLabel(""))
 
-	if applyEdit(model, editor, "greet", "ship", "s", "echo ship", listFor(model), window) {
+	if front.applyEdit("greet", "ship", "s", "echo ship") {
 		t.Fatal("applyEdit accepted an editor error")
 	}
 
-	if got := model.Selected(); got != "greet" {
+	if got := front.model.Selected(); got != "greet" {
 		t.Errorf("Selected() = %q, want the set unchanged", got)
 	}
 }
 
 func TestApplyCreateReloadsTheModel(t *testing.T) {
-	model := testModel()
 	editor := &recordingEditor{next: catalog.New(nil, []catalog.Command{
 		{Name: "ship", Exec: "echo ship"},
 	})}
-	window := testWindow(t)
+	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
+	front.window.SetContent(widget.NewLabel(""))
 
-	if !applyCreate(model, editor, "ship", "", "echo ship", listFor(model), window) {
+	if !front.applyCreate("ship", "", "echo ship") {
 		t.Fatal("applyCreate returned false")
 	}
 
@@ -231,17 +343,17 @@ func TestApplyCreateReloadsTheModel(t *testing.T) {
 		t.Fatalf("creates = %v, want ship", editor.creates)
 	}
 
-	if got := model.Selected(); got != "ship" {
+	if got := front.model.Selected(); got != "ship" {
 		t.Errorf("Selected() = %q, want the created command", got)
 	}
 }
 
 func TestApplyCreateRejectsEmptyFields(t *testing.T) {
-	model := testModel()
-	editor := &recordingEditor{next: model.Commands}
-	window := testWindow(t)
+	editor := &recordingEditor{next: testModel().Commands}
+	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
+	front.window.SetContent(widget.NewLabel(""))
 
-	if applyCreate(model, editor, " ", "", " ", listFor(model), window) {
+	if front.applyCreate(" ", "", " ") {
 		t.Fatal("applyCreate accepted an empty name and exec")
 	}
 
@@ -251,11 +363,11 @@ func TestApplyCreateRejectsEmptyFields(t *testing.T) {
 }
 
 func TestApplyDeleteReloadsTheModel(t *testing.T) {
-	model := testModel()
 	editor := &recordingEditor{next: catalog.New(nil, nil)}
-	window := testWindow(t)
+	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
+	front.window.SetContent(widget.NewLabel(""))
 
-	if !applyDelete(model, editor, "greet", listFor(model), window) {
+	if !front.applyDelete("greet") {
 		t.Fatal("applyDelete returned false")
 	}
 
@@ -263,7 +375,74 @@ func TestApplyDeleteReloadsTheModel(t *testing.T) {
 		t.Fatalf("deletes = %v, want greet", editor.deletes)
 	}
 
-	if got := model.Selected(); got != "" {
+	if got := front.model.Selected(); got != "" {
 		t.Errorf("Selected() = %q, want an empty set", got)
+	}
+}
+
+// The history tab shows every entry, not the 21 the old text view capped at.
+func TestHistoryTabHoldsEveryEntry(t *testing.T) {
+	var history timeline.Log
+	for i := 0; i < 30; i++ {
+		history.Add(operation.Create, "greet", "note")
+	}
+
+	model := desktop.NewModel(
+		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
+		history,
+		stubExecutor{},
+	)
+
+	front, _ := newTestUI(t, model, stubEditor{}, stubReverter{})
+	content := front.historyTab()
+	if content == nil {
+		t.Fatal("historyTab returned nil")
+	}
+
+	rows, cols := front.table.Length()
+	if rows != 30 {
+		t.Errorf("table rows = %d, want 30", rows)
+	}
+
+	if cols != len(historyHeaders) {
+		t.Errorf("table columns = %d, want %d", cols, len(historyHeaders))
+	}
+
+	// Selecting a row enables the restore action.
+	front.historyRow = 0
+	front.showHistoryDetail()
+
+	if front.revert.Disabled() {
+		t.Error("restore stayed disabled after a row was selected")
+	}
+}
+
+func TestApplyRevertReloadsTheModel(t *testing.T) {
+	reverter := &recordingReverter{next: catalog.New(nil, []catalog.Command{
+		{Name: "greet", Exec: "echo hi"},
+	})}
+	front, _ := newTestUI(t, testModel(), stubEditor{}, reverter)
+	front.window.SetContent(widget.NewLabel(""))
+
+	if !front.applyRevert(2) {
+		t.Fatal("applyRevert returned false")
+	}
+
+	if len(reverter.steps) != 1 || reverter.steps[0] != 2 {
+		t.Fatalf("steps = %v, want [2]", reverter.steps)
+	}
+
+	if got := front.model.Selected(); got != "greet" {
+		t.Errorf("Selected() = %q, want the restored command", got)
+	}
+}
+
+func TestApplyRevertReportsAnError(t *testing.T) {
+	reverter := &recordingReverter{err: errors.New("boom")}
+	front, _ := newTestUI(t, testModel(), stubEditor{}, reverter)
+	front.window.SetContent(widget.NewLabel(""))
+
+	if front.applyRevert(1) {
+		t.Fatal("applyRevert accepted a reverter error")
 	}
 }

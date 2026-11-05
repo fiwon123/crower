@@ -17,6 +17,18 @@ the window, and anything done there lands in the history. The Fyne window can
 create, edit and delete commands with the same catalog rules and history notes
 as the CLI.
 
+The window is split into tabs:
+
+| Tab | What it holds |
+| --- | --- |
+| **Commands** | The list, with a filter, a detail line, and **Run**, **Run with params**, **Edit** and **Delete** on every row |
+| **History** | Every recorded operation as a table, newest first, with a **Restore this state** action |
+
+Delete and restore both ask first. Restoring puts the command set back to what a
+history entry recorded and drops the newer entries, through the same
+`Session.RevertTo` path `crower revert` uses. The About and Tools tabs arrive in
+later releases.
+
 > [!NOTE]
 > `crower-gui` needs a graphical session; in a terminal-only environment use
 > `crower gui`. It ships in every platform archive next to `crower` and `cr`,
