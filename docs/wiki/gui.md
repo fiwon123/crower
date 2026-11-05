@@ -24,7 +24,7 @@ The window is split into tabs:
 | **Commands** | The list, with a filter, a group filter and **Run**, **Edit** and **Delete** on every row; selecting one opens the **Details** panel below the list |
 | **History** | Every recorded operation as a table, newest first; clicking a row selects the whole row and opens its details below the table, with **Restore this state** |
 | **Tools** | Copy, move, search, extract and open; every path field has **Browse…**, and each card has its own result square that opens when an action runs |
-| **About** | Logo, version, description, the repository link, and the update controls |
+| **About** | Logo, version, description, the repository link, and the update controls — centred in the tab |
 
 A command can carry an **icon** — a short marker such as 🚀 — shown beside its
 name, and a **group**; the filter lists every group in use, and the details panel
@@ -61,10 +61,13 @@ history entry recorded and drops the newer entries, through the same
 `Session.RevertTo` path `crower revert` uses.
 
 The About tab checks GitHub for a newer release when the window opens and
-reports what it finds. **Install latest** and **Restore previous** always ask
-first, then install through the same checksum-verified path as
-`crower --upgrade`, and offer **Restart now** — the window starts the new binary
-and closes.
+reports what it finds. When there is one, an **Install `<version>`** button
+appears; nothing is installed without a confirmation, and the download goes
+through the same checksum-verified path as `crower --upgrade`. Once a release is
+on disk the install action gives way to **Restart now**, which starts the new
+binary and closes the window. **Restore previous** appears only when the
+installation recorded an earlier version. Neither the install nor the restart
+button is a permanent control, so they never contradict the status line.
 
 The Tools tab runs the file operations through the same use cases as the CLI
 commands, and every run lands in the History tab. Path fields take a

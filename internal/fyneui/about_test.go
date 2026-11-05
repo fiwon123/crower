@@ -84,6 +84,14 @@ func TestAboutTabShowsTheVersionAndTheDescription(t *testing.T) {
 		t.Fatal("the update controls were not built")
 	}
 
+	if front.installButton.Visible() {
+		t.Error("the install button is visible before a check found a release")
+	}
+
+	if front.restartButton == nil || front.restartButton.Visible() {
+		t.Error("the restart button must exist and start hidden")
+	}
+
 	if !findLabelText(content, "v9.9.9") {
 		t.Error("the About tab does not show the running version")
 	}
@@ -131,6 +139,18 @@ func TestApplyLatestReportsANewerRelease(t *testing.T) {
 	if front.latest != "v1.1.0" {
 		t.Errorf("latest = %q, want v1.1.0", front.latest)
 	}
+
+	if !front.installButton.Visible() {
+		t.Error("the install action did not appear for an available release")
+	}
+
+	if !strings.Contains(front.installButton.Text, "v1.1.0") {
+		t.Errorf("install button = %q, want the version named", front.installButton.Text)
+	}
+
+	if front.restartButton.Visible() {
+		t.Error("restart appeared before anything was installed")
+	}
 }
 
 func TestApplyLatestReportsTheNewestVersion(t *testing.T) {
@@ -142,6 +162,10 @@ func TestApplyLatestReportsTheNewestVersion(t *testing.T) {
 
 	if got := front.updateStatus.Text; !strings.Contains(got, "is the newest release") {
 		t.Errorf("status = %q, want it to say the running version is newest", got)
+	}
+
+	if front.installButton.Visible() {
+		t.Error("the install action appeared although the running version is newest")
 	}
 }
 
@@ -158,6 +182,33 @@ func TestApplyLatestReportsALookupFailure(t *testing.T) {
 
 	if front.latest != "" {
 		t.Errorf("latest = %q, want it cleared after a failure", front.latest)
+	}
+
+	if front.installButton.Visible() {
+		t.Error("the install action appeared after a failed lookup")
+	}
+}
+
+// A finished install replaces the install action with the restart, and drops
+// the now-stale restore.
+func TestAfterInstallOffersTheRestart(t *testing.T) {
+	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
+	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
+	front.aboutTab()
+
+	front.applyLatest("v1.1.0", nil)
+	front.afterInstall()
+
+	if front.installButton.Visible() {
+		t.Error("the install action stayed after the install finished")
+	}
+
+	if front.restoreButton.Visible() {
+		t.Error("a restore action built from the old previous version stayed visible")
+	}
+
+	if !front.restartButton.Visible() {
+		t.Error("the restart action did not appear after an install")
 	}
 }
 
