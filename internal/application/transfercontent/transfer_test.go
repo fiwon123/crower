@@ -1,6 +1,7 @@
 package transfercontent_test
 
 import (
+	"context"
 	"errors"
 	"slices"
 	"testing"
@@ -181,6 +182,73 @@ func TestMoveUsesTheMoveTransfer(t *testing.T) {
 
 // One argument names a source and no destination; it is refused instead of
 // succeeding without doing anything.
+// Progress reports each source before it starts, and a cancelled context stops
+// the batch between sources — the command already running is not interrupted.
+func TestRunReportsProgressAndStopsOnCancel(t *testing.T) {
+	h := newHarness()
+
+	reported := make([][3]any, 0)
+
+	err := h.run(transfercontent.Request{
+		Op:   operation.Copy,
+		Args: []string{"a.txt", "b.txt", "dest"},
+		Progress: func(done, total int, current string) {
+			reported = append(reported, [3]any{done, total, current})
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	want := [][3]any{{0, 2, "a.txt"}, {1, 2, "b.txt"}}
+
+	if len(reported) != len(want) {
+		t.Fatalf("progress = %v, want %v", reported, want)
+	}
+
+	for i := range want {
+		if reported[i] != want[i] {
+			t.Errorf("progress %d = %v, want %v", i, reported[i], want[i])
+		}
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	h = newHarness()
+
+	err = h.run(transfercontent.Request{Op: operation.Copy, Args: []string{"a.txt", "dest"}, Context: ctx})
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want context.Canceled", err)
+	}
+
+	if len(h.transfer.calls) != 0 {
+		t.Errorf("calls = %v, want none after a cancel", h.transfer.calls)
+	}
+
+	// Cancelling from the progress callback stops the rest of the batch.
+	h = newHarness("a.txt", "b.txt")
+	ctx, cancel = context.WithCancel(context.Background())
+
+	err = h.run(transfercontent.Request{
+		Op:      operation.Copy,
+		Args:    []string{"a.txt", "b.txt", "dest"},
+		Context: ctx,
+		Progress: func(done int, _ int, _ string) {
+			if done == 1 {
+				cancel()
+			}
+		},
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want context.Canceled", err)
+	}
+
+	if len(h.transfer.calls) != 1 || h.transfer.calls[0] != "copy file a.txt" {
+		t.Errorf("calls = %v, want only the first source", h.transfer.calls)
+	}
+}
+
 func TestOneArgumentIsRefused(t *testing.T) {
 	for _, op := range []operation.Operation{operation.Copy, operation.Move} {
 		t.Run(string(op), func(t *testing.T) {

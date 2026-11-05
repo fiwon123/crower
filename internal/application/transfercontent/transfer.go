@@ -7,6 +7,7 @@
 package transfercontent
 
 import (
+	"context"
 	stderrors "errors"
 
 	"github.com/fiwon123/crower/internal/domain/operation"
@@ -21,6 +22,15 @@ type Request struct {
 	// Args are the positional values: one or more sources, then the
 	// destination folder as the last one.
 	Args []string
+
+	// Context stops the batch between sources. The platform command already
+	// running is not interrupted; no further source starts. Nil means "run to
+	// the end".
+	Context context.Context
+
+	// Progress is told how many sources are done, out of how many, and which
+	// one is starting. It may be nil.
+	Progress func(done, total int, current string)
 }
 
 // State is the history the operation is recorded in.
@@ -83,12 +93,31 @@ func (u *UseCase) Run(request Request) error {
 	destination := request.Args[lastIndex]
 	paths := request.Args[:lastIndex]
 
+	ctx := request.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	sawFile := false
 	sawFolder := false
 
 	var failures []error
 
-	for _, path := range paths {
+	for index, path := range paths {
+		if err := ctx.Err(); err != nil {
+			return errors.Cancelled(index, len(paths))
+		}
+
+		if request.Progress != nil {
+			request.Progress(index, len(paths), path)
+		}
+
+		// The callback is where a window's Cancel button is pressed, so the
+		// check runs again: a cancel asked for on this item skips it.
+		if err := ctx.Err(); err != nil {
+			return errors.Cancelled(index, len(paths))
+		}
+
 		folder := !u.files.IsFile(path)
 
 		if folder {

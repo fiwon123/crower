@@ -3,13 +3,18 @@
 package fyneui
 
 import (
+	"context"
+	"fmt"
 	"path/filepath"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
+	"github.com/fiwon123/crower/internal/desktop"
 )
 
 // newGrowingEntry builds a multi-line field that shows its text instead of
@@ -73,18 +78,25 @@ func newScrollFreeEntry() *widget.Entry {
 // something, then opens with the outcome; the toggle hides it again, which is
 // what gives the forms back their space.
 type toolResult struct {
-	label  *widget.Label
-	toggle *widget.Button
-	body   *fyne.Container
-	area   *fyne.Container
-	shown  bool
+	label        *widget.Label
+	toggle       *widget.Button
+	cancelButton *widget.Button
+	body         *fyne.Container
+	area         *fyne.Container
+	shown        bool
+	status       string
+	cancel       context.CancelFunc
 }
 
 func newToolResult() *toolResult {
 	result := &toolResult{label: widget.NewLabel("")}
 	result.label.Wrapping = fyne.TextWrapWord
 
-	result.body = container.NewVBox(result.label)
+	result.cancelButton = widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), result.cancelRun)
+	result.cancelButton.Importance = widget.LowImportance
+	result.cancelButton.Hide()
+
+	result.body = container.NewVBox(result.label, result.cancelButton)
 	result.body.Hide()
 
 	result.toggle = widget.NewButton("Hide result", func() {
@@ -122,6 +134,51 @@ func (r *toolResult) report(text string) {
 	r.label.SetText(text)
 	r.area.Show()
 	r.setVisible(true)
+}
+
+// start opens the area for a run and arms the cancel action. A nil cancel means
+// the run cannot be stopped, so no Cancel button is offered.
+func (r *toolResult) start(status string, cancel context.CancelFunc) {
+	r.status = status
+	r.cancel = cancel
+
+	r.label.SetText(status)
+	r.area.Show()
+	r.setVisible(true)
+
+	if cancel != nil && r.cancelButton != nil {
+		r.cancelButton.Show()
+		r.cancelButton.Enable()
+	}
+}
+
+// stop ends a run: the cancel action goes away and the result stays.
+func (r *toolResult) stop() {
+	r.cancel = nil
+
+	if r.cancelButton != nil {
+		r.cancelButton.Hide()
+	}
+}
+
+// cancelRun asks the running action to stop and disables itself, so a second
+// press cannot cancel something that already ended.
+func (r *toolResult) cancelRun() {
+	if r.cancel == nil {
+		return
+	}
+
+	r.cancel()
+	r.cancelButton.Disable()
+	r.label.SetText("Cancelling…")
+}
+
+// progress shows how far a run has got. It is called from the worker goroutine,
+// so the label is updated on the UI thread.
+func (r *toolResult) progress(p desktop.Progress) {
+	fyne.Do(func() {
+		r.label.SetText(fmt.Sprintf("%s %d of %d — %s", r.status, p.Done+1, p.Total, p.Current))
+	})
 }
 
 // appendPath adds a picked path to a comma-separated list, so repeated Browse

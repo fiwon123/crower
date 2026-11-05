@@ -3,6 +3,7 @@
 package fyneui
 
 import (
+	"context"
 	"errors"
 	"strings"
 
@@ -55,15 +56,15 @@ func (u *ui) transferCard() fyne.CanvasObject {
 
 	copyButton := widget.NewButtonWithIcon("Copy", theme.ContentCopyIcon(), func() {
 		paths := splitPaths(sources.Text)
-		u.runTool(u.transferResult, "Copying…", func() (string, timeline.Log, error) {
-			return u.transfer(true, paths, destination.Text)
+		u.runTool(u.transferResult, "Copying…", true, func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error) {
+			return u.transfer(ctx, report, true, paths, destination.Text)
 		})
 	})
 
 	moveButton := widget.NewButtonWithIcon("Move", theme.ContentCutIcon(), func() {
 		paths := splitPaths(sources.Text)
-		u.runTool(u.transferResult, "Moving…", func() (string, timeline.Log, error) {
-			return u.transfer(false, paths, destination.Text)
+		u.runTool(u.transferResult, "Moving…", true, func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error) {
+			return u.transfer(ctx, report, false, paths, destination.Text)
 		})
 	})
 
@@ -82,17 +83,17 @@ func (u *ui) transferCard() fyne.CanvasObject {
 var errPathAndDestination = errors.New("enter at least one source path and a destination folder")
 
 // transfer is the call without the goroutine, so a test can drive it.
-func (u *ui) transfer(copying bool, sources []string, destinationText string) (string, timeline.Log, error) {
+func (u *ui) transfer(ctx context.Context, report func(desktop.Progress), copying bool, sources []string, destinationText string) (string, timeline.Log, error) {
 	destination := strings.TrimSpace(destinationText)
 	if len(sources) == 0 || destination == "" {
 		return "", timeline.Log{}, errPathAndDestination
 	}
 
 	if copying {
-		return u.tools.Copy(sources, destination)
+		return u.tools.Copy(ctx, report, sources, destination)
 	}
 
-	return u.tools.Move(sources, destination)
+	return u.tools.Move(ctx, report, sources, destination)
 }
 
 func (u *ui) searchCard() fyne.CanvasObject {
@@ -107,7 +108,7 @@ func (u *ui) searchCard() fyne.CanvasObject {
 
 	searchButton := widget.NewButtonWithIcon("Search", theme.SearchIcon(), func() {
 		selected := searchMode(mode.Selected)
-		u.runTool(u.searchResult, "Searching…", func() (string, timeline.Log, error) {
+		u.runTool(u.searchResult, "Searching…", false, func(context.Context, func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.search(selected, term.Text, path.Text)
 		})
 	})
@@ -164,8 +165,8 @@ func (u *ui) extractCard() fyne.CanvasObject {
 
 	extractButton := widget.NewButtonWithIcon("Extract", theme.FileIcon(), func() {
 		paths := splitPaths(archives.Text)
-		u.runTool(u.extractResult, "Extracting…", func() (string, timeline.Log, error) {
-			return u.extract(paths, outDir.Text)
+		u.runTool(u.extractResult, "Extracting…", true, func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error) {
+			return u.extract(ctx, report, paths, outDir.Text)
 		})
 	})
 
@@ -182,12 +183,12 @@ func (u *ui) extractCard() fyne.CanvasObject {
 }
 
 // extract is the call without the goroutine.
-func (u *ui) extract(archives []string, outDir string) (string, timeline.Log, error) {
+func (u *ui) extract(ctx context.Context, report func(desktop.Progress), archives []string, outDir string) (string, timeline.Log, error) {
 	if len(archives) == 0 {
 		return "", timeline.Log{}, errors.New("enter at least one archive path")
 	}
 
-	return u.tools.Extract(archives, strings.TrimSpace(outDir))
+	return u.tools.Extract(ctx, report, archives, strings.TrimSpace(outDir))
 }
 
 func (u *ui) openCard() fyne.CanvasObject {
@@ -195,7 +196,7 @@ func (u *ui) openCard() fyne.CanvasObject {
 	paths.SetPlaceHolder("Paths, comma-separated")
 
 	openButton := widget.NewButtonWithIcon("Open", theme.FolderOpenIcon(), func() {
-		u.runTool(u.openResult, "Opening…", func() (string, timeline.Log, error) {
+		u.runTool(u.openResult, "Opening…", false, func(context.Context, func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.open(splitPaths(paths.Text))
 		})
 	})
@@ -222,17 +223,32 @@ func (u *ui) open(paths []string) (string, timeline.Log, error) {
 
 // runTool runs the call off the UI thread and reports on it in that card's own
 // result area, so a slow search or transfer does not freeze the window.
-func (u *ui) runTool(result *toolResult, status string, action func() (string, timeline.Log, error)) {
+//
+// A cancellable run gets a Cancel button and a progress line; the context stops
+// the batch between items, because the platform command already running cannot
+// be interrupted.
+func (u *ui) runTool(result *toolResult, status string, cancellable bool, action func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error)) {
 	if result == nil {
 		return
 	}
 
-	result.report(status)
+	ctx := context.Background()
+	cancel := func() {}
+
+	if cancellable {
+		cancellableCtx, stop := context.WithCancel(ctx)
+		ctx, cancel = cancellableCtx, stop
+		result.start(status, cancel)
+	} else {
+		result.start(status, nil)
+	}
 
 	go func() {
-		message, history, err := action()
+		message, history, err := action(ctx, result.progress)
 
 		fyne.Do(func() {
+			cancel()
+			result.stop()
 			u.reportTool(result, message, history, err)
 		})
 	}()
@@ -246,6 +262,11 @@ func (u *ui) reportTool(result *toolResult, message string, history timeline.Log
 	}
 
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			result.report("Stopped: " + err.Error())
+			return
+		}
+
 		result.report("Error: " + err.Error())
 		return
 	}

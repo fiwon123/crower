@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -27,16 +28,16 @@ func newFyneTools(cfg *session.Session) fyneTools {
 }
 
 // Copy copies every source into destination.
-func (t fyneTools) Copy(sources []string, destination string) (string, timeline.Log, error) {
-	return t.transfer(operation.Copy, sources, destination)
+func (t fyneTools) Copy(ctx context.Context, report func(desktop.Progress), sources []string, destination string) (string, timeline.Log, error) {
+	return t.transfer(ctx, report, operation.Copy, sources, destination)
 }
 
 // Move moves every source into destination.
-func (t fyneTools) Move(sources []string, destination string) (string, timeline.Log, error) {
-	return t.transfer(operation.Move, sources, destination)
+func (t fyneTools) Move(ctx context.Context, report func(desktop.Progress), sources []string, destination string) (string, timeline.Log, error) {
+	return t.transfer(ctx, report, operation.Move, sources, destination)
 }
 
-func (t fyneTools) transfer(op operation.Operation, sources []string, destination string) (string, timeline.Log, error) {
+func (t fyneTools) transfer(ctx context.Context, report func(desktop.Progress), op operation.Operation, sources []string, destination string) (string, timeline.Log, error) {
 	args := make([]string, 0, len(sources)+1)
 	args = append(args, sources...)
 	args = append(args, destination)
@@ -44,7 +45,7 @@ func (t fyneTools) transfer(op operation.Operation, sources []string, destinatio
 	session := newTransferSession(t.cfg)
 
 	if err := transfercontent.New(session, session, session, session).Run(
-		transfercontent.Request{Op: op, Args: args},
+		transfercontent.Request{Op: op, Args: args, Context: ctx, Progress: progressReporter(report)},
 	); err != nil {
 		return "", t.cfg.History, err
 	}
@@ -97,12 +98,12 @@ func (t fyneTools) Search(mode desktop.SearchMode, term, path string) (string, t
 }
 
 // Extract expands archives, beside each one unless outDir is set.
-func (t fyneTools) Extract(archives []string, outDir string) (string, timeline.Log, error) {
+func (t fyneTools) Extract(ctx context.Context, report func(desktop.Progress), archives []string, outDir string) (string, timeline.Log, error) {
 	capture := &captureOutput{}
 	extract := captureExtractSession{extractSession: newExtractSession(t.cfg), output: capture}
 
 	if err := extractcontent.New(extract, extract, extract, extract).Run(
-		extractcontent.Request{Args: archives, OutDir: outDir},
+		extractcontent.Request{Args: archives, OutDir: outDir, Context: ctx, Progress: progressReporter(report)},
 	); err != nil {
 		return "", t.cfg.History, err
 	}
@@ -112,6 +113,18 @@ func (t fyneTools) Extract(archives []string, outDir string) (string, timeline.L
 	}
 
 	return fmt.Sprintf("Extracted %d archive(s).", len(archives)), t.cfg.History, nil
+}
+
+// progressReporter adapts a use case's progress callback to the window's, and
+// returns nil when nobody is listening.
+func progressReporter(report func(desktop.Progress)) func(done, total int, current string) {
+	if report == nil {
+		return nil
+	}
+
+	return func(done, total int, current string) {
+		report(desktop.Progress{Done: done, Total: total, Current: current})
+	}
 }
 
 // Open opens paths with the platform's default application.
