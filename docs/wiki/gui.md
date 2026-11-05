@@ -23,11 +23,17 @@ The window is split into tabs:
 | --- | --- |
 | **Commands** | The list, with a filter, a detail line, and **Run**, **Run with params**, **Edit** and **Delete** on every row |
 | **History** | Every recorded operation as a table, newest first, with a **Restore this state** action |
+| **About** | Logo, version, description, the repository link, and the update controls |
 
 Delete and restore both ask first. Restoring puts the command set back to what a
 history entry recorded and drops the newer entries, through the same
-`Session.RevertTo` path `crower revert` uses. The About and Tools tabs arrive in
-later releases.
+`Session.RevertTo` path `crower revert` uses.
+
+The About tab checks GitHub for a newer release when the window opens and
+reports what it finds. **Install latest** and **Restore previous** always ask
+first, then install through the same checksum-verified path as
+`crower --upgrade`, and offer **Restart now** — the window starts the new binary
+and closes. The Tools tab arrives in a later release.
 
 > [!NOTE]
 > `crower-gui` needs a graphical session; in a terminal-only environment use

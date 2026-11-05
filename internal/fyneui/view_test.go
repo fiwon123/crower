@@ -135,37 +135,48 @@ func testWindow(t *testing.T) fyne.Window {
 func newTestUI(t *testing.T, model *desktop.Model, editor Editor, reverter Reverter) (*ui, fyne.Window) {
 	t.Helper()
 
+	return newTestUIWithUpdater(t, model, editor, reverter, &stubUpdater{current: "v0.0.0-test"})
+}
+
+func newTestUIWithUpdater(t *testing.T, model *desktop.Model, editor Editor, reverter Reverter, updater Updater) (*ui, fyne.Window) {
+	t.Helper()
+
 	window := testWindow(t)
 	front := &ui{
 		model:      model,
 		window:     window,
 		editor:     editor,
 		reverter:   reverter,
+		updater:    updater,
 		historyRow: -1,
 	}
 
 	return front, window
 }
 
-// The window is tab based: Commands and History today, with the remaining
-// phases adding their own tabs.
+// The window is tab based: Commands, History and About today, with Tools and
+// the setup switcher adding their own tabs.
 func TestNewContentBuildsTheTabs(t *testing.T) {
 	window := testWindow(t)
 	model := testModel()
+	updater := &stubUpdater{current: "v0.0.0-test"}
 
-	content := NewContent(model, window, stubEditor{}, stubReverter{})
+	content := NewContent(model, window, stubEditor{}, stubReverter{}, updater)
 
 	tabs, ok := content.(*container.AppTabs)
 	if !ok {
 		t.Fatalf("content = %T, want tabs", content)
 	}
 
-	if len(tabs.Items) != 2 {
-		t.Fatalf("got %d tabs, want 2", len(tabs.Items))
+	want := []string{"Commands", "History", "About"}
+	if len(tabs.Items) != len(want) {
+		t.Fatalf("got %d tabs, want %d", len(tabs.Items), len(want))
 	}
 
-	if tabs.Items[0].Text != "Commands" || tabs.Items[1].Text != "History" {
-		t.Errorf("tabs = %q, %q; want Commands, History", tabs.Items[0].Text, tabs.Items[1].Text)
+	for i, text := range want {
+		if tabs.Items[i].Text != text {
+			t.Errorf("tab %d = %q, want %q", i, tabs.Items[i].Text, text)
+		}
 	}
 
 	window.SetContent(content)
