@@ -33,6 +33,16 @@ crower --setup streamer list
 CROWER_SETUP=streamer crower list
 ```
 
+## 🖥️ Switching from the window
+
+`crower-gui` lists the same setups in a **Setup** control on the Commands tab.
+Switching reloads the commands, history and group icons without a restart, and
+writes the same persisted default `crower setup use` writes — the next terminal
+command opens the setup the window chose.
+
+`default` always means the original `~/crower/crower.yaml`, not a folder called
+`default`.
+
 ## 🔗 Related
 
 [⚙️ Configuration](Configuration) · [📖 Commands](How-to-Use)

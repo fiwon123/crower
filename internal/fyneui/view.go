@@ -47,6 +47,7 @@ type Deps struct {
 	Updater  Updater
 	Tools    desktop.Tools
 	Groups   desktop.Groups
+	Setups   desktop.Setups
 }
 
 // Run opens the Fyne window and blocks until it closes.
@@ -79,6 +80,10 @@ type ui struct {
 	updater  Updater
 	tools    desktop.Tools
 	groups   desktop.Groups
+	setups   desktop.Setups
+
+	activeSetup string
+	setupSelect *widget.Select
 
 	groupIcons   map[string]string
 	groupOptions []groupOption
@@ -107,7 +112,7 @@ type ui struct {
 }
 
 func newUI(model *desktop.Model, window fyne.Window, deps Deps) *ui {
-	return &ui{
+	front := &ui{
 		model:      model,
 		window:     window,
 		editor:     deps.Editor,
@@ -115,9 +120,16 @@ func newUI(model *desktop.Model, window fyne.Window, deps Deps) *ui {
 		updater:    deps.Updater,
 		tools:      deps.Tools,
 		groups:     deps.Groups,
+		setups:     deps.Setups,
 		groupIcons: map[string]string{},
 		historyRow: -1,
 	}
+
+	if deps.Setups != nil {
+		front.activeSetup = deps.Setups.Current()
+	}
+
+	return front
 }
 
 // NewContent builds the window content over the headless model.
@@ -177,7 +189,21 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	u.groupFilter.SetSelected(allGroupsLabel)
 
 	groupsButton := widget.NewButtonWithIcon("Groups…", theme.GridIcon(), u.showGroups)
-	groups := container.NewBorder(nil, nil, widget.NewLabel("Group"), groupsButton, u.groupFilter)
+
+	u.setupSelect = widget.NewSelect(u.setupNames(), func(name string) {
+		if name == u.activeSetup {
+			return
+		}
+
+		u.switchSetup(name)
+	})
+	u.setupSelect.SetSelected(u.activeSetup)
+
+	controls := container.NewHBox(
+		widget.NewLabel("Setup"), u.setupSelect,
+		widget.NewLabel("Group"), u.groupFilter,
+		groupsButton,
+	)
 
 	toolbar := container.NewHBox(
 		widget.NewButtonWithIcon("New", theme.ContentAddIcon(), u.showCreate),
@@ -186,7 +212,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		widget.NewButton("Quit", u.window.Close),
 	)
 
-	return container.NewBorder(container.NewVBox(filter, groups, u.detail), toolbar, nil, nil, u.list)
+	return container.NewBorder(container.NewVBox(filter, controls, u.detail), toolbar, nil, nil, u.list)
 }
 
 // allGroupsLabel is the group filter's "no filter" entry.
@@ -336,6 +362,63 @@ func (u *ui) updateRow(id widget.ListItemID, object fyne.CanvasObject) {
 	row.params.OnTapped = func() { u.runKey(key, true) }
 	row.edit.OnTapped = func() { u.showEditFor(key) }
 	row.remove.OnTapped = func() { u.showDeleteFor(key) }
+}
+
+// setupNames is the switcher's options, or a single entry when the window was
+// built without a setup source (the tests that only exercise another tab).
+func (u *ui) setupNames() []string {
+	if u.setups == nil {
+		return []string{u.activeSetup}
+	}
+
+	return u.setups.Names()
+}
+
+// refreshSetupSelect rebuilds the switcher's options and reselects the active
+// setup, which is what puts the list back after a failed switch.
+func (u *ui) refreshSetupSelect() {
+	if u.setupSelect == nil || u.setups == nil {
+		return
+	}
+
+	u.setupSelect.Options = u.setups.Names()
+	u.setupSelect.Refresh()
+	u.setupSelect.SetSelected(u.activeSetup)
+}
+
+// switchSetup changes the setup and rebuilds everything the window shows from
+// it. The session is reloaded in place, so the ports keep working.
+func (u *ui) switchSetup(name string) bool {
+	if u.setups == nil {
+		return false
+	}
+
+	state, err := u.setups.Switch(name)
+	if err != nil {
+		showError(err.Error(), u.window)
+		u.refreshSetupSelect()
+		return false
+	}
+
+	u.activeSetup = name
+	u.model.Reload(state.Catalog, state.History)
+	u.loadGroupIcons()
+
+	if u.list != nil {
+		u.list.Refresh()
+		u.list.UnselectAll()
+	}
+
+	if u.detail != nil {
+		u.detail.SetText("")
+	}
+
+	u.refreshSetupSelect()
+	u.refreshGroups()
+	u.refreshHistory()
+	u.window.SetTitle("crower — " + name)
+
+	return true
 }
 
 // commandLabel is what a row shows: the icon when one is set, then the name.
