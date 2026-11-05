@@ -29,11 +29,14 @@ var optionalSections = []string{
 	"## 🛠 Fixes",
 }
 
-// downloadRows pin the platform icon table.
+// downloadRows pin the platform icon table. One archive per platform now
+// carries crower, cr and crower-gui (#357).
 var downloadRows = []string{
-	"| Platform | CLI | GUI |",
+	"| Platform | Archive |",
 	"| 🐧 Linux amd64 |",
+	"| 🐧 Linux arm64 |",
 	"| 🪟 Windows amd64 |",
+	"| 🪟 Windows arm64 |",
 	"| 🍎 macOS Intel |",
 	"| 🍎 macOS Apple Silicon |",
 }
@@ -111,6 +114,10 @@ func check(body string) []string {
 		if !strings.Contains(body, row) {
 			problems = append(problems, fmt.Sprintf("missing the download row %q", row))
 		}
+	}
+
+	if !strings.Contains(body, "crower-gui") {
+		problems = append(problems, "missing crower-gui in the archive description")
 	}
 
 	if !strings.Contains(body, "vcs.modified=false") {

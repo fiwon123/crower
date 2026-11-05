@@ -69,7 +69,7 @@ Run the steps from claim 1 or 2 against the arm64 archive. **Record:**
 
 No gate draws a window; `go test ./...` asserts the model, not pixels.
 
-**You need:** a terminal (`crower gui`) or a graphical session and the GUI archive (`crower-gui`).
+**You need:** a terminal (`crower gui`) or a graphical session and `crower-gui` (in every archive).
 
 1. `crower gui` — does the list render, do the keys move, does it exit cleanly?
 2. `crower-gui` — does a window open, and does the list populate?

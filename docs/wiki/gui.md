@@ -4,8 +4,8 @@
 
 | Command | Surface |
 | --- | --- |
-| `crower gui` | Interactive terminal UI (CLI archive) |
-| `crower-gui` | Fyne window (GUI archive) |
+| `crower gui` | Interactive terminal UI |
+| `crower-gui` | Fyne window |
 
 ```bash
 crower gui
@@ -19,9 +19,9 @@ as the CLI.
 
 > [!NOTE]
 > `crower-gui` needs a graphical session; in a terminal-only environment use
-> `crower gui`. It is a separate executable in the `crower_gui_*` archive
-> (Linux/Windows amd64, macOS arm64/Intel), not a `crower` subcommand. The CLI
-> archive is cgo-free and has no window.
+> `crower gui`. It ships in every platform archive next to `crower` and `cr`,
+> not as a `crower` subcommand. The CLI binaries are cgo-free and need no
+> display.
 
 ## 🔗 Related
 

@@ -138,7 +138,7 @@ func checkNames(gui bool, entries []string) []string {
 	}
 	if gui && !have[guiName] && !have[guiName+".exe"] {
 		problems = append(problems, fmt.Sprintf(
-			"missing %q (or %q); GUI archive holds %v", guiName, guiName+".exe", entries,
+			"missing %q (or %q); the archive holds %v", guiName, guiName+".exe", entries,
 		))
 	}
 	for _, name := range suffixed {

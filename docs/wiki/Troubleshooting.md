@@ -63,7 +63,7 @@ command line and cannot be quoted away either. Keep `Exec` single-line and use
 
 ## The GUI window does not open
 
-`crower-gui` is the Fyne app from the `crower_gui_*` archive and needs a
+`crower-gui` is the Fyne app included in every platform archive and needs a
 graphical session. In a terminal-only environment use `crower gui`, which
 renders in the terminal itself.
 

@@ -399,9 +399,10 @@ ran, not for those.
 ### Release workflow (read this before dispatching)
 
 `.github/workflows/release.yml` is manual-dispatch and `main`-only. It tags
-`main`, builds the six platform archives on `ubuntu-latest`, verifies each
-binary's embedded `vcs.revision`, writes `checksums.txt`, and creates a
-**draft** release — or publishes it when the `publish` input is set.
+`main`, builds one archive per platform — four natively and the two arm64
+targets with `fyne-cross` — each containing `crower`, `cr` and `crower-gui`.
+It verifies each binary's embedded `vcs.revision`, writes `checksums.txt`, and
+creates a **draft** release — or publishes it when the `publish` input is set.
 
 ```bash
 gh workflow run release.yml --ref main -f version=v0.6.0

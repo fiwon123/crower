@@ -75,9 +75,10 @@ main          ← release merges (dev → main, a pull request)
 gh workflow run release.yml --ref main -f version=v0.6.0
 ```
 
-The workflow tags `main`, builds six platform archives, verifies each binary's
-embedded revision, writes `checksums.txt`, and creates a **draft** release —
-publish it by hand, or pass the `publish` input.
+The workflow tags `main`, builds one archive per platform — four natively and
+two arm64 with `fyne-cross` — each containing `crower`, `cr` and `crower-gui`.
+It verifies each binary's embedded revision, writes `checksums.txt`, and creates
+a **draft** release — publish it by hand, or pass the `publish` input.
 
 The published body follows `docs/release-notes-template.md` and ends with a
 compare link, not a pasted PR list: `generate-notes` cannot see squash-merged

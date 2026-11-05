@@ -61,7 +61,10 @@ clean:
 release: zip_windows zip_linux
 	@echo "Release ready: $(VERSION)"
 
-# Platform release for CI (cross-compile)
+# Platform release for a CLI-only archive (local use).
+#
+# The release workflow builds one combined archive per platform with
+# release-gui-platform; this target stays for a local CLI-only build.
 #
 # The binary inside the archive is always named $(APP_NAME)$(EXT) /
 # $(APP_NAME_SHORT)$(EXT) — never arch-suffixed. The platform and architecture
