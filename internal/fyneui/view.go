@@ -118,6 +118,7 @@ type ui struct {
 	checkButton   *widget.Button
 	installButton *widget.Button
 	restoreButton *widget.Button
+	restartButton *widget.Button
 	latest        string
 }
 
