@@ -98,8 +98,9 @@ type ui struct {
 	groups   desktop.Groups
 	setups   desktop.Setups
 
-	activeSetup string
-	setupSelect *widget.Select
+	activeSetup  string
+	setupSelect  *widget.Select
+	setupChoices []setupOption
 
 	groupIcons   map[string]string
 	groupOptions []groupOption
@@ -242,14 +243,18 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 
 	groupsButton := widget.NewButtonWithIcon("Groups…", theme.GridIcon(), u.showGroups)
 
-	u.setupSelect = widget.NewSelect(u.setupNames(), func(name string) {
-		if name == u.activeSetup {
+	labels, choices := u.setupChoicesList()
+	u.setupChoices = choices
+
+	u.setupSelect = widget.NewSelect(labels, func(label string) {
+		name := u.setupName(label)
+		if name == "" || name == u.activeSetup {
 			return
 		}
 
 		u.switchSetup(name)
 	})
-	u.setupSelect.SetSelected(u.activeSetup)
+	u.setupSelect.SetSelected(u.setupLabel(u.activeSetup))
 
 	controls := container.NewHBox(widget.NewLabel("Setup"), u.setupSelect)
 
@@ -428,14 +433,58 @@ func (u *ui) updateRow(id widget.ListItemID, object fyne.CanvasObject) {
 	row.remove.OnTapped = func() { u.showDeleteFor(key) }
 }
 
-// setupNames is the switcher's options, or a single entry when the window was
-// built without a setup source (the tests that only exercise another tab).
-func (u *ui) setupNames() []string {
+// setupOption maps a selector label to the setup it selects; the label carries
+// the command count, so it is not the same string as the name.
+type setupOption struct {
+	label string
+	name  string
+}
+
+// setupChoicesList is the selector's entries with their command counts, or a
+// single entry when the window was built without a setup source (the tests that
+// only exercise another tab).
+func (u *ui) setupChoicesList() ([]string, []setupOption) {
 	if u.setups == nil {
-		return []string{u.activeSetup}
+		return []string{u.activeSetup}, []setupOption{{label: u.activeSetup, name: u.activeSetup}}
 	}
 
-	return u.setups.Names()
+	names := u.setups.Names()
+	labels := make([]string, 0, len(names))
+	choices := make([]setupOption, 0, len(names))
+
+	for _, name := range names {
+		label := u.setupLabel(name)
+		labels = append(labels, label)
+		choices = append(choices, setupOption{label: label, name: name})
+	}
+
+	return labels, choices
+}
+
+// setupLabel is what the selector shows: the name and how many commands it
+// holds. A count that cannot be read shows as "?" rather than hiding the setup.
+func (u *ui) setupLabel(name string) string {
+	if u.setups == nil {
+		return name
+	}
+
+	count, err := u.setups.Commands(name)
+	if err != nil {
+		return name + " (?)"
+	}
+
+	return fmt.Sprintf("%s (%d)", name, count)
+}
+
+// setupName maps a selected label back to the setup's name.
+func (u *ui) setupName(label string) string {
+	for _, choice := range u.setupChoices {
+		if choice.label == label {
+			return choice.name
+		}
+	}
+
+	return ""
 }
 
 // refreshSetupSelect rebuilds the switcher's options and reselects the active
@@ -445,9 +494,12 @@ func (u *ui) refreshSetupSelect() {
 		return
 	}
 
-	u.setupSelect.Options = u.setups.Names()
+	labels, choices := u.setupChoicesList()
+	u.setupChoices = choices
+
+	u.setupSelect.Options = labels
 	u.setupSelect.Refresh()
-	u.setupSelect.SetSelected(u.activeSetup)
+	u.setupSelect.SetSelected(u.setupLabel(u.activeSetup))
 }
 
 // switchSetup changes the setup and rebuilds everything the window shows from

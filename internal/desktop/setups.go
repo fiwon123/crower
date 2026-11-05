@@ -28,6 +28,10 @@ type Setups interface {
 	// returning the state the window should show.
 	Switch(name string) (State, error)
 
+	// Commands counts the commands a setup holds, so the selector can show what
+	// switching would bring. It must not create a setup that does not exist.
+	Commands(name string) (int, error)
+
 	// Create makes an empty named setup, the way `crower setup new` does.
 	Create(name string) error
 
