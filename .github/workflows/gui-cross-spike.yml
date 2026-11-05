@@ -1,7 +1,8 @@
-name: GUI cross spike
+name: GUI combined spike
 
-# Throwaway verification for #357: can fyne-cross build crower-gui for the two
-# arm64 targets on an amd64 runner? Removed before the PR.
+# Throwaway verification for #357: build the combined platform archive with
+# all three executables, natively on Linux and via fyne-cross for the two
+# arm64 targets. Removed before the PR.
 on:
   push:
     branches: [feat/357-one-archive-per-platform]
@@ -10,31 +11,56 @@ permissions:
   contents: read
 
 jobs:
+  native:
+    name: Native linux/amd64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Install X11/GL and Wayland headers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
+      - name: Build
+        env:
+          VERSION: v0.0.0-test
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: '1'
+        run: make release-gui-platform
+      - name: Inspect
+        run: |
+          set -euo pipefail
+          ls -l build/dist
+          tar -tzf build/dist/crower_v0.0.0-test_linux_amd64.tar.gz
+          go version -m build/crower-gui | grep -E 'vcs\.(revision|modified)'
+          strings build/crower-gui | grep -qF 'v0.0.0-test'
+
   cross:
-    name: ${{ matrix.target }}/${{ matrix.arch }}
+    name: Cross ${{ matrix.goos }}/${{ matrix.goarch }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - target: linux
-            arch: arm64
-          - target: windows
-            arch: arm64
+          - goos: linux
+            goarch: arm64
+            target: linux
+          - goos: windows
+            goarch: arm64
+            target: windows
     steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: 'go.mod'
           cache: true
-
       - name: Install fyne-cross
-        run: go install github.com/fyne-io/fyne-cross@latest
-
-      - name: Build with fyne-cross
+        run: go install github.com/fyne-io/fyne-cross@v1.6.3
+      - name: Build crower-gui
         env:
           VERSION: v0.0.0-test
         run: |
@@ -42,34 +68,41 @@ jobs:
           printf 'package cmd\n\nfunc init() { Version = "%s" }\n' "$VERSION" > cmd/zz_version_generated.go
           trap 'rm -f cmd/zz_version_generated.go' EXIT
           "$(go env GOPATH)/bin/fyne-cross" "${{ matrix.target }}" \
-            -arch "${{ matrix.arch }}" \
+            -arch "${{ matrix.goarch }}" \
             -name crower-gui \
             -app-id com.fiwon123.crower \
             -tags fyne \
             -icon internal/fyneui/logo.png \
             ./cmd/crowergui
-
-      - name: Debug the container view
-        run: |
-          docker run --rm --entrypoint sh -v "$PWD:/app" -w /app \
-            fyneio/fyne-cross-images:${{ matrix.target }} \
-            -c 'git status --porcelain; echo "--- tracked diff ---"; git diff --stat; echo "--- ignored ---"; git status --porcelain --ignored | head -20'
-
-      - name: Inspect the binary
+      - name: Package
+        env:
+          VERSION: v0.0.0-test
         run: |
           set -euo pipefail
-          echo "--- git status after fyne-cross ---"
-          git status --porcelain
-          echo "---"
-          find fyne-cross/bin -maxdepth 3 -type f -print
-          BIN="$(find fyne-cross/bin -maxdepth 3 -type f ! -name '*.tar.*' ! -name '*.zip' | head -1)"
-          test -n "$BIN"
-          echo "binary: $BIN"
-          go version -m "$BIN"
-          file "$BIN"
-          if strings "$BIN" | grep -qF 'v0.0.0-test'; then
-            echo "version string embedded: yes"
-          else
-            echo "::error::version string is missing from $BIN"
-            exit 1
-          fi
+          EXT=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then EXT=".exe"; fi
+          mkdir -p build
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
+            go build -ldflags "-X github.com/fiwon123/crower/cmd.Version=${VERSION}" \
+            -o "build/crower${EXT}" .
+          cp "build/crower${EXT}" "build/cr${EXT}"
+          GUI="$(find fyne-cross/bin -maxdepth 3 -type f \
+            \( -name 'crower-gui*' -o -name 'crowergui*' \) \
+            ! -name '*.tar.*' ! -name '*.zip' | head -1)"
+          test -n "$GUI"
+          cp "$GUI" "build/crower-gui${EXT}"
+          make package-gui VERSION="${VERSION}" GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }}
+          make verify-release VERSION="${VERSION}" GUI=1
+      - name: Inspect
+        run: |
+          set -euo pipefail
+          ls -l build/dist
+          ARCHIVE="$(find build/dist -type f | head -1)"
+          case "$ARCHIVE" in
+            *.zip) python3 -c "import zipfile,sys; [print(n) for n in zipfile.ZipFile(sys.argv[1]).namelist()]" "$ARCHIVE" ;;
+            *.tar.gz) tar -tzf "$ARCHIVE" ;;
+          esac
+          BIN="build/crower-gui"
+          if [ -f build/crower-gui.exe ]; then BIN=build/crower-gui.exe; fi
+          go version -m "$BIN" | grep -E 'vcs\.(revision|modified)'
+          strings "$BIN" | grep -qF 'v0.0.0-test'
