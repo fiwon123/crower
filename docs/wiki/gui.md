@@ -46,6 +46,8 @@ The edit dialog also changes the rest of the command: **Description**,
 **Params** (comma-separated), **Cwd**, **Shell** and **Timeout**. Emptying a
 field clears it. `Env` is not in the dialog — it holds values that look like
 secrets, so it stays a configuration-file field, and the window shows keys only.
+**Exec** and **Description** wrap and grow with their text (up to a cap); the
+dialog's field list scrolls, so a long script never clips the buttons.
 
 **Groups…** beside the filter gives each group an icon of its own, stored in
 `groups.toml` next to the configuration (the window is the only writer; the CLI
