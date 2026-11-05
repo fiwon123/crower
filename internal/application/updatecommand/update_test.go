@@ -2,6 +2,7 @@ package updatecommand_test
 
 import (
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -188,6 +189,46 @@ func TestRunAppliesASuppliedChange(t *testing.T) {
 }
 
 // With no key, the table is shown and the row is asked for.
+// A metadata-only change applies without asking for name, aliases or exec.
+func TestRunAppliesMetadataWithoutPrompting(t *testing.T) {
+	state := greeter()
+	output := &fakeOutput{}
+	prompt := &fakePrompt{answers: map[string]bool{"Continue to update": true}}
+	notes := &fakeNotes{}
+
+	description := "ship it"
+	params := []string{"env", "region"}
+	cwd := "/srv/app"
+	shellName := "sh"
+	timeout := "120s"
+
+	err := newUseCase(state, output, prompt, notes).Run(updatecommand.Request{
+		Key: "greet",
+		Changes: catalog.Changes{
+			Description: &description,
+			Params:      &params,
+			Cwd:         &cwd,
+			Shell:       &shellName,
+			Timeout:     &timeout,
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	stored, _ := state.committed.commands.Get("greet")
+
+	if stored.Description != description || !slices.Equal(stored.Params, params) || stored.Cwd != cwd || stored.Shell != shellName || stored.Timeout != timeout {
+		t.Errorf("stored = %+v, want every supplied field applied", stored)
+	}
+
+	for _, asked := range prompt.asked {
+		if asked == "name" || asked == "aliases" || asked == "exec" {
+			t.Errorf("a metadata-only update asked for %q", asked)
+		}
+	}
+}
+
 func TestRunAsksForTheCommand(t *testing.T) {
 	state := greeter()
 	output := &fakeOutput{table: "TABLE"}

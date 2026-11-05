@@ -19,8 +19,8 @@ var execute bool
 // Cmd represents the update command
 var updateCmd = &cobra.Command{
 	Use:   "update [command]",
-	Short: "Change a command's name, aliases or exec.",
-	Long: `Change a command's name, aliases or exec.
+	Short: "Change a command's name, aliases, exec or execution metadata.",
+	Long: `Change a command's name, aliases, exec or execution metadata.
 
 	crower update greet --exec "echo hi"
 	crower update greet --name hello --alias hi
@@ -31,7 +31,8 @@ updated instead:
 	crower update --create
 	crower update --execute
 
-With no field given, crower asks for each one.`,
+With no field given, crower asks for each one. --description, --params, --cwd,
+--shell and --timeout change the optional metadata, and an empty value clears it.`,
 	Example: `	crower update greet --exec "echo hi"
 	crower update hi --name hello
 	crower update --last
@@ -64,6 +65,33 @@ With no field given, crower asks for each one.`,
 			request.Changes.ClearGroup = request.Changes.Group == ""
 		}
 
+		// The metadata fields are pointers in catalog.Changes: a flag that was
+		// given supplies the value, and an empty one clears it.
+		if cmd.Flags().Changed("description") {
+			value := strings.TrimSpace(description)
+			request.Changes.Description = &value
+		}
+
+		if cmd.Flags().Changed("params") {
+			list := flagList(params)
+			request.Changes.Params = &list
+		}
+
+		if cmd.Flags().Changed("cwd") {
+			value := strings.TrimSpace(cwd)
+			request.Changes.Cwd = &value
+		}
+
+		if cmd.Flags().Changed("shell") {
+			value := strings.TrimSpace(shell)
+			request.Changes.Shell = &value
+		}
+
+		if cmd.Flags().Changed("timeout") {
+			value := strings.TrimSpace(timeout)
+			request.Changes.Timeout = &value
+		}
+
 		if len(args) != 0 {
 			request.Key = args[0]
 		}
@@ -87,6 +115,7 @@ func init() {
 	AddExecFlag(updateCmd, &exec)
 	AddIconFlag(updateCmd, &icon)
 	AddGroupFlag(updateCmd, &group)
+	AddMetadataFlags(updateCmd, &description, &params, &cwd, &shell, &timeout)
 
 	updateCmd.Flags().BoolVarP(&last, "last", "l", false, "update recent updated command")
 	updateCmd.Flags().BoolVarP(&create, "create", "c", false, "update recent created command")
