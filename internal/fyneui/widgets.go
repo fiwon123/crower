@@ -12,6 +12,41 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// newGrowingEntry builds a multi-line field that shows its text instead of
+// hiding it behind a scrollbar: it wraps long lines and grows to the number of
+// rows the text needs, between minRows and maxRows.
+//
+// Past maxRows it keeps its own scroll, which is the one place a wheel event
+// still stops at a field — an entry tall enough to hold a script is worth that,
+// and the dialogs put the whole form in a scroll so nothing is unreachable.
+func newGrowingEntry(minRows, maxRows int) *widget.Entry {
+	entry := widget.NewMultiLineEntry()
+	entry.Wrapping = fyne.TextWrapWord
+	entry.SetMinRowsVisible(minRows)
+
+	entry.OnChanged = func(text string) {
+		entry.SetMinRowsVisible(growingRows(text, minRows, maxRows))
+	}
+
+	return entry
+}
+
+// growingRows estimates how many rows text needs at the dialog's width, so a
+// script shows every line it has up to the cap rather than a fixed window into
+// it. The estimate only drives MinRowsVisible: if it is low the field scrolls a
+// little, and if it is high a spare empty row shows.
+func growingRows(text string, minRows, maxRows int) int {
+	const charsPerRow = 72
+
+	rows := 0
+
+	for _, line := range strings.Split(text, "\n") {
+		rows += max(1, (len(line)+charsPerRow-1)/charsPerRow)
+	}
+
+	return min(max(rows, minRows), maxRows)
+}
+
 // newScrollFreeEntry builds a single-line field that does not swallow the mouse
 // wheel.
 //
