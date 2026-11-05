@@ -143,16 +143,17 @@ func newTestUIWithUpdater(t *testing.T, model *desktop.Model, editor Editor, rev
 
 	window := testWindow(t)
 	front := &ui{
-		model:      model,
-		window:     window,
-		editor:     editor,
-		reverter:   reverter,
-		updater:    updater,
-		tools:      &stubTools{},
-		groups:     &stubGroups{},
-		setups:     &stubSetups{current: "default", names: []string{"default"}},
-		groupIcons: map[string]string{},
-		historyRow: -1,
+		model:       model,
+		window:      window,
+		editor:      editor,
+		reverter:    reverter,
+		updater:     updater,
+		tools:       &stubTools{},
+		groups:      &stubGroups{},
+		setups:      &stubSetups{current: "default", names: []string{"default"}},
+		activeSetup: "default",
+		groupIcons:  map[string]string{},
+		historyRow:  -1,
 	}
 
 	return front, window
