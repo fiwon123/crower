@@ -9,19 +9,22 @@ import (
 //
 // It has no Fyne import, so the adapter is covered by the normal cmd tests.
 type fyneGroups struct {
-	groups *storage.Groups
+	cfg *session.Session
 }
 
 func newFyneGroups(cfg *session.Session) fyneGroups {
-	return fyneGroups{groups: storage.NewGroups(cfg.ConfigFolder())}
+	return fyneGroups{cfg: cfg}
 }
 
 // Icons returns every group that has an icon.
+//
+// The file is looked up per call rather than captured: switching a setup moves
+// the configuration folder, and the icons have to move with it.
 func (g fyneGroups) Icons() (map[string]string, error) {
-	return g.groups.Load()
+	return storage.NewGroups(g.cfg.ConfigFolder()).Load()
 }
 
 // SetIcon stores or removes one group's icon.
 func (g fyneGroups) SetIcon(group, icon string) (map[string]string, error) {
-	return g.groups.Set(group, icon)
+	return storage.NewGroups(g.cfg.ConfigFolder()).Set(group, icon)
 }

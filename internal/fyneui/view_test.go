@@ -150,6 +150,7 @@ func newTestUIWithUpdater(t *testing.T, model *desktop.Model, editor Editor, rev
 		updater:    updater,
 		tools:      &stubTools{},
 		groups:     &stubGroups{},
+		setups:     &stubSetups{current: "default", names: []string{"default"}},
 		groupIcons: map[string]string{},
 		historyRow: -1,
 	}
@@ -171,6 +172,7 @@ func TestNewContentBuildsTheTabs(t *testing.T) {
 		Updater:  updater,
 		Tools:    &stubTools{},
 		Groups:   &stubGroups{},
+		Setups:   &stubSetups{current: "default", names: []string{"default"}},
 	})
 
 	tabs, ok := content.(*container.AppTabs)

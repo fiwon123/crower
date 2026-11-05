@@ -34,6 +34,7 @@ This command is the entrypoint of the crower-gui executable, built with
 			Updater:  newFyneUpdater(cfg, Version),
 			Tools:    newFyneTools(cfg),
 			Groups:   newFyneGroups(cfg),
+			Setups:   newFyneSetups(cfg),
 		})
 		return nil
 	},

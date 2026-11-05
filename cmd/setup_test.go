@@ -62,6 +62,17 @@ func TestResolveConfigPath(t *testing.T) {
 	if want := filepath.Join(home, "crower", "crower.yaml"); got != want {
 		t.Errorf("default = %q, want %q", got, want)
 	}
+
+	// The name `crower setup use default` writes resolves to the original
+	// installation, not to a folder called default.
+	got, err = resolveConfigPath("", "default")
+	if err != nil {
+		t.Fatalf("resolveConfigPath: %v", err)
+	}
+
+	if want := filepath.Join(home, "crower", "crower.yaml"); got != want {
+		t.Errorf("named default = %q, want %q", got, want)
+	}
 }
 
 // runSetup executes the root command against a temporary HOME, without the

@@ -85,7 +85,9 @@ func resolveConfigPath(explicit, setup string) (string, error) {
 		return "", errors.NotUserHome()
 	}
 
-	if setup == "" {
+	// "default" is the name `crower setup use default` writes; it names the
+	// original installation, not a folder called default.
+	if setup == "" || setup == "default" {
 		return filepath.Join(home, "crower", "crower.yaml"), nil
 	}
 
