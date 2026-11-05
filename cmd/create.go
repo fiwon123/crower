@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"path/filepath"
+	"strings"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/adapters/system"
@@ -17,6 +18,12 @@ import (
 var allAlias []string
 var icon string
 var group string
+
+var description string
+var params []string
+var cwd string
+var shell string
+var timeout string
 
 var scriptFlag bool
 var processName string
@@ -55,11 +62,16 @@ the last command you ran.`,
 		}
 
 		request := createcommand.Request{
-			Mode:    createcommand.ModeCommand,
-			Aliases: allAlias,
-			Icon:    icon,
-			Group:   group,
-			Args:    args,
+			Mode:        createcommand.ModeCommand,
+			Aliases:     allAlias,
+			Icon:        strings.TrimSpace(icon),
+			Group:       strings.TrimSpace(group),
+			Description: strings.TrimSpace(description),
+			Params:      flagList(params),
+			Cwd:         strings.TrimSpace(cwd),
+			Shell:       strings.TrimSpace(shell),
+			Timeout:     strings.TrimSpace(timeout),
+			Args:        args,
 		}
 
 		// The flags decide which job this run is -- and their precedence is the
@@ -268,6 +280,7 @@ func init() {
 	AddAllAliasFlag(createCmd, &allAlias)
 	AddIconFlag(createCmd, &icon)
 	AddGroupFlag(createCmd, &group)
+	AddMetadataFlags(createCmd, &description, &params, &cwd, &shell, &timeout)
 
 	createCmd.Flags().StringVarP(&processName, "process", "p", "", "new command name for a process; pass the process name or pid as an argument")
 	createCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")

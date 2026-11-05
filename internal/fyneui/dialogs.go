@@ -46,7 +46,11 @@ func (u *ui) showCreate() {
 		widget.NewFormItem("Exec", exec),
 	}
 
-	form := dialog.NewForm("New command", "Create", "Cancel", items, func(ok bool) {
+	// The form scrolls, so a grown exec field or a short window never clips the
+	// last row or the buttons.
+	form := widget.NewForm(items...)
+
+	create := dialog.NewCustomConfirm("New command", "Create", "Cancel", container.NewVScroll(form), func(ok bool) {
 		if !ok {
 			return
 		}
@@ -54,8 +58,8 @@ func (u *ui) showCreate() {
 		u.applyCreate(name.Text, aliases.Text, icon.Text, group.Text, exec.Text)
 	}, u.window)
 
-	form.Resize(fyne.NewSize(dialogWidth, dialogHeight))
-	form.Show()
+	create.Resize(fyne.NewSize(dialogWidth, dialogHeight))
+	create.Show()
 }
 
 // applyCreate is the form's submit path, separate from the dialog so a test
@@ -109,9 +113,8 @@ func (u *ui) showEditFor(key string) {
 	exec := newExecEntry()
 	exec.SetText(command.Exec)
 
-	description := widget.NewMultiLineEntry()
+	description := newGrowingEntry(3, 8)
 	description.SetText(command.Description)
-	description.SetMinRowsVisible(2)
 	description.SetPlaceHolder("what the command is for")
 
 	params := newScrollFreeEntry()
@@ -143,7 +146,9 @@ func (u *ui) showEditFor(key string) {
 		widget.NewFormItem("Timeout", timeout),
 	}
 
-	form := dialog.NewForm("Edit command", "Save", "Cancel", items, func(ok bool) {
+	form := widget.NewForm(items...)
+
+	edit := dialog.NewCustomConfirm("Edit command", "Save", "Cancel", container.NewVScroll(form), func(ok bool) {
 		if !ok {
 			return
 		}
@@ -162,8 +167,8 @@ func (u *ui) showEditFor(key string) {
 		})
 	}, u.window)
 
-	form.Resize(fyne.NewSize(dialogWidth, editDialogHeight))
-	form.Show()
+	edit.Resize(fyne.NewSize(dialogWidth, editDialogHeight))
+	edit.Show()
 }
 
 // commandForm is what the edit dialog holds. Every field is always supplied by
@@ -258,10 +263,10 @@ func (u *ui) applyDelete(key string) bool {
 	return true
 }
 
-// newExecEntry is the multi-line field a shell line needs.
+// newExecEntry is the multi-line field a shell line needs. It grows with the
+// script, up to twelve rows.
 func newExecEntry() *widget.Entry {
-	exec := widget.NewMultiLineEntry()
-	exec.SetMinRowsVisible(6)
+	exec := newGrowingEntry(4, 12)
 	exec.SetPlaceHolder("echo hello")
 
 	return exec

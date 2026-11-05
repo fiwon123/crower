@@ -3,6 +3,7 @@
 package fyneui
 
 import (
+	"context"
 	"errors"
 	"path/filepath"
 	"strings"
@@ -26,13 +27,13 @@ type stubTools struct {
 	err      error
 }
 
-func (s *stubTools) Copy(sources []string, destination string) (string, timeline.Log, error) {
+func (s *stubTools) Copy(_ context.Context, _ func(desktop.Progress), sources []string, destination string) (string, timeline.Log, error) {
 	s.copies = append(s.copies, [2]any{sources, destination})
 
 	return s.result()
 }
 
-func (s *stubTools) Move(sources []string, destination string) (string, timeline.Log, error) {
+func (s *stubTools) Move(_ context.Context, _ func(desktop.Progress), sources []string, destination string) (string, timeline.Log, error) {
 	s.moves = append(s.moves, [2]any{sources, destination})
 
 	return s.result()
@@ -44,7 +45,7 @@ func (s *stubTools) Search(mode desktop.SearchMode, term, path string) (string, 
 	return s.result()
 }
 
-func (s *stubTools) Extract(archives []string, outDir string) (string, timeline.Log, error) {
+func (s *stubTools) Extract(_ context.Context, _ func(desktop.Progress), archives []string, outDir string) (string, timeline.Log, error) {
 	s.extracts = append(s.extracts, [2]any{archives, outDir})
 
 	return s.result()
@@ -97,11 +98,11 @@ func TestTransferNeedsPathsAndADestination(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
 	front.tools = tools
 
-	if _, _, err := front.transfer(true, nil, "/tmp"); err == nil {
+	if _, _, err := front.transfer(context.Background(), nil, true, nil, "/tmp"); err == nil {
 		t.Error("transfer accepted no source")
 	}
 
-	if _, _, err := front.transfer(true, []string{"/tmp/a"}, "  "); err == nil {
+	if _, _, err := front.transfer(context.Background(), nil, true, []string{"/tmp/a"}, "  "); err == nil {
 		t.Error("transfer accepted no destination")
 	}
 
@@ -109,7 +110,7 @@ func TestTransferNeedsPathsAndADestination(t *testing.T) {
 		t.Fatalf("copies = %v, want none before validation", tools.copies)
 	}
 
-	if _, _, err := front.transfer(true, []string{"/tmp/a"}, "/tmp/out"); err != nil {
+	if _, _, err := front.transfer(context.Background(), nil, true, []string{"/tmp/a"}, "/tmp/out"); err != nil {
 		t.Fatalf("transfer: %v", err)
 	}
 
@@ -117,7 +118,7 @@ func TestTransferNeedsPathsAndADestination(t *testing.T) {
 		t.Fatalf("copies = %v, want one", tools.copies)
 	}
 
-	if _, _, err := front.transfer(false, []string{"/tmp/a"}, "/tmp/out"); err != nil {
+	if _, _, err := front.transfer(context.Background(), nil, false, []string{"/tmp/a"}, "/tmp/out"); err != nil {
 		t.Fatalf("move: %v", err)
 	}
 
@@ -161,7 +162,7 @@ func TestExtractAndOpenNeedPaths(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
 	front.tools = tools
 
-	if _, _, err := front.extract(nil, ""); err == nil {
+	if _, _, err := front.extract(context.Background(), nil, nil, ""); err == nil {
 		t.Error("extract accepted no archive")
 	}
 
@@ -169,7 +170,7 @@ func TestExtractAndOpenNeedPaths(t *testing.T) {
 		t.Error("open accepted no path")
 	}
 
-	if _, _, err := front.extract([]string{"a.zip"}, "/tmp/out"); err != nil {
+	if _, _, err := front.extract(context.Background(), nil, []string{"a.zip"}, "/tmp/out"); err != nil {
 		t.Fatalf("extract: %v", err)
 	}
 
@@ -288,6 +289,49 @@ func TestURIPathDropsTheWindowsLeadingSlash(t *testing.T) {
 
 	if got, want := uriPath(unix), filepath.FromSlash("/tmp/file.txt"); got != want {
 		t.Errorf("uriPath = %q, want %q", got, want)
+	}
+}
+
+// A cancellable run offers Cancel, which stops the context; the button goes
+// away when the run ends.
+func TestToolResultCancel(t *testing.T) {
+	result := newToolResult()
+
+	cancelled := false
+	result.start("Copying…", func() { cancelled = true })
+
+	if !result.cancelButton.Visible() {
+		t.Fatal("a cancellable run did not offer Cancel")
+	}
+
+	result.cancelRun()
+
+	if !cancelled {
+		t.Error("Cancel did not stop the run")
+	}
+
+	if !result.cancelButton.Disabled() {
+		t.Error("Cancel stayed enabled after it was pressed")
+	}
+
+	if result.label.Text != "Cancelling…" {
+		t.Errorf("label = %q, want the cancelling note", result.label.Text)
+	}
+
+	result.stop()
+
+	if result.cancelButton.Visible() {
+		t.Error("Cancel stayed visible after the run ended")
+	}
+}
+
+// A run that cannot be stopped — a search, an open — offers no Cancel button.
+func TestToolResultWithoutCancel(t *testing.T) {
+	result := newToolResult()
+	result.start("Searching…", nil)
+
+	if result.cancelButton.Visible() {
+		t.Error("a non-cancellable run offered Cancel")
 	}
 }
 

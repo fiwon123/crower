@@ -91,6 +91,11 @@ field.
 | `--alias <a,b>` | `-a` | add aliases (comma-separated, repeatable) |
 | `--icon <marker>` | | a short marker (an emoji) shown beside the command in the window |
 | `--group <name>` | | the group the command belongs to |
+| `--description <text>` | | what the command is for |
+| `--params <a,b>` | | positional parameters (`env,region`) |
+| `--cwd <dir>` | | working directory the command runs in |
+| `--shell <name>` | | shell that runs the command (`sh`, `pwsh`, `cmd`) |
+| `--timeout <dur>` | | longest the command may run (`120s`) |
 | `--process <name>` | `-p` | create the command from a running process; the argument is its name or pid |
 | `--file` | `-f` | treat every argument as a file path to create |
 | `--folder` | `-o` | treat every argument as a folder path to create |
@@ -117,7 +122,8 @@ its `exec`; `execute` refuses to run one with parameters it cannot apply.
 crower update [command]
 ```
 
-Change a command's name, aliases or exec. The command is found by name or alias.
+Change a command's name, aliases, exec or execution metadata. The command is
+found by name or alias.
 
 | Flag | Short | Meaning |
 | --- | --- | --- |
@@ -126,6 +132,11 @@ Change a command's name, aliases or exec. The command is found by name or alias.
 | `--exec <line>` | `-e` | new command line |
 | `--icon <marker>` | | new icon; an empty value removes it |
 | `--group <name>` | | new group; an empty value removes it |
+| `--description <text>` | | what the command is for; empty removes it |
+| `--params <a,b>` | | positional parameters; empty removes them |
+| `--cwd <dir>` | | working directory; empty removes it |
+| `--shell <name>` | | shell that runs the command; empty removes it |
+| `--timeout <dur>` | | longest the command may run; empty removes it |
 | `--last` | `-l` | update the last executed command |
 | `--create` | `-c` | update the last created command |
 | `--execute` | `-x` | update the last updated command |

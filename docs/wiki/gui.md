@@ -46,15 +46,19 @@ The edit dialog also changes the rest of the command: **Description**,
 **Params** (comma-separated), **Cwd**, **Shell** and **Timeout**. Emptying a
 field clears it. `Env` is not in the dialog — it holds values that look like
 secrets, so it stays a configuration-file field, and the window shows keys only.
+**Exec** and **Description** wrap and grow with their text (up to a cap); the
+dialog's field list scrolls, so a long script never clips the buttons.
 
 **Groups…** beside the filter gives each group an icon of its own, stored in
 `groups.toml` next to the configuration (the window is the only writer; the CLI
 ignores the file). The filter then reads `🚀 deploy` instead of a bare name.
 
 The **Setup** list beside it switches between the named setups the CLI creates
-with `crower setup new`. Switching reloads the commands, the history and the
-group icons without restarting, and saves the choice the way
-`crower setup use` does — so the next `crower` run opens the same setup.
+with `crower setup new`; **New…** and **Delete…** manage them without leaving the
+window (the default and the active setup cannot be deleted). Switching reloads
+the commands, the history and the group icons without restarting, and saves the
+choice the way `crower setup use` does — so the next `crower` run opens the same
+setup.
 
 Delete and restore both ask first. Restoring puts the command set back to what a
 history entry recorded and drops the newer entries, through the same
@@ -74,7 +78,9 @@ commands, and every run lands in the History tab. Path fields take a
 comma-separated list, and **Browse…** beside each one fills it from a file or
 folder picker — Fyne's dialog is single-select, so pressing Browse again appends
 another path. Each card keeps its own result square: it appears when that card
-runs something and collapses with its toggle. A copy or move takes one or more
+runs something and collapses with its toggle. A copy, move or extract reports
+how many items are done and offers **Cancel**, which stops the batch between
+items — the platform command already running is not interrupted. A copy or move takes one or more
 paths and a destination; a search takes a term, a folder (default `.`) and what
 to look in; extract takes archive paths and an optional destination; open takes
 paths and hands them to the platform's default application.
