@@ -4,8 +4,11 @@ package fyneui
 
 import (
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
+
+	"fyne.io/fyne/v2/storage"
 
 	"github.com/fiwon123/crower/internal/desktop"
 	"github.com/fiwon123/crower/internal/domain/operation"
@@ -61,7 +64,8 @@ func (s *stubTools) result() (string, timeline.Log, error) {
 	return "done", s.history, nil
 }
 
-// The tools tab builds its four cards and the shared result pane.
+// The tools tab builds its four cards, each with its own result area, and no
+// result is visible before an action ran.
 func TestToolsTabBuilds(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
 
@@ -69,12 +73,21 @@ func TestToolsTabBuilds(t *testing.T) {
 		t.Fatal("toolsTab returned nil")
 	}
 
-	if front.toolResult == nil {
-		t.Fatal("the result pane was not built")
+	results := map[string]*toolResult{
+		"transfer": front.transferResult,
+		"search":   front.searchResult,
+		"extract":  front.extractResult,
+		"open":     front.openResult,
 	}
 
-	if !strings.Contains(front.toolResult.Text, "Pick a tool") {
-		t.Errorf("result = %q, want the placeholder", front.toolResult.Text)
+	for name, result := range results {
+		if result == nil {
+			t.Fatalf("%s result was not built", name)
+		}
+
+		if result.area.Visible() {
+			t.Errorf("%s result is visible before an action ran", name)
+		}
 	}
 }
 
@@ -178,14 +191,22 @@ func TestReportToolReplacesTheHistory(t *testing.T) {
 	var history timeline.Log
 	history.Add(operation.Copy, "", "note")
 
-	front.reportTool("Copied 1 item(s)", history, nil)
+	front.reportTool(front.transferResult, "Copied 1 item(s)", history, nil)
 
 	if len(front.model.History.AllData) != 1 {
 		t.Fatalf("model history = %+v, want the recorded log", front.model.History.AllData)
 	}
 
-	if front.toolResult.Text != "Copied 1 item(s)" {
-		t.Errorf("result = %q, want the message", front.toolResult.Text)
+	if front.transferResult.label.Text != "Copied 1 item(s)" {
+		t.Errorf("result = %q, want the message", front.transferResult.label.Text)
+	}
+
+	if !front.transferResult.area.Visible() || !front.transferResult.body.Visible() {
+		t.Error("the result area did not open")
+	}
+
+	if front.searchResult.area.Visible() {
+		t.Error("a transfer result appeared in the search card")
 	}
 }
 
@@ -196,14 +217,77 @@ func TestReportToolShowsTheErrorAndKeepsTheHistory(t *testing.T) {
 	var history timeline.Log
 	history.Add(operation.Copy, "", "note")
 
-	front.reportTool("", history, errors.New("permission denied"))
+	front.reportTool(front.transferResult, "", history, errors.New("permission denied"))
 
-	if !strings.Contains(front.toolResult.Text, "permission denied") {
-		t.Errorf("result = %q, want the error named", front.toolResult.Text)
+	if !strings.Contains(front.transferResult.label.Text, "permission denied") {
+		t.Errorf("result = %q, want the error named", front.transferResult.label.Text)
 	}
 
 	if len(front.model.History.AllData) != 0 {
 		t.Errorf("history = %+v, want it untouched after a failure", front.model.History.AllData)
+	}
+}
+
+// The result toggle collapses one card's square without losing its text.
+func TestToolResultToggle(t *testing.T) {
+	result := newToolResult()
+
+	if result.area.Visible() {
+		t.Fatal("a fresh result is visible")
+	}
+
+	result.report("done")
+
+	if !result.body.Visible() || result.toggle.Text != "Hide result" {
+		t.Error("report did not open the result")
+	}
+
+	result.setVisible(false)
+
+	if result.body.Visible() || result.toggle.Text != "Show result" {
+		t.Error("the toggle did not collapse the result")
+	}
+
+	if result.label.Text != "done" {
+		t.Errorf("text = %q, want it kept while collapsed", result.label.Text)
+	}
+}
+
+// appendPath builds a comma-separated list one Browse pick at a time.
+func TestAppendPath(t *testing.T) {
+	entry := newScrollFreeEntry()
+
+	appendPath(entry, "/tmp/a")
+	appendPath(entry, "/tmp/b")
+
+	if entry.Text != "/tmp/a, /tmp/b" {
+		t.Errorf("text = %q, want both paths", entry.Text)
+	}
+
+	if got := splitPaths(entry.Text); len(got) != 2 || got[0] != "/tmp/a" || got[1] != "/tmp/b" {
+		t.Errorf("splitPaths(%q) = %v, want both paths", entry.Text, got)
+	}
+}
+
+// A Fyne URI reports a Windows path with a leading slash; the CLI needs the
+// path as the file system spells it.
+func TestURIPathDropsTheWindowsLeadingSlash(t *testing.T) {
+	uri, err := storage.ParseURI("file:///C:/Users/dev/file.txt")
+	if err != nil {
+		t.Fatalf("ParseURI: %v", err)
+	}
+
+	if got, want := uriPath(uri), filepath.FromSlash("C:/Users/dev/file.txt"); got != want {
+		t.Errorf("uriPath = %q, want %q", got, want)
+	}
+
+	unix, err := storage.ParseURI("file:///tmp/file.txt")
+	if err != nil {
+		t.Fatalf("ParseURI: %v", err)
+	}
+
+	if got, want := uriPath(unix), filepath.FromSlash("/tmp/file.txt"); got != want {
+		t.Errorf("uriPath = %q, want %q", got, want)
 	}
 }
 

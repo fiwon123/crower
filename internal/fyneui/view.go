@@ -107,8 +107,11 @@ type ui struct {
 	historyRows []desktop.HistoryRow
 	historyRow  int
 
-	// tools tab
-	toolResult *widget.Label
+	// tools tab: one result square per card
+	transferResult *toolResult
+	searchResult   *toolResult
+	extractResult  *toolResult
+	openResult     *toolResult
 
 	// about tab
 	updateStatus  *widget.Label
@@ -174,7 +177,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	u.detail = widget.NewLabel("")
 	u.detail.Wrapping = fyne.TextWrapWord
 
-	u.paramsEntry = widget.NewEntry()
+	u.paramsEntry = newScrollFreeEntry()
 	u.paramsEntry.SetPlaceHolder("Parameters (space-separated)")
 	u.paramsEntry.OnSubmitted = func(string) { u.runFromDetail() }
 
@@ -202,7 +205,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	u.list.OnSelected = func(id widget.ListItemID) { u.selectRow(id) }
 	u.list.OnUnselected = func(widget.ListItemID) { u.clearDetail() }
 
-	filter := widget.NewEntry()
+	filter := newScrollFreeEntry()
 	filter.SetPlaceHolder("Filter commands")
 	filter.OnChanged = func(string) {
 		u.model.Filter = filter.Text

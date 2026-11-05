@@ -38,7 +38,7 @@ func (u *ui) showGroups() {
 	items := make([]*widget.FormItem, 0, len(groups))
 
 	for _, name := range groups {
-		entry := widget.NewEntry()
+		entry := newScrollFreeEntry()
 		entry.SetText(u.groupIcons[name])
 		entry.SetPlaceHolder("🚀")
 		entries[name] = entry
