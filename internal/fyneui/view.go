@@ -242,7 +242,9 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		))
 	}
 
-	controls.Add(widget.NewLabel("Group"), u.groupFilter, groupsButton)
+	controls.Add(widget.NewLabel("Group"))
+	controls.Add(u.groupFilter)
+	controls.Add(groupsButton)
 
 	toolbar := container.NewHBox(
 		widget.NewButtonWithIcon("New", theme.ContentAddIcon(), u.showCreate),
