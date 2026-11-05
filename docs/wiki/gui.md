@@ -78,7 +78,9 @@ commands, and every run lands in the History tab. Path fields take a
 comma-separated list, and **Browse…** beside each one fills it from a file or
 folder picker — Fyne's dialog is single-select, so pressing Browse again appends
 another path. Each card keeps its own result square: it appears when that card
-runs something and collapses with its toggle. A copy or move takes one or more
+runs something and collapses with its toggle. A copy, move or extract reports
+how many items are done and offers **Cancel**, which stops the batch between
+items — the platform command already running is not interrupted. A copy or move takes one or more
 paths and a destination; a search takes a term, a folder (default `.`) and what
 to look in; extract takes archive paths and an optional destination; open takes
 paths and hands them to the platform's default application.

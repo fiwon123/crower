@@ -6,6 +6,7 @@
 package extractcontent
 
 import (
+	"context"
 	stderrors "errors"
 	"fmt"
 	"path/filepath"
@@ -22,6 +23,14 @@ type Request struct {
 
 	// OutDir is where everything goes. Empty means beside each archive.
 	OutDir string
+
+	// Context stops the batch between archives; an archive already expanding is
+	// not interrupted. Nil means "run to the end".
+	Context context.Context
+
+	// Progress is told how many archives are done, out of how many, and which
+	// one is starting. It may be nil.
+	Progress func(done, total int, current string)
 }
 
 // State is the history the operation is recorded in.
@@ -67,9 +76,28 @@ func (u *UseCase) Run(request Request) error {
 		return errors.EmptyPaths()
 	}
 
+	ctx := request.Context
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
 	var failures []error
 
-	for _, path := range paths {
+	for index, path := range paths {
+		if err := ctx.Err(); err != nil {
+			return errors.Cancelled(index, len(paths))
+		}
+
+		if request.Progress != nil {
+			request.Progress(index, len(paths), path)
+		}
+
+		// The callback is where a window's Cancel button is pressed, so the
+		// check runs again: a cancel asked for on this item skips it.
+		if err := ctx.Err(); err != nil {
+			return errors.Cancelled(index, len(paths))
+		}
+
 		// The destination belongs to this archive: an omitted --out means
 		// "next to this archive", not "next to the first archive". Assigning
 		// it once outside the loop sent every later archive into the first

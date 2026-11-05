@@ -9,6 +9,7 @@
 package errors
 
 import (
+	"context"
 	stderrors "errors"
 	"fmt"
 )
@@ -17,6 +18,26 @@ import (
 // running platform. It is an error rather than a silent no-op: an operation
 // that did nothing must not look like one that succeeded.
 var ErrUnsupportedOS = stderrors.New("unsupported operating system")
+
+// Cancelled reports that a long operation stopped because its context was
+// cancelled. It unwraps to context.Canceled, so a caller can test it with
+// errors.Is, while the message says how much of the work was done.
+func Cancelled(done, total int) error {
+	return &cancelledError{done: done, total: total}
+}
+
+type cancelledError struct {
+	done  int
+	total int
+}
+
+func (e *cancelledError) Error() string {
+	return fmt.Sprintf("cancelled after %d of %d item(s)", e.done, e.total)
+}
+
+func (e *cancelledError) Unwrap() error {
+	return context.Canceled
+}
 
 // ErrInvalidPackName reports a pack name that is not a registry slug. The name
 // is interpolated into a URL and used to derive a file, so a path or a URL

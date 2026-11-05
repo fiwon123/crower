@@ -1,6 +1,7 @@
 package extractcontent_test
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -77,6 +78,41 @@ func newHarness() *harness {
 
 func (h *harness) run(request extractcontent.Request) error {
 	return extractcontent.New(h.state, h.output, h.archives, fakeNotes{}).Run(request)
+}
+
+// A cancelled context stops the batch before the first archive, and progress
+// names each archive as it starts.
+func TestExtractReportsProgressAndStopsOnCancel(t *testing.T) {
+	reported := make([]string, 0)
+
+	h := newHarness()
+	err := h.run(extractcontent.Request{
+		Args: []string{"a.zip", "b.tar"},
+		Progress: func(done, total int, current string) {
+			reported = append(reported, current)
+		},
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	if !slices.Equal(reported, []string{"a.zip", "b.tar"}) {
+		t.Errorf("progress = %v, want each archive", reported)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	h = newHarness()
+
+	err = h.run(extractcontent.Request{Args: []string{"a.zip"}, Context: ctx})
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("err = %v, want context.Canceled", err)
+	}
+
+	if len(h.archives.calls) != 0 {
+		t.Errorf("calls = %v, want none after a cancel", h.archives.calls)
+	}
 }
 
 func TestExtractGlobsAndUsesEachArchivesFolder(t *testing.T) {
