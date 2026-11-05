@@ -51,7 +51,7 @@ before they reach the shell, so a value with a space stays one value.
 | 📜 **See what you did** | `crower list -i` — history, newest first |
 | ↩️ **Undo the last operation** | `crower revert 1` |
 | 🗑️ **Bring something back** | `crower restore <name>` |
-| 🎛️ **Prefer a UI?** | `crower gui` (terminal) or `crower desktop` (window) |
+| 🎛️ **Prefer a UI?** | `crower gui` (terminal) or `crower-gui` (window, GUI archive) |
 | 🤝 **Share your set** | `crower export -o team.toml` |
 
 > [!TIP]

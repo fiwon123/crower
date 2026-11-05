@@ -65,14 +65,14 @@ The windows archives are cross-compiled on Linux and never started.
 Run the steps from claim 1 or 2 against the arm64 archive. **Record:**
 `uname -m` (or `echo %PROCESSOR_ARCHITECTURE%`) and the output.
 
-## 🖼️ 4. The TUI and desktop surfaces render
+## 🖼️ 4. The TUI and Fyne GUI render
 
 No gate draws a window; `go test ./...` asserts the model, not pixels.
 
-**You need:** a terminal (`crower gui`) or a desktop session (`crower desktop`).
+**You need:** a terminal (`crower gui`) or a graphical session and the GUI archive (`crower-gui`).
 
 1. `crower gui` — does the list render, do the keys move, does it exit cleanly?
-2. `crower desktop` — does a window open, and does the list populate?
+2. `crower-gui` — does a window open, and does the list populate?
 
 **Record:** a screenshot, plus anything clipped, misaligned or unreadable.
 

@@ -26,7 +26,7 @@
 - [restore](restore)
 - [reset](reset)
 - [share / export / import](share)
-- [gui / desktop](gui)
+- [gui / crower-gui](gui)
 - [setup](setup)
 - [init](init)
 - [doctor](doctor)

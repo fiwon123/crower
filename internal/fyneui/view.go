@@ -32,7 +32,10 @@ type Editor interface {
 func Run(commands catalog.Catalog, history timeline.Log, exec desktop.Executor, editor Editor) {
 	model := desktop.NewModel(commands, history, exec)
 
-	window := app.New().NewWindow("crower fyne")
+	a := app.New()
+	a.SetIcon(logoResource())
+
+	window := a.NewWindow("crower")
 	window.SetContent(NewContent(model, window, editor))
 	window.Resize(fyne.NewSize(720, 520))
 	window.ShowAndRun()

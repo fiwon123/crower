@@ -421,22 +421,14 @@ Open the interactive terminal UI.
 crower gui
 ```
 
-## 🪟 crower desktop
+## 🖼️ crower-gui
 
-Open the native window UI (cgo-free).
-
-```bash
-crower desktop
-```
-
-## 🖼️ crower fyne
-
-Open the Fyne window. This command exists only in the `crower_fyne_*` archive
-(Linux/Windows amd64, macOS arm64/Intel); the default archive keeps the
-cgo-free `desktop`.
+The GUI archive contains `crower-gui`, the Fyne desktop application. It is not
+a `crower` subcommand; extract the `crower_gui_*` archive and launch it. The
+CLI archive is cgo-free and has no window.
 
 ```bash
-crower fyne
+crower-gui
 ```
 
 ---

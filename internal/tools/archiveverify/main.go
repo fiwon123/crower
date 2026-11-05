@@ -31,6 +31,7 @@ import (
 const (
 	appName   = "crower"
 	shortName = "cr"
+	guiName   = "crower-gui"
 )
 
 func main() {
@@ -53,7 +54,7 @@ func main() {
 			failed++
 			continue
 		}
-		problems := checkNames(names)
+		problems := checkNames(path, names)
 		if len(problems) > 0 {
 			fmt.Fprintf(os.Stderr, "FAIL %s\n", path)
 			for _, p := range problems {
@@ -62,14 +63,20 @@ func main() {
 			failed++
 			continue
 		}
-		fmt.Printf("ok   %s (crower, cr)\n", path)
+
+		expected := "crower, cr"
+		if isGUIArchive(path) {
+			expected = "crower-gui"
+		}
+
+		fmt.Printf("ok   %s (%s)\n", path, expected)
 	}
 
 	if failed > 0 {
 		fmt.Fprintf(os.Stderr, "\narchiveverify: %d of %d archive(s) are wrong\n", failed, len(archives))
 		os.Exit(1)
 	}
-	fmt.Printf("\narchiveverify: %d archive(s) carry crower and cr\n", len(archives))
+	fmt.Printf("\narchiveverify: %d archive(s) are valid\n", len(archives))
 }
 
 // findArchives lists the release archives in dir. No archive is an error: a
@@ -97,8 +104,14 @@ func findArchives(dir string) ([]string, error) {
 	return archives, nil
 }
 
+// isGUIArchive reports whether path is a `_gui_` archive, whose executable is
+// crower-gui rather than the CLI pair.
+func isGUIArchive(path string) bool {
+	return strings.Contains(filepath.Base(path), "_gui_")
+}
+
 // checkNames reports what is wrong with the entries of one archive.
-func checkNames(entries []string) []string {
+func checkNames(path string, entries []string) []string {
 	have := make(map[string]bool, len(entries))
 	var suffixed []string
 	for _, entry := range entries {
@@ -110,15 +123,23 @@ func checkNames(entries []string) []string {
 	}
 
 	var problems []string
-	if !have[appName] && !have[appName+".exe"] {
-		problems = append(problems, fmt.Sprintf(
-			"missing %q (or %q); archive holds %v", appName, appName+".exe", entries,
-		))
-	}
-	if !have[shortName] && !have[shortName+".exe"] {
-		problems = append(problems, fmt.Sprintf(
-			"missing %q (or %q); archive holds %v", shortName, shortName+".exe", entries,
-		))
+	if isGUIArchive(path) {
+		if !have[guiName] && !have[guiName+".exe"] {
+			problems = append(problems, fmt.Sprintf(
+				"missing %q (or %q); GUI archive holds %v", guiName, guiName+".exe", entries,
+			))
+		}
+	} else {
+		if !have[appName] && !have[appName+".exe"] {
+			problems = append(problems, fmt.Sprintf(
+				"missing %q (or %q); archive holds %v", appName, appName+".exe", entries,
+			))
+		}
+		if !have[shortName] && !have[shortName+".exe"] {
+			problems = append(problems, fmt.Sprintf(
+				"missing %q (or %q); archive holds %v", shortName, shortName+".exe", entries,
+			))
+		}
 	}
 	for _, name := range suffixed {
 		problems = append(problems, fmt.Sprintf(

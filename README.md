@@ -182,8 +182,6 @@ cr restore <key>
 | Command | Description | Example |
 |---------|-------------|---------|
 | `gui` | Launch interactive TUI GUI | `crower gui` |
-| `desktop` | Launch native desktop window UI (cgo-free) | `crower desktop` |
-| `fyne` | Launch the Fyne window (Fyne archive only) | `crower fyne` |
 | `create` | Create a command, file, folder, or script | `crower create name "command"` |
 | `update` | Update existing commands or last operation | `crower update -n oldname -n newname` |
 | `delete` | Delete commands, files, folders, or history | `crower delete name` |
@@ -204,6 +202,10 @@ cr restore <key>
 | `doctor` | Show paths, permissions and environment | `crower doctor --json` |
 
 Use `crower <command> --help` for detailed options.
+
+The **GUI archive** (`crower_gui_*`) contains `crower-gui`, the Fyne window over
+the same configuration. The CLI archive is cgo-free and has no window; `crower
+gui` is the terminal menu.
 
 ## 🧩 Scripting
 
@@ -335,7 +337,7 @@ executes what it built.
 - **The macOS build runs** — the darwin archives are never executed, and shell-backed operations are reported broken ([#129](https://github.com/fiwon123/crower/issues/129)).
 - **The Windows build runs** — cross-compiled on Linux, never started.
 - **The arm64 builds run** — built, never executed on ARM hardware.
-- **The TUI and desktop surfaces render** — no gate draws a window; the tests assert the model, not pixels.
+- **The TUI and Fyne GUI render** — no gate draws a window; the tests assert the model, not pixels.
 - **History and revert across a real session** — the suite uses isolated temp directories, not a day of real use.
 
 Running the program and reporting exactly what happened — including "it worked"

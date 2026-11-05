@@ -4,7 +4,6 @@ go 1.25.4
 
 require (
 	fyne.io/fyne/v2 v2.8.2
-	github.com/hajimehoshi/ebiten/v2 v2.10.5
 	github.com/minio/selfupdate v0.6.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/pelletier/go-toml/v2 v2.4.3
@@ -22,9 +21,6 @@ require (
 	github.com/anthonynsimon/bild v0.14.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/ebitengine/gomobile v0.0.0-20260820040257-d11f821a26a6 // indirect
-	github.com/ebitengine/hideconsole v1.0.0 // indirect
-	github.com/ebitengine/purego v0.11.0 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fyne-io/gl-js v0.2.1-0.20260315212741-029c47fd27e8 // indirect
 	github.com/fyne-io/glfw-js v0.4.0 // indirect
@@ -59,7 +55,6 @@ require (
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/image v0.45.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

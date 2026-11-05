@@ -12,19 +12,17 @@ Grab the latest archive from **[Releases](https://github.com/fiwon123/crower/rel
 Archives are named `crower_<version>_<os>_<arch>` — the binaries inside are
 always `crower` and `cr`, with no architecture suffix.
 
-| Platform | Archive | CLI | Desktop |
-| --- | --- | :--: | :--: |
-| 🐧 Linux amd64 | `crower_<v>_linux_amd64.tar.gz` | ✅ | ✅ |
-| 🐧 Linux arm64 | `crower_<v>_linux_arm64.tar.gz` | ✅ | ✅ |
-| 🪟 Windows amd64 | `crower_<v>_windows_amd64.zip` | ✅ | ✅ |
-| 🪟 Windows arm64 | `crower_<v>_windows_arm64.zip` | ✅ | ✅ |
-| 🍎 macOS Intel | `crower_<v>_darwin_amd64.tar.gz` | ✅ | ✅ |
-| 🍎 macOS Apple Silicon | `crower_<v>_darwin_arm64.tar.gz` | ✅ | ✅ |
+| Platform | CLI archive | GUI archive |
+| --- | --- | :--: |
+| 🐧 Linux amd64 | `crower_<v>_linux_amd64.tar.gz` | `crower_gui_<v>_linux_amd64.tar.gz` |
+| 🐧 Linux arm64 | `crower_<v>_linux_arm64.tar.gz` | — |
+| 🪟 Windows amd64 | `crower_<v>_windows_amd64.zip` | `crower_gui_<v>_windows_amd64.zip` |
+| 🪟 Windows arm64 | `crower_<v>_windows_arm64.zip` | — |
+| 🍎 macOS Intel | `crower_<v>_darwin_amd64.tar.gz` | `crower_gui_<v>_darwin_amd64.tar.gz` |
+| 🍎 macOS Apple Silicon | `crower_<v>_darwin_arm64.tar.gz` | `crower_gui_<v>_darwin_arm64.tar.gz` |
 
-A separate Fyne archive exists for Linux/Windows amd64 and macOS arm64/Intel:
-`crower_fyne_<v>_linux_amd64.tar.gz`, `crower_fyne_<v>_windows_amd64.zip`,
-`crower_fyne_<v>_darwin_arm64.tar.gz` and `crower_fyne_<v>_darwin_amd64.tar.gz`.
-It adds `crower fyne`; the archive above keeps the cgo-free `desktop`.
+The **CLI** archive is cgo-free and contains `crower` and `cr`. The **GUI**
+archive contains the Fyne app `crower-gui`; it needs a graphical session.
 
 ```bash
 VERSION=v0.5.2   # replace with the tag you are installing
