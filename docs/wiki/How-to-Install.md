@@ -2,34 +2,35 @@
 
 # 📦 Installation
 
-**One archive, two binaries: `crower` and `cr`.**
+**One archive, three executables: `crower`, `cr` and `crower-gui`.**
 
 </div>
 
 ## ⬇️ Download a release (recommended)
 
 Grab the latest archive from **[Releases](https://github.com/fiwon123/crower/releases)**.
-Archives are named `crower_<version>_<os>_<arch>` — the binaries inside are
-always `crower` and `cr`, with no architecture suffix.
+Archives are named `crower_<version>_<os>_<arch>`. Every one contains the same
+three executables — `crower`, `cr` and `crower-gui` — with no architecture
+suffix.
 
-| Platform | CLI archive | GUI archive |
-| --- | --- | :--: |
-| 🐧 Linux amd64 | `crower_<v>_linux_amd64.tar.gz` | `crower_gui_<v>_linux_amd64.tar.gz` |
-| 🐧 Linux arm64 | `crower_<v>_linux_arm64.tar.gz` | — |
-| 🪟 Windows amd64 | `crower_<v>_windows_amd64.zip` | `crower_gui_<v>_windows_amd64.zip` |
-| 🪟 Windows arm64 | `crower_<v>_windows_arm64.zip` | — |
-| 🍎 macOS Intel | `crower_<v>_darwin_amd64.tar.gz` | `crower_gui_<v>_darwin_amd64.tar.gz` |
-| 🍎 macOS Apple Silicon | `crower_<v>_darwin_arm64.tar.gz` | `crower_gui_<v>_darwin_arm64.tar.gz` |
+| Platform | Archive |
+| --- | --- |
+| 🐧 Linux amd64 | `crower_<v>_linux_amd64.tar.gz` |
+| 🐧 Linux arm64 | `crower_<v>_linux_arm64.tar.gz` |
+| 🪟 Windows amd64 | `crower_<v>_windows_amd64.zip` |
+| 🪟 Windows arm64 | `crower_<v>_windows_arm64.zip` |
+| 🍎 macOS Intel | `crower_<v>_darwin_amd64.tar.gz` |
+| 🍎 macOS Apple Silicon | `crower_<v>_darwin_arm64.tar.gz` |
 
-The **CLI** archive is cgo-free and contains `crower` and `cr`. The **GUI**
-archive contains the Fyne app `crower-gui`; it needs a graphical session.
+`crower` and `cr` are cgo-free and need no display. `crower-gui` is the Fyne
+window; it needs a graphical session.
 
 ```bash
 VERSION=v0.5.2   # replace with the tag you are installing
 curl -LO "https://github.com/fiwon123/crower/releases/download/$VERSION/crower_${VERSION}_linux_amd64.tar.gz"
 tar -xzf "crower_${VERSION}_linux_amd64.tar.gz"
-chmod +x crower cr
-sudo mv crower cr /usr/local/bin/
+chmod +x crower cr crower-gui
+sudo mv crower cr crower-gui /usr/local/bin/
 ```
 
 > [!TIP]
@@ -39,7 +40,7 @@ sudo mv crower cr /usr/local/bin/
 
 **Windows:** extract the `..._windows_amd64.zip` (or `..._arm64.zip`), then run
 `add_to_path.bat` from the extracted folder — or add the folder containing
-`crower.exe` and `cr.exe` to your `PATH`.
+`crower.exe`, `cr.exe` and `crower-gui.exe` to your `PATH`.
 
 Verify either install:
 

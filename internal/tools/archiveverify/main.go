@@ -8,7 +8,11 @@
 //
 // Usage:
 //
-//	go run ./internal/tools/archiveverify [dir]
+//	go run ./internal/tools/archiveverify [-gui] [dir]
+//
+// With -gui every archive must also contain `crower-gui`. That is how the four
+// GUI-capable platform archives are checked; Linux arm64 and Windows arm64
+// ship the CLI pair only.
 //
 // The directory defaults to build/dist. It exits 1 when any archive is missing
 // a name, carries an arch-suffixed binary, or when the directory holds no
@@ -20,6 +24,7 @@ import (
 	"archive/zip"
 	"compress/gzip"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -35,9 +40,12 @@ const (
 )
 
 func main() {
+	gui := flag.Bool("gui", false, "every archive must contain crower-gui")
+	flag.Parse()
+
 	dir := filepath.Join("build", "dist")
-	if len(os.Args) > 1 {
-		dir = os.Args[1]
+	if flag.NArg() > 0 {
+		dir = flag.Arg(0)
 	}
 
 	archives, err := findArchives(dir)
@@ -54,7 +62,7 @@ func main() {
 			failed++
 			continue
 		}
-		problems := checkNames(path, names)
+		problems := checkNames(*gui, names)
 		if len(problems) > 0 {
 			fmt.Fprintf(os.Stderr, "FAIL %s\n", path)
 			for _, p := range problems {
@@ -65,8 +73,8 @@ func main() {
 		}
 
 		expected := "crower, cr"
-		if isGUIArchive(path) {
-			expected = "crower-gui"
+		if *gui {
+			expected = "crower, cr, crower-gui"
 		}
 
 		fmt.Printf("ok   %s (%s)\n", path, expected)
@@ -104,14 +112,9 @@ func findArchives(dir string) ([]string, error) {
 	return archives, nil
 }
 
-// isGUIArchive reports whether path is a `_gui_` archive, whose executable is
-// crower-gui rather than the CLI pair.
-func isGUIArchive(path string) bool {
-	return strings.Contains(filepath.Base(path), "_gui_")
-}
-
-// checkNames reports what is wrong with the entries of one archive.
-func checkNames(path string, entries []string) []string {
+// checkNames reports what is wrong with the entries of one archive. When gui
+// is set, the Fyne executable must be present too.
+func checkNames(gui bool, entries []string) []string {
 	have := make(map[string]bool, len(entries))
 	var suffixed []string
 	for _, entry := range entries {
@@ -123,23 +126,20 @@ func checkNames(path string, entries []string) []string {
 	}
 
 	var problems []string
-	if isGUIArchive(path) {
-		if !have[guiName] && !have[guiName+".exe"] {
-			problems = append(problems, fmt.Sprintf(
-				"missing %q (or %q); GUI archive holds %v", guiName, guiName+".exe", entries,
-			))
-		}
-	} else {
-		if !have[appName] && !have[appName+".exe"] {
-			problems = append(problems, fmt.Sprintf(
-				"missing %q (or %q); archive holds %v", appName, appName+".exe", entries,
-			))
-		}
-		if !have[shortName] && !have[shortName+".exe"] {
-			problems = append(problems, fmt.Sprintf(
-				"missing %q (or %q); archive holds %v", shortName, shortName+".exe", entries,
-			))
-		}
+	if !have[appName] && !have[appName+".exe"] {
+		problems = append(problems, fmt.Sprintf(
+			"missing %q (or %q); archive holds %v", appName, appName+".exe", entries,
+		))
+	}
+	if !have[shortName] && !have[shortName+".exe"] {
+		problems = append(problems, fmt.Sprintf(
+			"missing %q (or %q); archive holds %v", shortName, shortName+".exe", entries,
+		))
+	}
+	if gui && !have[guiName] && !have[guiName+".exe"] {
+		problems = append(problems, fmt.Sprintf(
+			"missing %q (or %q); the archive holds %v", guiName, guiName+".exe", entries,
+		))
 	}
 	for _, name := range suffixed {
 		problems = append(problems, fmt.Sprintf(

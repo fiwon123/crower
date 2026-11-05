@@ -14,7 +14,7 @@
 | Command | What it does | Example |
 | --- | --- | --- |
 | 🎛️ [`gui`](gui) | Terminal UI | `crower gui` |
-| 🖼️ [`crower-gui`](gui) | Fyne window (GUI archive) | `crower-gui` |
+| 🖼️ [`crower-gui`](gui) | Fyne window (same archive) | `crower-gui` |
 | ➕ [`create`](create) | Command, file, folder, or script | `crower create name "cmd"` |
 | ✏️ [`update`](update) | Change a command, or the last operation | `crower update name -n new` |
 | 🗑️ [`delete`](delete) | Command, file, folder, or history entry | `crower delete name` |

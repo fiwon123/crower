@@ -127,8 +127,19 @@ func releaseTargets(workflow string) []releaseTarget {
 	return targets
 }
 
+// releaseTargetsForJobs merges the matrix rows of several release jobs. The
+// release builds four platforms natively (gui) and two arm64 platforms with
+// fyne-cross (gui-cross), so no single job lists all six.
+func releaseTargetsForJobs(workflow string, jobs ...string) []releaseTarget {
+	var all []releaseTarget
+	for _, job := range jobs {
+		all = append(all, releaseTargets(releaseJobSection(workflow, job))...)
+	}
+	return all
+}
+
 func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
-	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "build"))
+	targets := releaseTargetsForJobs(readRepositoryFile(t, releaseWorkflowPath), "gui", "gui-cross")
 	if len(targets) == 0 {
 		t.Fatal("no build matrix rows found in the release workflow — the guard is not looking at anything")
 	}
@@ -150,9 +161,8 @@ func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
 	}
 }
 
-// The GUI job is a separate CGO build. It targets Linux/Windows amd64 and
-// macOS arm64/Intel, and its rows must stay on runners that exist; it is not
-// part of the six cgo-free CLI targets above.
+// The native GUI job is a CGO build. It targets Linux/Windows amd64 and macOS
+// arm64/Intel; the two arm64 targets are built by gui-cross.
 func TestReleaseWorkflowBuildsTheGUIPlatforms(t *testing.T) {
 	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "gui"))
 	if len(targets) != 4 {
@@ -175,8 +185,33 @@ func TestReleaseWorkflowBuildsTheGUIPlatforms(t *testing.T) {
 	}
 }
 
+// The arm64 GUI binaries are built with fyne-cross in Docker on ubuntu-latest.
+// They must stay on a runner that has Docker, and the archive name must match
+// the platform the CLI pair is built for.
+func TestReleaseWorkflowBuildsTheGUICrossPlatforms(t *testing.T) {
+	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "gui-cross"))
+	if len(targets) != 2 {
+		t.Fatalf("found %d cross GUI targets, want 2", len(targets))
+	}
+
+	built := make(map[string]bool, len(targets))
+	for _, target := range targets {
+		built[target.goos+"/"+target.goarch] = true
+
+		if target.runner != "ubuntu-latest" {
+			t.Errorf("cross GUI %s/%s builds on %q, want ubuntu-latest (fyne-cross needs Docker)", target.goos, target.goarch, target.runner)
+		}
+	}
+
+	for _, platform := range []string{"linux/arm64", "windows/arm64"} {
+		if !built[platform] {
+			t.Errorf("the cross GUI release no longer builds %s", platform)
+		}
+	}
+}
+
 func TestReleaseWorkflowRunnersAreSupported(t *testing.T) {
-	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "build"))
+	targets := releaseTargetsForJobs(readRepositoryFile(t, releaseWorkflowPath), "gui", "gui-cross")
 	if len(targets) == 0 {
 		t.Fatal("no build matrix rows found in the release workflow — the guard is not looking at anything")
 	}
@@ -440,7 +475,7 @@ func TestWorkflowGuardsCatchTheReleaseNotesBug(t *testing.T) {
 // platform and the architecture the build matrix actually produces, or the
 // request is a 404 (#143).
 func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
-	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "build"))
+	targets := releaseTargetsForJobs(readRepositoryFile(t, releaseWorkflowPath), "gui", "gui-cross")
 	if len(targets) != 6 {
 		t.Fatalf("found %d release targets, want 6", len(targets))
 	}
@@ -498,9 +533,11 @@ func TestReleaseNotesFollowTheHouseStyle(t *testing.T) {
 	}
 
 	rows := []string{
-		"| Platform | CLI | GUI |",
+		"| Platform | Archive |",
 		"| 🐧 Linux amd64 |",
+		"| 🐧 Linux arm64 |",
 		"| 🪟 Windows amd64 |",
+		"| 🪟 Windows arm64 |",
 		"| 🍎 macOS Intel |",
 		"| 🍎 macOS Apple Silicon |",
 	}
@@ -547,7 +584,38 @@ func TestReleaseNotesTemplateKeepsTheHouseOrder(t *testing.T) {
 		t.Errorf("the release notes template mentions shields.io; colour is emoji, not badges")
 	}
 
-	if !strings.Contains(template, "| Platform | CLI | GUI |") {
-		t.Errorf("the release notes template does not show the CLI/GUI table")
+	if !strings.Contains(template, "| Platform | Archive |") {
+		t.Errorf("the release notes template does not show the one-archive table")
+	}
+}
+
+// The style is only a guarantee if the workflow builds it and then checks it:
+// `releasehighlights` writes the Highlights and Fixes sections from the merged
+// PRs, and `bodycheck` refuses a body that drifts from the template.
+func TestReleaseWorkflowGeneratesAndChecksTheBodyShape(t *testing.T) {
+	workflow := readRepositoryFile(t, releaseWorkflowPath)
+
+	tools := []string{
+		"go run ./internal/tools/releasehighlights",
+		"go run ./internal/tools/bodycheck notes.md",
+	}
+	for _, tool := range tools {
+		if !strings.Contains(workflow, tool) {
+			t.Errorf("the release workflow does not run %q; the house style is no longer enforced", tool)
+		}
+	}
+
+	generated := strings.Index(workflow, tools[0])
+	checked := strings.Index(workflow, tools[1])
+	if generated < 0 || checked < 0 || checked < generated {
+		t.Errorf("the body check must run after the sections are generated (generated at %d, checked at %d)", generated, checked)
+	}
+
+	// The notes step now calls `gh api` and `gh pr list`, so it needs the token.
+	// TestWorkflowStepsCallingGhSetToken checks this globally; this assertion
+	// keeps the reason next to the style guard.
+	notes := releaseJobSection(workflow, "publish")
+	if !strings.Contains(notes, "GITHUB_TOKEN") {
+		t.Errorf("the publish job has no GITHUB_TOKEN; the PR list call would fail (#124)")
 	}
 }

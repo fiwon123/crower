@@ -85,9 +85,9 @@ Then `crower init --apply` puts the directory on your PATH.
 Download the latest release for your platform from the [releases page](https://github.com/fiwon123/crower/releases).
 
 Archives are named `crower_<tag>_<os>_<arch>` — for example
-`crower_v0.4.0_linux_amd64.tar.gz`. The binaries inside are always `crower` and
-`cr`, with no architecture suffix. Replace `v0.4.0` below with the tag you are
-installing.
+`crower_v0.4.0_linux_amd64.tar.gz`. Every archive contains `crower`, `cr` and
+`crower-gui`, with no architecture suffix. Replace `v0.4.0` below with the tag
+you are installing.
 
 **Linux** (swap `linux_amd64` for `linux_arm64`, `darwin_amd64` or
 `darwin_arm64` on another platform):
@@ -96,8 +96,8 @@ installing.
 VERSION=v0.8.0
 curl -LO "https://github.com/fiwon123/crower/releases/download/$VERSION/crower_${VERSION}_linux_amd64.tar.gz"
 tar -xzf "crower_${VERSION}_linux_amd64.tar.gz"
-chmod +x crower cr
-sudo mv crower cr /usr/local/bin/
+chmod +x crower cr crower-gui
+sudo mv crower cr crower-gui /usr/local/bin/
 ```
 
 Without `sudo`: the archive also ships `add_to_path.sh`, which adds the
@@ -106,7 +106,7 @@ it next to the binaries and run `./add_to_path.sh`.
 
 **Windows:** extract `crower_<tag>_windows_amd64.zip` (or `..._arm64.zip`), then
 either run `add_to_path.bat` from the extracted folder or add the folder
-containing `crower.exe` and `cr.exe` to your PATH.
+containing `crower.exe`, `cr.exe` and `crower-gui.exe` to your PATH.
 
 Verify either install with `crower --version`.
 
@@ -203,9 +203,9 @@ cr restore <key>
 
 Use `crower <command> --help` for detailed options.
 
-The **GUI archive** (`crower_gui_*`) contains `crower-gui`, the Fyne window over
-the same configuration. The CLI archive is cgo-free and has no window; `crower
-gui` is the terminal menu.
+Every archive contains `crower`, the `cr` alias and `crower-gui`, the Fyne
+window over the same configuration. The CLI binaries are cgo-free and need no
+display; `crower gui` is the terminal menu.
 
 ## 🧩 Scripting
 

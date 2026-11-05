@@ -108,126 +108,11 @@ jobs:
           PREV=$(git describe --tags --abbrev=0 "${{ steps.validate.outputs.commit }}^" 2>/dev/null || echo "")
           echo "previous_tag=$PREV" >> "$GITHUB_OUTPUT"
 
-  build:
-    name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
-    needs: prepare
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - goos: linux
-            goarch: amd64
-            runner: ubuntu-latest
-          - goos: linux
-            goarch: arm64
-            runner: ubuntu-latest
-          - goos: windows
-            goarch: amd64
-            runner: ubuntu-latest
-          - goos: windows
-            goarch: arm64
-            runner: ubuntu-latest
-          # Every target is a pure-Go cross-compile (CGO_ENABLED=0) with no
-          # macOS tooling, signing or notarisation involved, so one Linux runner
-          # builds all six. The darwin rows used to sit on macos-13, a label
-          # retired in December 2025: such a job is not rejected, it queues with
-          # zero steps forever, and since `publish` needs every build no draft
-          # was ever created (#121). Keep this matrix on labels that exist.
-          - goos: darwin
-            goarch: amd64
-            runner: ubuntu-latest
-          - goos: darwin
-            goarch: arm64
-            runner: ubuntu-latest
-    steps:
-      - name: Checkout tag
-        uses: actions/checkout@v7
-        with:
-          ref: ${{ needs.prepare.outputs.tag }}
-          fetch-depth: 0
-
-      - name: Set up Go
-        uses: actions/setup-go@v7
-        with:
-          go-version-file: 'go.mod'
-          cache: true
-
-      - name: Build release assets
-        env:
-          VERSION: ${{ needs.prepare.outputs.tag }}
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-          CGO_ENABLED: '0'
-        run: |
-          make release-platform
-
-      # Go records the revision it was built from inside the binary. The v0.4.0
-      # assets turned out to come from 943146a, a commit on no release branch,
-      # and nothing failed. This is the check that fails.
-      - name: Verify build provenance
-        env:
-          EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
-          TARGET_GOOS: ${{ matrix.goos }}
-        run: |
-          set -euo pipefail
-
-          BIN="build/crower"
-          if [ "$TARGET_GOOS" = "windows" ]; then
-            BIN="build/crower.exe"
-          fi
-
-          INFO="$(go version -m "$BIN")"
-
-          # Strip the prefix rather than capturing the value. POSIX basic regular
-          # expressions have no alternation, and BSD sed -- the one macOS runners
-          # ship -- does not implement the GNU `\|` extension: a pattern using it
-          # matches nothing and yields an empty value. That is how v0.5.0 failed
-          # its first dispatch with "vcs.modified=: the tree had uncommitted
-          # changes" on a clean tree (#111). Keep these patterns POSIX-only.
-          REVISION="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.revision=//p')"
-          MODIFIED="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.modified=//p')"
-
-          if [ -z "$REVISION" ]; then
-            echo "::error::$BIN carries no vcs.revision, so nothing proves which commit it was built from." >&2
-            printf '%s\n' "$INFO" >&2
-            exit 1
-          fi
-
-          if [ "$REVISION" != "$EXPECTED_COMMIT" ]; then
-            echo "::error::$BIN was built from $REVISION, but the release tag points at $EXPECTED_COMMIT." >&2
-            exit 1
-          fi
-
-          # An empty value means the field is absent, which is a different
-          # problem from a genuinely modified tree -- and saying "modified" for
-          # both hides the real cause.
-          case "$MODIFIED" in
-            false)
-              ;;
-            true)
-              echo "::error::$BIN reports vcs.modified=true: the tree had uncommitted changes." >&2
-              exit 1
-              ;;
-            *)
-              echo "::error::$BIN carries no vcs.modified, so its tree state is unproven." >&2
-              printf '%s\n' "$INFO" >&2
-              exit 1
-              ;;
-          esac
-
-          echo "provenance OK: built from $REVISION, unmodified"
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.goos }}-${{ matrix.goarch }}
-          path: build/dist/*
-
   gui:
-    # The Fyne GUI is a CGO build, so it cannot join the cross-compile matrix
-    # above: it runs on the target OS runner and ships only the crower_gui_*
-    # archives. The six cgo-free CLI archives are unchanged.
+    # The Fyne GUI is a CGO build, so it cannot join a cross-compile matrix: it
+    # runs on the target OS runner and packages the cgo-free CLI pair and
+    # crower-gui into one archive. The two arm64 targets are handled by
+    # gui-cross below.
     name: Build GUI ${{ matrix.goos }}/${{ matrix.goarch }}
     needs: prepare
     runs-on: ${{ matrix.runner }}
@@ -266,7 +151,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
 
-      - name: Build GUI (Unix)
+      - name: Build the platform archive (Unix)
         if: matrix.goos != 'windows'
         env:
           VERSION: ${{ needs.prepare.outputs.tag }}
@@ -275,23 +160,29 @@ jobs:
           CGO_ENABLED: '1'
         run: make release-gui-platform
 
-      - name: Build GUI (Windows)
+      - name: Build the platform archive (Windows)
         if: matrix.goos == 'windows'
         shell: pwsh
         env:
           VERSION: ${{ needs.prepare.outputs.tag }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $env:CGO_ENABLED = '1'
           $env:GOOS = 'windows'
           $env:GOARCH = 'amd64'
           New-Item -ItemType Directory -Force build/dist, build/gui-package | Out-Null
+
+          $env:CGO_ENABLED = '0'
+          go build -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower.exe .
+          Copy-Item build/crower.exe build/cr.exe
+
+          $env:CGO_ENABLED = '1'
           go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower-gui.exe ./cmd/crowergui
-          Copy-Item build/crower-gui.exe, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/gui-package/
+
+          Copy-Item build/crower.exe, build/cr.exe, build/crower-gui.exe, scripts/add_to_path.bat, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/gui-package/
           Push-Location build/gui-package
-          Compress-Archive -Path * -DestinationPath "../dist/crower_gui_${env:VERSION}_windows_amd64.zip" -Force
+          Compress-Archive -Path * -DestinationPath "../dist/crower_${env:VERSION}_windows_amd64.zip" -Force
           Pop-Location
-          go run ./internal/tools/archiveverify build/dist
+          go run ./internal/tools/archiveverify -gui build/dist
 
       - name: Verify build provenance (Unix)
         if: matrix.goos != 'windows'
@@ -341,9 +232,128 @@ jobs:
           name: gui-${{ matrix.goos }}-${{ matrix.goarch }}
           path: build/dist/*
 
+  gui-cross:
+    # fyne-cross runs the Fyne build in a Docker image with Zig/MinGW, which is
+    # how the two arm64 targets get a real crower-gui. The CLI pair is a plain
+    # Go cross-compile. Both go into the same platform archive.
+    name: Build GUI ${{ matrix.goos }}/${{ matrix.goarch }} (cross)
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: arm64
+            target: linux
+            runner: ubuntu-latest
+          - goos: windows
+            goarch: arm64
+            target: windows
+            runner: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Install fyne-cross
+        run: go install github.com/fyne-io/fyne-cross@v1.6.3
+
+      - name: Build crower-gui with fyne-cross
+        env:
+          VERSION: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+          # fyne-cross v1.6.3 reads GOFLAGS but does not pass it into the
+          # container, so the tag travels in a generated init file. It is
+          # gitignored, which keeps vcs.modified=false in the binary.
+          printf 'package cmd\n\nfunc init() { Version = "%s" }\n' "$VERSION" > cmd/zz_version_generated.go
+          trap 'rm -f cmd/zz_version_generated.go' EXIT
+
+          "$(go env GOPATH)/bin/fyne-cross" "${{ matrix.target }}" \
+            -arch "${{ matrix.goarch }}" \
+            -name crower-gui \
+            -app-id com.fiwon123.crower \
+            -tags fyne \
+            -icon internal/fyneui/logo.png \
+            ./cmd/crowergui
+
+      - name: Build the platform archive
+        env:
+          VERSION: ${{ needs.prepare.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          EXT=""
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            EXT=".exe"
+          fi
+
+          mkdir -p build
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} CGO_ENABLED=0 \
+            go build -ldflags "-X github.com/fiwon123/crower/cmd.Version=${VERSION}" \
+            -o "build/crower${EXT}" .
+          cp "build/crower${EXT}" "build/cr${EXT}"
+
+          # fyne-cross names the Linux binary after the package directory.
+          GUI="$(find fyne-cross/bin -maxdepth 3 -type f \
+            \( -name 'crower-gui*' -o -name 'crowergui*' \) \
+            ! -name '*.tar.*' ! -name '*.zip' | head -1)"
+          test -n "$GUI"
+          cp "$GUI" "build/crower-gui${EXT}"
+
+          make package-gui VERSION="${VERSION}" GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }}
+          make verify-release VERSION="${VERSION}" GUI=1
+
+      - name: Verify build provenance
+        env:
+          EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+
+          BIN="build/crower-gui"
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            BIN="build/crower-gui.exe"
+          fi
+
+          INFO="$(go version -m "$BIN")"
+          REVISION="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.revision=//p')"
+          MODIFIED="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.modified=//p')"
+
+          if [ -z "$REVISION" ]; then
+            echo "::error::$BIN carries no vcs.revision" >&2
+            exit 1
+          fi
+
+          if [ "$REVISION" != "$EXPECTED_COMMIT" ]; then
+            echo "::error::GUI binary was built from $REVISION, expected $EXPECTED_COMMIT" >&2
+            exit 1
+          fi
+
+          if [ "$MODIFIED" != "false" ]; then
+            echo "::error::GUI binary reports vcs.modified=$MODIFIED" >&2
+            exit 1
+          fi
+
+          echo "provenance OK: built from $REVISION, unmodified"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: gui-cross-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: build/dist/*
+
   publish:
     name: Publish release
-    needs: [prepare, build, gui]
+    needs: [prepare, gui, gui-cross]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
@@ -351,6 +361,12 @@ jobs:
         with:
           ref: ${{ needs.prepare.outputs.tag }}
           fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
 
       - name: Download all artifacts
         uses: actions/download-artifact@v8
@@ -370,9 +386,10 @@ jobs:
         id: notes
         # The body follows docs/release-notes-template.md: section emoji,
         # platform icons and a CLI/GUI table, with a compare link as the
-        # changelog. The release manager adds Highlights and Fixes while the
-        # release is still a draft.
+        # changelog. Highlights and Fixes come from the PRs merged into `dev`,
+        # so an unedited draft already has the house shape.
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           TAG: ${{ needs.prepare.outputs.tag }}
           COMMIT: ${{ needs.prepare.outputs.commit }}
@@ -382,18 +399,34 @@ jobs:
           cat > notes.md <<'EOF'
           A terminal file manager and command-alias manager with undoable history and per-item notes.
 
+          EOF
+
+          # Highlights and Fixes are the PRs merged into `dev` in this window,
+          # labelled `enhancement` and `bug`. `releasehighlights` drops the
+          # conventional-commit prefix and capitalises the title; the release
+          # manager may still rewrite a line in the draft.
+          if [ -n "$PREV" ]; then
+            PREV_AT="$(gh api "repos/${REPO}/commits/${PREV}" --jq '.commit.committer.date')"
+            END_AT="$(gh api "repos/${REPO}/commits/${COMMIT}" --jq '.commit.committer.date')"
+            gh pr list --repo "$REPO" --state merged --base dev --limit 200 \
+              --search "merged:>=${PREV_AT}" \
+              --json number,title,url,labels,mergedAt \
+              | go run ./internal/tools/releasehighlights "${PREV_AT}" "${END_AT}" >> notes.md
+          fi
+
+          cat >> notes.md <<'EOF'
           ## 📦 Downloads
 
-          | Platform | CLI | GUI |
-          | --- | --- | --- |
-          | 🐧 Linux amd64 | `crower_@TAG@_linux_amd64.tar.gz` | `crower_gui_@TAG@_linux_amd64.tar.gz` |
-          | 🐧 Linux arm64 | `crower_@TAG@_linux_arm64.tar.gz` | — |
-          | 🪟 Windows amd64 | `crower_@TAG@_windows_amd64.zip` | `crower_gui_@TAG@_windows_amd64.zip` |
-          | 🪟 Windows arm64 | `crower_@TAG@_windows_arm64.zip` | — |
-          | 🍎 macOS Intel | `crower_@TAG@_darwin_amd64.tar.gz` | `crower_gui_@TAG@_darwin_amd64.tar.gz` |
-          | 🍎 macOS Apple Silicon | `crower_@TAG@_darwin_arm64.tar.gz` | `crower_gui_@TAG@_darwin_arm64.tar.gz` |
+          | Platform | Archive |
+          | --- | --- |
+          | 🐧 Linux amd64 | `crower_@TAG@_linux_amd64.tar.gz` |
+          | 🐧 Linux arm64 | `crower_@TAG@_linux_arm64.tar.gz` |
+          | 🪟 Windows amd64 | `crower_@TAG@_windows_amd64.zip` |
+          | 🪟 Windows arm64 | `crower_@TAG@_windows_arm64.zip` |
+          | 🍎 macOS Intel | `crower_@TAG@_darwin_amd64.tar.gz` |
+          | 🍎 macOS Apple Silicon | `crower_@TAG@_darwin_arm64.tar.gz` |
 
-          The CLI archive is cgo-free and ships `crower`, the `cr` alias, README, licenses and the `add_to_path` installer. The GUI archive ships `crower-gui`, the Fyne window over the same configuration, with README and licenses.
+          Every archive contains `crower`, the `cr` alias and `crower-gui`, plus README, licenses and the `add_to_path` installer. The CLI is cgo-free; `crower-gui` is the Fyne window over the same configuration.
 
           ## ⚙️ Install
 
@@ -403,7 +436,7 @@ jobs:
           crower --version
           ```
 
-          `crower gui` opens the terminal menu; `crower-gui` from the GUI archive opens the Fyne window.
+          `crower gui` opens the terminal menu; `crower-gui` opens the Fyne window.
 
           ## ⚡ Upgrade
 
@@ -424,17 +457,22 @@ jobs:
 
           ## 📝 Changelog
           EOF
-          sed -i "s|@TAG@|${TAG}|g; s|@REPO@|${REPO}|g; s|@COMMIT@|${COMMIT}|g" notes.md
 
           # The published body carries a compare link, not a pasted PR list: the
-          # list is long, goes stale, and reads worse than the link. The
-          # `scripts/release-notes.sh` helper prints it for the release manager
-          # when writing the Highlights and Fixes sections of the draft.
+          # list is long, goes stale, and reads worse than the link.
           if [ -z "$PREV" ]; then
             echo "_Initial release or first tagged version._" >> notes.md
           else
             printf '\n[`%s...%s`](https://github.com/%s/compare/%s...%s)\n' "$PREV" "$TAG" "$REPO" "$PREV" "$TAG" >> notes.md
           fi
+
+          sed -i "s|@TAG@|${TAG}|g; s|@REPO@|${REPO}|g; s|@COMMIT@|${COMMIT}|g" notes.md
+
+      - name: Check the release-body shape
+        # A generator change that drops a section or reintroduces a badge fails
+        # here, before the draft exists. The gate is the one in
+        # docs/release-notes-template.md and internal/tools/bodycheck.
+        run: go run ./internal/tools/bodycheck notes.md
 
       # A draft is the default so the artifacts can be inspected — and rebuilt by
       # re-running — before anyone can download them. A published release is
