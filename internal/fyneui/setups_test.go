@@ -100,7 +100,7 @@ func TestCreateSetupAddsItToTheSelector(t *testing.T) {
 		t.Fatalf("created = %v, want [work]", setups.created)
 	}
 
-	if !slices.Contains(front.setupSelect.Options, "work") {
+	if !slices.Contains(front.setupSelect.Options, front.setupLabel("work")) {
 		t.Errorf("selector = %v, want the new setup in it", front.setupSelect.Options)
 	}
 
@@ -143,7 +143,7 @@ func TestDeleteSetupRemovesItFromTheSelector(t *testing.T) {
 		t.Fatalf("deleted = %v, want [work]", setups.deleted)
 	}
 
-	if slices.Contains(front.setupSelect.Options, "work") {
+	if slices.Contains(front.setupSelect.Options, front.setupLabel("work")) {
 		t.Errorf("selector = %v, want the deleted setup gone", front.setupSelect.Options)
 	}
 }
@@ -165,7 +165,7 @@ func TestDeleteSetupReportsAFailure(t *testing.T) {
 		t.Fatal("deleteSetup accepted a failing delete")
 	}
 
-	if !slices.Contains(front.setupSelect.Options, "work") {
+	if !slices.Contains(front.setupSelect.Options, front.setupLabel("work")) {
 		t.Errorf("selector = %v, want the failed setup kept", front.setupSelect.Options)
 	}
 }
