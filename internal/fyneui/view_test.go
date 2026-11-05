@@ -203,6 +203,54 @@ func TestNewContentBuildsTheTabs(t *testing.T) {
 	}
 }
 
+// labelsIn collects every label text the canvas can reach, walking the tree the
+// way Fyne paints it: a container exposes its objects, and a widget exposes its
+// renderer's objects. Anything else is opaque — including a type that embeds a
+// container, which is the shape that made the rows paint nothing (#406).
+func labelsIn(object fyne.CanvasObject) []string {
+	switch typed := object.(type) {
+	case *widget.Label:
+		return []string{typed.Text}
+	case *fyne.Container:
+		found := make([]string, 0, len(typed.Objects))
+
+		for _, child := range typed.Objects {
+			found = append(found, labelsIn(child)...)
+		}
+
+		return found
+	case fyne.Widget:
+		renderer := test.WidgetRenderer(typed)
+		if renderer == nil {
+			return nil
+		}
+
+		found := make([]string, 0, len(renderer.Objects()))
+
+		for _, child := range renderer.Objects() {
+			found = append(found, labelsIn(child)...)
+		}
+
+		return found
+	}
+
+	return nil
+}
+
+// The canvas has to reach a command row's text. The row can have a size and a
+// working set of buttons while the walk still stops at it — that is what a row
+// type embedding a container does — and the list then paints nothing (#406).
+func TestCommandRowIsPaintable(t *testing.T) {
+	front, window := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
+
+	window.SetContent(front.content())
+	window.Resize(fyne.NewSize(960, 640))
+
+	if labels := labelsIn(window.Canvas().Content()); !slices.Contains(labels, "greet") {
+		t.Fatalf("the command name is not reachable in the rendered tree; labels = %q", labels)
+	}
+}
+
 // A row's Run button runs that row, not whatever the selection happens to be.
 func TestCommandRowRunsItsOwnCommand(t *testing.T) {
 	exec := &recordingExecutor{}

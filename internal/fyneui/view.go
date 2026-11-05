@@ -383,13 +383,19 @@ func (u *ui) refreshGroups() {
 // commandRow is one list row: the command name on the left, its actions on the
 // right. widget.List recycles templates, so updateRow re-points every button at
 // the row's own key on each update.
+//
+// It is a widget holding a container, not a container subtype: Fyne walks a
+// canvas by concrete type, descending into *fyne.Container and fyne.Widget only,
+// so a struct that embeds a container is opaque and its children never paint
+// (#406).
 type commandRow struct {
-	*fyne.Container
+	widget.BaseWidget
 
 	name   *widget.Label
 	run    *widget.Button
 	edit   *widget.Button
 	remove *widget.Button
+	body   *fyne.Container
 }
 
 func newCommandRow() *commandRow {
@@ -404,7 +410,7 @@ func newCommandRow() *commandRow {
 	row.edit.Importance = widget.LowImportance
 	row.remove.Importance = widget.DangerImportance
 
-	row.Container = container.NewBorder(
+	row.body = container.NewBorder(
 		nil,
 		nil,
 		nil,
@@ -412,7 +418,15 @@ func newCommandRow() *commandRow {
 		row.name,
 	)
 
+	row.ExtendBaseWidget(row)
+
 	return row
+}
+
+// CreateRenderer hands the row's container to the canvas. BaseWidget.Resize then
+// lays the body out at the row's size, so a recycled row stretches with the list.
+func (r *commandRow) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(r.body)
 }
 
 func (u *ui) updateRow(id widget.ListItemID, object fyne.CanvasObject) {
