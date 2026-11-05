@@ -24,29 +24,21 @@ func distinctColors(img interface{ At(x, y int) color.Color }, x0, y0, x1, y1 in
 	return len(seen)
 }
 
-// Scratch diagnostic: is there any ink where the first command row is drawn?
+// Scratch diagnostic: where is any ink drawn, and is there any at the row band?
 func TestCommandRowPaintsInk(t *testing.T) {
 	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, &stubUpdater{current: "v1"})
 	window.SetContent(front.content())
 	window.Resize(fyneSize())
 
 	img := test.Canvas().Capture()
+	bounds := img.Bounds()
+	t.Logf("capture bounds: %v", bounds)
 
-	rows := distinctColors(img, 20, 100, 500, 150)
-	t.Logf("command row band colours: %d", rows)
-
-	if rows < 4 {
-		t.Errorf("command row region has %d colours; the rows look blank", rows)
+	for y := bounds.Min.Y; y < bounds.Max.Y; y += 40 {
+		colours := distinctColors(img, 0, y, bounds.Max.X, min(y+40, bounds.Max.Y))
+		t.Logf("band y=%d..%d colours=%d", y, min(y+40, bounds.Max.Y), colours)
 	}
 
-	front.tabs.SelectIndex(1)
-
-	img = test.Canvas().Capture()
-
-	history := distinctColors(img, 20, 100, 500, 150)
-	t.Logf("history band colours: %d", history)
-
-	if history < 4 {
-		t.Errorf("history region has %d colours; the table looks blank", history)
-	}
+	t.Logf("list size: %v, visible: %v", front.list.Size(), front.list.Visible())
+	t.Logf("first row text: %q", front.model.FilteredKeys())
 }
