@@ -15,6 +15,7 @@
 | `~/crower/history/` | Command snapshots, used by `revert` and `restore` |
 | `~/crower/crower.log` | Execution log |
 | `~/crower/groups.toml` | Group icons for the window (written only by `crower-gui`) |
+| `~/crower/window.toml` | The window's last size (written only by `crower-gui`) |
 
 ## 🔀 Another configuration
 

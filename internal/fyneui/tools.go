@@ -48,28 +48,28 @@ func fieldWithBrowse(entry *widget.Entry, pick func()) fyne.CanvasObject {
 }
 
 func (u *ui) transferCard() fyne.CanvasObject {
-	sources := newScrollFreeEntry()
-	sources.SetPlaceHolder("Paths, comma-separated")
+	u.sourcesEntry = newScrollFreeEntry()
+	u.sourcesEntry.SetPlaceHolder("Paths, comma-separated")
 
 	destination := newScrollFreeEntry()
 	destination.SetPlaceHolder("Destination folder")
 
 	copyButton := widget.NewButtonWithIcon("Copy", theme.ContentCopyIcon(), func() {
-		paths := splitPaths(sources.Text)
+		paths := splitPaths(u.sourcesEntry.Text)
 		u.runTool(u.transferResult, "Copying…", true, func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.transfer(ctx, report, true, paths, destination.Text)
 		})
 	})
 
 	moveButton := widget.NewButtonWithIcon("Move", theme.ContentCutIcon(), func() {
-		paths := splitPaths(sources.Text)
+		paths := splitPaths(u.sourcesEntry.Text)
 		u.runTool(u.transferResult, "Moving…", true, func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.transfer(ctx, report, false, paths, destination.Text)
 		})
 	})
 
 	form := widget.NewForm(
-		widget.NewFormItem("Sources", fieldWithBrowse(sources, func() { u.browseFiles(sources) })),
+		widget.NewFormItem("Sources", fieldWithBrowse(u.sourcesEntry, func() { u.browseFiles(u.sourcesEntry) })),
 		widget.NewFormItem("Destination", fieldWithBrowse(destination, func() { u.browseFolder(destination) })),
 	)
 

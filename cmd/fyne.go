@@ -35,6 +35,7 @@ This command is the entrypoint of the crower-gui executable, built with
 			Tools:    newFyneTools(cfg),
 			Groups:   newFyneGroups(cfg),
 			Setups:   newFyneSetups(cfg),
+			Window:   newFyneWindow(cfg.ConfigFolder()),
 		})
 		return nil
 	},
