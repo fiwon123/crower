@@ -89,6 +89,8 @@ field.
 | Flag | Short | Meaning |
 | --- | --- | --- |
 | `--alias <a,b>` | `-a` | add aliases (comma-separated, repeatable) |
+| `--icon <marker>` | | a short marker (an emoji) shown beside the command in the window |
+| `--group <name>` | | the group the command belongs to |
 | `--process <name>` | `-p` | create the command from a running process; the argument is its name or pid |
 | `--file` | `-f` | treat every argument as a file path to create |
 | `--folder` | `-o` | treat every argument as a folder path to create |
@@ -122,6 +124,8 @@ Change a command's name, aliases or exec. The command is found by name or alias.
 | `--name <name>` | `-n` | new name |
 | `--alias <a,b>` | `-a` | new alias list, replacing the old one |
 | `--exec <line>` | `-e` | new command line |
+| `--icon <marker>` | | new icon; an empty value removes it |
+| `--group <name>` | | new group; an empty value removes it |
 | `--last` | `-l` | update the last executed command |
 | `--create` | `-c` | update the last created command |
 | `--execute` | `-x` | update the last updated command |

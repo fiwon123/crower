@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/session"
 )
@@ -32,11 +33,11 @@ func TestFyneReverterRestoresAnEarlierState(t *testing.T) {
 	cfg := loadFyneConfigAt(t, path)
 
 	editor := newFyneEditor(cfg)
-	if _, _, err := editor.Create("a", nil, "echo a"); err != nil {
+	if _, _, err := editor.Create(catalog.Command{Name: "a", Exec: "echo a"}); err != nil {
 		t.Fatalf("Create a: %v", err)
 	}
 
-	if _, _, err := editor.Create("b", nil, "echo b"); err != nil {
+	if _, _, err := editor.Create(catalog.Command{Name: "b", Exec: "echo b"}); err != nil {
 		t.Fatalf("Create b: %v", err)
 	}
 

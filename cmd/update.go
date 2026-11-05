@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"strings"
+
 	"github.com/fiwon123/crower/internal/application/updatecommand"
 	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
@@ -50,6 +52,18 @@ With no field given, crower asks for each one.`,
 			},
 		}
 
+		// A flag that was not given leaves the field alone; giving it an empty
+		// value is how a user removes an icon or a group.
+		if cmd.Flags().Changed("icon") {
+			request.Changes.Icon = strings.TrimSpace(icon)
+			request.Changes.ClearIcon = request.Changes.Icon == ""
+		}
+
+		if cmd.Flags().Changed("group") {
+			request.Changes.Group = strings.TrimSpace(group)
+			request.Changes.ClearGroup = request.Changes.Group == ""
+		}
+
 		if len(args) != 0 {
 			request.Key = args[0]
 		}
@@ -71,6 +85,8 @@ func init() {
 	AddNameFlag(updateCmd, &name)
 	AddAllAliasFlag(updateCmd, &allAlias)
 	AddExecFlag(updateCmd, &exec)
+	AddIconFlag(updateCmd, &icon)
+	AddGroupFlag(updateCmd, &group)
 
 	updateCmd.Flags().BoolVarP(&last, "last", "l", false, "update recent updated command")
 	updateCmd.Flags().BoolVarP(&create, "create", "c", false, "update recent created command")

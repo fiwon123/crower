@@ -41,7 +41,7 @@ func (stubEditor) Update(string, catalog.Changes) (catalog.Catalog, timeline.Log
 	return catalog.New(nil, nil), timeline.Log{}, nil
 }
 
-func (stubEditor) Create(string, []string, string) (catalog.Catalog, timeline.Log, error) {
+func (stubEditor) Create(catalog.Command) (catalog.Catalog, timeline.Log, error) {
 	return catalog.New(nil, nil), timeline.Log{}, nil
 }
 
@@ -69,8 +69,8 @@ func (e *recordingEditor) Update(_ string, changes catalog.Changes) (catalog.Cat
 	return e.next, e.history, nil
 }
 
-func (e *recordingEditor) Create(name string, _ []string, _ string) (catalog.Catalog, timeline.Log, error) {
-	e.creates = append(e.creates, name)
+func (e *recordingEditor) Create(command catalog.Command) (catalog.Catalog, timeline.Log, error) {
+	e.creates = append(e.creates, command.Name)
 
 	if e.err != nil {
 		return catalog.Catalog{}, timeline.Log{}, e.err
@@ -295,7 +295,7 @@ func TestApplyEditReloadsTheModel(t *testing.T) {
 
 	front.window.SetContent(widget.NewLabel(""))
 
-	if !front.applyEdit("greet", "ship", "s", "echo ship") {
+	if !front.applyEdit("greet", "ship", "s", "🚀", "deploy", "echo ship") {
 		t.Fatal("applyEdit returned false")
 	}
 
@@ -309,6 +309,14 @@ func TestApplyEditReloadsTheModel(t *testing.T) {
 		t.Error("ClearAliases = true, want it false for a supplied alias")
 	}
 
+	if editor.updates[0].Icon != "🚀" || editor.updates[0].Group != "deploy" {
+		t.Errorf("changes = %+v, want the icon and group carried through", editor.updates[0])
+	}
+
+	if editor.updates[0].ClearIcon || editor.updates[0].ClearGroup {
+		t.Error("a supplied icon or group was marked for clearing")
+	}
+
 	if got := front.model.Selected(); got != "ship" {
 		t.Errorf("Selected() = %q, want the reloaded command", got)
 	}
@@ -319,7 +327,7 @@ func TestApplyEditRejectsEmptyFields(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
 	front.window.SetContent(widget.NewLabel(""))
 
-	if front.applyEdit("greet", " ", " ", " ") {
+	if front.applyEdit("greet", " ", " ", " ", " ", " ") {
 		t.Fatal("applyEdit accepted an empty name and exec")
 	}
 
@@ -337,7 +345,7 @@ func TestApplyEditReportsAnEditorError(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
 	front.window.SetContent(widget.NewLabel(""))
 
-	if front.applyEdit("greet", "ship", "s", "echo ship") {
+	if front.applyEdit("greet", "ship", "s", "🚀", "deploy", "echo ship") {
 		t.Fatal("applyEdit accepted an editor error")
 	}
 
@@ -353,7 +361,7 @@ func TestApplyCreateReloadsTheModel(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
 	front.window.SetContent(widget.NewLabel(""))
 
-	if !front.applyCreate("ship", "", "echo ship") {
+	if !front.applyCreate("ship", "", "🚀", "deploy", "echo ship") {
 		t.Fatal("applyCreate returned false")
 	}
 
@@ -371,7 +379,7 @@ func TestApplyCreateRejectsEmptyFields(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
 	front.window.SetContent(widget.NewLabel(""))
 
-	if front.applyCreate(" ", "", " ") {
+	if front.applyCreate(" ", "", "", "", " ") {
 		t.Fatal("applyCreate accepted an empty name and exec")
 	}
 
@@ -462,5 +470,16 @@ func TestApplyRevertReportsAnError(t *testing.T) {
 
 	if front.applyRevert(1) {
 		t.Fatal("applyRevert accepted a reverter error")
+	}
+}
+
+// A row shows the icon when one is set, and the bare name when it is not.
+func TestCommandLabelShowsTheIcon(t *testing.T) {
+	if got := commandLabel(catalog.Command{Name: "deploy", Icon: "🚀"}); got != "🚀 deploy" {
+		t.Errorf("commandLabel = %q, want the icon before the name", got)
+	}
+
+	if got := commandLabel(catalog.Command{Name: "deploy"}); got != "deploy" {
+		t.Errorf("commandLabel = %q, want the bare name", got)
 	}
 }

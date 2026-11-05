@@ -7,6 +7,7 @@ package fyneui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -24,7 +25,7 @@ import (
 // set and history.
 type Editor interface {
 	Update(key string, changes catalog.Changes) (catalog.Catalog, timeline.Log, error)
-	Create(name string, aliases []string, exec string) (catalog.Catalog, timeline.Log, error)
+	Create(command catalog.Command) (catalog.Catalog, timeline.Log, error)
 	Delete(key string) (catalog.Catalog, timeline.Log, error)
 }
 
@@ -80,6 +81,7 @@ type ui struct {
 
 	list          *widget.List
 	detail        *widget.Label
+	groupFilter   *widget.Select
 	table         *widget.Table
 	historyDetail *widget.Label
 	revert        *widget.Button
@@ -163,6 +165,22 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		u.detail.SetText("")
 	}
 
+	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, func(selected string) {
+		if selected == allGroupsLabel {
+			u.model.Group = ""
+		} else {
+			u.model.Group = selected
+		}
+
+		u.model.Index = 0
+		u.list.Refresh()
+		u.list.UnselectAll()
+		u.detail.SetText("")
+	})
+	u.groupFilter.SetSelected(allGroupsLabel)
+
+	groups := container.NewBorder(nil, nil, widget.NewLabel("Group"), nil, u.groupFilter)
+
 	toolbar := container.NewHBox(
 		widget.NewButtonWithIcon("New", theme.ContentAddIcon(), u.showCreate),
 		widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() { u.runSelected(false) }),
@@ -170,7 +188,34 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		widget.NewButton("Quit", u.window.Close),
 	)
 
-	return container.NewBorder(container.NewVBox(filter, u.detail), toolbar, nil, nil, u.list)
+	return container.NewBorder(container.NewVBox(filter, groups, u.detail), toolbar, nil, nil, u.list)
+}
+
+// allGroupsLabel is the group filter's "no filter" entry.
+const allGroupsLabel = "All groups"
+
+// refreshGroups rebuilds the filter's options after an edit or a removal. A
+// group with no commands left disappears, and the filter falls back to all.
+func (u *ui) refreshGroups() {
+	if u.groupFilter == nil {
+		return
+	}
+
+	options := append([]string{allGroupsLabel}, u.model.Groups()...)
+	u.groupFilter.Options = options
+	u.groupFilter.Refresh()
+
+	selected := allGroupsLabel
+	if u.model.Group != "" {
+		selected = u.model.Group
+	}
+
+	if !slices.Contains(options, selected) {
+		selected = allGroupsLabel
+		u.model.Group = ""
+	}
+
+	u.groupFilter.SetSelected(selected)
 }
 
 // commandRow is one list row: the command name on the left, its actions on the
@@ -224,12 +269,27 @@ func (u *ui) updateRow(id widget.ListItemID, object fyne.CanvasObject) {
 	}
 
 	key := keys[id]
-	row.name.SetText(key)
+
+	label := key
+	if command, found := u.model.Commands.Get(key); found {
+		label = commandLabel(command)
+	}
+
+	row.name.SetText(label)
 
 	row.run.OnTapped = func() { u.runKey(key, false) }
 	row.params.OnTapped = func() { u.runKey(key, true) }
 	row.edit.OnTapped = func() { u.showEditFor(key) }
 	row.remove.OnTapped = func() { u.showDeleteFor(key) }
+}
+
+// commandLabel is what a row shows: the icon when one is set, then the name.
+func commandLabel(command catalog.Command) string {
+	if command.Icon == "" {
+		return command.Name
+	}
+
+	return command.Icon + " " + command.Name
 }
 
 func (u *ui) selectRow(id widget.ListItemID) {
@@ -257,6 +317,10 @@ func describe(command catalog.Command) string {
 
 	if len(command.Aliases) > 0 {
 		lines = append(lines, "aliases: "+strings.Join(command.Aliases, ", "))
+	}
+
+	if command.Group != "" {
+		lines = append(lines, "group: "+command.Group)
 	}
 
 	if command.Description != "" {
@@ -322,6 +386,7 @@ func (u *ui) reload(commands catalog.Catalog, history timeline.Log) {
 		u.detail.SetText("")
 	}
 
+	u.refreshGroups()
 	u.refreshHistory()
 }
 

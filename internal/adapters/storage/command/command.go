@@ -12,6 +12,12 @@ type Data struct {
 	Description string   `toml:"Description,omitempty" json:"Description,omitempty"`
 	Params      []string `toml:"Params,omitempty" json:"Params,omitempty"`
 
+	// Icon and Group are the list's presentation: a short marker and the set
+	// the command belongs to. They change no behaviour, so a file without
+	// them is complete.
+	Icon  string `toml:"Icon,omitempty" json:"Icon,omitempty"`
+	Group string `toml:"Group,omitempty" json:"Group,omitempty"`
+
 	// Shell and Cwd are where the command runs: the shell it needs and the
 	// folder it starts in. Empty keeps the platform default and the caller's
 	// working directory, so every existing file keeps its behaviour.

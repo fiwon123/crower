@@ -15,6 +15,8 @@ import (
 )
 
 var allAlias []string
+var icon string
+var group string
 
 var scriptFlag bool
 var processName string
@@ -55,6 +57,8 @@ the last command you ran.`,
 		request := createcommand.Request{
 			Mode:    createcommand.ModeCommand,
 			Aliases: allAlias,
+			Icon:    icon,
+			Group:   group,
 			Args:    args,
 		}
 
@@ -262,6 +266,8 @@ func (s createSession) CreateFolderNote(args []string) string {
 
 func init() {
 	AddAllAliasFlag(createCmd, &allAlias)
+	AddIconFlag(createCmd, &icon)
+	AddGroupFlag(createCmd, &group)
 
 	createCmd.Flags().StringVarP(&processName, "process", "p", "", "new command name for a process; pass the process name or pid as an argument")
 	createCmd.Flags().BoolVarP(&fileFlag, "file", "f", false, "ensure arguments are file paths")
