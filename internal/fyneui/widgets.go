@@ -18,7 +18,7 @@ import (
 // Fyne dispatches a wheel event to the topmost Scrollable under the cursor and
 // never bubbles it to a parent (internal/driver/glfw window.processMouseScrolled).
 // Every widget.Entry builds an internal scroll unless its wrapping is
-// TextWrapOff and its Scroll is ScrollNone (widget/entry.go), and the
+// TextWrapOff and its Scroll is container.ScrollNone (widget/entry.go), and the
 // constructors' default wrapping is not TextWrapOff — so a plain entry under the
 // cursor freezes the scrollbar of the container it sits in. These two settings
 // make the entry's renderer drop that internal scroll, and the wheel reaches the
@@ -29,7 +29,7 @@ import (
 func newScrollFreeEntry() *widget.Entry {
 	entry := widget.NewEntry()
 	entry.Wrapping = fyne.TextWrapOff
-	entry.Scroll = widget.ScrollNone
+	entry.Scroll = container.ScrollNone
 
 	return entry
 }
