@@ -15,6 +15,11 @@ crower update [command] [flags]
 | `-e`, `--exec` | New command text |
 | `--icon` | New icon; an empty value removes it |
 | `--group` | New group; an empty value removes it |
+| `--description` | What the command is for; an empty value removes it |
+| `--params` | Positional parameters, comma-separated or repeated; an empty value removes them |
+| `--cwd` | Working directory the command runs in; an empty value removes it |
+| `--shell` | Shell that runs the command (`sh`, `pwsh`, `cmd`); an empty value removes it |
+| `--timeout` | Longest the command may run, as a Go duration (`120s`); an empty value removes it |
 | `-l`, `--last` | Update the most recent entry |
 | `-c`, `--create` | Update the most recent `create` |
 | `-x`, `--execute` | Update the most recent `execute` |
@@ -34,11 +39,10 @@ crower update --last -e "make test"          # edit what you just ran
 > with [`revert`](revert).
 
 > [!NOTE]
-> `Description`, `Params`, `Shell`, `Cwd`, `Env` and `Timeout` are part of the
-> command schema, but `update` has no flags for them yet: edit them in the
-> window's edit dialog, in the configuration file, or by re-importing a pack.
-> See [`execute`](execute#-execution-target). `--icon` and `--group` are the
-> exception: they are display metadata, so they have flags too.
+> A flag that is not given leaves its field alone; giving it an empty value
+> clears the field. `Env` has no flag — it holds values that look like secrets,
+> so it stays a configuration-file field. See
+> [`execute`](execute#-execution-target) for what each field does at run time.
 
 ## 🔗 Related
 

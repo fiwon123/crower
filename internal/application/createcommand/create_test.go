@@ -301,6 +301,41 @@ func twoCommands() []catalog.Command {
 	}
 }
 
+// The metadata flags reach the command the create mode adds.
+func TestCreateCommandCarriesTheMetadata(t *testing.T) {
+	h := newHarness()
+
+	err := h.run(createcommand.Request{
+		Mode:        createcommand.ModeCommand,
+		Args:        []string{"deploy", "make deploy"},
+		Description: "ship it",
+		Params:      []string{"env", "region"},
+		Cwd:         "/srv/app",
+		Shell:       "sh",
+		Timeout:     "120s",
+	})
+	if err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+
+	created, found := h.state.saved[0].Get("deploy")
+	if !found {
+		t.Fatal("the saved catalog does not hold the new command")
+	}
+
+	if created.Description != "ship it" {
+		t.Errorf("Description = %q, want ship it", created.Description)
+	}
+
+	if !slices.Equal(created.Params, []string{"env", "region"}) {
+		t.Errorf("Params = %v, want [env region]", created.Params)
+	}
+
+	if created.Cwd != "/srv/app" || created.Shell != "sh" || created.Timeout != "120s" {
+		t.Errorf("Cwd/Shell/Timeout = %q/%q/%q, want /srv/app/sh/120s", created.Cwd, created.Shell, created.Timeout)
+	}
+}
+
 func TestCreateCommandWithTwoArguments(t *testing.T) {
 	h := newHarness()
 

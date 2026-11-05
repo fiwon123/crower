@@ -13,6 +13,11 @@ crower create [name] [exec] [flags]
 | `-a`, `--alias` | Aliases, comma-separated (`--alias 'a1,a2'`) |
 | `--icon` | A short marker — an emoji — shown beside the command in the window |
 | `--group` | The group the command belongs to |
+| `--description` | What the command is for |
+| `--params` | Positional parameters, comma-separated or repeated (`--params 'env,region'`) |
+| `--cwd` | Working directory the command runs in |
+| `--shell` | Shell that runs the command (`sh`, `pwsh`, `cmd`) |
+| `--timeout` | Longest the command may run, as a Go duration (`120s`) |
 | `-f`, `--file` | Treat the arguments as file paths |
 | `-o`, `--folder` | Treat the arguments as folder paths |
 | `--execute` | Create from the last executed command |
