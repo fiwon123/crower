@@ -46,3 +46,13 @@ build/
 
 # fyne-cross working directory (Docker cross-build outputs).
 fyne-cross/
+
+# fyne package injects a metadata file into the package directory while it
+# builds, then removes it. Without these rules `go build` sees an untracked
+# file and stamps vcs.modified=true into a cross-built crower-gui.
+cmd/crowergui/fyne_metadata_init.go
+cmd/crowergui/fyne_pprof.go
+cmd/crowergui/crowergui
+cmd/crowergui/crowergui.exe
+cmd/crowergui/crower-gui
+cmd/crowergui/crower-gui.exe
