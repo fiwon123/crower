@@ -84,7 +84,12 @@ items — the platform command already running is not interrupted.
 
 Dropping files or folders anywhere on the window appends their paths to the
 **Sources** field of the copy/move card and opens the Tools tab. A drop only
-fills the field; nothing runs until you press Copy or Move. A copy or move takes one or more
+fills the field; nothing runs until you press Copy or Move.
+
+The window opens at the size it last closed with, recorded in `window.toml`
+beside the configuration. A size too small to work in is ignored, so a corrupted
+file cannot open an unusable window. Position is not recorded: Fyne's window API
+does not expose it. A copy or move takes one or more
 paths and a destination; a search takes a term, a folder (default `.`) and what
 to look in; extract takes archive paths and an optional destination; open takes
 paths and hands them to the platform's default application.

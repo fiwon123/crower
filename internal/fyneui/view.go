@@ -48,6 +48,7 @@ type Deps struct {
 	Tools    desktop.Tools
 	Groups   desktop.Groups
 	Setups   desktop.Setups
+	Window   WindowStore
 }
 
 // Run opens the Fyne window and blocks until it closes.
@@ -60,11 +61,22 @@ func Run(commands catalog.Catalog, history timeline.Log, deps Deps) {
 	window := a.NewWindow("crower")
 	front := newUI(model, window, deps)
 	window.SetContent(front.content())
-	window.Resize(fyne.NewSize(960, 640))
+	window.Resize(initialSize(deps.Window))
 
 	// Fyne offers a window-wide drop callback only, so a drop has one documented
 	// destination: the copy/move sources.
 	window.SetOnDropped(front.handleDrop)
+
+	// Remember the size the user settled on, so the next run opens the same way.
+	window.SetOnClosed(func() {
+		if deps.Window == nil {
+			return
+		}
+
+		if size, ok := recordedSize(window.Canvas().Size()); ok {
+			_ = deps.Window.Save(size)
+		}
+	})
 
 	// The lookup runs after the content exists and never blocks the window:
 	// opening crower is not a reason to wait for GitHub.
