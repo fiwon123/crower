@@ -90,6 +90,10 @@ type ui struct {
 
 	list          *widget.List
 	detail        *widget.Label
+	detailBody    *fyne.Container
+	detailToggle  *widget.Button
+	detailShown   bool
+	paramsEntry   *widget.Entry
 	groupFilter   *widget.Select
 	table         *widget.Table
 	historyDetail *widget.Label
@@ -161,10 +165,30 @@ func (u *ui) content() fyne.CanvasObject {
 	return tabs
 }
 
-// commandsTab is the command list with its filter and per-row actions.
+// commandsTab is the command list with its filter, the per-row actions and a
+// detail panel that opens below the list.
 func (u *ui) commandsTab() fyne.CanvasObject {
 	u.detail = widget.NewLabel("")
 	u.detail.Wrapping = fyne.TextWrapWord
+
+	u.paramsEntry = widget.NewEntry()
+	u.paramsEntry.SetPlaceHolder("Parameters (space-separated)")
+	u.paramsEntry.OnSubmitted = func(string) { u.runFromDetail() }
+
+	runDetail := widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), u.runFromDetail)
+
+	// The body is hidden rather than built on demand: Fyne's layouts skip an
+	// invisible child, so collapsing it gives the height back to the list.
+	u.detailBody = container.NewVBox(
+		u.detail,
+		container.NewBorder(nil, nil, nil, runDetail, u.paramsEntry),
+	)
+	u.detailBody.Hide()
+
+	u.detailToggle = widget.NewButtonWithIcon("Details", theme.MenuDropDownIcon(), func() {
+		u.setDetailVisible(!u.detailShown)
+	})
+	u.detailToggle.Importance = widget.LowImportance
 
 	u.list = widget.NewList(
 		func() int { return len(u.model.FilteredKeys()) },
@@ -173,7 +197,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	)
 
 	u.list.OnSelected = func(id widget.ListItemID) { u.selectRow(id) }
-	u.list.OnUnselected = func(widget.ListItemID) { u.detail.SetText("") }
+	u.list.OnUnselected = func(widget.ListItemID) { u.clearDetail() }
 
 	filter := widget.NewEntry()
 	filter.SetPlaceHolder("Filter commands")
@@ -182,7 +206,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		u.model.Index = 0
 		u.list.Refresh()
 		u.list.UnselectAll()
-		u.detail.SetText("")
+		u.clearDetail()
 	}
 
 	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, u.selectGroup)
@@ -207,12 +231,18 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 
 	toolbar := container.NewHBox(
 		widget.NewButtonWithIcon("New", theme.ContentAddIcon(), u.showCreate),
-		widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() { u.runSelected(false) }),
-		widget.NewButtonWithIcon("Run with params…", theme.MediaFastForwardIcon(), func() { u.runSelected(true) }),
-		widget.NewButton("Quit", u.window.Close),
+		widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), u.runSelected),
 	)
 
-	return container.NewBorder(container.NewVBox(filter, controls, u.detail), toolbar, nil, nil, u.list)
+	detail := container.NewVBox(u.detailToggle, u.detailBody)
+
+	return container.NewBorder(
+		container.NewVBox(filter, controls),
+		container.NewVBox(detail, toolbar),
+		nil,
+		nil,
+		u.list,
+	)
 }
 
 // allGroupsLabel is the group filter's "no filter" entry.
@@ -257,7 +287,7 @@ func (u *ui) selectGroup(label string) {
 	u.model.Index = 0
 	u.list.Refresh()
 	u.list.UnselectAll()
-	u.detail.SetText("")
+	u.clearDetail()
 }
 
 // refreshGroups rebuilds the filter's options after an edit, a removal or a
@@ -307,7 +337,6 @@ type commandRow struct {
 
 	name   *widget.Label
 	run    *widget.Button
-	params *widget.Button
 	edit   *widget.Button
 	remove *widget.Button
 }
@@ -316,13 +345,11 @@ func newCommandRow() *commandRow {
 	row := &commandRow{
 		name:   widget.NewLabel(""),
 		run:    widget.NewButtonWithIcon("", theme.MediaPlayIcon(), nil),
-		params: widget.NewButtonWithIcon("", theme.MediaFastForwardIcon(), nil),
 		edit:   widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), nil),
 		remove: widget.NewButtonWithIcon("", theme.DeleteIcon(), nil),
 	}
 
 	row.run.Importance = widget.LowImportance
-	row.params.Importance = widget.LowImportance
 	row.edit.Importance = widget.LowImportance
 	row.remove.Importance = widget.DangerImportance
 
@@ -330,7 +357,7 @@ func newCommandRow() *commandRow {
 		nil,
 		nil,
 		nil,
-		container.NewHBox(row.run, row.params, row.edit, row.remove),
+		container.NewHBox(row.run, row.edit, row.remove),
 		row.name,
 	)
 
@@ -358,8 +385,7 @@ func (u *ui) updateRow(id widget.ListItemID, object fyne.CanvasObject) {
 
 	row.name.SetText(label)
 
-	row.run.OnTapped = func() { u.runKey(key, false) }
-	row.params.OnTapped = func() { u.runKey(key, true) }
+	row.run.OnTapped = func() { u.runKey(key) }
 	row.edit.OnTapped = func() { u.showEditFor(key) }
 	row.remove.OnTapped = func() { u.showDeleteFor(key) }
 }
@@ -409,9 +435,7 @@ func (u *ui) switchSetup(name string) bool {
 		u.list.UnselectAll()
 	}
 
-	if u.detail != nil {
-		u.detail.SetText("")
-	}
+	u.clearDetail()
 
 	u.refreshSetupSelect()
 	u.refreshGroups()
@@ -435,17 +459,104 @@ func (u *ui) selectRow(id widget.ListItemID) {
 
 	selected := u.model.Selected()
 	if selected == "" {
-		u.detail.SetText("")
+		u.clearDetail()
 		return
 	}
 
 	command, found := u.model.Commands.Get(selected)
 	if !found {
 		u.detail.SetText(selected)
+		u.setDetailVisible(true)
 		return
 	}
 
 	u.detail.SetText(describe(command))
+	u.paramsEntry.SetPlaceHolder(paramsHint(command))
+	u.setDetailVisible(true)
+}
+
+// setDetailVisible is the Details toggle: Fyne's layouts skip an invisible
+// child, so collapsing the panel gives its height back to the list.
+func (u *ui) setDetailVisible(visible bool) {
+	u.detailShown = visible
+
+	if u.detailBody == nil {
+		return
+	}
+
+	if visible {
+		u.detailBody.Show()
+	} else {
+		u.detailBody.Hide()
+	}
+}
+
+// clearDetail empties and collapses the panel, so a filter change, a reload or
+// an unselect cannot leave another command's text on screen.
+func (u *ui) clearDetail() {
+	if u.detail != nil {
+		u.detail.SetText("")
+	}
+
+	if u.paramsEntry != nil {
+		u.paramsEntry.SetText("")
+		u.paramsEntry.SetPlaceHolder("Parameters (space-separated)")
+	}
+
+	u.setDetailVisible(false)
+}
+
+// paramsHint tells the user what the command's parameters mean without making
+// them look like input that is already filled in.
+func paramsHint(command catalog.Command) string {
+	if len(command.Params) == 0 {
+		return "Parameters (space-separated)"
+	}
+
+	return "Parameters — declared: " + strings.Join(command.Params, " ")
+}
+
+func (u *ui) runSelected() {
+	u.runKey(u.model.Selected())
+}
+
+// runKey runs one command: the row's key when a row button asked, the
+// selection when the toolbar did.
+//
+// It is smart about parameters: a command that declares them asks for them, one
+// that does not runs straight away. The detail panel's Run button is the path
+// for supplying them from the window without a prompt.
+func (u *ui) runKey(key string) {
+	if key == "" {
+		return
+	}
+
+	command, found := u.model.Commands.Get(key)
+	if !found {
+		return
+	}
+
+	if len(command.Params) > 0 {
+		u.askParams(key, command)
+		return
+	}
+
+	u.model.StartRunKey(key, false)
+	u.showOutput()
+}
+
+// runFromDetail runs the selected command with the detail panel's entry as its
+// parameters. An empty entry runs it without parameters.
+func (u *ui) runFromDetail() {
+	key := u.model.Selected()
+	if key == "" {
+		return
+	}
+
+	u.model.StartRunKey(key, true)
+	u.model.ParamInput = u.paramsEntry.Text
+	u.model.SubmitParams()
+	u.showOutput()
 }
 
 // describe is the detail line: what the command runs, plus the metadata that
@@ -488,27 +599,6 @@ func describe(command catalog.Command) string {
 	return strings.Join(lines, "\n")
 }
 
-func (u *ui) runSelected(withParams bool) {
-	u.runKey(u.model.Selected(), withParams)
-}
-
-// runKey runs one command: the row's key when a row button asked, the
-// selection when the toolbar did.
-func (u *ui) runKey(key string, withParams bool) {
-	if key == "" {
-		return
-	}
-
-	u.model.StartRunKey(key, withParams)
-
-	if withParams {
-		u.askParams()
-		return
-	}
-
-	u.showOutput()
-}
-
 // reload replaces the model state after an edit and refreshes every view built
 // from it. The widgets are optional so a test can exercise the submit paths
 // without a window.
@@ -520,9 +610,7 @@ func (u *ui) reload(commands catalog.Catalog, history timeline.Log) {
 		u.list.UnselectAll()
 	}
 
-	if u.detail != nil {
-		u.detail.SetText("")
-	}
+	u.clearDetail()
 
 	u.refreshGroups()
 	u.refreshHistory()
