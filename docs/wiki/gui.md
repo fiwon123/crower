@@ -30,7 +30,9 @@ A command can carry an **icon** — a short marker such as 🚀 — shown beside
 name, and a **group**; the filter lists every group in use, and the details panel
 shows which one the selected command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
-`crower update --icon/--group`.
+`crower update --icon/--group`. The Icon field has a **Pick…** button with a grid
+of about a hundred emoji; the field stays editable, so any other emoji can be
+typed or pasted.
 
 Selecting a row opens a **Details** panel below the list; the **Details** toggle
 collapses it again. The panel shows the exec line and the command's metadata,
