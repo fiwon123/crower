@@ -43,6 +43,7 @@ jobs:
             -arch "${{ matrix.arch }}" \
             -name crower-gui \
             -app-id com.fiwon123.crower \
+            -tags fyne \
             -icon internal/fyneui/logo.png \
             -ldflags "-X=github.com/fiwon123/crower/cmd.Version=${VERSION}" \
             ./cmd/crowergui
