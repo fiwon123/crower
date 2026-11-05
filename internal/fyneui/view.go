@@ -230,11 +230,19 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	})
 	u.setupSelect.SetSelected(u.activeSetup)
 
-	controls := container.NewHBox(
-		widget.NewLabel("Setup"), u.setupSelect,
-		widget.NewLabel("Group"), u.groupFilter,
-		groupsButton,
-	)
+	controls := container.NewHBox(widget.NewLabel("Setup"), u.setupSelect)
+
+	if u.setups != nil {
+		removeSetup := widget.NewButtonWithIcon("Delete…", theme.DeleteIcon(), u.showDeleteSetup)
+		removeSetup.Importance = widget.DangerImportance
+
+		controls.Add(container.NewHBox(
+			widget.NewButtonWithIcon("New…", theme.ContentAddIcon(), u.showNewSetup),
+			removeSetup,
+		))
+	}
+
+	controls.Add(widget.NewLabel("Group"), u.groupFilter, groupsButton)
 
 	toolbar := container.NewHBox(
 		widget.NewButtonWithIcon("New", theme.ContentAddIcon(), u.showCreate),

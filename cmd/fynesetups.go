@@ -61,6 +61,29 @@ func (s fyneSetups) Switch(name string) (desktop.State, error) {
 	return desktop.State{Catalog: s.cfg.Catalog(), History: s.cfg.History}, nil
 }
 
+// Create makes an empty named setup, the way `crower setup new` does.
+func (s fyneSetups) Create(name string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	_, err = createSetup(home, strings.TrimSpace(name))
+
+	return err
+}
+
+// Delete removes a named setup and its folder, refusing the default and the
+// active setup just as the CLI does without --force.
+func (s fyneSetups) Delete(name string) error {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+
+	return deleteSetup(home, strings.TrimSpace(name), s.current)
+}
+
 // setupNames lists the original installation and the folders the setups live
 // in. The default entry comes first and the rest are sorted, so the list does
 // not depend on the order the filesystem returns.

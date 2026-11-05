@@ -54,9 +54,11 @@ dialog's field list scrolls, so a long script never clips the buttons.
 ignores the file). The filter then reads `🚀 deploy` instead of a bare name.
 
 The **Setup** list beside it switches between the named setups the CLI creates
-with `crower setup new`. Switching reloads the commands, the history and the
-group icons without restarting, and saves the choice the way
-`crower setup use` does — so the next `crower` run opens the same setup.
+with `crower setup new`; **New…** and **Delete…** manage them without leaving the
+window (the default and the active setup cannot be deleted). Switching reloads
+the commands, the history and the group icons without restarting, and saves the
+choice the way `crower setup use` does — so the next `crower` run opens the same
+setup.
 
 Delete and restore both ask first. Restoring puts the command set back to what a
 history entry recorded and drops the newer entries, through the same

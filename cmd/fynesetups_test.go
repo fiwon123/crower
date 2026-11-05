@@ -10,6 +10,70 @@ import (
 	"github.com/fiwon123/crower/internal/domain/catalog"
 )
 
+// Create writes an empty setup the way `setup new` does, and it appears in the
+// list.
+func TestFyneSetupsCreateWritesAnEmptySetup(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	setups := fyneSetups{current: "default"}
+
+	if err := setups.Create("streamer"); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	path := filepath.Join(home, "crower", "setups", "streamer", "crower.yaml")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("stat %s: %v", path, err)
+	}
+
+	if !slices.Contains(setups.Names(), "streamer") {
+		t.Errorf("Names() = %v, want the new setup", setups.Names())
+	}
+
+	if err := setups.Create("streamer"); err == nil {
+		t.Error("Create accepted an existing setup")
+	}
+
+	if err := setups.Create("a/b"); err == nil {
+		t.Error("Create accepted an invalid name")
+	}
+}
+
+// Delete removes the folder, and refuses the default and the active setup.
+func TestFyneSetupsDeleteRefusesTheDefaultAndTheActive(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	setups := fyneSetups{current: "work"}
+
+	for _, name := range []string{"work", "old"} {
+		if err := setups.Create(name); err != nil {
+			t.Fatalf("Create %s: %v", name, err)
+		}
+	}
+
+	if err := setups.Delete("default"); err == nil {
+		t.Error("Delete removed the default setup")
+	}
+
+	if err := setups.Delete("work"); err == nil {
+		t.Error("Delete removed the active setup")
+	}
+
+	if err := setups.Delete("missing"); err == nil {
+		t.Error("Delete accepted a missing setup")
+	}
+
+	if err := setups.Delete("old"); err != nil {
+		t.Fatalf("Delete old: %v", err)
+	}
+
+	if _, err := os.Stat(filepath.Join(home, "crower", "setups", "old")); !os.IsNotExist(err) {
+		t.Errorf("the deleted setup's folder still exists: %v", err)
+	}
+}
+
 // The switcher lists the original installation first and the setups sorted, so
 // the order does not depend on the filesystem.
 func TestSetupNamesListsTheDefaultFirst(t *testing.T) {

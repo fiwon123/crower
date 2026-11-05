@@ -75,20 +75,8 @@ var setupNewCmd = &cobra.Command{
 			return err
 		}
 
-		path, err := setupConfigPath(home, args[0])
+		path, err := createSetup(home, args[0])
 		if err != nil {
-			return err
-		}
-
-		if _, err := os.Stat(path); err == nil {
-			return fmt.Errorf("setup %q already exists", args[0])
-		}
-
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			return err
-		}
-
-		if err := os.WriteFile(path, nil, 0o644); err != nil {
 			return err
 		}
 
@@ -168,29 +156,17 @@ var setupDeleteCmd = &cobra.Command{
 	Short: "Delete a named setup and its history.",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if args[0] == "default" {
-			return fmt.Errorf("the default setup is not a folder; delete its commands with crower reset")
-		}
-
-		if args[0] == activeSetup() && !setupForce {
-			return fmt.Errorf("setup %q is active; switch first or pass --force", args[0])
-		}
-
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return err
 		}
 
-		path, err := setupConfigPath(home, args[0])
-		if err != nil {
-			return err
+		active := activeSetup()
+		if setupForce {
+			active = ""
 		}
 
-		if _, err := os.Stat(path); err != nil {
-			return fmt.Errorf("setup %q does not exist", args[0])
-		}
-
-		if err := os.RemoveAll(filepath.Dir(path)); err != nil {
+		if err := deleteSetup(home, args[0], active); err != nil {
 			return err
 		}
 
@@ -198,6 +174,54 @@ var setupDeleteCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+// createSetup makes an empty named setup and returns the config path it wrote.
+// The CLI and the window both call it, so `setup new` and the window's New…
+// cannot drift apart.
+func createSetup(home, name string) (string, error) {
+	path, err := setupConfigPath(home, name)
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := os.Stat(path); err == nil {
+		return "", fmt.Errorf("setup %q already exists", name)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return "", err
+	}
+
+	if err := os.WriteFile(path, nil, 0o644); err != nil {
+		return "", err
+	}
+
+	return path, nil
+}
+
+// deleteSetup removes a named setup and its folder. It refuses the default setup,
+// which is the original installation, and the active one -- a running session
+// would otherwise point at a file that no longer exists.
+func deleteSetup(home, name, active string) error {
+	if name == "default" {
+		return fmt.Errorf("the default setup is not a folder; delete its commands with crower reset")
+	}
+
+	if name == active {
+		return fmt.Errorf("setup %q is active; switch first or pass --force", name)
+	}
+
+	path, err := setupConfigPath(home, name)
+	if err != nil {
+		return err
+	}
+
+	if _, err := os.Stat(path); err != nil {
+		return fmt.Errorf("setup %q does not exist", name)
+	}
+
+	return os.RemoveAll(filepath.Dir(path))
 }
 
 // activeSetup resolves the selected setup the way a run does: --setup, then

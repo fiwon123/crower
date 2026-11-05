@@ -27,4 +27,11 @@ type Setups interface {
 	// Switch makes name the default for future runs and reloads the session,
 	// returning the state the window should show.
 	Switch(name string) (State, error)
+
+	// Create makes an empty named setup, the way `crower setup new` does.
+	Create(name string) error
+
+	// Delete removes a named setup and its history. The default setup and the
+	// active one are refused -- the same rules `crower setup delete` applies.
+	Delete(name string) error
 }

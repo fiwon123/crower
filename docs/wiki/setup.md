@@ -43,6 +43,11 @@ command opens the setup the window chose.
 `default` always means the original `~/crower/crower.yaml`, not a folder called
 `default`.
 
+**New…** beside the control creates an empty setup, and **Delete…** removes the
+one the control points at, both with the rules the CLI uses: the name is a slug,
+the default setup is not a folder, and a setup can only be deleted when it is not
+the active one — switch first.
+
 ## 🔗 Related
 
 [⚙️ Configuration](Configuration) · [📖 Commands](How-to-Use)
