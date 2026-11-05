@@ -38,15 +38,21 @@ type Reverter interface {
 }
 
 // Run opens the Fyne window and blocks until it closes.
-func Run(commands catalog.Catalog, history timeline.Log, exec desktop.Executor, editor Editor, reverter Reverter) {
+func Run(commands catalog.Catalog, history timeline.Log, exec desktop.Executor, editor Editor, reverter Reverter, updater Updater) {
 	model := desktop.NewModel(commands, history, exec)
 
 	a := app.New()
 	a.SetIcon(logoResource())
 
 	window := a.NewWindow("crower")
-	window.SetContent(NewContent(model, window, editor, reverter))
+	front := newUI(model, window, editor, reverter, updater)
+	window.SetContent(front.content())
 	window.Resize(fyne.NewSize(960, 640))
+
+	// The lookup runs after the content exists and never blocks the window:
+	// opening crower is not a reason to wait for GitHub.
+	front.checkForUpdates()
+
 	window.ShowAndRun()
 }
 
@@ -58,6 +64,7 @@ type ui struct {
 	window   fyne.Window
 	editor   Editor
 	reverter Reverter
+	updater  Updater
 
 	list          *widget.List
 	detail        *widget.Label
@@ -69,21 +76,38 @@ type ui struct {
 	// rather than recomputing the whole log for every cell.
 	historyRows []desktop.HistoryRow
 	historyRow  int
+
+	// about tab
+	updateStatus  *widget.Label
+	checkButton   *widget.Button
+	installButton *widget.Button
+	restoreButton *widget.Button
+	latest        string
 }
 
-// NewContent builds the window content over the headless model.
-func NewContent(model *desktop.Model, window fyne.Window, editor Editor, reverter Reverter) fyne.CanvasObject {
-	front := &ui{
+func newUI(model *desktop.Model, window fyne.Window, editor Editor, reverter Reverter, updater Updater) *ui {
+	return &ui{
 		model:      model,
 		window:     window,
 		editor:     editor,
 		reverter:   reverter,
+		updater:    updater,
 		historyRow: -1,
 	}
+}
 
+// NewContent builds the window content over the headless model.
+func NewContent(model *desktop.Model, window fyne.Window, editor Editor, reverter Reverter, updater Updater) fyne.CanvasObject {
+	return newUI(model, window, editor, reverter, updater).content()
+}
+
+// content builds the tabs. It is network-free: only Run starts the update
+// lookup, so a test can build the window without reaching GitHub.
+func (u *ui) content() fyne.CanvasObject {
 	tabs := container.NewAppTabs(
-		container.NewTabItem("Commands", front.commandsTab()),
-		container.NewTabItem("History", front.historyTab()),
+		container.NewTabItem("Commands", u.commandsTab()),
+		container.NewTabItem("History", u.historyTab()),
+		container.NewTabItem("About", u.aboutTab()),
 	)
 
 	// The table is built from the model, so a command edit changes it. Refresh
@@ -91,7 +115,7 @@ func NewContent(model *desktop.Model, window fyne.Window, editor Editor, reverte
 	// keystroke.
 	tabs.OnSelected = func(item *container.TabItem) {
 		if item.Text == "History" {
-			front.refreshHistory()
+			u.refreshHistory()
 		}
 	}
 
