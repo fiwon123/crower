@@ -52,6 +52,7 @@ fyne-cross/
 # file and stamps vcs.modified=true into a cross-built crower-gui.
 cmd/crowergui/fyne_metadata_init.go
 cmd/crowergui/fyne_pprof.go
+cmd/crowergui/*.syso
 cmd/crowergui/crowergui
 cmd/crowergui/crowergui.exe
 cmd/crowergui/crower-gui
