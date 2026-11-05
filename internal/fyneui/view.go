@@ -97,6 +97,9 @@ type ui struct {
 	groupFilter   *widget.Select
 	table         *widget.Table
 	historyDetail *widget.Label
+	historyBody   *fyne.Container
+	historyToggle *widget.Button
+	historyShown  bool
 	revert        *widget.Button
 
 	// historyRows is the table's snapshot: rebuild it on reload or tab open
