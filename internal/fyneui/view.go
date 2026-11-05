@@ -7,7 +7,6 @@ package fyneui
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -47,6 +46,7 @@ type Deps struct {
 	Reverter Reverter
 	Updater  Updater
 	Tools    desktop.Tools
+	Groups   desktop.Groups
 }
 
 // Run opens the Fyne window and blocks until it closes.
@@ -78,6 +78,10 @@ type ui struct {
 	reverter Reverter
 	updater  Updater
 	tools    desktop.Tools
+	groups   desktop.Groups
+
+	groupIcons   map[string]string
+	groupOptions []groupOption
 
 	list          *widget.List
 	detail        *widget.Label
@@ -110,6 +114,8 @@ func newUI(model *desktop.Model, window fyne.Window, deps Deps) *ui {
 		reverter:   deps.Reverter,
 		updater:    deps.Updater,
 		tools:      deps.Tools,
+		groups:     deps.Groups,
+		groupIcons: map[string]string{},
 		historyRow: -1,
 	}
 }
@@ -122,6 +128,8 @@ func NewContent(model *desktop.Model, window fyne.Window, deps Deps) fyne.Canvas
 // content builds the tabs. It is network-free: only Run starts the update
 // lookup, so a test can build the window without reaching GitHub.
 func (u *ui) content() fyne.CanvasObject {
+	u.loadGroupIcons()
+
 	tabs := container.NewAppTabs(
 		container.NewTabItem("Commands", u.commandsTab()),
 		container.NewTabItem("History", u.historyTab()),
@@ -165,21 +173,11 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		u.detail.SetText("")
 	}
 
-	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, func(selected string) {
-		if selected == allGroupsLabel {
-			u.model.Group = ""
-		} else {
-			u.model.Group = selected
-		}
-
-		u.model.Index = 0
-		u.list.Refresh()
-		u.list.UnselectAll()
-		u.detail.SetText("")
-	})
+	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, u.selectGroup)
 	u.groupFilter.SetSelected(allGroupsLabel)
 
-	groups := container.NewBorder(nil, nil, widget.NewLabel("Group"), nil, u.groupFilter)
+	groupsButton := widget.NewButtonWithIcon("Groups…", theme.GridIcon(), u.showGroups)
+	groups := container.NewBorder(nil, nil, widget.NewLabel("Group"), groupsButton, u.groupFilter)
 
 	toolbar := container.NewHBox(
 		widget.NewButtonWithIcon("New", theme.ContentAddIcon(), u.showCreate),
@@ -194,24 +192,81 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 // allGroupsLabel is the group filter's "no filter" entry.
 const allGroupsLabel = "All groups"
 
-// refreshGroups rebuilds the filter's options after an edit or a removal. A
-// group with no commands left disappears, and the filter falls back to all.
+// groupOption maps a filter label to the group it selects; the label carries
+// the group's icon, so it is not the same string as the name.
+type groupOption struct {
+	label string
+	name  string
+}
+
+// loadGroupIcons reads the group icons once. A file that cannot be read leaves
+// the filter with names only: an icon is decoration, not a reason the window
+// fails to open.
+func (u *ui) loadGroupIcons() {
+	if u.groups == nil {
+		return
+	}
+
+	icons, err := u.groups.Icons()
+	if err != nil {
+		return
+	}
+
+	u.groupIcons = icons
+}
+
+// selectGroup is the filter's change handler: it maps the label back to the
+// group name and narrows the list.
+func (u *ui) selectGroup(label string) {
+	group := ""
+
+	for _, option := range u.groupOptions {
+		if option.label == label {
+			group = option.name
+			break
+		}
+	}
+
+	u.model.Group = group
+	u.model.Index = 0
+	u.list.Refresh()
+	u.list.UnselectAll()
+	u.detail.SetText("")
+}
+
+// refreshGroups rebuilds the filter's options after an edit, a removal or a
+// group icon change. A group with no commands left disappears, and the filter
+// falls back to all.
 func (u *ui) refreshGroups() {
 	if u.groupFilter == nil {
 		return
 	}
 
-	options := append([]string{allGroupsLabel}, u.model.Groups()...)
+	names := u.model.Groups()
+	options := make([]string, 0, len(names)+1)
+	u.groupOptions = make([]groupOption, 0, len(names)+1)
+
+	options = append(options, allGroupsLabel)
+	u.groupOptions = append(u.groupOptions, groupOption{label: allGroupsLabel})
+
+	for _, name := range names {
+		label := groupLabel(u.groupIcons[name], name)
+		options = append(options, label)
+		u.groupOptions = append(u.groupOptions, groupOption{label: label, name: name})
+	}
+
 	u.groupFilter.Options = options
 	u.groupFilter.Refresh()
 
 	selected := allGroupsLabel
-	if u.model.Group != "" {
-		selected = u.model.Group
+
+	for _, option := range u.groupOptions {
+		if option.name == u.model.Group && option.name != "" {
+			selected = option.label
+		}
 	}
 
-	if !slices.Contains(options, selected) {
-		selected = allGroupsLabel
+	if u.model.Group != "" && selected == allGroupsLabel {
 		u.model.Group = ""
 	}
 

@@ -32,6 +32,10 @@ shows which one the selected command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
 `crower update --icon/--group`.
 
+**Groups…** beside the filter gives each group an icon of its own, stored in
+`groups.toml` next to the configuration (the window is the only writer; the CLI
+ignores the file). The filter then reads `🚀 deploy` instead of a bare name.
+
 Delete and restore both ask first. Restoring puts the command set back to what a
 history entry recorded and drops the newer entries, through the same
 `Session.RevertTo` path `crower revert` uses.
