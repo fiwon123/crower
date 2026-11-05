@@ -79,10 +79,11 @@ The workflow tags `main`, builds six platform archives, verifies each binary's
 embedded revision, writes `checksums.txt`, and creates a **draft** release —
 publish it by hand, or pass the `publish` input.
 
-The changelog is built by `scripts/release-notes.sh` from the pull requests
-merged into `dev`, **not** from `generate-notes`: feature commits are
-squash-merged, so the commit graph the generator walks cannot see them and every
-shipped change would be missing from the notes.
+The published body follows `docs/release-notes-template.md` and ends with a
+compare link, not a pasted PR list: `generate-notes` cannot see squash-merged
+feature commits, and a pasted list goes stale. `scripts/release-notes.sh` prints
+the PRs merged into `dev` for the release manager to turn into Highlights and
+Fixes while the release is a draft.
 
 ## 🧪 What a green run proves
 

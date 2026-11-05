@@ -463,3 +463,91 @@ func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
 		}
 	}
 }
+
+// The published body follows the v0.8.0 house style: an opening sentence then
+// section emoji in a fixed order, with platform icons in a CLI/GUI table (#353).
+// Shields.io badges are not part of it — GitHub has no custom text colour, and
+// the v0.8.0 page that set the style has none.
+func TestReleaseNotesFollowTheHouseStyle(t *testing.T) {
+	notes := releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "publish")
+
+	for _, banned := range []string{"img.shields.io", "## Crower"} {
+		if strings.Contains(notes, banned) {
+			t.Errorf("the notes step still emits %q; the house style uses section emoji and platform icons, not badges or a repeated title (#353)", banned)
+		}
+	}
+
+	headings := []string{
+		"## 📦 Downloads",
+		"## ⚙️ Install",
+		"## ⚡ Upgrade",
+		"## 🔐 Verify",
+		"## 📝 Changelog",
+	}
+
+	last := -1
+	for _, heading := range headings {
+		at := strings.Index(notes, heading)
+		if at < 0 {
+			t.Fatalf("the notes step does not emit %q", heading)
+		}
+		if at <= last {
+			t.Errorf("the notes step emits %q out of order", heading)
+		}
+		last = at
+	}
+
+	rows := []string{
+		"| Platform | CLI | GUI |",
+		"| 🐧 Linux amd64 |",
+		"| 🪟 Windows amd64 |",
+		"| 🍎 macOS Intel |",
+		"| 🍎 macOS Apple Silicon |",
+	}
+	for _, row := range rows {
+		if !strings.Contains(notes, row) {
+			t.Errorf("the Downloads table is missing %q", row)
+		}
+	}
+
+	if !strings.Contains(notes, "vcs.modified=false") {
+		t.Errorf("the Verify section does not state vcs.modified=false")
+	}
+}
+
+// The template is the contract the workflow and the hand-written bodies follow,
+// so it has to keep the full order — including the two sections the workflow
+// leaves for the release manager to write.
+func TestReleaseNotesTemplateKeepsTheHouseOrder(t *testing.T) {
+	template := readRepositoryFile(t, "docs/release-notes-template.md")
+
+	headings := []string{
+		"## ✨ Highlights",
+		"## 🛠 Fixes",
+		"## 📦 Downloads",
+		"## ⚙️ Install",
+		"## ⚡ Upgrade",
+		"## 🔐 Verify",
+		"## 📝 Changelog",
+	}
+
+	last := -1
+	for _, heading := range headings {
+		at := strings.Index(template, heading)
+		if at < 0 {
+			t.Fatalf("the release notes template does not show %q", heading)
+		}
+		if at <= last {
+			t.Errorf("the release notes template shows %q out of order", heading)
+		}
+		last = at
+	}
+
+	if strings.Contains(template, "img.shields.io") {
+		t.Errorf("the release notes template mentions shields.io; colour is emoji, not badges")
+	}
+
+	if !strings.Contains(template, "| Platform | CLI | GUI |") {
+		t.Errorf("the release notes template does not show the CLI/GUI table")
+	}
+}

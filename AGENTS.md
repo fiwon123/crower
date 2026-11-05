@@ -409,18 +409,20 @@ gh workflow run release.yml --ref main -f version=v0.6.0
 
 - It refuses to build when `dev` holds commits `main` does not: a release ships
   what `main` contains, so merge `dev` into `main` first.
-- **The changelog is built from the PRs merged into `dev`, not from
-  `releases/generate-notes`.** Every feature PR is squash-merged, so its commits
-  never become ancestors of the release commit and the generated notes see only
-  the release merge. `scripts/release-notes.sh` bounds the list by the previous
-  release and this commit, and groups by label.
+- **The published changelog is a compare link, not a pasted PR list.** Every
+  feature PR is squash-merged, so `releases/generate-notes` sees only the
+  release merge; the list itself is long and goes stale. When writing the
+  Highlights and Fixes sections, `scripts/release-notes.sh` prints the PRs
+  merged into `dev`, bounded by the previous release and this commit.
 - A published release is never rewritten; re-running the same version refreshes
-  the draft. Bump the version instead of moving a published tag.
-- **Release notes follow `docs/release-notes-template.md`.** Title
-  `Crower vX.Y.Z` (short, no emoji); emoji only on section headings and the
-  download table's platform rows; professional and under ~60 lines; the full PR
-  list is a compare link, not a pasted list. Copy asset names, the commit and
-  the checksum file from the published release before writing them down.
+  the draft. Bump the version instead of moving a published tag. (Rewriting a
+  description on request is the one exception; the assets and tag never move.)
+- **Release notes follow `docs/release-notes-template.md`.** The release title
+  is `Crower vX.Y.Z` (short, no emoji) and the body does not repeat it; colour
+  is emoji — section headings and the download table's platform rows — never
+  shields.io badges; professional and under ~60 lines; the full PR list is a
+  compare link. Copy asset names, the commit and the checksum file from the
+  published release before writing them down.
 - The workflow itself is not covered by CI. Its first real proof is a run, and a
   run whose jobs never executed proves nothing — which is also why a build job
   stuck on a retired runner label used to leave no draft at all (#121).

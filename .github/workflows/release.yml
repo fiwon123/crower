@@ -368,11 +368,11 @@ jobs:
 
       - name: Create professional release notes
         id: notes
-        # `gh` reads the token from the environment. Every other step that talks
-        # to the API sets it explicitly; this one did not, so the changelog call
-        # failed with nothing in the log to say why (#124).
+        # The body follows docs/release-notes-template.md: section emoji,
+        # platform icons and a CLI/GUI table, with a compare link as the
+        # changelog. The release manager adds Highlights and Fixes while the
+        # release is still a draft.
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           TAG: ${{ needs.prepare.outputs.tag }}
           COMMIT: ${{ needs.prepare.outputs.commit }}
@@ -380,29 +380,22 @@ jobs:
         run: |
           set -euo pipefail
           cat > notes.md <<'EOF'
-          ![Version](https://img.shields.io/badge/version-@TAG@-2563eb?style=flat-square)
-          ![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-059669?style=flat-square)
-          ![CLI](https://img.shields.io/badge/CLI-cgo--free-059669?style=flat-square)
-          ![GUI](https://img.shields.io/badge/GUI-Fyne-7c3aed?style=flat-square)
-
-          ## Crower @TAG@
-
           A terminal file manager and command-alias manager with undoable history and per-item notes.
 
-          ### 📦 Downloads
+          ## 📦 Downloads
 
-          | Platform | CLI | GUI (Fyne) |
-          | :-- | :--: | :--: |
-          | 🐧 Linux amd64 | [crower_@TAG@_linux_amd64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_linux_amd64.tar.gz) | [crower_gui_@TAG@_linux_amd64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_gui_@TAG@_linux_amd64.tar.gz) |
-          | 🐧 Linux arm64 | [crower_@TAG@_linux_arm64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_linux_arm64.tar.gz) | — |
-          | 🪟 Windows amd64 | [crower_@TAG@_windows_amd64.zip](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_windows_amd64.zip) | [crower_gui_@TAG@_windows_amd64.zip](https://github.com/@REPO@/releases/download/@TAG@/crower_gui_@TAG@_windows_amd64.zip) |
-          | 🪟 Windows arm64 | [crower_@TAG@_windows_arm64.zip](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_windows_arm64.zip) | — |
-          | 🍎 macOS Apple Silicon | [crower_@TAG@_darwin_arm64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_darwin_arm64.tar.gz) | [crower_gui_@TAG@_darwin_arm64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_gui_@TAG@_darwin_arm64.tar.gz) |
-          | 🍎 macOS Intel | [crower_@TAG@_darwin_amd64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_darwin_amd64.tar.gz) | [crower_gui_@TAG@_darwin_amd64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_gui_@TAG@_darwin_amd64.tar.gz) |
+          | Platform | CLI | GUI |
+          | --- | --- | --- |
+          | 🐧 Linux amd64 | `crower_@TAG@_linux_amd64.tar.gz` | `crower_gui_@TAG@_linux_amd64.tar.gz` |
+          | 🐧 Linux arm64 | `crower_@TAG@_linux_arm64.tar.gz` | — |
+          | 🪟 Windows amd64 | `crower_@TAG@_windows_amd64.zip` | `crower_gui_@TAG@_windows_amd64.zip` |
+          | 🪟 Windows arm64 | `crower_@TAG@_windows_arm64.zip` | — |
+          | 🍎 macOS Intel | `crower_@TAG@_darwin_amd64.tar.gz` | `crower_gui_@TAG@_darwin_amd64.tar.gz` |
+          | 🍎 macOS Apple Silicon | `crower_@TAG@_darwin_arm64.tar.gz` | `crower_gui_@TAG@_darwin_arm64.tar.gz` |
 
-          > **CLI** is cgo-free and has no window. **GUI** is the Fyne app `crower-gui`.
+          The CLI archive is cgo-free and ships `crower`, the `cr` alias, README, licenses and the `add_to_path` installer. The GUI archive ships `crower-gui`, the Fyne window over the same configuration, with README and licenses.
 
-          ### ⚡ Install
+          ## ⚙️ Install
 
           ```sh
           tar -xzf crower_@TAG@_linux_amd64.tar.gz   # .zip on Windows
@@ -410,39 +403,37 @@ jobs:
           crower --version
           ```
 
-          Run `crower gui` for the terminal menu, or launch `crower-gui` from the GUI archive.
+          `crower gui` opens the terminal menu; `crower-gui` from the GUI archive opens the Fyne window.
 
-          ### 🔐 Verify
+          ## ⚡ Upgrade
+
+          ```sh
+          crower --upgrade
+          ```
+
+          Verifies the archive against the release's `checksums.txt` before replacing the binary.
+
+          ## 🔐 Verify
 
           - SHA-256 for every asset: `checksums.txt`.
-          - Built from the tagged commit, `vcs.modified=false`:
+          - Built from `@COMMIT@` (tag `@TAG@`), `vcs.modified=false`:
 
           ```sh
           go version -m crower | grep vcs.revision
           ```
 
-          ### 📝 Changelog
+          ## 📝 Changelog
           EOF
-          sed -i "s|@TAG@|${TAG}|g; s|@REPO@|${REPO}|g" notes.md
+          sed -i "s|@TAG@|${TAG}|g; s|@REPO@|${REPO}|g; s|@COMMIT@|${COMMIT}|g" notes.md
 
-
-          # `releases/generate-notes` walks the commit graph, and every feature
-          # PR here is squash-merged into `dev` — so the generated notes see the
-          # release merge and list none of the shipped work. The changelog is
-          # built from the PRs merged into `dev` instead, bounded by the
-          # previous release and this commit.
-          #
-          # The changelog is the least important part of the notes: an API
-          # hiccup must not cost the whole dispatch, but it must not be silent
-          # either. Writing to a separate file keeps a truncated body out of
-          # notes.md, and the failure branch appends a usable line.
+          # The published body carries a compare link, not a pasted PR list: the
+          # list is long, goes stale, and reads worse than the link. The
+          # `scripts/release-notes.sh` helper prints it for the release manager
+          # when writing the Highlights and Fixes sections of the draft.
           if [ -z "$PREV" ]; then
             echo "_Initial release or first tagged version._" >> notes.md
-          elif ./scripts/release-notes.sh "$REPO" "$TAG" "$COMMIT" "$PREV" > changelog.md; then
-            cat changelog.md >> notes.md
           else
-            echo "::warning::could not build the changelog from $PREV; linking the comparison instead" >&2
-            echo "**Full changelog**: https://github.com/${REPO}/compare/${PREV}...${TAG}" >> notes.md
+            printf '\n[`%s...%s`](https://github.com/%s/compare/%s...%s)\n' "$PREV" "$TAG" "$REPO" "$PREV" "$TAG" >> notes.md
           fi
 
       # A draft is the default so the artifacts can be inspected — and rebuilt by
