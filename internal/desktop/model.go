@@ -1,3 +1,5 @@
+// Package desktop is the headless model the Fyne window renders. The window
+// technology lives in internal/fyneui; this package has no UI dependency.
 package desktop
 
 import (

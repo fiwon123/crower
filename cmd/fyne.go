@@ -3,21 +3,24 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/fiwon123/crower/internal/fyneui"
 
 	"github.com/spf13/cobra"
 )
 
-// fyneCmd opens the Fyne window. It exists only in a binary built with
-// -tags fyne and CGO; the default binary keeps the cgo-free desktop.
+// fyneCmd opens the Fyne window. The crower-gui executable invokes it through
+// ExecuteFyne; it is also reachable as `crower fyne` in a tagged build.
 var fyneCmd = &cobra.Command{
 	Use:   "fyne",
-	Short: "Open the Fyne desktop window (CGO build).",
-	Long: `Open the Fyne desktop window.
+	Short: "Open the Fyne window (CGO build).",
+	Long: `Open the Fyne window.
 
-This command exists only in a binary built with -tags fyne and CGO enabled.
-The default crower binary ships the cgo-free desktop instead.`,
-	Example: "  crower fyne",
+This command is the entrypoint of the crower-gui executable, built with
+-tags fyne and CGO. The default CLI binary does not include it.`,
+	Example: "  crower-gui",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := newSession(cmd)
 		if err != nil {
@@ -31,4 +34,15 @@ The default crower binary ships the cgo-free desktop instead.`,
 
 func init() {
 	rootCmd.AddCommand(fyneCmd)
+}
+
+// ExecuteFyne is the crower-gui entrypoint. The root command parses the
+// persistent flags (--config, --setup) and dispatches to the fyne command.
+func ExecuteFyne(args []string) {
+	rootCmd.SetArgs(append([]string{"fyne"}, args...))
+
+	if err := rootCmd.Execute(); err != nil {
+		fmt.Fprintln(streams.Err, "error:", err)
+		os.Exit(1)
+	}
 }

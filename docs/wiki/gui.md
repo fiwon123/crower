@@ -1,30 +1,27 @@
-# 🎛️ `gui` · `desktop` · `fyne`
+# 🎛️ `gui` · `crower-gui`
 
-**Three surfaces over the same configuration.**
+**Two entries over the same configuration.**
 
 | Command | Surface |
 | --- | --- |
-| `crower gui` | Interactive terminal UI |
-| `crower desktop` | Native window (cgo-free) |
-| `crower fyne` | Fyne window (separate CGO archive) |
+| `crower gui` | Interactive terminal UI (CLI archive) |
+| `crower-gui` | Fyne window (GUI archive) |
 
 ```bash
 crower gui
-crower desktop
-crower fyne
+crower-gui
 ```
 
-All three read the same `crower.yaml`, so a command created in the CLI appears
-in each, and anything done there lands in the history. The Fyne window can
+Both read the same `crower.yaml`, so a command created in the CLI appears in
+the window, and anything done there lands in the history. The Fyne window can
 create, edit and delete commands with the same catalog rules and history notes
 as the CLI.
 
 > [!NOTE]
-> `desktop` needs a graphical session; in a terminal-only environment use `gui`.
-> `fyne` exists only in the `crower_fyne_<version>_linux_amd64`,
-> `_windows_amd64`, `_darwin_arm64` and `_darwin_amd64` archives; the default
-> archive keeps the cgo-free `desktop`. The windows are not exercised by CI —
-> see **[🧪 Verifying claims](Verifying-claims)**.
+> `crower-gui` needs a graphical session; in a terminal-only environment use
+> `crower gui`. It is a separate executable in the `crower_gui_*` archive
+> (Linux/Windows amd64, macOS arm64/Intel), not a `crower` subcommand. The CLI
+> archive is cgo-free and has no window.
 
 ## 🔗 Related
 

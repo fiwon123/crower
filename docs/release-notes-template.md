@@ -1,23 +1,34 @@
 # Release notes template
 
-The style used for `v0.8.0`. Use it for every release; keep the result under
-~60 lines. Fill the placeholders, keep the section order.
+The house style, first used by `v0.8.0`. Every release body follows it; keep the
+result under ~60 lines and keep the section order.
 
-Rules:
+## Rules
 
-- **Title:** `Crower vX.Y.Z` — short, no emoji, no tagline.
-- **Emoji:** only at the start of a section heading, and on the platform rows of
-  the download table. Nothing else.
-- **Tone:** professional, present tense, one idea per line. No exclamation
+- **Title.** The release title is `Crower vX.Y.Z` — short, no emoji. The body
+  does not repeat it.
+- **Colour.** GitHub does not render custom text colour. Sections use emoji
+  headings and the download table uses platform icons; never shields.io badges.
+- **Icons.** 🐧 Linux, 🪟 Windows, 🍎 macOS. Section headings: ✨ Highlights,
+  🛠 Fixes, 📦 Downloads, ⚙️ Install, ⚡ Upgrade, 🔐 Verify, ⚠️ Known
+  limitations, 📝 Changelog.
+- **Tone.** Professional, present tense, one idea per line. No exclamation
   marks, no "we are excited", no thanks paragraph.
-- **Detail:** 4–6 highlights, a short fixes list, then the operational sections.
-  The full PR list is a link, never pasted into the body.
-- **Facts:** asset names, the commit and the checksum file must be copied from
-  the actual release, not from memory.
+- **Detail.** 3–6 highlights and a short fixes list, then the operational
+  sections. The full PR list is a compare link, never pasted into the body.
+- **Facts.** Asset names, the commit and the checksum file are copied from the
+  published release, not from memory.
+- **Assets.** `crower_vX.Y.Z_<os>_<arch>` is the cgo-free CLI; it ships
+  `crower`, the `cr` alias, README, licenses and `add_to_path`.
+  `crower_gui_vX.Y.Z_<os>_<arch>` is the Fyne app `crower-gui`, for Linux and
+  Windows amd64 plus macOS Apple Silicon and Intel. The other two platforms get
+  the CLI only.
+- **Draft first.** The workflow creates a draft with the operational sections.
+  Add Highlights and Fixes while it is a draft, then publish.
 
----
+## Template
 
-```markdown
+````markdown
 A terminal file manager and command-alias manager with undoable history and per-item notes.
 
 ## ✨ Highlights
@@ -33,16 +44,16 @@ A terminal file manager and command-alias manager with undoable history and per-
 
 ## 📦 Downloads
 
-| Platform | CLI | GUI | Fyne |
-| --- | --- | --- | --- |
-| 🐧 Linux amd64 | `crower_vX.Y.Z_linux_amd64.tar.gz` | `crower_gui_vX.Y.Z_linux_amd64.tar.gz` | `crower_fyne_vX.Y.Z_linux_amd64.tar.gz` |
-| 🐧 Linux arm64 | `crower_vX.Y.Z_linux_arm64.tar.gz` | `crower_gui_vX.Y.Z_linux_arm64.tar.gz` | — |
-| 🪟 Windows amd64 | `crower_vX.Y.Z_windows_amd64.zip` | `crower_gui_vX.Y.Z_windows_amd64.zip` | `crower_fyne_vX.Y.Z_windows_amd64.zip` |
-| 🪟 Windows arm64 | `crower_vX.Y.Z_windows_arm64.zip` | `crower_gui_vX.Y.Z_windows_arm64.zip` | — |
-| 🍎 macOS Intel | `crower_vX.Y.Z_darwin_amd64.tar.gz` | `crower_gui_vX.Y.Z_darwin_amd64.tar.gz` | `crower_fyne_vX.Y.Z_darwin_amd64.tar.gz` |
-| 🍎 macOS Apple Silicon | `crower_vX.Y.Z_darwin_arm64.tar.gz` | `crower_gui_vX.Y.Z_darwin_arm64.tar.gz` | `crower_fyne_vX.Y.Z_darwin_arm64.tar.gz` |
+| Platform | CLI | GUI |
+| --- | --- | --- |
+| 🐧 Linux amd64 | `crower_vX.Y.Z_linux_amd64.tar.gz` | `crower_gui_vX.Y.Z_linux_amd64.tar.gz` |
+| 🐧 Linux arm64 | `crower_vX.Y.Z_linux_arm64.tar.gz` | — |
+| 🪟 Windows amd64 | `crower_vX.Y.Z_windows_amd64.zip` | `crower_gui_vX.Y.Z_windows_amd64.zip` |
+| 🪟 Windows arm64 | `crower_vX.Y.Z_windows_arm64.zip` | — |
+| 🍎 macOS Intel | `crower_vX.Y.Z_darwin_amd64.tar.gz` | `crower_gui_vX.Y.Z_darwin_amd64.tar.gz` |
+| 🍎 macOS Apple Silicon | `crower_vX.Y.Z_darwin_arm64.tar.gz` | `crower_gui_vX.Y.Z_darwin_arm64.tar.gz` |
 
-Each archive includes `crower`, the `cr` alias, README and licenses. The CLI archives also include the `add_to_path` installer. The Fyne archives are a separate CGO build for Linux/Windows amd64 and macOS arm64/Intel and add `crower fyne`; the other archives keep the cgo-free desktop.
+The CLI archive is cgo-free and ships `crower`, the `cr` alias, README, licenses and the `add_to_path` installer. The GUI archive ships `crower-gui`, the Fyne window over the same configuration, with README and licenses.
 
 ## ⚙️ Install
 
@@ -52,8 +63,7 @@ tar -xzf crower_vX.Y.Z_linux_amd64.tar.gz   # .zip on Windows
 crower --version
 ```
 
-`crower gui` opens the terminal menu; `crower desktop` opens the cgo-free window;
-`crower fyne` opens the Fyne window in the Fyne archive.
+`crower gui` opens the terminal menu; `crower-gui` from the GUI archive opens the Fyne window.
 
 ## ⚡ Upgrade
 
@@ -75,9 +85,8 @@ go version -m crower | grep vcs.revision
 ## ⚠️ Known limitations
 
 - <open issue that affects this release, or omit the section entirely>.
-- Windows binaries are cross-compiled unless a Windows runner executed them.
 
 ## 📝 Changelog
 
 [`vPREV...vX.Y.Z`](https://github.com/fiwon123/crower/compare/vPREV...vX.Y.Z) — one sentence on the main theme.
-```
+````

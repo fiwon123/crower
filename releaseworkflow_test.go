@@ -150,13 +150,13 @@ func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
 	}
 }
 
-// The Fyne job is a separate CGO build. It targets Linux/Windows amd64 and
+// The GUI job is a separate CGO build. It targets Linux/Windows amd64 and
 // macOS arm64/Intel, and its rows must stay on runners that exist; it is not
-// part of the six cgo-free targets above.
-func TestReleaseWorkflowBuildsTheFynePlatforms(t *testing.T) {
-	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "fyne"))
+// part of the six cgo-free CLI targets above.
+func TestReleaseWorkflowBuildsTheGUIPlatforms(t *testing.T) {
+	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "gui"))
 	if len(targets) != 4 {
-		t.Fatalf("found %d Fyne targets, want 4", len(targets))
+		t.Fatalf("found %d GUI targets, want 4", len(targets))
 	}
 
 	built := make(map[string]bool, len(targets))
@@ -164,13 +164,13 @@ func TestReleaseWorkflowBuildsTheFynePlatforms(t *testing.T) {
 		built[target.goos+"/"+target.goarch] = true
 
 		if !supportedRunners[target.runner] {
-			t.Errorf("Fyne %s/%s builds on %q, which is not a runner label known to exist", target.goos, target.goarch, target.runner)
+			t.Errorf("GUI %s/%s builds on %q, which is not a runner label known to exist", target.goos, target.goarch, target.runner)
 		}
 	}
 
 	for _, platform := range []string{"linux/amd64", "windows/amd64", "darwin/arm64", "darwin/amd64"} {
 		if !built[platform] {
-			t.Errorf("the Fyne release no longer builds %s", platform)
+			t.Errorf("the GUI release no longer builds %s", platform)
 		}
 	}
 }
@@ -449,6 +449,7 @@ func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
 	// sample tag lets the asset name be compared with both sides: the matrix
 	// and the filenames the release actually publishes.
 	downloads := strings.ReplaceAll(readRepositoryFile(t, releaseWorkflowPath), "${TAG}", "v1.2.3")
+	downloads = strings.ReplaceAll(downloads, "@TAG@", "v1.2.3")
 
 	for _, target := range targets {
 		asset, err := update.AssetName(target.goos, target.goarch, "v1.2.3")
@@ -460,5 +461,93 @@ func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
 		if !strings.Contains(downloads, asset) {
 			t.Errorf("%s/%s: the release does not publish %q", target.goos, target.goarch, asset)
 		}
+	}
+}
+
+// The published body follows the v0.8.0 house style: an opening sentence then
+// section emoji in a fixed order, with platform icons in a CLI/GUI table (#353).
+// Shields.io badges are not part of it — GitHub has no custom text colour, and
+// the v0.8.0 page that set the style has none.
+func TestReleaseNotesFollowTheHouseStyle(t *testing.T) {
+	notes := releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "publish")
+
+	for _, banned := range []string{"img.shields.io", "## Crower"} {
+		if strings.Contains(notes, banned) {
+			t.Errorf("the notes step still emits %q; the house style uses section emoji and platform icons, not badges or a repeated title (#353)", banned)
+		}
+	}
+
+	headings := []string{
+		"## 📦 Downloads",
+		"## ⚙️ Install",
+		"## ⚡ Upgrade",
+		"## 🔐 Verify",
+		"## 📝 Changelog",
+	}
+
+	last := -1
+	for _, heading := range headings {
+		at := strings.Index(notes, heading)
+		if at < 0 {
+			t.Fatalf("the notes step does not emit %q", heading)
+		}
+		if at <= last {
+			t.Errorf("the notes step emits %q out of order", heading)
+		}
+		last = at
+	}
+
+	rows := []string{
+		"| Platform | CLI | GUI |",
+		"| 🐧 Linux amd64 |",
+		"| 🪟 Windows amd64 |",
+		"| 🍎 macOS Intel |",
+		"| 🍎 macOS Apple Silicon |",
+	}
+	for _, row := range rows {
+		if !strings.Contains(notes, row) {
+			t.Errorf("the Downloads table is missing %q", row)
+		}
+	}
+
+	if !strings.Contains(notes, "vcs.modified=false") {
+		t.Errorf("the Verify section does not state vcs.modified=false")
+	}
+}
+
+// The template is the contract the workflow and the hand-written bodies follow,
+// so it has to keep the full order — including the two sections the workflow
+// leaves for the release manager to write.
+func TestReleaseNotesTemplateKeepsTheHouseOrder(t *testing.T) {
+	template := readRepositoryFile(t, "docs/release-notes-template.md")
+
+	headings := []string{
+		"## ✨ Highlights",
+		"## 🛠 Fixes",
+		"## 📦 Downloads",
+		"## ⚙️ Install",
+		"## ⚡ Upgrade",
+		"## 🔐 Verify",
+		"## 📝 Changelog",
+	}
+
+	last := -1
+	for _, heading := range headings {
+		at := strings.Index(template, heading)
+		if at < 0 {
+			t.Fatalf("the release notes template does not show %q", heading)
+		}
+		if at <= last {
+			t.Errorf("the release notes template shows %q out of order", heading)
+		}
+		last = at
+	}
+
+	if strings.Contains(template, "img.shields.io") {
+		t.Errorf("the release notes template mentions shields.io; colour is emoji, not badges")
+	}
+
+	if !strings.Contains(template, "| Platform | CLI | GUI |") {
+		t.Errorf("the release notes template does not show the CLI/GUI table")
 	}
 }
