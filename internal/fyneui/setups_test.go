@@ -104,8 +104,8 @@ func TestCreateSetupAddsItToTheSelector(t *testing.T) {
 		t.Errorf("selector = %v, want the new setup in it", front.setupSelect.Options)
 	}
 
-	if front.setupSelect.Selected != "default" {
-		t.Errorf("selector selected %q, want the active setup kept", front.setupSelect.Selected)
+	if want := front.setupLabel("default"); front.setupSelect.Selected != want {
+		t.Errorf("selector selected %q, want %q kept", front.setupSelect.Selected, want)
 	}
 }
 
