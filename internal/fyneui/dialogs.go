@@ -41,7 +41,7 @@ func (u *ui) showCreate() {
 	items := []*widget.FormItem{
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
-		widget.NewFormItem("Icon", icon),
+		widget.NewFormItem("Icon", u.iconField(icon)),
 		widget.NewFormItem("Group", group),
 		widget.NewFormItem("Exec", exec),
 	}
@@ -133,7 +133,7 @@ func (u *ui) showEditFor(key string) {
 	items := []*widget.FormItem{
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
-		widget.NewFormItem("Icon", icon),
+		widget.NewFormItem("Icon", u.iconField(icon)),
 		widget.NewFormItem("Group", group),
 		widget.NewFormItem("Exec", exec),
 		widget.NewFormItem("Description", description),
