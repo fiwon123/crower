@@ -22,6 +22,15 @@ type Changes struct {
 	Aliases []string
 	Exec    string
 
+	// Icon and Group are display metadata. An empty value means "not
+	// supplied"; ClearIcon and ClearGroup remove an existing one, the same
+	// way ClearAliases does.
+	Icon  string
+	Group string
+
+	ClearIcon  bool
+	ClearGroup bool
+
 	// ClearAliases distinguishes "set the alias list to empty" from "leave it
 	// alone": an empty Aliases slice means not supplied, so a caller that needs
 	// to remove every alias sets this instead.
@@ -100,6 +109,16 @@ func (c Catalog) Update(key string, changes Changes) (UpdateResult, error) {
 
 	if changes.Exec != "" {
 		updated.Exec = changes.Exec
+		changed++
+	}
+
+	if changes.Icon != "" || changes.ClearIcon {
+		updated.Icon = changes.Icon
+		changed++
+	}
+
+	if changes.Group != "" || changes.ClearGroup {
+		updated.Group = changes.Group
 		changed++
 	}
 

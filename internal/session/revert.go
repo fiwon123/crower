@@ -1,6 +1,9 @@
 package session
 
 import (
+	"slices"
+
+	"github.com/fiwon123/crower/internal/adapters/storage/command"
 	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
@@ -19,9 +22,29 @@ func (s *Session) RevertTo(entry *timeline.Content) error {
 		return err
 	}
 
+	// The restored map has to replace the in-memory one as well. The CLI exits
+	// after a revert and never noticed, but the Fyne window keeps running: a
+	// stale catalog would show the commands the revert just removed, and a
+	// later Save would write them back over the restored file.
+	s.ReplaceCatalog(catalogOf(commands, sortedNames(commands)))
+
 	s.removeUntilHistory(entry)
 
 	return nil
+}
+
+// sortedNames is the order a fresh load sees: the TOML encoder writes map keys
+// in sorted order, so the in-memory catalog must use the same order or the
+// list reorders on the next start.
+func sortedNames(commands command.MapData) []string {
+	names := make([]string, 0, len(commands))
+	for name := range commands {
+		names = append(names, name)
+	}
+
+	slices.Sort(names)
+
+	return names
 }
 
 // removeUntilHistory drops entries from the newest down to the one that was

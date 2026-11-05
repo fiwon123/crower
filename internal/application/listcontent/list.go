@@ -176,6 +176,8 @@ func (u *UseCase) listCommands() error {
 			Exec:        command.Exec,
 			Description: command.Description,
 			Params:      command.Params,
+			Icon:        command.Icon,
+			Group:       command.Group,
 			Shell:       command.Shell,
 			Cwd:         command.Cwd,
 			Env:         redactEnv(command.Env),

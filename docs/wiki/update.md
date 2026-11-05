@@ -13,6 +13,8 @@ crower update [command] [flags]
 | `-n`, `--name` | New name |
 | `-a`, `--alias` | New aliases, comma-separated |
 | `-e`, `--exec` | New command text |
+| `--icon` | New icon; an empty value removes it |
+| `--group` | New group; an empty value removes it |
 | `-l`, `--last` | Update the most recent entry |
 | `-c`, `--create` | Update the most recent `create` |
 | `-x`, `--execute` | Update the most recent `execute` |
@@ -35,6 +37,8 @@ crower update --last -e "make test"          # edit what you just ran
 > `Description`, `Params`, `Shell`, `Cwd`, `Env` and `Timeout` are part of the
 > command schema, but `update` has no flags for them yet: edit the configuration
 > file or re-import a pack. See [`execute`](execute#-execution-target).
+> `--icon` and `--group` are the exception: they are display metadata, so the
+> window can set them too.
 
 ## 🔗 Related
 

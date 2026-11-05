@@ -27,7 +27,15 @@ This command is the entrypoint of the crower-gui executable, built with
 			return err
 		}
 
-		fyneui.Run(cfg.Catalog(), cfg.History, newExecutor(cfg), newFyneEditor(cfg))
+		fyneui.Run(cfg.Catalog(), cfg.History, fyneui.Deps{
+			Exec:     newExecutor(cfg),
+			Editor:   newFyneEditor(cfg),
+			Reverter: newFyneReverter(cfg),
+			Updater:  newFyneUpdater(cfg, Version),
+			Tools:    newFyneTools(cfg),
+			Groups:   newFyneGroups(cfg),
+			Setups:   newFyneSetups(cfg),
+		})
 		return nil
 	},
 }

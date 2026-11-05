@@ -93,14 +93,7 @@ func New(
 		return nil, err
 	}
 
-	// Entries written before the name was stored on the entry itself carry it
-	// only inside the note. Resolve it on load so `--last` and the history view
-	// work on a file from an older build.
-	for i := range historyData.AllData {
-		if historyData.AllData[i].CommandName == "" {
-			historyData.AllData[i].CommandName = notes.CommandName(historyData.AllData[i].Note)
-		}
-	}
+	fillCommandNames(&historyData)
 
 	log, err := logger.New(logPath, opts.Streams.Out, opts.Streams.Err)
 	if err != nil {
@@ -122,21 +115,83 @@ func New(
 		err:                opts.Streams.Err,
 	}
 
+	cfg.warnAboutLoadedState()
+
+	return cfg, nil
+}
+
+// Reload points this session at another configuration and replaces the state
+// loaded from the previous one.
+//
+// The Session value itself is kept, so the adapters built over it -- the
+// editor, the reverter, the tools, the group icons -- follow the switch
+// without being rebuilt, and the logger keeps writing where it did. This is
+// what lets the window change setup without restarting.
+func (s *Session) Reload(cfgFilePath string) error {
+	if cfgFilePath == "" {
+		return fmt.Errorf("reload needs a configuration path")
+	}
+
+	commandFile := storage.NewCommandFile(cfgFilePath)
+
+	commands, order, err := commandFile.Load()
+	if err != nil {
+		return err
+	}
+
+	historyFiles := storage.NewHistoryFiles(commandFile.Folder())
+
+	if err := historyFiles.Ensure(); err != nil {
+		return err
+	}
+
+	history, err := historyFiles.Load()
+	if err != nil {
+		return err
+	}
+
+	fillCommandNames(&history)
+
+	s.commands = commandFile
+	s.historyFiles = historyFiles
+	s.orderKeys = order
+	s.allCommandsByName = commands
+	s.allCommandsByAlias = getAliasMap(commands)
+	s.History = history
+
+	s.warnAboutLoadedState()
+
+	return nil
+}
+
+// fillCommandNames backfills the name from the note for entries written before
+// the entry carried it, so `--last` and the history view work on a file from an
+// older build.
+func fillCommandNames(history *timeline.Log) {
+	for i := range history.AllData {
+		if history.AllData[i].CommandName == "" {
+			history.AllData[i].CommandName = notes.CommandName(history.AllData[i].Note)
+		}
+	}
+}
+
+// warnAboutLoadedState reports the problems a loaded file has and cannot fix:
+// collisions and environment literals. Reload calls it again, so a setup switch
+// tells the user about that setup's problems too.
+func (s *Session) warnAboutLoadedState() {
 	// A config written by an older build (or edited by hand) can hold a
 	// collision. Resolution is deterministic now, but the user still needs to
 	// know that one of the two commands is unreachable by that key.
-	for _, warning := range commandCollisions(allCommands) {
-		cfg.Logger.Warning(warning)
+	for _, warning := range commandCollisions(s.allCommandsByName) {
+		s.Logger.Warning(warning)
 	}
 
 	// A file written by an older build (or edited by hand) may hold a literal
 	// the write path now refuses. Load it and say so: refusing the whole
 	// configuration would leave the user unable to fix it.
-	for _, command := range cfg.Catalog().Commands() {
+	for _, command := range s.Catalog().Commands() {
 		if err := shell.ValidateEnv(command.Env); err != nil {
-			cfg.Logger.Warning(fmt.Sprintf("command %q: %v", command.Name, err))
+			s.Logger.Warning(fmt.Sprintf("command %q: %v", command.Name, err))
 		}
 	}
-
-	return cfg, nil
 }

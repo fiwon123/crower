@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/fiwon123/crower/internal/adapters/storage/command"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/timeline"
 
@@ -268,5 +269,34 @@ func TestHistorySnapshotUsesTheCommandMapFormat(t *testing.T) {
 
 	if !slices.Equal(got.AllAlias, []string{"hi"}) {
 		t.Errorf("snapshot aliases = %v, want [hi]", got.AllAlias)
+	}
+}
+
+// The icon and the group are part of the stored command, so a reload sees what
+// the previous run wrote.
+func TestIconAndGroupSurviveAReload(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "crower.yaml")
+	cfg := newTestConfigAt(t, path)
+
+	commands := catalog.New(nil, []catalog.Command{{
+		Name:  "deploy",
+		Exec:  "make deploy",
+		Icon:  "🚀",
+		Group: "ship",
+	}})
+
+	if err := cfg.Commit(commands, operation.Create, "deploy", "note"); err != nil {
+		t.Fatalf("Commit: %v", err)
+	}
+
+	reloaded := newTestConfigAt(t, path)
+
+	got, found := reloaded.Catalog().Get("deploy")
+	if !found {
+		t.Fatal("deploy is missing after a reload")
+	}
+
+	if got.Icon != "🚀" || got.Group != "ship" {
+		t.Errorf("reloaded = %+v, want the icon and group", got)
 	}
 }

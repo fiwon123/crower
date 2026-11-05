@@ -16,6 +16,16 @@ func AddAllAliasFlag(cmd *cobra.Command, allAlias *[]string) {
 	cmd.Flags().StringSliceVarP(allAlias, "alias", "a", []string{}, "define alias (--alias 'a1,a2,a3')")
 }
 
+// AddIconFlag adds the --icon flag used by create and update.
+func AddIconFlag(cmd *cobra.Command, icon *string) {
+	cmd.Flags().StringVar(icon, "icon", "", "short marker shown beside the command (an emoji)")
+}
+
+// AddGroupFlag adds the --group flag used by create and update.
+func AddGroupFlag(cmd *cobra.Command, group *string) {
+	cmd.Flags().StringVar(group, "group", "", "name of the group the command belongs to")
+}
+
 // AddExecFlag adds the --exec flag.
 func AddExecFlag(cmd *cobra.Command, exec *string) {
 	cmd.Flags().StringVarP(exec, "exec", "e", "", `define the command (--exec "echo 'Hello World!'")`)

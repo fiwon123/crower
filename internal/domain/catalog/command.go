@@ -19,6 +19,13 @@ type Command struct {
 	Description string
 	Params      []string
 
+	// Icon is a short marker -- an emoji -- shown beside the command so the
+	// list is recognisable at a glance, and Group names the set it belongs
+	// to. Both are presentation: they change no behaviour, and a file that
+	// lacks them loads as empty.
+	Icon  string
+	Group string
+
 	// Shell names the shell the command runs through ("sh", "pwsh", "cmd"),
 	// and Cwd is the folder it runs in. Empty Shell keeps the platform's own
 	// shell; empty Cwd keeps the caller's working directory. Every step of a

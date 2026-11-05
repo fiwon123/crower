@@ -261,6 +261,8 @@ func (u *UseCase) importPack(pack []catalog.Command, overwrite bool) error {
 			Steps:       imported.Steps,
 			Description: imported.Description,
 			Params:      imported.Params,
+			Icon:        imported.Icon,
+			Group:       imported.Group,
 			Shell:       imported.Shell,
 			Cwd:         imported.Cwd,
 			Env:         maps.Clone(imported.Env),

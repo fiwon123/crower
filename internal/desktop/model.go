@@ -4,6 +4,7 @@ package desktop
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/fiwon123/crower/internal/domain/catalog"
@@ -39,6 +40,9 @@ type Model struct {
 	Index    int
 	Filter   string
 
+	// Group limits the visible commands to one group when non-empty.
+	Group string
+
 	// run
 	SelectedKey string
 	Params      []string
@@ -70,23 +74,63 @@ func (m *Model) Reload(commands catalog.Catalog, history timeline.Log) {
 	m.Keys = commands.Names()
 	m.Index = 0
 	m.Filter = ""
+	m.Group = ""
+}
+
+// ReplaceHistory swaps the log after an operation that changed it without
+// changing the command set -- a copy, a search or an extract started from the
+// window's tools. The list is unaffected, so it keeps its selection.
+func (m *Model) ReplaceHistory(history timeline.Log) {
+	m.History = history
 }
 
 func (m *Model) FilteredKeys() []string {
-	if m.Filter == "" {
-		return m.Keys
-	}
-	f := strings.ToLower(m.Filter)
-	var out []string
-	for _, k := range m.Keys {
-		if strings.Contains(strings.ToLower(k), f) {
-			out = append(out, k)
+	filter := strings.ToLower(m.Filter)
+	out := make([]string, 0, len(m.Keys))
+
+	for _, key := range m.Keys {
+		if m.Group != "" {
+			command, found := m.Commands.Get(key)
+			if !found || command.Group != m.Group {
+				continue
+			}
 		}
+
+		if filter != "" && !strings.Contains(strings.ToLower(key), filter) {
+			continue
+		}
+
+		out = append(out, key)
 	}
-	if len(out) == 0 {
+
+	// The text filter has always fallen back to the whole set so a typo does
+	// not empty the window. A group filter does not: "this group is empty" is
+	// a real answer the user asked for.
+	if len(out) == 0 && m.Group == "" && filter != "" {
 		return m.Keys
 	}
+
 	return out
+}
+
+// Groups returns the group names in use, sorted, without the empty one.
+func (m *Model) Groups() []string {
+	groups := make([]string, 0)
+	seen := make(map[string]bool)
+
+	for _, key := range m.Keys {
+		command, found := m.Commands.Get(key)
+		if !found || command.Group == "" || seen[command.Group] {
+			continue
+		}
+
+		seen[command.Group] = true
+		groups = append(groups, command.Group)
+	}
+
+	slices.Sort(groups)
+
+	return groups
 }
 
 func (m *Model) Move(d int) {
@@ -112,11 +156,19 @@ func (m *Model) Selected() string {
 }
 
 func (m *Model) StartRun(withParams bool) {
-	sel := m.Selected()
-	if sel == "" {
+	m.StartRunKey(m.Selected(), withParams)
+}
+
+// StartRunKey runs key, or records it as the selection when withParams is set.
+//
+// The list's per-row buttons carry their own key, so they must not depend on
+// where the selection happens to be: a row's Run button runs that row even
+// when nothing was tapped first.
+func (m *Model) StartRunKey(key string, withParams bool) {
+	if key == "" {
 		return
 	}
-	m.SelectedKey = sel
+	m.SelectedKey = key
 	m.Params = nil
 	m.ParamInput = ""
 	if withParams {

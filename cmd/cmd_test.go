@@ -1617,3 +1617,40 @@ func TestDeleteHistoryEntryDeclined(t *testing.T) {
 		t.Errorf("snapshot 00001.yaml = %v, want it kept", err)
 	}
 }
+
+// create and update carry the display metadata, and an empty value clears it.
+func TestCreateAndUpdateCarryIconAndGroup(t *testing.T) {
+	cfgPath := filepath.Join(t.TempDir(), "crower.yaml")
+
+	if _, _, err := runWith(t, cfgPath, "", "create", "deploy", "echo deploy", "--icon", "🚀", "--group", "ship"); err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	stdout, _, err := runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if !strings.Contains(stdout, `"icon":"🚀"`) || !strings.Contains(stdout, `"group":"ship"`) {
+		t.Fatalf("list --json = %q, want the icon and group", stdout)
+	}
+
+	// Three "no" answers skip the name, alias and exec prompts; the last "y"
+	// confirms the update.
+	if _, _, err := runWith(t, cfgPath, "n\nn\nn\ny\n", "update", "deploy", "--icon", ""); err != nil {
+		t.Fatalf("update: %v", err)
+	}
+
+	stdout, _, err = runWith(t, cfgPath, "", "list", "--json")
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if strings.Contains(stdout, `"icon"`) {
+		t.Errorf("list --json = %q, want the cleared icon gone", stdout)
+	}
+
+	if !strings.Contains(stdout, `"group":"ship"`) {
+		t.Errorf("list --json = %q, want the group untouched", stdout)
+	}
+}
