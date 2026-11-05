@@ -368,6 +368,29 @@ func TestSelectRowShowsTheDetail(t *testing.T) {
 	}
 }
 
+// Selecting a row must give the detail panel a height, not only make it
+// visible: Fyne's layouts skip an invisible child, so a panel hidden at build
+// time has no size until the tab lays out again.
+func TestSelectingARowSizesTheDetailPanel(t *testing.T) {
+	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, &stubUpdater{current: "v1"})
+	window.SetContent(front.content())
+	window.Resize(fyneSize())
+
+	if size := front.detailBody.Size(); size.Height != 0 {
+		t.Fatalf("the panel already has a size before a selection: %v", size)
+	}
+
+	front.selectRow(0)
+
+	if !front.detailBody.Visible() {
+		t.Fatal("selecting a row did not open the panel")
+	}
+
+	if size := front.detailBody.Size(); size.Height == 0 {
+		t.Fatalf("panel size = %v, want the tab to lay it out", size)
+	}
+}
+
 // Delete never happens on the first click.
 func TestCommandRowDeleteAsksFirst(t *testing.T) {
 	front, window := newTestUI(t, testModel(), &recordingEditor{next: testModel().Commands}, stubReverter{})
