@@ -62,6 +62,10 @@ func Run(commands catalog.Catalog, history timeline.Log, deps Deps) {
 	window.SetContent(front.content())
 	window.Resize(fyne.NewSize(960, 640))
 
+	// Fyne offers a window-wide drop callback only, so a drop has one documented
+	// destination: the copy/move sources.
+	window.SetOnDropped(front.handleDrop)
+
 	// The lookup runs after the content exists and never blocks the window:
 	// opening crower is not a reason to wait for GitHub.
 	front.checkForUpdates()
@@ -153,7 +157,7 @@ func NewContent(model *desktop.Model, window fyne.Window, deps Deps) fyne.Canvas
 func (u *ui) content() fyne.CanvasObject {
 	u.loadGroupIcons()
 
-	tabs := container.NewAppTabs(
+	u.tabs = container.NewAppTabs(
 		container.NewTabItem("Commands", u.commandsTab()),
 		container.NewTabItem("History", u.historyTab()),
 		container.NewTabItem("Tools", u.toolsTab()),
@@ -163,13 +167,13 @@ func (u *ui) content() fyne.CanvasObject {
 	// The table is built from the model, so a command edit changes it. Refresh
 	// when the tab is opened instead of refreshing a hidden table on every
 	// keystroke.
-	tabs.OnSelected = func(item *container.TabItem) {
+	u.tabs.OnSelected = func(item *container.TabItem) {
 		if item.Text == "History" {
 			u.refreshHistory()
 		}
 	}
 
-	return tabs
+	return u.tabs
 }
 
 // commandsTab is the command list with its filter, the per-row actions and a
