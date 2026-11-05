@@ -15,61 +15,67 @@ import (
 	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
-// toolsTab is the file operations the CLI offers, reachable without leaving
-// the window: transfer, search, extract and open, each with its result below.
+// toolsTab is the file operations the CLI offers, reachable without leaving the
+// window: transfer, search, extract and open. Each card owns its result square,
+// which stays hidden until that card runs something.
 func (u *ui) toolsTab() fyne.CanvasObject {
-	u.toolResult = widget.NewLabel("Pick a tool. Its result appears here.")
-	u.toolResult.Wrapping = fyne.TextWrapWord
+	u.transferResult = newToolResult()
+	u.searchResult = newToolResult()
+	u.extractResult = newToolResult()
+	u.openResult = newToolResult()
 
-	top := container.NewVScroll(container.NewVBox(
+	return container.NewVScroll(container.NewVBox(
 		u.transferCard(),
 		u.searchCard(),
 		u.extractCard(),
 		u.openCard(),
 	))
+}
 
-	resultTitle := widget.NewLabelWithStyle("Result", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	result := container.NewBorder(resultTitle, nil, nil, nil, container.NewVScroll(u.toolResult))
+// browseButton is the "pick it instead of typing it" control beside a path
+// field. Fyne's dialog is single-select, so each press adds one path.
+func browseButton(pick func()) *widget.Button {
+	button := widget.NewButtonWithIcon("Browse…", theme.FolderOpenIcon(), pick)
+	button.Importance = widget.LowImportance
 
-	split := container.NewVSplit(top, result)
-	// The forms keep most of the height; the result pane grows when a search
-	// prints a long list.
-	split.SetOffset(0.62)
+	return button
+}
 
-	return split
+// fieldWithBrowse puts the button at the end of the path field.
+func fieldWithBrowse(entry *widget.Entry, pick func()) fyne.CanvasObject {
+	return container.NewBorder(nil, nil, nil, browseButton(pick), entry)
 }
 
 func (u *ui) transferCard() fyne.CanvasObject {
-	sources := widget.NewMultiLineEntry()
-	sources.SetMinRowsVisible(3)
-	sources.SetPlaceHolder("One path per line")
+	sources := newScrollFreeEntry()
+	sources.SetPlaceHolder("Paths, comma-separated")
 
-	destination := widget.NewEntry()
+	destination := newScrollFreeEntry()
 	destination.SetPlaceHolder("Destination folder")
 
 	copyButton := widget.NewButtonWithIcon("Copy", theme.ContentCopyIcon(), func() {
 		paths := splitPaths(sources.Text)
-		u.runTool("Copying…", func() (string, timeline.Log, error) {
+		u.runTool(u.transferResult, "Copying…", func() (string, timeline.Log, error) {
 			return u.transfer(true, paths, destination.Text)
 		})
 	})
 
 	moveButton := widget.NewButtonWithIcon("Move", theme.ContentCutIcon(), func() {
 		paths := splitPaths(sources.Text)
-		u.runTool("Moving…", func() (string, timeline.Log, error) {
+		u.runTool(u.transferResult, "Moving…", func() (string, timeline.Log, error) {
 			return u.transfer(false, paths, destination.Text)
 		})
 	})
 
 	form := widget.NewForm(
-		widget.NewFormItem("Sources", sources),
-		widget.NewFormItem("Destination", destination),
+		widget.NewFormItem("Sources", fieldWithBrowse(sources, func() { u.browseFiles(sources) })),
+		widget.NewFormItem("Destination", fieldWithBrowse(destination, func() { u.browseFolder(destination) })),
 	)
 
 	return widget.NewCard(
 		"Copy or move",
 		"One or more paths and the destination folder.",
-		container.NewVBox(form, container.NewHBox(copyButton, moveButton)),
+		container.NewVBox(form, container.NewHBox(copyButton, moveButton), u.transferResult.object()),
 	)
 }
 
@@ -90,10 +96,10 @@ func (u *ui) transfer(copying bool, sources []string, destinationText string) (s
 }
 
 func (u *ui) searchCard() fyne.CanvasObject {
-	term := widget.NewEntry()
+	term := newScrollFreeEntry()
 	term.SetPlaceHolder("Search term")
 
-	path := widget.NewEntry()
+	path := newScrollFreeEntry()
 	path.SetPlaceHolder("Folder (default: .)")
 
 	mode := widget.NewSelect([]string{"Files and folders", "Files", "Folders", "Web"}, nil)
@@ -101,21 +107,21 @@ func (u *ui) searchCard() fyne.CanvasObject {
 
 	searchButton := widget.NewButtonWithIcon("Search", theme.SearchIcon(), func() {
 		selected := searchMode(mode.Selected)
-		u.runTool("Searching…", func() (string, timeline.Log, error) {
+		u.runTool(u.searchResult, "Searching…", func() (string, timeline.Log, error) {
 			return u.search(selected, term.Text, path.Text)
 		})
 	})
 
 	form := widget.NewForm(
 		widget.NewFormItem("Term", term),
-		widget.NewFormItem("Path", path),
+		widget.NewFormItem("Path", fieldWithBrowse(path, func() { u.browseFolder(path) })),
 		widget.NewFormItem("Look in", mode),
 	)
 
 	return widget.NewCard(
 		"Search",
 		"File and folder names, or a web search.",
-		container.NewVBox(form, container.NewHBox(searchButton)),
+		container.NewVBox(form, container.NewHBox(searchButton), u.searchResult.object()),
 	)
 }
 
@@ -150,28 +156,28 @@ func (u *ui) search(mode desktop.SearchMode, term, pathText string) (string, tim
 }
 
 func (u *ui) extractCard() fyne.CanvasObject {
-	archives := widget.NewEntry()
+	archives := newScrollFreeEntry()
 	archives.SetPlaceHolder("Archive paths, comma-separated")
 
-	outDir := widget.NewEntry()
+	outDir := newScrollFreeEntry()
 	outDir.SetPlaceHolder("Destination folder (default: beside each archive)")
 
 	extractButton := widget.NewButtonWithIcon("Extract", theme.FileIcon(), func() {
 		paths := splitPaths(archives.Text)
-		u.runTool("Extracting…", func() (string, timeline.Log, error) {
+		u.runTool(u.extractResult, "Extracting…", func() (string, timeline.Log, error) {
 			return u.extract(paths, outDir.Text)
 		})
 	})
 
 	form := widget.NewForm(
-		widget.NewFormItem("Archives", archives),
-		widget.NewFormItem("Into", outDir),
+		widget.NewFormItem("Archives", fieldWithBrowse(archives, func() { u.browseFiles(archives) })),
+		widget.NewFormItem("Into", fieldWithBrowse(outDir, func() { u.browseFolder(outDir) })),
 	)
 
 	return widget.NewCard(
 		"Extract",
 		"Zip, tar, tar.gz, 7z and rar archives.",
-		container.NewVBox(form, container.NewHBox(extractButton)),
+		container.NewVBox(form, container.NewHBox(extractButton), u.extractResult.object()),
 	)
 }
 
@@ -185,12 +191,11 @@ func (u *ui) extract(archives []string, outDir string) (string, timeline.Log, er
 }
 
 func (u *ui) openCard() fyne.CanvasObject {
-	paths := widget.NewMultiLineEntry()
-	paths.SetMinRowsVisible(2)
-	paths.SetPlaceHolder("One path per line")
+	paths := newScrollFreeEntry()
+	paths.SetPlaceHolder("Paths, comma-separated")
 
 	openButton := widget.NewButtonWithIcon("Open", theme.FolderOpenIcon(), func() {
-		u.runTool("Opening…", func() (string, timeline.Log, error) {
+		u.runTool(u.openResult, "Opening…", func() (string, timeline.Log, error) {
 			return u.open(splitPaths(paths.Text))
 		})
 	})
@@ -198,7 +203,11 @@ func (u *ui) openCard() fyne.CanvasObject {
 	return widget.NewCard(
 		"Open",
 		"Open paths with the platform's default application.",
-		container.NewVBox(paths, container.NewHBox(openButton)),
+		container.NewVBox(
+			fieldWithBrowse(paths, func() { u.browseFiles(paths) }),
+			container.NewHBox(openButton),
+			u.openResult.object(),
+		),
 	)
 }
 
@@ -211,33 +220,33 @@ func (u *ui) open(paths []string) (string, timeline.Log, error) {
 	return u.tools.Open(paths)
 }
 
-// runTool runs the call off the UI thread and reports on it there, so a slow
-// search or transfer does not freeze the window.
-func (u *ui) runTool(status string, action func() (string, timeline.Log, error)) {
-	if u.toolResult == nil {
+// runTool runs the call off the UI thread and reports on it in that card's own
+// result area, so a slow search or transfer does not freeze the window.
+func (u *ui) runTool(result *toolResult, status string, action func() (string, timeline.Log, error)) {
+	if result == nil {
 		return
 	}
 
-	u.toolResult.SetText(status)
+	result.report(status)
 
 	go func() {
 		message, history, err := action()
 
 		fyne.Do(func() {
-			u.reportTool(message, history, err)
+			u.reportTool(result, message, history, err)
 		})
 	}()
 }
 
-// reportTool shows the outcome and, on success, puts the history the operation
-// recorded into the model so the History tab lists it.
-func (u *ui) reportTool(message string, history timeline.Log, err error) {
-	if u.toolResult == nil {
+// reportTool shows the outcome in one card's area and, on success, puts the
+// history the operation recorded into the model so the History tab lists it.
+func (u *ui) reportTool(result *toolResult, message string, history timeline.Log, err error) {
+	if result == nil {
 		return
 	}
 
 	if err != nil {
-		u.toolResult.SetText("Error: " + err.Error())
+		result.report("Error: " + err.Error())
 		return
 	}
 
@@ -248,11 +257,11 @@ func (u *ui) reportTool(message string, history timeline.Log, err error) {
 		message = "Done."
 	}
 
-	u.toolResult.SetText(message)
+	result.report(message)
 }
 
-// splitPaths reads one path per line and also accepts commas, so a pasted
-// command line works without editing.
+// splitPaths reads a comma- or newline-separated list, so a pasted command line
+// works without editing and a Browse pick can be appended to an earlier one.
 func splitPaths(text string) []string {
 	fields := strings.FieldsFunc(text, func(r rune) bool {
 		return r == '\n' || r == ','

@@ -73,27 +73,29 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 
 	u.updateStatus = widget.NewLabel("Updates are checked when the window opens.")
 	u.updateStatus.Wrapping = fyne.TextWrapWord
+	u.updateStatus.Alignment = fyne.TextAlignCenter
 
 	u.checkButton = widget.NewButtonWithIcon("Check for updates", theme.ViewRefreshIcon(), u.checkForUpdates)
-	u.installButton = widget.NewButtonWithIcon("Install latest", theme.DownloadIcon(), u.installLatest)
 
-	actions := container.NewHBox(u.checkButton, u.installButton)
+	// Install and restart are state, not furniture: install appears when the
+	// check found a release, restart appears once a release was put on disk.
+	u.installButton = widget.NewButtonWithIcon("Install", theme.DownloadIcon(), u.installLatest)
+	u.installButton.Hide()
+
+	u.restartButton = widget.NewButtonWithIcon("Restart now", theme.ViewRefreshIcon(), u.restart)
+	u.restartButton.Hide()
+
+	actions := container.NewHBox(u.checkButton, u.installButton, u.restartButton)
 
 	if previous, found := u.updater.Previous(); found {
 		u.restoreButton = widget.NewButton("Restore previous ("+previous+")", u.restorePrevious)
 		actions.Add(u.restoreButton)
 	}
 
-	restart := widget.NewButtonWithIcon("Restart", theme.ViewRefreshIcon(), u.restart)
-
 	updates := widget.NewCard(
 		"Updates",
 		"Checks GitHub for the newest release. Nothing is replaced without confirmation.",
-		container.NewVBox(
-			u.updateStatus,
-			actions,
-			container.NewHBox(restart),
-		),
+		container.NewVBox(u.updateStatus, actions),
 	)
 
 	body := container.NewVBox(
@@ -106,7 +108,8 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 		updates,
 	)
 
-	return container.NewVScroll(body)
+	// Centre the block in the window; the scroll only matters on a short one.
+	return container.NewVScroll(container.NewCenter(body))
 }
 
 // checkForUpdates is the startup courtesy: one lookup, in the background, with
@@ -134,6 +137,7 @@ func (u *ui) applyLatest(latest string, err error) {
 	if err != nil {
 		u.latest = ""
 		u.updateStatus.SetText("Could not check for updates: " + err.Error())
+		u.showInstall("")
 		return
 	}
 
@@ -142,10 +146,45 @@ func (u *ui) applyLatest(latest string, err error) {
 	switch {
 	case latest == "":
 		u.updateStatus.SetText("No release information was returned.")
+		u.showInstall("")
 	case latest == u.updater.Current():
 		u.updateStatus.SetText("crower " + u.updater.Current() + " is the newest release.")
+		u.showInstall("")
 	default:
 		u.updateStatus.SetText("crower " + latest + " is available (you have " + u.updater.Current() + ").")
+		u.showInstall(latest)
+	}
+}
+
+// showInstall offers the install action only when there is a release to install,
+// so the button appears because the check found one instead of sitting there
+// permanently.
+func (u *ui) showInstall(version string) {
+	if u.installButton == nil {
+		return
+	}
+
+	if version == "" {
+		u.installButton.Hide()
+		return
+	}
+
+	u.installButton.SetText("Install " + version)
+	u.installButton.Show()
+}
+
+// afterInstall is what a successful install or restore leaves: no install
+// action (there is nothing newer to fetch), no stale restore, and a restart,
+// because the binary on disk is now a different one.
+func (u *ui) afterInstall() {
+	u.showInstall("")
+
+	if u.restoreButton != nil {
+		u.restoreButton.Hide()
+	}
+
+	if u.restartButton != nil {
+		u.restartButton.Show()
 	}
 }
 
@@ -157,6 +196,10 @@ func (u *ui) setBusy(status string) {
 	if u.restoreButton != nil {
 		u.restoreButton.Disable()
 	}
+
+	if u.restartButton != nil {
+		u.restartButton.Disable()
+	}
 }
 
 func (u *ui) setIdle() {
@@ -165,6 +208,10 @@ func (u *ui) setIdle() {
 
 	if u.restoreButton != nil {
 		u.restoreButton.Enable()
+	}
+
+	if u.restartButton != nil {
+		u.restartButton.Enable()
 	}
 }
 
@@ -239,7 +286,7 @@ func (u *ui) installInBackground(version string) {
 				return
 			}
 
-			u.offerRestart(version)
+			u.afterInstall()
 		})
 	}()
 }
@@ -255,18 +302,6 @@ func (u *ui) installNow(version string) error {
 	u.updateStatus.SetText("Installed crower " + version + ". Restart to use it.")
 
 	return nil
-}
-
-func (u *ui) offerRestart(version string) {
-	question := "crower " + version + " is installed. Restart the window to use it?"
-
-	dialog.ShowConfirm("Restart now?", question, func(ok bool) {
-		if !ok {
-			return
-		}
-
-		u.restart()
-	}, u.window)
 }
 
 func (u *ui) restart() {

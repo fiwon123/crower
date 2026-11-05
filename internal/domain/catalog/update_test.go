@@ -245,3 +245,67 @@ func TestUpdateSetsAndClearsIconAndGroup(t *testing.T) {
 		t.Errorf("New = %+v, want the metadata cleared", cleared.New)
 	}
 }
+
+// The optional metadata is supplied through pointers: nil leaves the field
+// alone, a pointer to an empty value clears it.
+func TestUpdateSuppliesTheOptionalMetadata(t *testing.T) {
+	original := New(nil, []Command{{
+		Name:        "deploy",
+		Exec:        "make deploy",
+		Description: "ship it",
+		Params:      []string{"env"},
+		Cwd:         "~/src/app",
+		Shell:       "sh",
+		Timeout:     "120s",
+	}})
+
+	// An update that says nothing about them keeps them.
+	kept, err := original.Update("deploy", Changes{Exec: "make release"})
+	if err != nil {
+		t.Fatalf("Update exec: %v", err)
+	}
+
+	if kept.New.Description != "ship it" || kept.New.Timeout != "120s" {
+		t.Errorf("New = %+v, want the metadata preserved", kept.New)
+	}
+
+	description := "ship to production"
+	params := []string{"env", "region"}
+	cwd := "/srv/app"
+	shell := "pwsh"
+	timeout := "30s"
+
+	changed, err := original.Update("deploy", Changes{
+		Description: &description,
+		Params:      &params,
+		Cwd:         &cwd,
+		Shell:       &shell,
+		Timeout:     &timeout,
+	})
+	if err != nil {
+		t.Fatalf("Update metadata: %v", err)
+	}
+
+	got := changed.New
+	if got.Description != description || !slices.Equal(got.Params, params) || got.Cwd != cwd || got.Shell != shell || got.Timeout != timeout {
+		t.Fatalf("New = %+v, want every supplied field applied", got)
+	}
+
+	empty := ""
+	noParams := []string{}
+
+	cleared, err := changed.Catalog.Update("deploy", Changes{
+		Description: &empty,
+		Params:      &noParams,
+		Cwd:         &empty,
+		Shell:       &empty,
+		Timeout:     &empty,
+	})
+	if err != nil {
+		t.Fatalf("Clear metadata: %v", err)
+	}
+
+	if cleared.New.Description != "" || len(cleared.New.Params) != 0 || cleared.New.Cwd != "" || cleared.New.Shell != "" || cleared.New.Timeout != "" {
+		t.Errorf("New = %+v, want every supplied field cleared", cleared.New)
+	}
+}
