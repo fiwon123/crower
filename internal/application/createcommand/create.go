@@ -63,6 +63,10 @@ type Request struct {
 	// Aliases are the aliases supplied on the command line.
 	Aliases []string
 
+	// Icon and Group are the display metadata supplied on the command line.
+	Icon  string
+	Group string
+
 	// Args are the positional values the command line carried.
 	Args []string
 
@@ -279,7 +283,7 @@ func (u *UseCase) createCommand(request Request) error {
 		}
 	}
 
-	commands, created, err := u.add(name, request.Aliases, exec)
+	commands, created, err := u.add(name, request.Aliases, exec, request.Icon, request.Group)
 	if err != nil {
 		return fmt.Errorf("add command %q: %w", name, err)
 	}
@@ -312,7 +316,7 @@ func (u *UseCase) createProcess(request Request) error {
 		return fmt.Errorf("add command by process: %w", err)
 	}
 
-	commands, created, err := u.add(name, request.Aliases, execLine)
+	commands, created, err := u.add(name, request.Aliases, execLine, request.Icon, request.Group)
 	if err != nil {
 		return fmt.Errorf("add command by process: %w", err)
 	}
@@ -343,7 +347,7 @@ func (u *UseCase) createScript(request Request) error {
 		return err
 	}
 
-	commands, created, err := u.add(name, request.Aliases, path)
+	commands, created, err := u.add(name, request.Aliases, path, request.Icon, request.Group)
 	if err != nil {
 		return fmt.Errorf("add command %q: %w", name, err)
 	}
@@ -392,7 +396,7 @@ func (u *UseCase) createLast(request Request) error {
 		return fmt.Errorf("the last %q operation carries no exec to reuse", request.Last)
 	}
 
-	commands, created, err := u.add(name, request.Aliases, run.Exec)
+	commands, created, err := u.add(name, request.Aliases, run.Exec, request.Icon, request.Group)
 	if err != nil {
 		return fmt.Errorf("add command %q: %w", name, err)
 	}
@@ -484,11 +488,13 @@ func (u *UseCase) createSystemPath(request Request) error {
 //
 // It does not persist anything: the caller decides when the command file is
 // written, because `--script` has a step in between.
-func (u *UseCase) add(name string, aliases []string, exec string) (catalog.Catalog, catalog.Command, error) {
+func (u *UseCase) add(name string, aliases []string, exec string, icon, group string) (catalog.Catalog, catalog.Command, error) {
 	commands, err := u.state.Commands().Add(catalog.Command{
 		Name:    name,
 		Aliases: aliases,
 		Exec:    exec,
+		Icon:    icon,
+		Group:   group,
 	})
 	if err != nil {
 		return catalog.Catalog{}, catalog.Command{}, err

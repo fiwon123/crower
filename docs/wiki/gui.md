@@ -21,10 +21,16 @@ The window is split into tabs:
 
 | Tab | What it holds |
 | --- | --- |
-| **Commands** | The list, with a filter, a detail line, and **Run**, **Run with params**, **Edit** and **Delete** on every row |
+| **Commands** | The list, with a filter, a group filter, a detail line, and **Run**, **Run with params**, **Edit** and **Delete** on every row |
 | **History** | Every recorded operation as a table, newest first, with a **Restore this state** action |
 | **Tools** | Copy, move, search, extract and open, with their result below |
 | **About** | Logo, version, description, the repository link, and the update controls |
+
+A command can carry an **icon** — a short marker such as 🚀 — shown beside its
+name, and a **group**; the filter lists every group in use, and the detail line
+shows which one the selected command belongs to. Both are set from the create
+and edit dialogs, or with `crower create --icon/--group` and
+`crower update --icon/--group`.
 
 Delete and restore both ask first. Restoring puts the command set back to what a
 history entry recorded and drops the newer entries, through the same

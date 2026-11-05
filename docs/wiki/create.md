@@ -11,6 +11,8 @@ crower create [name] [exec] [flags]
 | Flag | Effect |
 | --- | --- |
 | `-a`, `--alias` | Aliases, comma-separated (`--alias 'a1,a2'`) |
+| `--icon` | A short marker — an emoji — shown beside the command in the window |
+| `--group` | The group the command belongs to |
 | `-f`, `--file` | Treat the arguments as file paths |
 | `-o`, `--folder` | Treat the arguments as folder paths |
 | `--execute` | Create from the last executed command |
@@ -30,6 +32,9 @@ crower create deploy "ssh user@server 'cd /app && git pull'"
 
 # With aliases
 crower create backup -a bkp,bk "tar -czf ~/b.tgz ~/data"
+
+# With an icon and a group, shown in the window's command list
+crower create deploy --icon 🚀 --group ship "make deploy"
 
 # Files and folders
 crower create --file notes.md todo.txt

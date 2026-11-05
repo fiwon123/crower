@@ -1,6 +1,7 @@
 package desktop
 
 import (
+	"slices"
 	"strings"
 	"testing"
 
@@ -215,5 +216,36 @@ func TestHistoryTextShowsTheCommand(t *testing.T) {
 
 	if !strings.Contains(text, "[copy] -") {
 		t.Errorf("history = %q, want a dash on the command-less row", text)
+	}
+}
+
+// The group filter narrows the list to one group; an empty group shows nothing
+// rather than falling back to the whole set the way the text filter does.
+func TestGroupFilterAndGroups(t *testing.T) {
+	m := modelWithCommands([]catalog.Command{
+		{Name: "ship", Exec: "x", Group: "deploy"},
+		{Name: "rollback", Exec: "x", Group: "deploy"},
+		{Name: "backup", Exec: "x", Group: "backup"},
+		{Name: "loose", Exec: "x"},
+	}, timeline.Log{})
+
+	if got := m.Groups(); !slices.Equal(got, []string{"backup", "deploy"}) {
+		t.Errorf("Groups() = %v, want [backup deploy]", got)
+	}
+
+	m.Group = "deploy"
+	if got := m.FilteredKeys(); !slices.Equal(got, []string{"rollback", "ship"}) {
+		t.Errorf("group deploy = %v, want [rollback ship]", got)
+	}
+
+	m.Group = "missing"
+	if got := m.FilteredKeys(); len(got) != 0 {
+		t.Errorf("empty group = %v, want nothing", got)
+	}
+
+	m.Group = ""
+	m.Filter = "zzz"
+	if got := m.FilteredKeys(); len(got) != 4 {
+		t.Errorf("text filter fallback = %v, want the whole set", got)
 	}
 }

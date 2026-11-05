@@ -79,7 +79,7 @@ func TestFyneEditorUpdateCommitsTheChange(t *testing.T) {
 func TestFyneEditorCreateCommitsTheCommand(t *testing.T) {
 	cfg := newFyneEditorConfig(t)
 
-	commands, history, err := newFyneEditor(cfg).Create("ship", []string{"s"}, "echo ship")
+	commands, history, err := newFyneEditor(cfg).Create(catalog.Command{Name: "ship", Aliases: []string{"s"}, Exec: "echo ship"})
 	if err != nil {
 		t.Fatalf("Create: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestFyneEditorCreateCommitsTheCommand(t *testing.T) {
 // Delete goes through catalog.Remove and records the command it removed.
 func TestFyneEditorDeleteCommitsTheChange(t *testing.T) {
 	cfg := newFyneEditorConfig(t)
-	if _, _, err := newFyneEditor(cfg).Create("ship", nil, "echo ship"); err != nil {
+	if _, _, err := newFyneEditor(cfg).Create(catalog.Command{Name: "ship", Exec: "echo ship"}); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 
@@ -118,13 +118,13 @@ func TestFyneEditorDeleteCommitsTheChange(t *testing.T) {
 // A create with a name that already exists is refused and writes nothing.
 func TestFyneEditorCreateRefusesACollision(t *testing.T) {
 	cfg := newFyneEditorConfig(t)
-	if _, _, err := newFyneEditor(cfg).Create("ship", nil, "echo ship"); err != nil {
+	if _, _, err := newFyneEditor(cfg).Create(catalog.Command{Name: "ship", Exec: "echo ship"}); err != nil {
 		t.Fatalf("Create: %v", err)
 	}
 
 	before := len(cfg.History.AllData)
 
-	if _, _, err := newFyneEditor(cfg).Create("ship", nil, "echo again"); err == nil {
+	if _, _, err := newFyneEditor(cfg).Create(catalog.Command{Name: "ship", Exec: "echo again"}); err == nil {
 		t.Fatal("Create accepted a duplicate name")
 	}
 

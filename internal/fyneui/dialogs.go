@@ -28,11 +28,20 @@ const (
 func (u *ui) showCreate() {
 	name := widget.NewEntry()
 	aliases := widget.NewEntry()
+
+	icon := widget.NewEntry()
+	icon.SetPlaceHolder("🚀")
+
+	group := widget.NewEntry()
+	group.SetPlaceHolder("deploy")
+
 	exec := newExecEntry()
 
 	items := []*widget.FormItem{
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
+		widget.NewFormItem("Icon", icon),
+		widget.NewFormItem("Group", group),
 		widget.NewFormItem("Exec", exec),
 	}
 
@@ -41,7 +50,7 @@ func (u *ui) showCreate() {
 			return
 		}
 
-		u.applyCreate(name.Text, aliases.Text, exec.Text)
+		u.applyCreate(name.Text, aliases.Text, icon.Text, group.Text, exec.Text)
 	}, u.window)
 
 	form.Resize(fyne.NewSize(dialogWidth, dialogHeight))
@@ -50,16 +59,21 @@ func (u *ui) showCreate() {
 
 // applyCreate is the form's submit path, separate from the dialog so a test
 // can exercise it without building the popup.
-func (u *ui) applyCreate(nameText, aliasesText, execText string) bool {
-	nameText = strings.TrimSpace(nameText)
-	execText = strings.TrimSpace(execText)
+func (u *ui) applyCreate(nameText, aliasesText, iconText, groupText, execText string) bool {
+	command := catalog.Command{
+		Name:    strings.TrimSpace(nameText),
+		Aliases: splitAliases(aliasesText),
+		Icon:    strings.TrimSpace(iconText),
+		Group:   strings.TrimSpace(groupText),
+		Exec:    strings.TrimSpace(execText),
+	}
 
-	if nameText == "" || execText == "" {
+	if command.Name == "" || command.Exec == "" {
 		showError("Name and exec are required.", u.window)
 		return false
 	}
 
-	commands, history, err := u.editor.Create(nameText, splitAliases(aliasesText), execText)
+	commands, history, err := u.editor.Create(command)
 	if err != nil {
 		showError(err.Error(), u.window)
 		return false
@@ -83,12 +97,22 @@ func (u *ui) showEditFor(key string) {
 	aliases := widget.NewEntry()
 	aliases.SetText(strings.Join(command.Aliases, ", "))
 
+	icon := widget.NewEntry()
+	icon.SetText(command.Icon)
+	icon.SetPlaceHolder("🚀")
+
+	group := widget.NewEntry()
+	group.SetText(command.Group)
+	group.SetPlaceHolder("deploy")
+
 	exec := newExecEntry()
 	exec.SetText(command.Exec)
 
 	items := []*widget.FormItem{
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
+		widget.NewFormItem("Icon", icon),
+		widget.NewFormItem("Group", group),
 		widget.NewFormItem("Exec", exec),
 	}
 
@@ -102,7 +126,7 @@ func (u *ui) showEditFor(key string) {
 			return
 		}
 
-		u.applyEdit(key, name.Text, aliases.Text, exec.Text)
+		u.applyEdit(key, name.Text, aliases.Text, icon.Text, group.Text, exec.Text)
 	}, u.window)
 
 	form.Resize(fyne.NewSize(dialogWidth, dialogHeight))
@@ -111,13 +135,20 @@ func (u *ui) showEditFor(key string) {
 
 // applyEdit is the form's submit path, separate from the dialog so a test can
 // exercise it without building the popup.
-func (u *ui) applyEdit(key, nameText, aliasesText, execText string) bool {
+func (u *ui) applyEdit(key, nameText, aliasesText, iconText, groupText, execText string) bool {
 	aliasList := splitAliases(aliasesText)
+	iconText = strings.TrimSpace(iconText)
+	groupText = strings.TrimSpace(groupText)
+
 	changes := catalog.Changes{
 		Name:         strings.TrimSpace(nameText),
 		Aliases:      aliasList,
 		Exec:         strings.TrimSpace(execText),
+		Icon:         iconText,
+		Group:        groupText,
 		ClearAliases: len(aliasList) == 0,
+		ClearIcon:    iconText == "",
+		ClearGroup:   groupText == "",
 	}
 
 	if changes.Name == "" || changes.Exec == "" {

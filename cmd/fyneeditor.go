@@ -37,9 +37,7 @@ func (e fyneEditor) Update(key string, changes catalog.Changes) (catalog.Catalog
 }
 
 // Create adds a command and returns the refreshed set and history.
-func (e fyneEditor) Create(name string, aliases []string, exec string) (catalog.Catalog, timeline.Log, error) {
-	command := catalog.Command{Name: name, Aliases: aliases, Exec: exec}
-
+func (e fyneEditor) Create(command catalog.Command) (catalog.Catalog, timeline.Log, error) {
 	next, err := e.cfg.Catalog().Add(command)
 	if err != nil {
 		return catalog.Catalog{}, timeline.Log{}, err

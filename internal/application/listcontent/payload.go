@@ -20,6 +20,8 @@ type CommandRow struct {
 	Exec        string            `json:"exec"`
 	Description string            `json:"description,omitempty"`
 	Params      []string          `json:"params,omitempty"`
+	Icon        string            `json:"icon,omitempty"`
+	Group       string            `json:"group,omitempty"`
 	Shell       string            `json:"shell,omitempty"`
 	Cwd         string            `json:"cwd,omitempty"`
 	Env         map[string]string `json:"env,omitempty"`

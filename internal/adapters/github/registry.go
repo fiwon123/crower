@@ -121,6 +121,8 @@ func (r *Registry) Pack(name string) ([]catalog.Command, string, error) {
 			Steps:       value.Steps,
 			Description: value.Description,
 			Params:      value.Params,
+			Icon:        value.Icon,
+			Group:       value.Group,
 			Shell:       value.Shell,
 			Cwd:         value.Cwd,
 			Env:         value.Env,

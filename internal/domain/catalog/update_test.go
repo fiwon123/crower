@@ -212,3 +212,36 @@ func TestUpdateWorksOnAPreExistingCollision(t *testing.T) {
 		t.Fatalf("Update of a colliding config: %v", err)
 	}
 }
+
+// An icon and a group are display metadata: an update sets them when supplied,
+// keeps them when not, and clears them only when told to.
+func TestUpdateSetsAndClearsIconAndGroup(t *testing.T) {
+	original := New(nil, []Command{{Name: "deploy", Exec: "make deploy"}})
+
+	result, err := original.Update("deploy", Changes{Icon: "🚀", Group: "ship"})
+	if err != nil {
+		t.Fatalf("Update icon/group: %v", err)
+	}
+
+	if result.New.Icon != "🚀" || result.New.Group != "ship" {
+		t.Fatalf("New = %+v, want the icon and group set", result.New)
+	}
+
+	kept, err := result.Catalog.Update("deploy", Changes{Exec: "make release"})
+	if err != nil {
+		t.Fatalf("Update exec: %v", err)
+	}
+
+	if kept.New.Icon != "🚀" || kept.New.Group != "ship" {
+		t.Errorf("New = %+v, want the metadata preserved by an unrelated update", kept.New)
+	}
+
+	cleared, err := kept.Catalog.Update("deploy", Changes{ClearIcon: true, ClearGroup: true})
+	if err != nil {
+		t.Fatalf("Clear: %v", err)
+	}
+
+	if cleared.New.Icon != "" || cleared.New.Group != "" {
+		t.Errorf("New = %+v, want the metadata cleared", cleared.New)
+	}
+}
