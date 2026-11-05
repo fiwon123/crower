@@ -48,6 +48,12 @@ jobs:
             -ldflags "-X=github.com/fiwon123/crower/cmd.Version=${VERSION}" \
             ./cmd/crowergui
 
+      - name: Debug the container view
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD:/app" -w /app \
+            fyneio/fyne-cross-images:${{ matrix.target }} \
+            -c 'git status --porcelain; echo "--- tracked diff ---"; git diff --stat; echo "--- ignored ---"; git status --porcelain --ignored | head -20'
+
       - name: Inspect the binary
         run: |
           set -euo pipefail
