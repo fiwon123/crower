@@ -551,3 +551,34 @@ func TestReleaseNotesTemplateKeepsTheHouseOrder(t *testing.T) {
 		t.Errorf("the release notes template does not show the CLI/GUI table")
 	}
 }
+
+// The style is only a guarantee if the workflow builds it and then checks it:
+// `releasehighlights` writes the Highlights and Fixes sections from the merged
+// PRs, and `bodycheck` refuses a body that drifts from the template.
+func TestReleaseWorkflowGeneratesAndChecksTheBodyShape(t *testing.T) {
+	workflow := readRepositoryFile(t, releaseWorkflowPath)
+
+	tools := []string{
+		"go run ./internal/tools/releasehighlights",
+		"go run ./internal/tools/bodycheck notes.md",
+	}
+	for _, tool := range tools {
+		if !strings.Contains(workflow, tool) {
+			t.Errorf("the release workflow does not run %q; the house style is no longer enforced", tool)
+		}
+	}
+
+	generated := strings.Index(workflow, tools[0])
+	checked := strings.Index(workflow, tools[1])
+	if generated < 0 || checked < 0 || checked < generated {
+		t.Errorf("the body check must run after the sections are generated (generated at %d, checked at %d)", generated, checked)
+	}
+
+	// The notes step now calls `gh api` and `gh pr list`, so it needs the token.
+	// TestWorkflowStepsCallingGhSetToken checks this globally; this assertion
+	// keeps the reason next to the style guard.
+	notes := releaseJobSection(workflow, "publish")
+	if !strings.Contains(notes, "GITHUB_TOKEN") {
+		t.Errorf("the publish job has no GITHUB_TOKEN; the PR list call would fail (#124)")
+	}
+}
