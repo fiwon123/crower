@@ -63,7 +63,8 @@ cr docker-ps
 | 📦 | **Share** — export, import, or pull a pack from a registry |
 
 > [!NOTE]
-> **Same binary, two surfaces.** `crower gui` is a terminal UI; `crower desktop`
+> **Two ways in.** `crower gui` is the terminal menu; `crower-gui` (GUI
+> archive) is the Fyne window. Both read the same configuration.
 > opens a native window. Both read the same configuration as the CLI.
 
 ## ⚠️ What is not proven

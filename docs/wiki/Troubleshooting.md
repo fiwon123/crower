@@ -61,11 +61,11 @@ starts a new command, and no quoting prevents it. `%VAR%` expands on the
 command line and cannot be quoted away either. Keep `Exec` single-line and use
 `Env` with `${VAR}` for values that must not be expanded.
 
-## The desktop window does not open
+## The GUI window does not open
 
-`crower desktop` is a native window (cgo-free) and needs a graphical session.
-In a terminal-only environment use `crower gui`, which renders in the terminal
-itself.
+`crower-gui` is the Fyne app from the `crower_gui_*` archive and needs a
+graphical session. In a terminal-only environment use `crower gui`, which
+renders in the terminal itself.
 
 ## Still stuck
 

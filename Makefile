@@ -1,5 +1,7 @@
 APP_NAME := crower
 APP_NAME_SHORT := cr
+GUI_NAME := crower-gui
+GUI_PACKAGE = $(BUILD_DIR)/gui-package
 BUILD_DIR := build
 SCRIPTS_DIR := scripts
 SCRIPT_NAME := add_to_path
@@ -22,7 +24,7 @@ LINUX_SCRIPT :=  $(SCRIPTS_DIR)/$(SCRIPT_NAME).sh
 .PHONY: all windows linux zip_linux zip_windows clean release check \
 	help dev-up dev-down dev-shell dev-opencode dev-opencode-auto dev-log dev-build reset \
 	preflight require-agent prepare-agent-mounts check-identity opencode-version opencode-upgrade \
-	shell opencode opencode-auto release-platform release-fyne-platform package-cli package-gui package-fyne verify-release
+	shell opencode opencode-auto release-platform release-gui-platform package-cli package-gui verify-release
 
 all: release
 
@@ -72,20 +74,18 @@ release-platform: $(BUILD_DIR)
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(APP_NAME)$(EXT)
 	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT)
 	@$(MAKE) package-cli GOOS=$(GOOS) GOARCH=$(GOARCH)
-	@$(MAKE) package-gui GOOS=$(GOOS) GOARCH=$(GOARCH)
 	@$(MAKE) verify-release
 
-# Platform release for the Fyne front end.
+# Platform release for the Fyne GUI.
 #
-# Fyne needs CGO, so this target runs on the target OS runner (Linux or
-# Windows), not as a cross-compile. It packages only the Fyne archive; the
-# cgo-free CLI/GUI archives come from release-platform.
-release-fyne-platform: $(BUILD_DIR)
-	mkdir -p $(DIST_DIR)
-	@echo "Building $(APP_NAME) with -tags fyne for $(GOOS)/$(GOARCH) with version $(VERSION)"
-	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go build -tags fyne -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(APP_NAME)$(EXT)
-	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT)
-	@$(MAKE) package-fyne GOOS=$(GOOS) GOARCH=$(GOARCH)
+# Fyne needs CGO, so this target runs on the target OS runner (Linux, Windows
+# or macOS), not as a cross-compile. The CLI archive comes from
+# release-platform; this one builds only the crower-gui executable.
+release-gui-platform: $(BUILD_DIR)
+	mkdir -p $(DIST_DIR) $(GUI_PACKAGE)
+	@echo "Building $(GUI_NAME) with -tags fyne for $(GOOS)/$(GOARCH) with version $(VERSION)"
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go build -tags fyne -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(GUI_NAME)$(EXT) ./cmd/crowergui
+	@$(MAKE) package-gui GOOS=$(GOOS) GOARCH=$(GOARCH)
 	@$(MAKE) verify-release
 
 # Fail the build if an archive does not carry the names users are told to run.
@@ -100,50 +100,31 @@ EXT := .exe
 SCRIPT_EXT := .bat
 CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS)_$(GOARCH).zip
 GUI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_gui_$(VERSION)_$(GOOS)_$(GOARCH).zip
-FYNE_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_fyne_$(VERSION)_$(GOOS)_$(GOARCH).zip
-LEGACY_CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS).zip
 else
 EXT :=
 SCRIPT_EXT := .sh
 CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
 GUI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_gui_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
-FYNE_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_fyne_$(VERSION)_$(GOOS)_$(GOARCH).tar.gz
-LEGACY_CLI_ARCHIVE := $(DIST_DIR)/$(APP_NAME)_$(VERSION)_$(GOOS).tar.gz
 endif
 
 package-cli: $(BUILD_DIR)
 	@mkdir -p $(DIST_DIR)
 ifeq ($(GOOS),windows)
 	zip -j $(CLI_ARCHIVE) $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT) $(SCRIPTS_DIR)/add_to_path$(SCRIPT_EXT) README.md LICENSE LICENSE-APACHE NOTICE
-ifeq ($(GOARCH),amd64)
-	cp $(CLI_ARCHIVE) $(LEGACY_CLI_ARCHIVE)
-endif
 else
 	tar -czvf $(CLI_ARCHIVE) -C $(BUILD_DIR) $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) -C ../$(SCRIPTS_DIR) add_to_path$(SCRIPT_EXT) ../README.md ../LICENSE ../LICENSE-APACHE ../NOTICE
-ifeq ($(GOARCH),amd64)
-	cp $(CLI_ARCHIVE) $(LEGACY_CLI_ARCHIVE)
-endif
 endif
 	@echo "CLI package: $(CLI_ARCHIVE)"
 
 package-gui: $(BUILD_DIR)
-	@mkdir -p $(DIST_DIR)
+	@mkdir -p $(DIST_DIR) $(GUI_PACKAGE)
+	cp $(BUILD_DIR)/$(GUI_NAME)$(EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE $(GUI_PACKAGE)/
 ifeq ($(GOOS),windows)
-	zip -j $(GUI_ARCHIVE) $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT) README.md NOTICE LICENSE LICENSE-APACHE
+	cd $(GUI_PACKAGE) && zip -j $(abspath $(GUI_ARCHIVE)) *
 else
-	tar -czvf $(GUI_ARCHIVE) -C $(BUILD_DIR) $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) ../README.md ../NOTICE ../LICENSE ../LICENSE-APACHE
+	tar -czvf $(GUI_ARCHIVE) -C $(GUI_PACKAGE) $(GUI_NAME)$(EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE
 endif
 	@echo "GUI package: $(GUI_ARCHIVE)"
-
-package-fyne: $(BUILD_DIR)
-	@mkdir -p $(DIST_DIR) $(BUILD_DIR)/$(APP_NAME)-fyne
-	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT) $(SCRIPTS_DIR)/add_to_path$(SCRIPT_EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE $(BUILD_DIR)/$(APP_NAME)-fyne/
-ifeq ($(GOOS),windows)
-	cd $(BUILD_DIR)/$(APP_NAME)-fyne && zip -j $(abspath $(FYNE_ARCHIVE)) *
-else
-	tar -czvf $(FYNE_ARCHIVE) -C $(BUILD_DIR)/$(APP_NAME)-fyne $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) add_to_path$(SCRIPT_EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE
-endif
-	@echo "Fyne package: $(FYNE_ARCHIVE)"
 
 
 # ---------------------------------------------------------------------------

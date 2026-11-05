@@ -150,13 +150,13 @@ func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
 	}
 }
 
-// The Fyne job is a separate CGO build. It targets Linux/Windows amd64 and
+// The GUI job is a separate CGO build. It targets Linux/Windows amd64 and
 // macOS arm64/Intel, and its rows must stay on runners that exist; it is not
-// part of the six cgo-free targets above.
-func TestReleaseWorkflowBuildsTheFynePlatforms(t *testing.T) {
-	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "fyne"))
+// part of the six cgo-free CLI targets above.
+func TestReleaseWorkflowBuildsTheGUIPlatforms(t *testing.T) {
+	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "gui"))
 	if len(targets) != 4 {
-		t.Fatalf("found %d Fyne targets, want 4", len(targets))
+		t.Fatalf("found %d GUI targets, want 4", len(targets))
 	}
 
 	built := make(map[string]bool, len(targets))
@@ -164,13 +164,13 @@ func TestReleaseWorkflowBuildsTheFynePlatforms(t *testing.T) {
 		built[target.goos+"/"+target.goarch] = true
 
 		if !supportedRunners[target.runner] {
-			t.Errorf("Fyne %s/%s builds on %q, which is not a runner label known to exist", target.goos, target.goarch, target.runner)
+			t.Errorf("GUI %s/%s builds on %q, which is not a runner label known to exist", target.goos, target.goarch, target.runner)
 		}
 	}
 
 	for _, platform := range []string{"linux/amd64", "windows/amd64", "darwin/arm64", "darwin/amd64"} {
 		if !built[platform] {
-			t.Errorf("the Fyne release no longer builds %s", platform)
+			t.Errorf("the GUI release no longer builds %s", platform)
 		}
 	}
 }
@@ -449,6 +449,7 @@ func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
 	// sample tag lets the asset name be compared with both sides: the matrix
 	// and the filenames the release actually publishes.
 	downloads := strings.ReplaceAll(readRepositoryFile(t, releaseWorkflowPath), "${TAG}", "v1.2.3")
+	downloads = strings.ReplaceAll(downloads, "@TAG@", "v1.2.3")
 
 	for _, target := range targets {
 		asset, err := update.AssetName(target.goos, target.goarch, "v1.2.3")

@@ -224,11 +224,11 @@ jobs:
           name: ${{ matrix.goos }}-${{ matrix.goarch }}
           path: build/dist/*
 
-  fyne:
-    # The Fyne front end is a CGO build, so it cannot join the cross-compile
-    # matrix above: it runs on the target OS runner and ships only the
-    # crower_fyne_* archives. The six cgo-free archives are unchanged.
-    name: Build Fyne ${{ matrix.goos }}/${{ matrix.goarch }}
+  gui:
+    # The Fyne GUI is a CGO build, so it cannot join the cross-compile matrix
+    # above: it runs on the target OS runner and ships only the crower_gui_*
+    # archives. The six cgo-free CLI archives are unchanged.
+    name: Build GUI ${{ matrix.goos }}/${{ matrix.goarch }}
     needs: prepare
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -266,16 +266,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
 
-      - name: Build Fyne assets (Unix)
+      - name: Build GUI (Unix)
         if: matrix.goos != 'windows'
         env:
           VERSION: ${{ needs.prepare.outputs.tag }}
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: '1'
-        run: make release-fyne-platform
+        run: make release-gui-platform
 
-      - name: Build Fyne assets (Windows)
+      - name: Build GUI (Windows)
         if: matrix.goos == 'windows'
         shell: pwsh
         env:
@@ -285,12 +285,11 @@ jobs:
           $env:CGO_ENABLED = '1'
           $env:GOOS = 'windows'
           $env:GOARCH = 'amd64'
-          New-Item -ItemType Directory -Force build/dist, build/fyne | Out-Null
-          go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower.exe .
-          Copy-Item build/crower.exe build/cr.exe
-          Copy-Item build/crower.exe, build/cr.exe, scripts/add_to_path.bat, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/fyne/
-          Push-Location build/fyne
-          Compress-Archive -Path * -DestinationPath "../dist/crower_fyne_${env:VERSION}_windows_amd64.zip" -Force
+          New-Item -ItemType Directory -Force build/dist, build/gui-package | Out-Null
+          go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower-gui.exe ./cmd/crowergui
+          Copy-Item build/crower-gui.exe, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/gui-package/
+          Push-Location build/gui-package
+          Compress-Archive -Path * -DestinationPath "../dist/crower_gui_${env:VERSION}_windows_amd64.zip" -Force
           Pop-Location
           go run ./internal/tools/archiveverify build/dist
 
@@ -301,22 +300,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          INFO="$(go version -m build/crower)"
+          INFO="$(go version -m build/crower-gui)"
           REVISION="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.revision=//p')"
           MODIFIED="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.modified=//p')"
 
           if [ -z "$REVISION" ]; then
-            echo "::error::build/crower carries no vcs.revision" >&2
+            echo "::error::build/crower-gui carries no vcs.revision" >&2
             exit 1
           fi
 
           if [ "$REVISION" != "$EXPECTED_COMMIT" ]; then
-            echo "::error::Fyne binary was built from $REVISION, expected $EXPECTED_COMMIT" >&2
+            echo "::error::GUI binary was built from $REVISION, expected $EXPECTED_COMMIT" >&2
             exit 1
           fi
 
           if [ "$MODIFIED" != "false" ]; then
-            echo "::error::Fyne binary reports vcs.modified=$MODIFIED" >&2
+            echo "::error::GUI binary reports vcs.modified=$MODIFIED" >&2
             exit 1
           fi
 
@@ -329,22 +328,22 @@ jobs:
           EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
         run: |
           $ErrorActionPreference = 'Stop'
-          $info = go version -m build/crower.exe
+          $info = go version -m build/crower-gui.exe
           $rev = (($info | Select-String 'vcs.revision=').Line -split 'vcs.revision=')[1].Trim()
-          if ([string]::IsNullOrWhiteSpace($rev)) { throw 'Fyne binary carries no vcs.revision' }
-          if ($rev -ne $env:EXPECTED_COMMIT) { throw "Fyne binary was built from $rev, expected $env:EXPECTED_COMMIT" }
-          if (-not ($info -match 'vcs.modified=false')) { throw 'Fyne binary reports a modified tree' }
+          if ([string]::IsNullOrWhiteSpace($rev)) { throw 'GUI binary carries no vcs.revision' }
+          if ($rev -ne $env:EXPECTED_COMMIT) { throw "GUI binary was built from $rev, expected $env:EXPECTED_COMMIT" }
+          if (-not ($info -match 'vcs.modified=false')) { throw 'GUI binary reports a modified tree' }
           Write-Host "provenance OK: built from $rev, unmodified"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: fyne-${{ matrix.goos }}-${{ matrix.goarch }}
+          name: gui-${{ matrix.goos }}-${{ matrix.goarch }}
           path: build/dist/*
 
   publish:
     name: Publish release
-    needs: [prepare, build, fyne]
+    needs: [prepare, build, gui]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
@@ -380,33 +379,52 @@ jobs:
           PREV: ${{ needs.prepare.outputs.previous_tag }}
         run: |
           set -euo pipefail
-          {
-            echo "## Crower $TAG"
-            echo ""
-            echo "A cross-platform terminal file manager and command-alias manager with undoable history and per-item notes."
-            echo ""
-            echo "### Downloads"
-            echo "| Platform | CLI | GUI/Desktop | Fyne |"
-            echo "| --- | --- | --- | --- |"
-            echo "| Linux (amd64) | crower_${TAG}_linux_amd64.tar.gz | crower_gui_${TAG}_linux_amd64.tar.gz | crower_fyne_${TAG}_linux_amd64.tar.gz |"
-            echo "| Linux (arm64) | crower_${TAG}_linux_arm64.tar.gz | crower_gui_${TAG}_linux_arm64.tar.gz | — |"
-            echo "| Windows (amd64) | crower_${TAG}_windows_amd64.zip | crower_gui_${TAG}_windows_amd64.zip | crower_fyne_${TAG}_windows_amd64.zip |"
-            echo "| Windows (arm64) | crower_${TAG}_windows_arm64.zip | crower_gui_${TAG}_windows_arm64.zip | — |"
-            echo "| macOS (Intel) | crower_${TAG}_darwin_amd64.tar.gz | crower_gui_${TAG}_darwin_amd64.tar.gz | crower_fyne_${TAG}_darwin_amd64.tar.gz |"
-            echo "| macOS (Apple Silicon) | crower_${TAG}_darwin_arm64.tar.gz | crower_gui_${TAG}_darwin_arm64.tar.gz | crower_fyne_${TAG}_darwin_arm64.tar.gz |"
-            echo ""
-            echo "### Installation"
-            echo "- **Linux/macOS:** extract, make executable, move \`crower\` and \`cr\` to your PATH — or run the bundled \`add_to_path.sh\`"
-            echo "- **Windows:** extract and add to PATH — or run the bundled \`add_to_path.bat\`"
-            echo "- Run \`crower gui\` for TUI or \`crower desktop\` for native desktop UI"
-            echo "- The **Fyne** archives are a separate CGO build for Linux/Windows amd64 and macOS arm64/Intel; they add \`crower fyne\`. The other archives keep the cgo-free desktop."
-            echo ""
-            echo "### Verification"
-            echo "See \`checksums.txt\` for SHA256 checksums. Every binary reports the commit it was built from:"
-            echo "\`go version -m crower | grep vcs.revision\`."
-            echo ""
-            echo "### Changelog"
-          } > notes.md
+          cat > notes.md <<'EOF'
+          ![Version](https://img.shields.io/badge/version-@TAG@-2563eb?style=flat-square)
+          ![Platforms](https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS-059669?style=flat-square)
+          ![CLI](https://img.shields.io/badge/CLI-cgo--free-059669?style=flat-square)
+          ![GUI](https://img.shields.io/badge/GUI-Fyne-7c3aed?style=flat-square)
+
+          ## Crower @TAG@
+
+          A terminal file manager and command-alias manager with undoable history and per-item notes.
+
+          ### 📦 Downloads
+
+          | Platform | CLI | GUI (Fyne) |
+          | :-- | :--: | :--: |
+          | 🐧 Linux amd64 | [crower_@TAG@_linux_amd64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_linux_amd64.tar.gz) | [crower_gui_@TAG@_linux_amd64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_gui_@TAG@_linux_amd64.tar.gz) |
+          | 🐧 Linux arm64 | [crower_@TAG@_linux_arm64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_linux_arm64.tar.gz) | — |
+          | 🪟 Windows amd64 | [crower_@TAG@_windows_amd64.zip](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_windows_amd64.zip) | [crower_gui_@TAG@_windows_amd64.zip](https://github.com/@REPO@/releases/download/@TAG@/crower_gui_@TAG@_windows_amd64.zip) |
+          | 🪟 Windows arm64 | [crower_@TAG@_windows_arm64.zip](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_windows_arm64.zip) | — |
+          | 🍎 macOS Apple Silicon | [crower_@TAG@_darwin_arm64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_darwin_arm64.tar.gz) | [crower_gui_@TAG@_darwin_arm64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_gui_@TAG@_darwin_arm64.tar.gz) |
+          | 🍎 macOS Intel | [crower_@TAG@_darwin_amd64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_@TAG@_darwin_amd64.tar.gz) | [crower_gui_@TAG@_darwin_amd64.tar.gz](https://github.com/@REPO@/releases/download/@TAG@/crower_gui_@TAG@_darwin_amd64.tar.gz) |
+
+          > **CLI** is cgo-free and has no window. **GUI** is the Fyne app `crower-gui`.
+
+          ### ⚡ Install
+
+          ```sh
+          tar -xzf crower_@TAG@_linux_amd64.tar.gz   # .zip on Windows
+          ./add_to_path.sh                            # add_to_path.bat on Windows
+          crower --version
+          ```
+
+          Run `crower gui` for the terminal menu, or launch `crower-gui` from the GUI archive.
+
+          ### 🔐 Verify
+
+          - SHA-256 for every asset: `checksums.txt`.
+          - Built from the tagged commit, `vcs.modified=false`:
+
+          ```sh
+          go version -m crower | grep vcs.revision
+          ```
+
+          ### 📝 Changelog
+          EOF
+          sed -i "s|@TAG@|${TAG}|g; s|@REPO@|${REPO}|g" notes.md
+
 
           # `releases/generate-notes` walks the commit graph, and every feature
           # PR here is squash-merged into `dev` — so the generated notes see the
