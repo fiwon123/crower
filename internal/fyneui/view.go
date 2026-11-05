@@ -88,19 +88,19 @@ type ui struct {
 	groupIcons   map[string]string
 	groupOptions []groupOption
 
-	list          *widget.List
-	detail        *widget.Label
-	detailBody    *fyne.Container
-	detailToggle  *widget.Button
-	detailShown   bool
-	paramsEntry   *widget.Entry
-	groupFilter   *widget.Select
-	table         *widget.Table
-	historyDetail *widget.Label
-	historyBody   *fyne.Container
-	historyToggle *widget.Button
-	historyShown  bool
-	revert        *widget.Button
+	list               *widget.List
+	detail             *widget.Label
+	detailBody         *fyne.Container
+	detailToggle       *widget.Button
+	detailShown        bool
+	paramsEntry        *widget.Entry
+	groupFilter        *widget.Select
+	table              *widget.Table
+	historyDetail      *widget.Label
+	historyBody        *fyne.Container
+	historyToggle      *widget.Button
+	historyDetailShown bool
+	revert             *widget.Button
 
 	// historyRows is the table's snapshot: rebuild it on reload or tab open
 	// rather than recomputing the whole log for every cell.
