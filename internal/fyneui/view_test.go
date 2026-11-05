@@ -28,10 +28,12 @@ func (stubExecutor) Execute(string, []string) (string, string, error) {
 // recordingExecutor records which command each run asked for.
 type recordingExecutor struct {
 	keys []string
+	args [][]string
 }
 
-func (e *recordingExecutor) Execute(key string, _ []string) (string, string, error) {
+func (e *recordingExecutor) Execute(key string, params []string) (string, string, error) {
 	e.keys = append(e.keys, key)
+	e.args = append(e.args, params)
 
 	return "ok", key, nil
 }
@@ -230,6 +232,139 @@ func TestCommandRowRunsItsOwnCommand(t *testing.T) {
 
 	if len(exec.keys) != 2 || exec.keys[0] != "greet" || exec.keys[1] != "ship" {
 		t.Fatalf("executed %v, want [greet ship]", exec.keys)
+	}
+}
+
+// A command that declares no parameters runs on the first click.
+func TestRunKeyRunsDirectlyWithoutDeclaredParams(t *testing.T) {
+	exec := &recordingExecutor{}
+	model := desktop.NewModel(
+		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
+		timeline.Log{},
+		exec,
+	)
+
+	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
+
+	window.SetContent(front.commandsTab())
+	window.Resize(fyne.NewSize(960, 640))
+
+	front.runKey("greet")
+
+	if len(exec.keys) != 1 || exec.keys[0] != "greet" {
+		t.Fatalf("executed %v, want [greet] without a prompt", exec.keys)
+	}
+
+	if front.model.State != desktop.ViewOutput {
+		t.Errorf("State = %v, want ViewOutput", front.model.State)
+	}
+}
+
+// A command that declares parameters asks for them before running.
+func TestRunKeyPromptsWhenTheCommandDeclaresParams(t *testing.T) {
+	exec := &recordingExecutor{}
+	model := desktop.NewModel(
+		catalog.New(nil, []catalog.Command{
+			{Name: "deploy", Exec: "make deploy", Params: []string{"env"}},
+		}),
+		timeline.Log{},
+		exec,
+	)
+
+	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
+
+	window.SetContent(front.commandsTab())
+	window.Resize(fyne.NewSize(960, 640))
+
+	front.runKey("deploy")
+
+	if len(exec.keys) != 0 {
+		t.Fatalf("executed %v before the parameters were confirmed", exec.keys)
+	}
+
+	if front.model.State != desktop.ViewParams {
+		t.Errorf("State = %v, want ViewParams", front.model.State)
+	}
+
+	if len(window.Canvas().Overlays().List()) == 0 {
+		t.Error("no parameters prompt was shown")
+	}
+}
+
+// The detail panel's Run button takes its parameters from the entry: an empty
+// entry means "run without parameters".
+func TestRunFromDetailUsesTheEntry(t *testing.T) {
+	exec := &recordingExecutor{}
+	model := desktop.NewModel(
+		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
+		timeline.Log{},
+		exec,
+	)
+
+	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
+
+	window.SetContent(front.commandsTab())
+	window.Resize(fyne.NewSize(960, 640))
+
+	front.selectRow(0)
+	front.runFromDetail()
+
+	if len(exec.keys) != 1 || len(exec.args[0]) != 0 {
+		t.Fatalf("run = %v %v, want one run with no parameters", exec.keys, exec.args)
+	}
+
+	front.paramsEntry.SetText("a  b")
+	front.runFromDetail()
+
+	if len(exec.args) != 2 || !slices.Equal(exec.args[1], []string{"a", "b"}) {
+		t.Fatalf("args = %v, want [a b]", exec.args)
+	}
+}
+
+// Selecting a row opens the panel below the list, and the toggle collapses it.
+func TestSelectRowShowsTheDetail(t *testing.T) {
+	model := desktop.NewModel(
+		catalog.New(nil, []catalog.Command{
+			{Name: "deploy", Exec: "make deploy", Params: []string{"env"}},
+		}),
+		timeline.Log{},
+		stubExecutor{},
+	)
+
+	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
+
+	window.SetContent(front.commandsTab())
+	window.Resize(fyne.NewSize(960, 640))
+
+	if front.detailBody.Visible() {
+		t.Fatal("the detail panel is visible before a selection")
+	}
+
+	front.selectRow(0)
+
+	if !front.detailBody.Visible() {
+		t.Fatal("selecting a row did not open the detail panel")
+	}
+
+	if !strings.Contains(front.detail.Text, "make deploy") {
+		t.Errorf("detail = %q, want the command's exec", front.detail.Text)
+	}
+
+	if !strings.Contains(front.paramsEntry.PlaceHolder, "env") {
+		t.Errorf("placeholder = %q, want the declared parameter names", front.paramsEntry.PlaceHolder)
+	}
+
+	front.setDetailVisible(false)
+
+	if front.detailBody.Visible() {
+		t.Error("the toggle did not collapse the panel")
+	}
+
+	front.selectRow(0)
+	front.clearDetail()
+
+	if front.detailBody.Visible() || front.detail.Text != "" || front.paramsEntry.Text != "" {
+		t.Error("clearDetail left the panel populated")
 	}
 }
 

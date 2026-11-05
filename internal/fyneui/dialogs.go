@@ -267,9 +267,14 @@ func newExecEntry() *widget.Entry {
 	return exec
 }
 
-func (u *ui) askParams() {
+// askParams prompts for the parameters a command declares. The prompt names
+// them so a reader knows what the positional arguments mean; an empty answer
+// runs the command without parameters.
+func (u *ui) askParams(key string, command catalog.Command) {
+	u.model.StartRunKey(key, true)
+
 	input := widget.NewEntry()
-	input.SetPlaceHolder("space-separated parameters")
+	input.SetPlaceHolder(paramsHint(command))
 
 	dialog.ShowCustomConfirm("Parameters", "Run", "Cancel", input, func(ok bool) {
 		if !ok {

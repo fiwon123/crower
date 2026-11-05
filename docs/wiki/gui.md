@@ -21,16 +21,24 @@ The window is split into tabs:
 
 | Tab | What it holds |
 | --- | --- |
-| **Commands** | The list, with a filter, a group filter, a detail line, and **Run**, **Run with params**, **Edit** and **Delete** on every row |
+| **Commands** | The list, with a filter, a group filter and **Run**, **Edit** and **Delete** on every row; selecting one opens the **Details** panel below the list |
 | **History** | Every recorded operation as a table, newest first, with a **Restore this state** action |
 | **Tools** | Copy, move, search, extract and open, with their result below |
 | **About** | Logo, version, description, the repository link, and the update controls |
 
 A command can carry an **icon** — a short marker such as 🚀 — shown beside its
-name, and a **group**; the filter lists every group in use, and the detail line
+name, and a **group**; the filter lists every group in use, and the details panel
 shows which one the selected command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
 `crower update --icon/--group`.
+
+Selecting a row opens a **Details** panel below the list; the **Details** toggle
+collapses it again. The panel shows the exec line and the command's metadata,
+and carries a **params entry** with its own **Run**: the entry's text is passed
+as parameters, and an empty entry runs the command without any. The row's ▶ and
+the toolbar's **Run** are smart — a command that declares `Params` asks for them
+first (an empty answer runs it without), and a command that declares none runs
+straight away.
 
 The edit dialog also changes the rest of the command: **Description**,
 **Params** (comma-separated), **Cwd**, **Shell** and **Timeout**. Emptying a
