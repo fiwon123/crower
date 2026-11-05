@@ -10,6 +10,48 @@ import (
 	"github.com/fiwon123/crower/internal/domain/catalog"
 )
 
+// A setup's command count comes from its own configuration file, and looking at
+// a setup that does not exist creates nothing.
+func TestFyneSetupsCountsTheCommandsInASetup(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+
+	workPath := filepath.Join(home, "crower", "setups", "work", "crower.yaml")
+	work := loadFyneConfigAt(t, workPath)
+	work.ReplaceCatalog(catalog.New(nil, []catalog.Command{
+		{Name: "deploy", Exec: "make deploy"},
+		{Name: "build", Exec: "make build"},
+	}))
+
+	if err := work.SaveCommands(); err != nil {
+		t.Fatalf("save work: %v", err)
+	}
+
+	setups := fyneSetups{current: "default"}
+
+	count, err := setups.Commands("work")
+	if err != nil {
+		t.Fatalf("Commands work: %v", err)
+	}
+
+	if count != 2 {
+		t.Errorf("count = %d, want 2", count)
+	}
+
+	count, err = setups.Commands("missing")
+	if err != nil {
+		t.Fatalf("Commands missing: %v", err)
+	}
+
+	if count != 0 {
+		t.Errorf("count = %d, want 0", count)
+	}
+
+	if _, err := os.Stat(filepath.Join(home, "crower", "setups", "missing")); !os.IsNotExist(err) {
+		t.Errorf("counting a missing setup created it: %v", err)
+	}
+}
+
 // Create writes an empty setup the way `setup new` does, and it appears in the
 // list.
 func TestFyneSetupsCreateWritesAnEmptySetup(t *testing.T) {

@@ -24,8 +24,10 @@ type stubSetups struct {
 	err       error
 	created   []string
 	deleted   []string
+	counts    map[string]int
 	createErr error
 	deleteErr error
+	countErr  error
 }
 
 func (s *stubSetups) Current() string { return s.current }
@@ -41,6 +43,14 @@ func (s *stubSetups) Switch(name string) (desktop.State, error) {
 	s.current = name
 
 	return s.next, nil
+}
+
+func (s *stubSetups) Commands(name string) (int, error) {
+	if s.countErr != nil {
+		return 0, s.countErr
+	}
+
+	return s.counts[name], nil
 }
 
 func (s *stubSetups) Create(name string) error {
@@ -90,12 +100,12 @@ func TestCreateSetupAddsItToTheSelector(t *testing.T) {
 		t.Fatalf("created = %v, want [work]", setups.created)
 	}
 
-	if !slices.Contains(front.setupSelect.Options, "work") {
+	if !slices.Contains(front.setupSelect.Options, front.setupLabel("work")) {
 		t.Errorf("selector = %v, want the new setup in it", front.setupSelect.Options)
 	}
 
-	if front.setupSelect.Selected != "default" {
-		t.Errorf("selector selected %q, want the active setup kept", front.setupSelect.Selected)
+	if want := front.setupLabel("default"); front.setupSelect.Selected != want {
+		t.Errorf("selector selected %q, want %q kept", front.setupSelect.Selected, want)
 	}
 }
 
@@ -133,7 +143,7 @@ func TestDeleteSetupRemovesItFromTheSelector(t *testing.T) {
 		t.Fatalf("deleted = %v, want [work]", setups.deleted)
 	}
 
-	if slices.Contains(front.setupSelect.Options, "work") {
+	if slices.Contains(front.setupSelect.Options, front.setupLabel("work")) {
 		t.Errorf("selector = %v, want the deleted setup gone", front.setupSelect.Options)
 	}
 }
@@ -155,8 +165,50 @@ func TestDeleteSetupReportsAFailure(t *testing.T) {
 		t.Fatal("deleteSetup accepted a failing delete")
 	}
 
-	if !slices.Contains(front.setupSelect.Options, "work") {
+	if !slices.Contains(front.setupSelect.Options, front.setupLabel("work")) {
 		t.Errorf("selector = %v, want the failed setup kept", front.setupSelect.Options)
+	}
+}
+
+// The selector's options say how many commands each setup holds, and choosing
+// one still switches by name.
+func TestSetupOptionsShowTheCommandCount(t *testing.T) {
+	setups := &stubSetups{
+		current: "default",
+		names:   []string{"default", "work"},
+		counts:  map[string]int{"default": 3, "work": 12},
+	}
+
+	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, &stubUpdater{current: "v1"})
+	front.setups = setups
+	window.SetContent(front.commandsTab())
+	window.Resize(fyneSize())
+
+	want := []string{"default (3)", "work (12)"}
+	if !slices.Equal(front.setupSelect.Options, want) {
+		t.Fatalf("options = %v, want %v", front.setupSelect.Options, want)
+	}
+
+	if front.setupSelect.Selected != "default (3)" {
+		t.Errorf("selected = %q, want the active setup's label", front.setupSelect.Selected)
+	}
+
+	// Choosing a label, not a bare name, still switches to the setup.
+	front.setupSelect.SetSelected("work (12)")
+
+	if len(setups.switched) != 1 || setups.switched[0] != "work" {
+		t.Fatalf("switched = %v, want [work]", setups.switched)
+	}
+}
+
+// A count that cannot be read shows as "?" instead of hiding the setup.
+func TestSetupLabelShowsUnknownCounts(t *testing.T) {
+	setups := &stubSetups{current: "default", names: []string{"default"}, countErr: errors.New("unreadable")}
+	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, &stubUpdater{current: "v1"})
+	front.setups = setups
+
+	if got := front.setupLabel("default"); got != "default (?)" {
+		t.Errorf("setupLabel = %q, want the unknown marker", got)
 	}
 }
 
@@ -191,8 +243,8 @@ func TestSwitchSetupRebuildsTheWindow(t *testing.T) {
 		t.Errorf("activeSetup = %q, want work", front.activeSetup)
 	}
 
-	if front.setupSelect.Selected != "work" {
-		t.Errorf("setup select = %q, want work", front.setupSelect.Selected)
+	if want := front.setupLabel("work"); front.setupSelect.Selected != want {
+		t.Errorf("setup select = %q, want %q", front.setupSelect.Selected, want)
 	}
 
 	if title := window.Title(); !strings.Contains(title, "work") {
@@ -215,8 +267,8 @@ func TestSwitchSetupReportsAFailureAndKeepsTheSetup(t *testing.T) {
 		t.Errorf("activeSetup = %q, want the previous setup kept", front.activeSetup)
 	}
 
-	if front.setupSelect.Selected != "default" {
-		t.Errorf("setup select = %q, want it put back", front.setupSelect.Selected)
+	if want := front.setupLabel("default"); front.setupSelect.Selected != want {
+		t.Errorf("setup select = %q, want %q", front.setupSelect.Selected, want)
 	}
 }
 
