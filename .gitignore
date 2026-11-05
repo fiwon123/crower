@@ -53,6 +53,8 @@ fyne-cross/
 cmd/crowergui/fyne_metadata_init.go
 cmd/crowergui/fyne_pprof.go
 cmd/crowergui/*.syso
+# Generated for the fyne-cross build only; carries the release version.
+cmd/zz_version_generated.go
 cmd/crowergui/crowergui
 cmd/crowergui/crowergui.exe
 cmd/crowergui/crower-gui
