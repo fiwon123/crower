@@ -1,0 +1,57 @@
+name: GUI cross spike
+
+# Throwaway verification for #357: can fyne-cross build crower-gui for the two
+# arm64 targets on an amd64 runner? Removed before the PR.
+on:
+  push:
+    branches: [feat/357-one-archive-per-platform]
+
+permissions:
+  contents: read
+
+jobs:
+  cross:
+    name: ${{ matrix.target }}/${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux
+            arch: arm64
+          - target: windows
+            arch: arm64
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Install fyne-cross
+        run: go install github.com/fyne-io/fyne-cross@latest
+
+      - name: Build with fyne-cross
+        env:
+          VERSION: v0.0.0-test
+        run: |
+          set -euo pipefail
+          "$(go env GOPATH)/bin/fyne-cross" "${{ matrix.target }}" \
+            -arch "${{ matrix.arch }}" \
+            -name crower-gui \
+            -app-id com.fiwon123.crower \
+            -icon internal/fyneui/logo.png \
+            -ldflags "-X=github.com/fiwon123/crower/cmd.Version=${VERSION}" \
+            ./cmd/crowergui
+
+      - name: Inspect the binary
+        run: |
+          set -euo pipefail
+          find fyne-cross/bin -maxdepth 3 -type f -print
+          BIN="$(find fyne-cross/bin -maxdepth 3 -type f -name 'crower-gui*' | head -1)"
+          test -n "$BIN"
+          go version -m "$BIN"
+          file "$BIN"
