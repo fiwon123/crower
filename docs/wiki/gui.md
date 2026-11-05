@@ -22,7 +22,7 @@ The window is split into tabs:
 | Tab | What it holds |
 | --- | --- |
 | **Commands** | The list, with a filter, a group filter and **Run**, **Edit** and **Delete** on every row; selecting one opens the **Details** panel below the list |
-| **History** | Every recorded operation as a table, newest first, with a **Restore this state** action |
+| **History** | Every recorded operation as a table, newest first; clicking a row selects the whole row and opens its details below the table, with **Restore this state** |
 | **Tools** | Copy, move, search, extract and open, with their result below |
 | **About** | Logo, version, description, the repository link, and the update controls |
 

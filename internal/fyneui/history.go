@@ -4,9 +4,11 @@ package fyneui
 
 import (
 	"fmt"
+	"image/color"
 	"strconv"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -27,19 +29,22 @@ var historyHeaders = []string{"When", "Operation", "Command", "Version"}
 func (u *ui) historyTab() fyne.CanvasObject {
 	u.historyRows = u.model.HistoryRows()
 
-	u.historyDetail = widget.NewLabel("Select an entry to see what it recorded.")
+	u.historyDetail = widget.NewLabel("")
 	u.historyDetail.Wrapping = fyne.TextWrapWord
 
 	u.table = widget.NewTableWithHeaders(
 		func() (int, int) { return len(u.historyRows), len(historyHeaders) },
-		func() fyne.CanvasObject { return widget.NewLabel("") },
+		func() fyne.CanvasObject { return newHistoryCell() },
 		func(id widget.TableCellID, cell fyne.CanvasObject) {
-			label, ok := cell.(*widget.Label)
+			view, ok := cell.(*historyCellView)
 			if !ok || id.Row < 0 || id.Row >= len(u.historyRows) {
 				return
 			}
 
-			label.SetText(historyCell(u.historyRows[id.Row], id.Col))
+			view.label.SetText(historyCell(u.historyRows[id.Row], id.Col))
+			// The selection is a row, so every cell of the selected row is
+			// painted the same; a cell on its own means nothing here.
+			view.setSelected(id.Row == u.historyRow)
 		},
 	)
 
@@ -63,27 +68,70 @@ func (u *ui) historyTab() fyne.CanvasObject {
 
 	u.table.OnSelected = func(id widget.TableCellID) {
 		u.historyRow = id.Row
+		u.table.Refresh()
 		u.showHistoryDetail()
 	}
 	u.table.OnUnselected = func(widget.TableCellID) {
 		u.historyRow = -1
+		u.table.Refresh()
 		u.revert.Disable()
-		u.historyDetail.SetText("Select an entry to see what it recorded.")
+		u.clearHistoryDetail()
 	}
 
 	u.revert = widget.NewButtonWithIcon("Restore this state…", theme.HistoryIcon(), u.showRevert)
 	u.revert.Disable()
 
+	// The detail panel sits below the table, as on the Commands tab, and stays
+	// collapsed until an entry is chosen.
+	u.historyBody = container.NewVBox(u.historyDetail, container.NewHBox(u.revert))
+	u.historyBody.Hide()
+
+	u.historyToggle = widget.NewButtonWithIcon("Details", theme.MenuDropDownIcon(), func() {
+		u.setHistoryDetailVisible(!u.historyDetailShown)
+	})
+	u.historyToggle.Importance = widget.LowImportance
+
 	header := widget.NewLabel("Every recorded operation, newest first. Restoring an entry puts the command set back to what that entry recorded and drops the newer ones.")
 	header.Wrapping = fyne.TextWrapWord
 
 	return container.NewBorder(
-		container.NewVBox(header, u.historyDetail),
-		container.NewHBox(u.revert),
+		header,
+		container.NewVBox(u.historyToggle, u.historyBody),
 		nil,
 		nil,
 		u.table,
 	)
+}
+
+// historyCellView is one table cell: a label over a background the row
+// selection tints. widget.Table recycles cells, so UpdateCell re-points the
+// label and the tint on every pass.
+type historyCellView struct {
+	*fyne.Container
+
+	bg    *canvas.Rectangle
+	label *widget.Label
+}
+
+func newHistoryCell() *historyCellView {
+	cell := &historyCellView{
+		bg:    canvas.NewRectangle(color.Transparent),
+		label: widget.NewLabel(""),
+	}
+
+	cell.Container = container.NewMax(cell.bg, cell.label)
+
+	return cell
+}
+
+func (c *historyCellView) setSelected(selected bool) {
+	if selected {
+		c.bg.FillColor = theme.Color(theme.ColorNameSelection)
+	} else {
+		c.bg.FillColor = color.Transparent
+	}
+
+	c.bg.Refresh()
 }
 
 func historyCell(row desktop.HistoryRow, column int) string {
@@ -116,9 +164,33 @@ func (u *ui) refreshHistory() {
 		u.revert.Disable()
 	}
 
-	if u.historyDetail != nil {
-		u.historyDetail.SetText("Select an entry to see what it recorded.")
+	u.clearHistoryDetail()
+}
+
+// setHistoryDetailVisible is the Details toggle below the table: an invisible
+// child is skipped by Fyne's layouts, so collapsing gives the height to the log.
+func (u *ui) setHistoryDetailVisible(visible bool) {
+	u.historyDetailShown = visible
+
+	if u.historyBody == nil {
+		return
 	}
+
+	if visible {
+		u.historyBody.Show()
+	} else {
+		u.historyBody.Hide()
+	}
+}
+
+// clearHistoryDetail empties and collapses the panel, so a refresh cannot leave
+// another entry's text on screen.
+func (u *ui) clearHistoryDetail() {
+	if u.historyDetail != nil {
+		u.historyDetail.SetText("")
+	}
+
+	u.setHistoryDetailVisible(false)
 }
 
 func (u *ui) showHistoryDetail() {
@@ -135,6 +207,7 @@ func (u *ui) showHistoryDetail() {
 
 	u.historyDetail.SetText(fmt.Sprintf("Version %d — %s, %s\n%s", row.Version, row.Operation, row.Command, note))
 	u.revert.Enable()
+	u.setHistoryDetailVisible(true)
 }
 
 // showRevert asks before restoring, then applies the change through the
