@@ -92,6 +92,10 @@ type ui struct {
 	groupIcons   map[string]string
 	groupOptions []groupOption
 
+	// tabs is the AppTabs itself: a drop needs to open the Tools tab, and the
+	// Commands tab changes the setup selector's labels, so both need it.
+	tabs *container.AppTabs
+
 	list               *widget.List
 	detail             *widget.Label
 	detailBody         *fyne.Container
@@ -111,7 +115,8 @@ type ui struct {
 	historyRows []desktop.HistoryRow
 	historyRow  int
 
-	// tools tab: one result square per card
+	// tools tab: one result square per card, plus the sources a drop fills
+	sourcesEntry   *widget.Entry
 	transferResult *toolResult
 	searchResult   *toolResult
 	extractResult  *toolResult
