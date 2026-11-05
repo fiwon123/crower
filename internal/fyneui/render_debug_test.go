@@ -34,11 +34,11 @@ func TestCommandRowPaintsInk(t *testing.T) {
 	bounds := img.Bounds()
 	t.Logf("capture bounds: %v", bounds)
 
+	bands := make(map[int]int)
+
 	for y := bounds.Min.Y; y < bounds.Max.Y; y += 40 {
-		colours := distinctColors(img, 0, y, bounds.Max.X, min(y+40, bounds.Max.Y))
-		t.Logf("band y=%d..%d colours=%d", y, min(y+40, bounds.Max.Y), colours)
+		bands[y] = distinctColors(img, 0, y, bounds.Max.X, min(y+40, bounds.Max.Y))
 	}
 
-	t.Logf("list size: %v, visible: %v", front.list.Size(), front.list.Visible())
-	t.Logf("first row text: %q", front.model.FilteredKeys())
+	t.Errorf("bands=%v bounds=%v list=%v visible=%v keys=%v", bands, bounds, front.list.Size(), front.list.Visible(), front.model.FilteredKeys())
 }
