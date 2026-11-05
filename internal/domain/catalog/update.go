@@ -31,6 +31,16 @@ type Changes struct {
 	ClearIcon  bool
 	ClearGroup bool
 
+	// The rest of the schema is optional metadata that a caller either
+	// supplies or does not. A nil field means "not supplied"; a pointer to an
+	// empty value clears it. They are pointers rather than another five
+	// Clear* booleans because that is what the caller means.
+	Description *string
+	Params      *[]string
+	Cwd         *string
+	Shell       *string
+	Timeout     *string
+
 	// ClearAliases distinguishes "set the alias list to empty" from "leave it
 	// alone": an empty Aliases slice means not supplied, so a caller that needs
 	// to remove every alias sets this instead.
@@ -119,6 +129,31 @@ func (c Catalog) Update(key string, changes Changes) (UpdateResult, error) {
 
 	if changes.Group != "" || changes.ClearGroup {
 		updated.Group = changes.Group
+		changed++
+	}
+
+	if changes.Description != nil {
+		updated.Description = *changes.Description
+		changed++
+	}
+
+	if changes.Params != nil {
+		updated.Params = slices.Clone(*changes.Params)
+		changed++
+	}
+
+	if changes.Cwd != nil {
+		updated.Cwd = *changes.Cwd
+		changed++
+	}
+
+	if changes.Shell != nil {
+		updated.Shell = *changes.Shell
+		changed++
+	}
+
+	if changes.Timeout != nil {
+		updated.Timeout = *changes.Timeout
 		changed++
 	}
 

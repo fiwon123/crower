@@ -32,6 +32,11 @@ shows which one the selected command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
 `crower update --icon/--group`.
 
+The edit dialog also changes the rest of the command: **Description**,
+**Params** (comma-separated), **Cwd**, **Shell** and **Timeout**. Emptying a
+field clears it. `Env` is not in the dialog — it holds values that look like
+secrets, so it stays a configuration-file field, and the window shows keys only.
+
 **Groups…** beside the filter gives each group an icon of its own, stored in
 `groups.toml` next to the configuration (the window is the only writer; the CLI
 ignores the file). The filter then reads `🚀 deploy` instead of a bare name.

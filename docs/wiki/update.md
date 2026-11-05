@@ -35,10 +35,10 @@ crower update --last -e "make test"          # edit what you just ran
 
 > [!NOTE]
 > `Description`, `Params`, `Shell`, `Cwd`, `Env` and `Timeout` are part of the
-> command schema, but `update` has no flags for them yet: edit the configuration
-> file or re-import a pack. See [`execute`](execute#-execution-target).
-> `--icon` and `--group` are the exception: they are display metadata, so the
-> window can set them too.
+> command schema, but `update` has no flags for them yet: edit them in the
+> window's edit dialog, in the configuration file, or by re-importing a pack.
+> See [`execute`](execute#-execution-target). `--icon` and `--group` are the
+> exception: they are display metadata, so they have flags too.
 
 ## 🔗 Related
 

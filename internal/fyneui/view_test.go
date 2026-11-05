@@ -4,6 +4,7 @@ package fyneui
 
 import (
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -301,7 +302,18 @@ func TestApplyEditReloadsTheModel(t *testing.T) {
 
 	front.window.SetContent(widget.NewLabel(""))
 
-	if !front.applyEdit("greet", "ship", "s", "🚀", "deploy", "echo ship") {
+	if !front.applyEdit("greet", commandForm{
+		Name:        "ship",
+		Aliases:     "s",
+		Icon:        "🚀",
+		Group:       "deploy",
+		Exec:        "echo ship",
+		Description: "ship it",
+		Params:      "env, region",
+		Cwd:         "/srv/app",
+		Shell:       "sh",
+		Timeout:     "30s",
+	}) {
 		t.Fatal("applyEdit returned false")
 	}
 
@@ -323,6 +335,28 @@ func TestApplyEditReloadsTheModel(t *testing.T) {
 		t.Error("a supplied icon or group was marked for clearing")
 	}
 
+	changes := editor.updates[0]
+
+	if changes.Description == nil || *changes.Description != "ship it" {
+		t.Errorf("Description = %v, want it carried through", changes.Description)
+	}
+
+	if changes.Params == nil || !slices.Equal(*changes.Params, []string{"env", "region"}) {
+		t.Errorf("Params = %v, want [env region]", changes.Params)
+	}
+
+	if changes.Cwd == nil || *changes.Cwd != "/srv/app" {
+		t.Errorf("Cwd = %v, want /srv/app", changes.Cwd)
+	}
+
+	if changes.Shell == nil || *changes.Shell != "sh" {
+		t.Errorf("Shell = %v, want sh", changes.Shell)
+	}
+
+	if changes.Timeout == nil || *changes.Timeout != "30s" {
+		t.Errorf("Timeout = %v, want 30s", changes.Timeout)
+	}
+
 	if got := front.model.Selected(); got != "ship" {
 		t.Errorf("Selected() = %q, want the reloaded command", got)
 	}
@@ -333,7 +367,7 @@ func TestApplyEditRejectsEmptyFields(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
 	front.window.SetContent(widget.NewLabel(""))
 
-	if front.applyEdit("greet", " ", " ", " ", " ", " ") {
+	if front.applyEdit("greet", commandForm{Name: " ", Aliases: " ", Icon: " ", Group: " ", Exec: " "}) {
 		t.Fatal("applyEdit accepted an empty name and exec")
 	}
 
@@ -351,7 +385,7 @@ func TestApplyEditReportsAnEditorError(t *testing.T) {
 	front, _ := newTestUI(t, testModel(), editor, stubReverter{})
 	front.window.SetContent(widget.NewLabel(""))
 
-	if front.applyEdit("greet", "ship", "s", "🚀", "deploy", "echo ship") {
+	if front.applyEdit("greet", commandForm{Name: "ship", Aliases: "s", Icon: "🚀", Group: "deploy", Exec: "echo ship"}) {
 		t.Fatal("applyEdit accepted an editor error")
 	}
 

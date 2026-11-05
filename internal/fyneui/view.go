@@ -529,14 +529,20 @@ func (u *ui) reload(commands catalog.Catalog, history timeline.Log) {
 }
 
 func splitAliases(text string) []string {
-	aliases := make([]string, 0)
+	return splitList(text)
+}
+
+// splitList reads a comma-separated list, dropping the empty entries a trailing
+// comma or a stray space would leave. Aliases and params share it.
+func splitList(text string) []string {
+	items := make([]string, 0)
 
 	for _, part := range strings.Split(text, ",") {
 		part = strings.TrimSpace(part)
 		if part != "" {
-			aliases = append(aliases, part)
+			items = append(items, part)
 		}
 	}
 
-	return aliases
+	return items
 }
