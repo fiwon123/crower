@@ -51,6 +51,9 @@ jobs:
       - name: Inspect the binary
         run: |
           set -euo pipefail
+          echo "--- git status after fyne-cross ---"
+          git status --porcelain
+          echo "---"
           find fyne-cross/bin -maxdepth 3 -type f -print
           BIN="$(find fyne-cross/bin -maxdepth 3 -type f ! -name '*.tar.*' ! -name '*.zip' | head -1)"
           test -n "$BIN"
