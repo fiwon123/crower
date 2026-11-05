@@ -37,6 +37,7 @@ jobs:
       - name: Build with fyne-cross
         env:
           VERSION: v0.0.0-test
+          GOFLAGS: -ldflags=-X=github.com/fiwon123/crower/cmd.Version=v0.0.0-test
         run: |
           set -euo pipefail
           "$(go env GOPATH)/bin/fyne-cross" "${{ matrix.target }}" \
@@ -45,7 +46,6 @@ jobs:
             -app-id com.fiwon123.crower \
             -tags fyne \
             -icon internal/fyneui/logo.png \
-            -ldflags "-X=github.com/fiwon123/crower/cmd.Version=${VERSION}" \
             ./cmd/crowergui
 
       - name: Debug the container view
