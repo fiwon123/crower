@@ -128,7 +128,14 @@ func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
 
 	flow := &rowFlow{gap: theme.Padding() * 2}
 
-	flow.Layout(buttons, fyne.NewSize(600, 40))
+	// Widths are measured, not assumed: a platform's font decides how wide a
+	// button is, and the wrap point has to be stated in those terms.
+	var wide float32
+	for _, button := range buttons {
+		wide += button.MinSize().Width + theme.Padding()*2
+	}
+
+	flow.Layout(buttons, fyne.NewSize(wide, 40))
 
 	for index := 1; index < len(buttons); index++ {
 		previous := buttons[index-1]
@@ -140,7 +147,8 @@ func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
 		}
 	}
 
-	flow.Layout(buttons, fyne.NewSize(120, 40))
+	narrow := buttons[0].MinSize().Width + theme.Padding()*2 + buttons[1].MinSize().Width - 1
+	flow.Layout(buttons, fyne.NewSize(narrow, 40))
 
 	if buttons[1].Position().Y <= buttons[0].Position().Y {
 		t.Error("a narrow row did not wrap its buttons")
