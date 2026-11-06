@@ -107,3 +107,57 @@ jobs:
 
       - name: Test the headless model
         run: go test ./internal/desktop
+
+  windows-diag:
+    name: Diag Windows window build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: Build variants and try to start them
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:CGO_ENABLED = '1'
+          New-Item -ItemType Directory -Force build | Out-Null
+
+          function Try-Run([string]$path) {
+            try {
+              $p = Start-Process $path -ArgumentList '--help' -PassThru
+              if (-not $p.WaitForExit(30000)) { $p.Kill(); return 'TIMEOUT' }
+              return "exit=$($p.ExitCode)"
+            } catch {
+              return "START FAILED: $($_.Exception.Message)"
+            }
+          }
+
+          $resource = 'cmd/crowergui/rsrc_windows_amd64.syso'
+
+          go build -tags fyne -o build/a.exe ./cmd/crowergui
+          Write-Host "A console-no-resource: $(Try-Run build/a.exe)"
+
+          go run ./internal/tools/winres -icon internal/fyneui/logo.png -out $resource -arch amd64 -name crower-gui -version v0.0.0
+          go build -tags fyne -o build/b.exe ./cmd/crowergui
+          Write-Host "B console-resource: $(Try-Run build/b.exe)"
+
+          Remove-Item $resource
+          go build -tags fyne -ldflags '-H windowsgui' -o build/c.exe ./cmd/crowergui
+          Write-Host "C gui-no-resource: $(Try-Run build/c.exe)"
+
+          go run ./internal/tools/winres -icon internal/fyneui/logo.png -out $resource -arch amd64 -name crower-gui -version v0.0.0
+          go build -tags fyne -ldflags '-H windowsgui' -o build/d.exe ./cmd/crowergui
+          Write-Host "D gui-resource: $(Try-Run build/d.exe)"
+          Remove-Item $resource
+
+          foreach ($name in 'a','b','c','d') {
+            $bytes = [System.IO.File]::ReadAllBytes("build/$name.exe")
+            $pe = [BitConverter]::ToInt32($bytes, 0x3c)
+            $machine = [BitConverter]::ToUInt16($bytes, $pe + 4)
+            $sections = [BitConverter]::ToUInt16($bytes, $pe + 6)
+            $opt = $pe + 24
+            $subsystem = [BitConverter]::ToUInt16($bytes, $opt + 68)
+            Write-Host "$name.exe machine=$('{0:x}' -f $machine) sections=$sections subsystem=$subsystem size=$($bytes.Length)"
+          }
