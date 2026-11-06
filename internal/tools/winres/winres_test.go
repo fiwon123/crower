@@ -81,50 +81,58 @@ func TestGroupIconReferencesTheIconResources(t *testing.T) {
 
 // resourceEntry is one leaf found by walking the generated tree.
 type resourceEntry struct {
-	id   uint32
+	path []uint32
 	data []byte
 }
 
-// walkResources parses the .rsrc section far enough to list every leaf by type,
-// which is exactly what Windows does to find an icon.
-func walkResources(t *testing.T, section []byte, directory uint32) map[uint32][]resourceEntry {
+// walkResources parses the .rsrc section the way the loader does: the root's
+// entries are resource types, then names, then languages, and only then a data
+// entry. It returns every leaf keyed by type.
+func walkResources(t *testing.T, section []byte) map[uint32][]resourceEntry {
 	t.Helper()
 
-	header := func(at uint32) (uint32, uint16) {
-		return at, binary.LittleEndian.Uint16(section[at+14:])
-	}
-
-	dataEntry := func(at uint32) []byte {
-		address := binary.LittleEndian.Uint32(section[at:])
-		size := binary.LittleEndian.Uint32(section[at+4:])
-
-		return section[address : address+size]
-	}
-
-	root, count := header(directory)
 	found := make(map[uint32][]resourceEntry)
 
-	for index := uint16(0); index < count; index++ {
-		entryAt := root + 16 + uint32(8*index)
-		kind := binary.LittleEndian.Uint32(section[entryAt:])
-		subAt := binary.LittleEndian.Uint32(section[entryAt+4:]) &^ 0x80000000
+	var walk func(at uint32, path []uint32)
 
-		sub, names := header(directory + subAt)
+	walk = func(at uint32, path []uint32) {
+		count := binary.LittleEndian.Uint16(section[at+14:])
 
-		for name := uint16(0); name < names; name++ {
-			nameAt := sub + 16 + uint32(8*name)
-			id := binary.LittleEndian.Uint32(section[nameAt:])
-			dataAt := binary.LittleEndian.Uint32(section[nameAt+4:]) &^ 0x80000000
+		for index := uint16(0); index < count; index++ {
+			entryAt := at + 16 + uint32(8*index)
+			id := binary.LittleEndian.Uint32(section[entryAt:])
+			offset := binary.LittleEndian.Uint32(section[entryAt+4:])
+			level := append(append([]uint32{}, path...), id)
 
-			found[kind] = append(found[kind], resourceEntry{id: id, data: dataEntry(directory + dataAt)})
+			// Every offset in the tree is relative to the start of the section,
+			// not to the directory that holds it.
+			if offset&0x80000000 != 0 {
+				walk(offset&^0x80000000, level)
+				continue
+			}
+
+			entry := offset
+			address := binary.LittleEndian.Uint32(section[entry:])
+			size := binary.LittleEndian.Uint32(section[entry+4:])
+
+			if len(level) != 3 {
+				t.Fatalf("resource %v is at %d levels, want type → name → language", level, len(level))
+			}
+
+			found[level[0]] = append(found[level[0]], resourceEntry{
+				path: level,
+				data: section[address : address+size],
+			})
 		}
 	}
+
+	walk(0, nil)
 
 	return found
 }
 
 // The tree carries the four resource types the icon, manifest and version need,
-// with the payloads intact.
+// with the payloads intact and every leaf under a language directory.
 func TestResourcesCarryIconManifestAndVersion(t *testing.T) {
 	images, err := iconImages(bytes.NewReader(testPNG(t)))
 	if err != nil {
@@ -139,19 +147,23 @@ func TestResourcesCarryIconManifestAndVersion(t *testing.T) {
 		t.Fatalf("resources: %v", err)
 	}
 
-	found := walkResources(t, section, 0)
+	found := walkResources(t, section)
 
 	if len(found[rtIcon]) != len(images) {
 		t.Errorf("icon resources = %d, want %d", len(found[rtIcon]), len(images))
 	}
 
 	for index, entry := range found[rtIcon] {
-		if int(entry.id) != index+1 {
-			t.Errorf("icon %d has id %d, want %d", index, entry.id, index+1)
+		if int(entry.path[1]) != index+1 {
+			t.Errorf("icon %d has name id %d, want %d", index, entry.path[1], index+1)
+		}
+
+		if entry.path[2] != neutralLanguage {
+			t.Errorf("icon %d is stored under language %d, want neutral", entry.path[1], entry.path[2])
 		}
 
 		if !bytes.HasPrefix(entry.data, []byte("\x89PNG")) {
-			t.Errorf("icon %d is not PNG data", entry.id)
+			t.Errorf("icon %d is not PNG data", entry.path[1])
 		}
 	}
 
@@ -161,6 +173,12 @@ func TestResourcesCarryIconManifestAndVersion(t *testing.T) {
 
 	if len(found[rtManifest]) != 1 || !bytes.Contains(found[rtManifest][0].data, []byte("dpiAware")) {
 		t.Error("the manifest resource is missing or not DPI aware")
+	}
+
+	for _, entry := range found[rtManifest] {
+		if entry.path[2] != neutralLanguage {
+			t.Errorf("the manifest is stored under language %d, want neutral", entry.path[2])
+		}
 	}
 
 	if len(found[rtVersion]) != 1 || !bytes.Equal(found[rtVersion][0].data, version) {
