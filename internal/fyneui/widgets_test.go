@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
 )
@@ -71,26 +70,24 @@ func TestGrowingEntryGrowsWithItsText(t *testing.T) {
 	}
 }
 
-// The value column of a detail grid can be selected and copied; the key labels
-// stay plain.
-func TestFieldGridValuesAreSelectable(t *testing.T) {
+// A detail form's values can be selected and copied.
+func TestFieldFormValuesAreSelectable(t *testing.T) {
 	app := test.NewApp()
 	t.Cleanup(app.Quit)
 
-	grid := container.NewGridWithColumns(2)
-	setFieldGrid(grid, []detailField{
+	form := newFieldForm([]detailField{
 		{Label: "Exec", Value: "echo hi"},
 		{Label: "Shell", Value: "sh"},
 	})
 
-	if len(grid.Objects) != 4 {
-		t.Fatalf("grid = %d objects, want two rows", len(grid.Objects))
+	if len(form.Items) != 2 {
+		t.Fatalf("form = %d items, want two rows", len(form.Items))
 	}
 
-	for index := 1; index < len(grid.Objects); index += 2 {
-		label, ok := grid.Objects[index].(*widget.Label)
+	for _, item := range form.Items {
+		label, ok := item.Widget.(*widget.Label)
 		if !ok {
-			t.Fatalf("object %d = %T, want a label", index, grid.Objects[index])
+			t.Fatalf("%s value = %T, want a label", item.Text, item.Widget)
 		}
 
 		if !label.Selectable {

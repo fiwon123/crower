@@ -233,8 +233,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 		fields = append(fields, detailField{Value: "(no note)"})
 	}
 
-	grid := container.NewGridWithColumns(2)
-	setFieldGrid(grid, fields)
+	form := newFieldForm(fields)
 
 	card.raw = widget.NewLabel(detail.Note)
 	card.raw.Wrapping = fyne.TextWrapWord
@@ -274,9 +273,10 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 	u.updateHistoryActions(card, detail)
 
 	return container.NewVBox(
-		grid,
+		form,
 		card.rawToggle,
 		card.raw,
+		widget.NewSeparator(),
 		container.NewHBox(card.run, card.edit, card.restore),
 		card.hint,
 	)
