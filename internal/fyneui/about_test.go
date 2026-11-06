@@ -301,9 +301,9 @@ func TestAboutActionsFitANarrowWindow(t *testing.T) {
 	}
 }
 
-// Hiding an action must re-run the wrapping grid: GridWrap's minimum height is
-// whatever its last layout counted, so a hidden button would otherwise keep its
-// row reserved until the window is resized.
+// Hiding an action re-runs the flow and the body above it: the flow reports the
+// height of its last layout, so without both the card would keep a hidden
+// button's row until the window was resized.
 func TestHidingAnAboutActionReclaimsItsRow(t *testing.T) {
 	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
 	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
@@ -314,13 +314,13 @@ func TestHidingAnAboutActionReclaimsItsRow(t *testing.T) {
 	window.SetContent(content)
 	window.Resize(fyne.NewSize(360, 640))
 
-	before := front.aboutActions.MinSize().Height
+	before := front.aboutUpdates.Size().Height
 
 	front.showInstall("")
 
-	after := front.aboutActions.MinSize().Height
+	after := front.aboutUpdates.Size().Height
 	if after >= before {
-		t.Errorf("actions height = %.1f after hiding Install, want less than %.1f", after, before)
+		t.Errorf("card height = %.1f after hiding Install, want less than %.1f", after, before)
 	}
 
 	if front.installButton.Visible() {
