@@ -135,6 +135,7 @@ type ui struct {
 	historyDetailShown bool
 	runHistory         *widget.Button
 	editHistory        *widget.Button
+	historyHint        *widget.Label
 	revert             *widget.Button
 
 	// historyRows is the table's snapshot: rebuild it on reload or tab open

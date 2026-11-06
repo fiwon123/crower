@@ -193,16 +193,21 @@ func TestHistoryCellPaintsTheRowSelection(t *testing.T) {
 	}
 }
 
-// historyEntryUI lays out the window over one command and one recorded entry,
-// with History selected and that row chosen.
-func historyEntryUI(t *testing.T, exec desktop.Executor, op operation.Operation, command, note string) (*ui, fyne.Window) {
+// historyEntryUI lays out the window over one or more commands and one recorded
+// entry, with History selected and that row chosen. A nil commands slice means
+// the usual single greet command.
+func historyEntryUI(t *testing.T, exec desktop.Executor, commands []catalog.Command, op operation.Operation, command, note string) (*ui, fyne.Window) {
 	t.Helper()
+
+	if commands == nil {
+		commands = []catalog.Command{{Name: "greet", Exec: "echo hi"}}
+	}
 
 	var history timeline.Log
 	history.Add(op, command, note)
 
 	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
+		catalog.New(nil, commands),
 		history,
 		exec,
 	)
@@ -222,7 +227,7 @@ func TestHistoryDetailLabelsTheNoteFields(t *testing.T) {
 	command := catalog.Command{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi"}
 	note := notes.ExecuteCommandNote(command, []string{"a b"})
 
-	front, _ := historyEntryUI(t, stubExecutor{}, operation.Execute, "greet", note)
+	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
 
 	labels := labelsIn(front.historyFields)
 	for _, want := range []string{"Operation", "Name", "Aliases", "Exec", "Params", "execute", "greet", "hi", "echo hi", "a b"} {
@@ -245,7 +250,7 @@ func TestHistoryRunReplaysTheRecordedParams(t *testing.T) {
 	exec := &recordingExecutor{}
 	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, []string{"a b", "-x"})
 
-	front, _ := historyEntryUI(t, exec, operation.Execute, "greet", note)
+	front, _ := historyEntryUI(t, exec, nil, operation.Execute, "greet", note)
 
 	if front.runHistory.Disabled() {
 		t.Fatal("run is disabled for an execute entry whose command exists")
@@ -263,11 +268,20 @@ func TestHistoryRunReplaysTheRecordedParams(t *testing.T) {
 }
 
 // Edit clears the Commands filters, selects the entry's command and opens its
-// dialog, so the user does not have to find it by hand.
+// dialog, so the user does not have to find it by hand. The command sits second
+// in a two-command catalog and the list is filtered to something else, so the
+// selection and the filter reset are both load-bearing.
 func TestHistoryEditOpensTheCommand(t *testing.T) {
 	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
+	commands := []catalog.Command{
+		{Name: "alpha", Exec: "echo a"},
+		{Name: "greet", Exec: "echo hi", Group: "work"},
+	}
 
-	front, window := historyEntryUI(t, stubExecutor{}, operation.Execute, "greet", note)
+	front, window := historyEntryUI(t, stubExecutor{}, commands, operation.Execute, "greet", note)
+
+	front.model.Group = "work"
+	front.refreshGroups()
 
 	front.model.Filter = "zzz"
 	front.filterEntry.SetText("zzz")
@@ -279,12 +293,20 @@ func TestHistoryEditOpensTheCommand(t *testing.T) {
 		t.Errorf("selected tab = %d, want Commands", front.tabs.SelectedIndex())
 	}
 
-	if front.model.Filter != "" {
-		t.Errorf("filter = %q, want it cleared", front.model.Filter)
+	if front.model.Filter != "" || front.filterEntry.Text != "" {
+		t.Errorf("filter = %q/%q, want it cleared", front.model.Filter, front.filterEntry.Text)
+	}
+
+	if front.model.Group != "" || front.groupFilter.Selected != allGroupsLabel {
+		t.Errorf("group = %q/%q, want the all-groups entry", front.model.Group, front.groupFilter.Selected)
 	}
 
 	if got := front.model.Selected(); got != "greet" {
 		t.Errorf("selected command = %q, want greet", got)
+	}
+
+	if front.model.Index != 1 {
+		t.Errorf("index = %d, want greet's row", front.model.Index)
 	}
 
 	if len(window.Canvas().Overlays().List()) == 0 {
@@ -302,30 +324,31 @@ func TestHistoryActionsFollowTheEntry(t *testing.T) {
 		note    string
 		run     bool
 		edit    bool
+		hint    string
 	}{
 		{
 			"execute with a live command",
 			operation.Execute, "greet",
-			"main_operation=execute;sub_operation=command;command_name=greet",
-			true, true,
+			"main_operation=execute;sub_operation=command;command_name=greet;command_params=[]",
+			true, true, "",
 		},
 		{
 			"copy naming a live command",
 			operation.Copy, "greet",
 			"main_operation=copy",
-			false, true,
+			false, true, "execute entries",
 		},
 		{
 			"a command that no longer exists",
 			operation.Execute, "gone",
 			"main_operation=execute;sub_operation=command;command_name=gone",
-			false, false,
+			false, false, "not in the current setup",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			front, _ := historyEntryUI(t, stubExecutor{}, tt.op, tt.command, tt.note)
+			front, _ := historyEntryUI(t, stubExecutor{}, nil, tt.op, tt.command, tt.note)
 
 			if got := !front.runHistory.Disabled(); got != tt.run {
 				t.Errorf("run enabled = %v, want %v", got, tt.run)
@@ -333,6 +356,22 @@ func TestHistoryActionsFollowTheEntry(t *testing.T) {
 
 			if got := !front.editHistory.Disabled(); got != tt.edit {
 				t.Errorf("edit enabled = %v, want %v", got, tt.edit)
+			}
+
+			if tt.hint == "" {
+				if front.historyHint.Text != "" || front.historyHint.Visible() {
+					t.Errorf("hint = %q, want none when both actions apply", front.historyHint.Text)
+				}
+
+				return
+			}
+
+			if !strings.Contains(front.historyHint.Text, tt.hint) {
+				t.Errorf("hint = %q, want it to contain %q", front.historyHint.Text, tt.hint)
+			}
+
+			if !front.historyHint.Visible() {
+				t.Error("a disabled action left no visible reason")
 			}
 		})
 	}
@@ -342,7 +381,7 @@ func TestHistoryActionsFollowTheEntry(t *testing.T) {
 func TestHistoryRawNoteToggle(t *testing.T) {
 	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
 
-	front, _ := historyEntryUI(t, stubExecutor{}, operation.Execute, "greet", note)
+	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
 
 	if front.historyRaw.Visible() {
 		t.Fatal("the raw note starts open")
@@ -351,6 +390,10 @@ func TestHistoryRawNoteToggle(t *testing.T) {
 	front.historyRawToggle.OnTapped()
 	if !front.historyRaw.Visible() || !front.historyRawShown {
 		t.Error("the toggle did not open the raw note")
+	}
+
+	if front.historyRaw.Size().Height == 0 {
+		t.Error("the opened raw note has no height: the tab did not lay it out")
 	}
 
 	front.historyRawToggle.OnTapped()
@@ -389,11 +432,50 @@ func TestHistoryFieldLabel(t *testing.T) {
 		"main_operation": "Operation",
 		"command_name":   "Name",
 		"future_field":   "Future Field",
+		"é_field":        "É Field",
 	}
 
 	for key, want := range tests {
 		if got := historyFieldLabel(key); got != want {
 			t.Errorf("historyFieldLabel(%q) = %q, want %q", key, got, want)
 		}
+	}
+}
+
+// An entry whose note is empty says so, rather than showing a blank panel.
+func TestHistoryDetailShowsNoNotePlaceholder(t *testing.T) {
+	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", "")
+
+	if labels := labelsIn(front.historyFields); !slices.Contains(labels, "(no note)") {
+		t.Errorf("fields %q do not say the entry has no note", labels)
+	}
+}
+
+// An execute entry written before command_params existed has no record of its
+// arguments. When the command declares parameters, Run asks for them instead of
+// running the exec with literal placeholders.
+func TestHistoryRunAsksWhenParamsWereNotRecorded(t *testing.T) {
+	exec := &recordingExecutor{}
+	commands := []catalog.Command{{Name: "greet", Exec: "echo {1}", Params: []string{"who"}}}
+	legacy := "main_operation=execute;sub_operation=command;command_name=greet;command_exec=echo {1}"
+
+	front, window := historyEntryUI(t, exec, commands, operation.Execute, "greet", legacy)
+
+	if front.runHistory.Disabled() {
+		t.Fatal("run is disabled for an execute entry whose command exists")
+	}
+
+	front.runHistoryEntry()
+
+	if len(exec.keys) != 0 {
+		t.Errorf("executed %v before the parameters were supplied", exec.keys)
+	}
+
+	if front.model.State != desktop.ViewParams {
+		t.Errorf("state = %v, want the params prompt", front.model.State)
+	}
+
+	if len(window.Canvas().Overlays().List()) == 0 {
+		t.Error("run did not open the parameters dialog")
 	}
 }

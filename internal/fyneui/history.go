@@ -8,6 +8,7 @@ import (
 	"image/color"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -17,6 +18,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/desktop"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
@@ -89,6 +91,10 @@ func (u *ui) historyTab() fyne.CanvasObject {
 	u.revert = widget.NewButtonWithIcon("Restore this state…", theme.HistoryIcon(), u.showRevert)
 	u.revert.Disable()
 
+	u.historyHint = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	u.historyHint.Wrapping = fyne.TextWrapWord
+	u.historyHint.Hide()
+
 	// The note is shown as labelled fields; the original key=value line stays
 	// one click away because it is what a bug report and `list --history` show.
 	u.historyFields = container.NewGridWithColumns(2)
@@ -110,6 +116,7 @@ func (u *ui) historyTab() fyne.CanvasObject {
 		u.historyRawToggle,
 		u.historyRaw,
 		container.NewHBox(u.runHistory, u.editHistory, u.revert),
+		u.historyHint,
 	)
 	u.historyBody.Hide()
 
@@ -179,6 +186,10 @@ func historyCell(row desktop.HistoryRow, column int) string {
 	case 1:
 		return row.Operation
 	case 2:
+		if row.Command == "" {
+			return "-"
+		}
+
 		return row.Command
 	case 3:
 		return strconv.Itoa(row.Version)
@@ -258,6 +269,11 @@ func (u *ui) clearHistoryDetail() {
 		u.revert.Disable()
 	}
 
+	if u.historyHint != nil {
+		u.historyHint.SetText("")
+		u.historyHint.Hide()
+	}
+
 	u.setHistoryDetailVisible(false)
 }
 
@@ -299,7 +315,7 @@ func (u *ui) showHistoryDetail() {
 	}
 
 	headline := fmt.Sprintf("Version %d — %s", row.Version, row.Operation)
-	if row.Command != "-" {
+	if row.Command != "" {
 		headline += " · " + row.Command
 	}
 	headline += " · " + row.When
@@ -324,6 +340,13 @@ func (u *ui) showHistoryFields(fields []desktop.HistoryField) {
 
 	u.historyFields.RemoveAll()
 
+	if len(fields) == 0 {
+		u.historyFields.Add(widget.NewLabel(""))
+		u.historyFields.Add(widget.NewLabel("(no note)"))
+		u.historyFields.Refresh()
+		return
+	}
+
 	for _, field := range fields {
 		key := widget.NewLabelWithStyle(historyFieldLabel(field.Key), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 		key.Wrapping = fyne.TextWrapWord
@@ -346,9 +369,13 @@ func historyFieldLabel(key string) string {
 
 	words := strings.Split(key, "_")
 	for i, word := range words {
-		if word != "" {
-			words[i] = strings.ToUpper(word[:1]) + word[1:]
+		if word == "" {
+			continue
 		}
+
+		runes := []rune(word)
+		runes[0] = unicode.ToUpper(runes[0])
+		words[i] = string(runes)
 	}
 
 	return strings.Join(words, " ")
@@ -388,13 +415,14 @@ func historyFieldValue(key, value string) string {
 }
 
 // updateHistoryActions enables only what this entry can do: Run needs an execute
-// entry whose command still exists, Edit needs the command to exist.
+// entry whose command still exists, Edit needs the command to exist. A disabled
+// action says why, so a grey button is not a dead end.
 func (u *ui) updateHistoryActions(row desktop.HistoryRow) {
 	if u.runHistory == nil || u.editHistory == nil {
 		return
 	}
 
-	_, exists := u.model.Commands.Get(row.Command)
+	command, exists := u.model.Commands.Get(row.Command)
 
 	if exists && row.Operation == string(operation.Execute) {
 		u.runHistory.Enable()
@@ -407,17 +435,53 @@ func (u *ui) updateHistoryActions(row desktop.HistoryRow) {
 	} else {
 		u.editHistory.Disable()
 	}
+
+	if u.historyHint != nil {
+		u.historyHint.SetText(historyActionHint(row, exists, command))
+		if u.historyHint.Text == "" {
+			u.historyHint.Hide()
+		} else {
+			u.historyHint.Show()
+		}
+	}
+}
+
+// historyActionHint explains a disabled action, or says nothing when both apply.
+func historyActionHint(row desktop.HistoryRow, exists bool, command catalog.Command) string {
+	if !exists {
+		return "This command is not in the current setup, so it cannot be run or edited."
+	}
+
+	if row.Operation != string(operation.Execute) {
+		return "Run replays execute entries; this entry recorded a " + row.Operation + "."
+	}
+
+	if !row.ParamsRecorded && len(command.Params) > 0 {
+		return "This entry did not record its parameters; Run asks for them."
+	}
+
+	return ""
 }
 
 // runHistoryEntry runs the managed command again with the parameters the entry
 // recorded. It is the safe half of "replay": it never re-creates or deletes.
+//
+// An entry written before command_params existed has no record of its arguments.
+// When the command declares parameters, the user is asked for them rather than
+// having the command run with literal placeholders.
 func (u *ui) runHistoryEntry() {
 	row, ok := u.selectedHistoryRow()
 	if !ok {
 		return
 	}
 
-	if _, found := u.model.Commands.Get(row.Command); !found {
+	command, found := u.model.Commands.Get(row.Command)
+	if !found {
+		return
+	}
+
+	if !row.ParamsRecorded && len(command.Params) > 0 {
+		u.askParams(row.Command, command)
 		return
 	}
 

@@ -18,15 +18,17 @@ type HistoryField struct {
 // It is a presentation shape, not the stored entry: the timestamp is formatted,
 // the note is shown the way the CLI shows it, and the note is also split into
 // its fields so a front end can label them. Params are what an execute entry ran
-// with, when the note recorded them (older entries did not).
+// with; ParamsRecorded is false for an entry written before the field existed (or
+// whose field is corrupt), which is not the same as "ran with none".
 type HistoryRow struct {
-	Version   int
-	When      string
-	Operation string
-	Command   string
-	Note      string
-	Fields    []HistoryField
-	Params    []string
+	Version        int
+	When           string
+	Operation      string
+	Command        string
+	Note           string
+	Fields         []HistoryField
+	Params         []string
+	ParamsRecorded bool
 }
 
 // HistoryText renders the history screen for another front end. The Fyne
@@ -45,9 +47,6 @@ func (m *Model) HistoryRows() []HistoryRow {
 		entry := m.History.AllData[i]
 
 		command := entry.CommandName
-		if command == "" {
-			command = "-"
-		}
 
 		fields := notes.Fields(entry.Note)
 		historyFields := make([]HistoryField, 0, len(fields))
@@ -56,16 +55,17 @@ func (m *Model) HistoryRows() []HistoryRow {
 			historyFields = append(historyFields, HistoryField{Key: field.Key, Value: field.Value})
 		}
 
-		params, _ := notes.CommandParams(entry.Note)
+		params, paramsRecorded := notes.CommandParams(entry.Note)
 
 		rows = append(rows, HistoryRow{
-			Version:   entry.Version,
-			When:      historyWhen(entry.Timestemp),
-			Operation: string(entry.Operation),
-			Command:   command,
-			Note:      notes.Display(entry.Note),
-			Fields:    historyFields,
-			Params:    params,
+			Version:        entry.Version,
+			When:           historyWhen(entry.Timestemp),
+			Operation:      string(entry.Operation),
+			Command:        command,
+			Note:           notes.Display(entry.Note),
+			Fields:         historyFields,
+			Params:         params,
+			ParamsRecorded: paramsRecorded,
 		})
 	}
 

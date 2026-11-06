@@ -108,8 +108,8 @@ func TestStartRunKeyRunsTheChosenRow(t *testing.T) {
 	}
 }
 
-// The rows are newest first and carry the command, or a dash when the
-// operation touched none.
+// The rows are newest first and carry the command, or nothing when the
+// operation touched none (the table renders the dash).
 func TestHistoryRowsAreNewestFirst(t *testing.T) {
 	var history timeline.Log
 	history.Add(operation.Create, "greet", "note")
@@ -122,8 +122,8 @@ func TestHistoryRowsAreNewestFirst(t *testing.T) {
 		t.Fatalf("got %d rows, want 2", len(rows))
 	}
 
-	if rows[0].Version != 2 || rows[0].Operation != "copy" || rows[0].Command != "-" {
-		t.Errorf("row 0 = %+v, want the newest entry with a dash for its command", rows[0])
+	if rows[0].Version != 2 || rows[0].Operation != "copy" || rows[0].Command != "" {
+		t.Errorf("row 0 = %+v, want the newest entry with no command", rows[0])
 	}
 
 	if rows[1].Version != 1 || rows[1].Command != "greet" {
@@ -274,8 +274,12 @@ func TestHistoryRowsExposeFieldsAndParams(t *testing.T) {
 		t.Errorf("Params = %v, want the recorded arguments", execute.Params)
 	}
 
-	if rows[1].Params != nil {
-		t.Errorf("Params on a copy row = %v, want none recorded", rows[1].Params)
+	if !execute.ParamsRecorded {
+		t.Error("ParamsRecorded = false, want true for a note that carries the field")
+	}
+
+	if rows[1].Params != nil || rows[1].ParamsRecorded {
+		t.Errorf("Params/recorded on a copy row = %v/%v, want none recorded", rows[1].Params, rows[1].ParamsRecorded)
 	}
 }
 
