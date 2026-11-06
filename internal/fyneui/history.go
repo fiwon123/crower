@@ -239,6 +239,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 
 	card.raw = widget.NewLabel(detail.Note)
 	card.raw.Wrapping = fyne.TextWrapWord
+	card.raw.Selectable = true
 	card.raw.Hide()
 
 	card.rawToggle = widget.NewButton("Raw note", func() {
@@ -269,6 +270,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 
 	card.hint = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
 	card.hint.Wrapping = fyne.TextWrapWord
+	card.hint.Selectable = true
 
 	u.updateHistoryActions(card, detail)
 

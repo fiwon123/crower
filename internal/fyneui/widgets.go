@@ -93,6 +93,7 @@ type toolResult struct {
 func newToolResult() *toolResult {
 	result := &toolResult{label: widget.NewLabel("")}
 	result.label.Wrapping = fyne.TextWrapWord
+	result.label.Selectable = true
 
 	result.cancelButton = widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), result.cancelRun)
 	result.cancelButton.Importance = widget.LowImportance
@@ -205,6 +206,7 @@ func setFieldGrid(grid *fyne.Container, fields []detailField) {
 
 		value := widget.NewLabel(field.Value)
 		value.Wrapping = fyne.TextWrapWord
+		value.Selectable = true
 
 		grid.Add(label)
 		grid.Add(value)

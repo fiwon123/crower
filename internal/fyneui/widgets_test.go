@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
 )
 
 // growingRows counts explicit lines and wrapped rows, between the bounds the
@@ -66,5 +68,51 @@ func TestGrowingEntryGrowsWithItsText(t *testing.T) {
 
 	if capped < tall {
 		t.Errorf("capped MinSize height = %v, want at least %v", capped, tall)
+	}
+}
+
+// The value column of a detail grid can be selected and copied; the key labels
+// stay plain.
+func TestFieldGridValuesAreSelectable(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	grid := container.NewGridWithColumns(2)
+	setFieldGrid(grid, []detailField{
+		{Label: "Exec", Value: "echo hi"},
+		{Label: "Shell", Value: "sh"},
+	})
+
+	if len(grid.Objects) != 4 {
+		t.Fatalf("grid = %d objects, want two rows", len(grid.Objects))
+	}
+
+	for index := 1; index < len(grid.Objects); index += 2 {
+		label, ok := grid.Objects[index].(*widget.Label)
+		if !ok {
+			t.Fatalf("object %d = %T, want a label", index, grid.Objects[index])
+		}
+
+		if !label.Selectable {
+			t.Errorf("value %q is not selectable", label.Text)
+		}
+	}
+}
+
+// Output and error text can be selected and copied.
+func TestOutputTextIsSelectable(t *testing.T) {
+	label := newSelectableText("command failed")
+	if !label.Selectable {
+		t.Error("the output label is not selectable")
+	}
+}
+
+// A tool result's outcome can be selected and copied too.
+func TestToolResultIsSelectable(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	if result := newToolResult(); !result.label.Selectable {
+		t.Error("the tool result label is not selectable")
 	}
 }
