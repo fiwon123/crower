@@ -84,6 +84,10 @@ func TestFieldFormValuesAreSelectable(t *testing.T) {
 		t.Fatalf("form = %d items, want two rows", len(form.Items))
 	}
 
+	if form.Items[0].Text != "Exec" || form.Items[1].Text != "Shell" {
+		t.Errorf("form keys = %q/%q, want Exec/Shell", form.Items[0].Text, form.Items[1].Text)
+	}
+
 	for _, item := range form.Items {
 		label, ok := item.Widget.(*widget.Label)
 		if !ok {
