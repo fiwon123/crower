@@ -24,7 +24,7 @@ The window is split into tabs:
 | **Commands** | The list, with a filter, a group filter and **Run**, **Edit** and **Delete** on every row; selecting one opens the **Details** panel below the list |
 | **History** | Every recorded operation as a table, newest first; clicking a row selects the whole row and opens its details below the table, with **Restore this state** |
 | **Tools** | Copy, move, search, extract and open; every path field has **Browse…**, and each card has its own result square that opens when an action runs |
-| **About** | Logo, version, description, the repository link, and the update controls — centred in the tab |
+| **About** | Logo, version, description, the repository link, and the update controls — padded to the tab width, with actions that wrap on a narrow window |
 
 A command can carry an **icon** — a short marker such as 🚀 — shown beside its
 name, and a **group**; the filter lists every group in use, and the details panel

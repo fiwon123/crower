@@ -157,6 +157,7 @@ type ui struct {
 	installButton *widget.Button
 	restoreButton *widget.Button
 	restartButton *widget.Button
+	aboutActions  *fyne.Container
 	latest        string
 }
 
@@ -428,7 +429,7 @@ func newCommandRow() *commandRow {
 		nil,
 		nil,
 		nil,
-		container.NewHBox(row.run, row.edit, row.remove, gap(theme.Padding()*3, 0)),
+		container.NewHBox(row.run, row.edit, row.remove, gap(scrollGutter(), 0)),
 		row.name,
 	)
 
@@ -734,8 +735,8 @@ func (u *ui) runFromDetail() {
 }
 
 // commandDetailFields is the detail panel's labelled metadata, in the order a
-// reader scans it: what runs, what it is called, where it lives, and the limits.
-// Empty values are omitted rather than shown as blank rows.
+// reader scans it: what it is called, what it runs, where it lives, and the
+// limits. Empty values are omitted rather than shown as blank rows.
 func commandDetailFields(command catalog.Command) []detailField {
 	fields := make([]detailField, 0, 10)
 

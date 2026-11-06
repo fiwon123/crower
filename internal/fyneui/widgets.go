@@ -222,9 +222,15 @@ func gap(width, height float32) fyne.CanvasObject {
 	return space
 }
 
-// page pads a scrolling tab. Fyne's scrollbar overlays the viewport instead of
-// reserving a column, so the right inset is wider than the edge padding: without
-// it a control at the edge sits under the scrollbar.
+// scrollGutter is the space a viewport takes for its scrollbar plus a little
+// padding. Fyne overlays the bar instead of reserving a column, so content at the
+// right edge needs this much inset to stay clear of it.
+func scrollGutter() float32 {
+	return theme.ScrollBarSize() + theme.Padding()
+}
+
+// page pads a scrolling tab: lateral margins, and a right inset wide enough for
+// the overlaid scrollbar.
 func page(content fyne.CanvasObject) fyne.CanvasObject {
 	pad := theme.Padding()
 
@@ -232,7 +238,7 @@ func page(content fyne.CanvasObject) fyne.CanvasObject {
 		gap(0, pad),
 		gap(0, pad),
 		gap(pad*2, 0),
-		gap(pad*3, 0),
+		gap(scrollGutter(), 0),
 		content,
 	)
 }
