@@ -8,11 +8,13 @@ package fyneui
 import (
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -259,9 +261,23 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 
 	groupRow := container.NewHBox(widget.NewLabel("Group"), u.groupFilter, groupsButton)
 
-	filterRow := container.NewBorder(nil, nil, nil, newCommand, filter)
+	filterRow := container.NewBorder(nil, nil, widget.NewLabel("Filter"), nil, filter)
 
-	controls := container.NewVBox(filterRow, setupRow, groupRow)
+	// Create sits at the top right, above the list it adds to; the filter reads
+	// under it with its own label, and a rule separates the controls from the
+	// cards so the two zones never look like one block.
+	createRow := container.NewHBox(layout.NewSpacer(), newCommand)
+
+	controls := container.NewVBox(
+		gap(0, theme.Padding()),
+		createRow,
+		filterRow,
+		widget.NewSeparator(),
+		setupRow,
+		gap(0, theme.Padding()/2),
+		groupRow,
+		widget.NewSeparator(),
+	)
 
 	u.commandEmpty = widget.NewLabel("No commands match the filter.")
 	u.commandEmpty.Wrapping = fyne.TextWrapWord
@@ -406,15 +422,41 @@ func (u *ui) selectGroup(label string) {
 	u.rebuildCommands()
 }
 
+// groupNames is every group the window offers: the ones the commands use and
+// the ones stored on their own, sorted and de-duplicated. A group can exist
+// before a command joins it, which is what the New group action creates.
+func (u *ui) groupNames() []string {
+	seen := make(map[string]bool, len(u.groupIcons)+4)
+	names := make([]string, 0, len(u.groupIcons)+4)
+
+	for _, name := range u.model.Groups() {
+		if !seen[name] {
+			seen[name] = true
+			names = append(names, name)
+		}
+	}
+
+	for name := range u.groupIcons {
+		if !seen[name] {
+			seen[name] = true
+			names = append(names, name)
+		}
+	}
+
+	slices.Sort(names)
+
+	return names
+}
+
 // refreshGroups rebuilds the filter's options after an edit, a removal or a
-// group icon change. A group with no commands left disappears, and the filter
-// falls back to all.
+// group icon change. A group with no commands and no stored record disappears,
+// and the filter falls back to all.
 func (u *ui) refreshGroups() {
 	if u.groupFilter == nil {
 		return
 	}
 
-	names := u.model.Groups()
+	names := u.groupNames()
 	options := make([]string, 0, len(names)+1)
 	u.groupOptions = make([]groupOption, 0, len(names)+1)
 

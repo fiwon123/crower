@@ -42,6 +42,10 @@ sudo mv crower cr crower-gui /usr/local/bin/
 `add_to_path.bat` from the extracted folder — or add the folder containing
 `crower.exe`, `cr.exe` and `crower-gui.exe` to your `PATH`.
 
+`crower.exe` and `cr.exe` are terminal programs. **Double-click
+`crower-gui.exe`** — the one carrying the crow icon — to open the window; it is
+built as a graphical program, so no console window opens with it.
+
 Verify either install:
 
 ```bash

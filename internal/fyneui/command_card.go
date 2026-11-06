@@ -41,24 +41,29 @@ func (u *ui) buildCommandBody(card *commandCard) fyne.CanvasObject {
 		return widget.NewLabel("This command is no longer in the current setup.")
 	}
 
-	form := newFieldForm(commandDetailFields(command))
+	form := newFieldList(commandDetailFields(command))
 
 	card.params = newScrollFreeEntry()
 	card.params.SetPlaceHolder(paramsHint(command))
 	card.params.OnSubmitted = func(string) { u.runCommandCard(card) }
 
 	card.run = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() { u.runCommandCard(card) })
+	card.run.Importance = widget.SuccessImportance
+
 	card.edit = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() { u.showEditFor(card.key) })
+	card.edit.Importance = widget.HighImportance
+
 	card.remove = widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() { u.showDeleteFor(card.key) })
 	card.remove.Importance = widget.DangerImportance
 
-	params := container.NewBorder(nil, nil, nil, card.run, card.params)
-	actions := container.NewHBox(card.edit, card.remove)
+	// Run sits with Edit and Delete, not inside the parameter row: a row of
+	// actions reads as one group, and the field gets the full card width.
+	actions := spacedActions(card.run, card.edit, card.remove)
 
 	return container.NewVBox(
 		form,
 		widget.NewSeparator(),
-		params,
+		card.params,
 		actions,
 	)
 }

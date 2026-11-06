@@ -34,6 +34,7 @@ type historyCard struct {
 	detail  desktop.HistoryDetail
 
 	raw       *widget.Label
+	rawBlock  *block
 	rawToggle *widget.Button
 	rawShown  bool
 	run       *widget.Button
@@ -288,19 +289,21 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 		fields = append(fields, detailField{Value: "(no note)"})
 	}
 
-	form := newFieldForm(fields)
+	form := newFieldList(fields)
 
-	card.raw = widget.NewLabel(detail.Note)
-	card.raw.Wrapping = fyne.TextWrapWord
-	card.raw.Selectable = true
-	card.raw.Hide()
+	// The raw note is the whole key=value line as recorded; it reads as a block
+	// on an inset panel rather than a stray sentence, and Copy puts it on the
+	// clipboard without selecting it by hand.
+	card.rawBlock = newBlock(detail.Note)
+	card.raw = card.rawBlock.label
+	card.rawBlock.panel.Hide()
 
 	card.rawToggle = widget.NewButton("Raw note", func() {
 		card.rawShown = !card.rawShown
 		if card.rawShown {
-			card.raw.Show()
+			card.rawBlock.panel.Show()
 		} else {
-			card.raw.Hide()
+			card.rawBlock.panel.Hide()
 		}
 
 		u.historyPage.Refresh()
@@ -311,6 +314,11 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 	})
 	card.rawToggle.Importance = widget.LowImportance
 
+	rawCopy := widget.NewButtonWithIcon("Copy", theme.ContentCopyIcon(), func() {
+		u.copyText(card.raw.Text)
+	})
+	rawCopy.Importance = widget.LowImportance
+
 	card.run = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
 		u.runHistoryEntry(card)
 	})
@@ -320,6 +328,10 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 	card.restore = widget.NewButtonWithIcon("Restore this state", theme.HistoryIcon(), func() {
 		u.showRevert(card)
 	})
+	card.restore.Importance = widget.WarningImportance
+
+	card.run.Importance = widget.SuccessImportance
+	card.edit.Importance = widget.HighImportance
 
 	card.hint = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
 	card.hint.Wrapping = fyne.TextWrapWord
@@ -329,10 +341,10 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 
 	return container.NewVBox(
 		form,
-		card.rawToggle,
-		card.raw,
+		container.NewHBox(card.rawToggle, rawCopy),
+		card.rawBlock.panel,
 		widget.NewSeparator(),
-		container.NewHBox(card.run, card.edit, card.restore),
+		spacedActions(card.run, card.edit, card.restore),
 		card.hint,
 	)
 }
@@ -460,6 +472,22 @@ func (u *ui) applyRevert(steps int) bool {
 
 	u.reload(commands, history)
 	return true
+}
+
+// copyText puts text on the clipboard. The app owns the clipboard, so a window
+// built without one (in a test) simply does nothing.
+func (u *ui) copyText(text string) {
+	app := fyne.CurrentApp()
+	if app == nil {
+		return
+	}
+
+	clipboard := app.Clipboard()
+	if clipboard == nil {
+		return
+	}
+
+	clipboard.SetContent(text)
 }
 
 // historyFieldLabel is what the grid calls a stored key.

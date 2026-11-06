@@ -175,8 +175,23 @@ jobs:
           go build -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower.exe .
           Copy-Item build/crower.exe build/cr.exe
 
+          # The window executable is a GUI program carrying the crower icon, a
+          # DPI-aware manifest and the version. Without -H windowsgui the loader
+          # gives it a console window, so double-clicking it opens a terminal
+          # instead of the window; without the .syso it has no icon at all.
+          go run ./internal/tools/winres -icon internal/fyneui/logo.png `
+            -out cmd/crowergui/rsrc_windows_amd64.syso -arch amd64 -version $env:VERSION
+
           $env:CGO_ENABLED = '1'
-          go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower-gui.exe ./cmd/crowergui
+          go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION -H windowsgui" -o build/crower-gui.exe ./cmd/crowergui
+
+          Remove-Item cmd/crowergui/rsrc_windows_amd64.syso
+
+          # The archive is only correct if the binaries are what their names
+          # promise: a GUI without a console, and two console programs.
+          go run ./internal/tools/winres -verify build/crower-gui.exe
+          go run ./internal/tools/winres -verify-console build/crower.exe
+          go run ./internal/tools/winres -verify-console build/cr.exe
 
           Copy-Item build/crower.exe, build/cr.exe, build/crower-gui.exe, scripts/add_to_path.bat, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/gui-package/
           Push-Location build/gui-package
@@ -309,6 +324,14 @@ jobs:
             ! -name '*.tar.*' ! -name '*.zip' | head -1)"
           test -n "$GUI"
           cp "$GUI" "build/crower-gui${EXT}"
+
+          # fyne-cross already gives the Windows GUI its subsystem and icon; this
+          # checks the result instead of trusting the tool's defaults.
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            go run ./internal/tools/winres -verify build/crower-gui.exe
+            go run ./internal/tools/winres -verify-console build/crower.exe
+            go run ./internal/tools/winres -verify-console build/cr.exe
+          fi
 
           make package-gui VERSION="${VERSION}" GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }}
           make verify-release VERSION="${VERSION}" GUI=1

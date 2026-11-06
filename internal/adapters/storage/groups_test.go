@@ -40,8 +40,9 @@ func TestGroupsRoundTripIncludingADottedName(t *testing.T) {
 	}
 }
 
-// Set writes and, with an empty icon, removes.
-func TestGroupsSetAndClear(t *testing.T) {
+// Set creates the group, and clearing the icon keeps it: a group is a record
+// the window can offer before any command uses it.
+func TestGroupsSetAndClearKeepsTheGroup(t *testing.T) {
 	groups := storage.NewGroups(t.TempDir())
 
 	if _, err := groups.Set("ship", "🚀"); err != nil {
@@ -53,8 +54,8 @@ func TestGroupsSetAndClear(t *testing.T) {
 		t.Fatalf("clear: %v", err)
 	}
 
-	if _, found := icons["ship"]; found {
-		t.Errorf("icons = %v, want the group removed", icons)
+	if icon, found := icons["ship"]; !found || icon != "" {
+		t.Errorf("icons = %v, want the group kept without an icon", icons)
 	}
 
 	body, err := os.ReadFile(filepath.Join(filepath.Dir(groups.Path()), "groups.toml"))
@@ -62,7 +63,43 @@ func TestGroupsSetAndClear(t *testing.T) {
 		t.Fatalf("read groups file: %v", err)
 	}
 
-	if strings.Contains(string(body), "ship") {
-		t.Errorf("groups file = %q, want the cleared group gone", body)
+	if !strings.Contains(string(body), "ship") {
+		t.Errorf("groups file = %q, want the group kept", body)
+	}
+}
+
+// A group without an icon survives a save and a load.
+func TestGroupsKeepAGroupWithNoIcon(t *testing.T) {
+	groups := storage.NewGroups(t.TempDir())
+
+	if err := groups.Save(map[string]string{"deploy": "", "ship": "🚀"}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	icons, err := groups.Load()
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+
+	if icon, found := icons["deploy"]; !found || icon != "" {
+		t.Errorf("icons = %v, want deploy with no icon", icons)
+	}
+}
+
+// Remove deletes a group from both the map and the file.
+func TestGroupsRemove(t *testing.T) {
+	groups := storage.NewGroups(t.TempDir())
+
+	if _, err := groups.Set("deploy", "🚀"); err != nil {
+		t.Fatalf("Set: %v", err)
+	}
+
+	icons, err := groups.Remove("deploy")
+	if err != nil {
+		t.Fatalf("Remove: %v", err)
+	}
+
+	if _, found := icons["deploy"]; found {
+		t.Errorf("icons = %v, want the group removed", icons)
 	}
 }
