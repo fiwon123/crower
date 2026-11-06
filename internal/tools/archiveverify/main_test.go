@@ -15,12 +15,12 @@ func TestCheckNames(t *testing.T) {
 	}{
 		{
 			name:    "plain unix names",
-			entries: []string{"crower", "cr", "add_to_path.sh", "README.md"},
+			entries: []string{"crower", "cr", "add_to_path.sh", "README.md", "NOTICE"},
 			wantOK:  true,
 		},
 		{
 			name:    "plain windows names",
-			entries: []string{"crower.exe", "cr.exe", "add_to_path.bat"},
+			entries: []string{"crower.exe", "cr.exe", "add_to_path.bat", "README.md", "NOTICE"},
 			wantOK:  true,
 		},
 		{
@@ -66,13 +66,13 @@ func TestCheckNames(t *testing.T) {
 		{
 			name:    "gui archive with all three",
 			gui:     true,
-			entries: []string{"crower", "cr", "crower-gui", "README.md"},
+			entries: []string{"crower", "cr", "crower-gui", "README.md", "NOTICE"},
 			wantOK:  true,
 		},
 		{
 			name:    "gui archive windows",
 			gui:     true,
-			entries: []string{"crower.exe", "cr.exe", "crower-gui.exe"},
+			entries: []string{"crower.exe", "cr.exe", "crower-gui.exe", "README.md", "NOTICE"},
 			wantOK:  true,
 		},
 		{
@@ -88,8 +88,13 @@ func TestCheckNames(t *testing.T) {
 			wantMsg: "missing \"crower\"",
 		},
 		{
+			name:    "archive without the notices",
+			entries: []string{"crower", "cr", "README.md"},
+			wantMsg: "missing \"NOTICE\"",
+		},
+		{
 			name:    "cli archive may still carry the gui binary",
-			entries: []string{"crower", "cr", "crower-gui"},
+			entries: []string{"crower", "cr", "crower-gui", "README.md", "NOTICE"},
 			wantOK:  true,
 		},
 	}
