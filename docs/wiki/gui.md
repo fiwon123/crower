@@ -43,6 +43,11 @@ actions. **Run** passes the entry's text as parameters (an empty entry runs
 without any), **Edit** opens the command dialog and **Delete** asks first.
 **New command** sits beside the filter.
 
+Each command and history entry is a card panel: the header is the summary and the
+opened body groups the fields in a label/value form, with the actions under a
+rule. **Run** sits beside the parameters entry, so it is clear what it passes to
+the command.
+
 The edit dialog also changes the rest of the command: **Description**,
 **Params** (comma-separated), **Cwd**, **Shell** and **Timeout**. Emptying a
 field clears it. `Env` is not in the dialog — it holds values that look like
@@ -79,7 +84,8 @@ parameters. **Edit** opens that command on the Commands tab.
 
 Values in a command or history card, tool results, and the output and error
 dialogs can be selected and copied with Ctrl+C (⌘C on macOS), so a failure can
-be pasted into a bug report.
+be pasted into a bug report. Information, picker and form dialogs close when you
+click outside them; confirmation dialogs wait for an answer.
 
 The About tab checks GitHub for a newer release when the window opens and
 reports what it finds. When there is one, an **Install `<version>`** button

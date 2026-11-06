@@ -428,7 +428,7 @@ func TestCommandCardShowsTheDetail(t *testing.T) {
 	}
 
 	labels := labelsIn(card.body)
-	for _, want := range []string{"Name", "Exec", "make deploy", "Params", "env"} {
+	for _, want := range []string{"deploy", "make deploy", "env"} {
 		if !slices.Contains(labels, want) {
 			t.Errorf("fields %q do not contain %q", labels, want)
 		}

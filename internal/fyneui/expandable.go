@@ -4,6 +4,7 @@ package fyneui
 
 import (
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -36,7 +37,15 @@ func newExpandableCard(title string, build func() fyne.CanvasObject) *expandable
 	card.body = container.NewVBox()
 	card.body.Hide()
 
-	card.box = container.NewVBox(card.header, card.body)
+	background := canvas.NewRectangle(theme.Color(theme.ColorNameInputBackground))
+	background.CornerRadius = theme.Size(theme.SizeNameInputRadius)
+	background.StrokeColor = theme.Color(theme.ColorNameSeparator)
+	background.StrokeWidth = theme.Size(theme.SizeNameSeparatorThickness)
+
+	card.box = container.NewStack(
+		background,
+		container.NewPadded(container.NewVBox(card.header, card.body)),
+	)
 	card.ExtendBaseWidget(card)
 	card.updateIcon()
 

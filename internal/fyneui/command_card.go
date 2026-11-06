@@ -41,8 +41,7 @@ func (u *ui) buildCommandBody(card *commandCard) fyne.CanvasObject {
 		return widget.NewLabel("This command is no longer in the current setup.")
 	}
 
-	grid := container.NewGridWithColumns(2)
-	setFieldGrid(grid, commandDetailFields(command))
+	form := newFieldForm(commandDetailFields(command))
 
 	card.params = newScrollFreeEntry()
 	card.params.SetPlaceHolder(paramsHint(command))
@@ -53,10 +52,14 @@ func (u *ui) buildCommandBody(card *commandCard) fyne.CanvasObject {
 	card.remove = widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() { u.showDeleteFor(card.key) })
 	card.remove.Importance = widget.DangerImportance
 
+	params := container.NewBorder(nil, nil, nil, card.run, card.params)
+	actions := container.NewHBox(card.edit, card.remove)
+
 	return container.NewVBox(
-		grid,
-		card.params,
-		container.NewHBox(card.run, card.edit, card.remove),
+		form,
+		widget.NewSeparator(),
+		params,
+		actions,
 	)
 }
 
