@@ -5,13 +5,10 @@ package fyneui
 import (
 	"encoding/json"
 	"fmt"
-	"image/color"
-	"strconv"
 	"strings"
 	"unicode"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -22,342 +19,351 @@ import (
 	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
-// historyHeaders is the table's column order. Version is last because the
-// number is an identifier, not something a reader scans for.
-var historyHeaders = []string{"When", "Operation", "Command", "Version"}
+// historyHeader is the sentence above the list.
+const historyHeader = "Every recorded operation, newest first. Open an entry to see what it recorded and to restore that state."
 
-// historyHeader is the sentence above the table.
-const historyHeader = "Every recorded operation, newest first. Restoring an entry puts the command set back to what that entry recorded and drops the newer ones."
+// historyPageSize is how many entries a page renders. The log stays in memory,
+// but only this many cards exist at once, which is what keeps a long history
+// responsive.
+const historyPageSize = 100
 
-// historyTab renders every recorded operation as a table, newest first, with a
-// restore action.
+// historyCard is one entry: a summary header that opens into its detail.
+type historyCard struct {
+	*expandableCard
+
+	version int
+	detail  desktop.HistoryDetail
+
+	raw       *widget.Label
+	rawToggle *widget.Button
+	rawShown  bool
+	run       *widget.Button
+	edit      *widget.Button
+	restore   *widget.Button
+	hint      *widget.Label
+}
+
+// historyTab renders the log as a scroll of expandable entry cards.
 //
-// It exists because the old History dialog showed 21 text lines with no way to
-// act on them: the log is what makes crower undoable, so it gets a view.
+// It replaced a table with a global detail panel: selecting a row used to
+// refresh every cell and re-lay out the tab twice, and every note in the log was
+// parsed on each refresh. Now only the opened card is built, and only the
+// rendered page is formatted.
 func (u *ui) historyTab() fyne.CanvasObject {
-	u.historyRows = u.model.HistoryRows()
-
-	u.historyDetail = widget.NewLabel("")
-	u.historyDetail.Wrapping = fyne.TextWrapWord
-
-	u.table = widget.NewTableWithHeaders(
-		func() (int, int) { return len(u.historyRows), len(historyHeaders) },
-		func() fyne.CanvasObject { return newHistoryCell() },
-		func(id widget.TableCellID, cell fyne.CanvasObject) {
-			view, ok := cell.(*historyCellView)
-			if !ok || id.Row < 0 || id.Row >= len(u.historyRows) {
-				return
-			}
-
-			view.label.SetText(historyCell(u.historyRows[id.Row], id.Col))
-			// The selection is a row, so every cell of the selected row is
-			// painted the same; a cell on its own means nothing here.
-			view.setSelected(id.Row == u.historyRow)
-		},
-	)
-
-	u.table.ShowHeaderRow = true
-	u.table.CreateHeader = func() fyne.CanvasObject {
-		return widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	}
-	u.table.UpdateHeader = func(id widget.TableCellID, cell fyne.CanvasObject) {
-		label, ok := cell.(*widget.Label)
-		if !ok || id.Col < 0 || id.Col >= len(historyHeaders) {
-			return
-		}
-
-		label.SetText(historyHeaders[id.Col])
-	}
-
-	u.table.SetColumnWidth(0, 160)
-	u.table.SetColumnWidth(1, 140)
-	u.table.SetColumnWidth(2, 220)
-	u.table.SetColumnWidth(3, 90)
-
-	u.table.OnSelected = func(id widget.TableCellID) {
-		u.historyRow = id.Row
-		u.table.Refresh()
-		u.showHistoryDetail()
-	}
-	u.table.OnUnselected = func(widget.TableCellID) {
-		u.historyRow = -1
-		u.table.Refresh()
-		u.clearHistoryDetail()
-	}
-
-	u.runHistory = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), u.runHistoryEntry)
-	u.runHistory.Disable()
-
-	u.editHistory = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), u.editHistoryEntry)
-	u.editHistory.Disable()
-
-	u.revert = widget.NewButtonWithIcon("Restore this state…", theme.HistoryIcon(), u.showRevert)
-	u.revert.Disable()
-
-	u.historyHint = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
-	u.historyHint.Wrapping = fyne.TextWrapWord
-	u.historyHint.Hide()
-
-	// The note is shown as labelled fields; the original key=value line stays
-	// one click away because it is what a bug report and `list --history` show.
-	u.historyFields = container.NewGridWithColumns(2)
-
-	u.historyRaw = widget.NewLabel("")
-	u.historyRaw.Wrapping = fyne.TextWrapWord
-	u.historyRaw.Hide()
-
-	u.historyRawToggle = widget.NewButton("Raw note", func() {
-		u.setHistoryRawVisible(!u.historyRawShown)
-	})
-	u.historyRawToggle.Importance = widget.LowImportance
-
-	// The detail panel sits below the table, as on the Commands tab, and stays
-	// collapsed until an entry is chosen.
-	u.historyBody = container.NewVBox(
-		u.historyDetail,
-		u.historyFields,
-		u.historyRawToggle,
-		u.historyRaw,
-		container.NewHBox(u.runHistory, u.editHistory, u.revert),
-		u.historyHint,
-	)
-	u.historyBody.Hide()
-
-	u.historyToggle = widget.NewButtonWithIcon("Details", theme.MenuDropDownIcon(), func() {
-		u.setHistoryDetailVisible(!u.historyDetailShown)
-	})
-	u.historyToggle.Importance = widget.LowImportance
-
 	header := widget.NewLabel(historyHeader)
 	header.Wrapping = fyne.TextWrapWord
 
-	u.historyRoot = container.NewBorder(
-		header,
-		container.NewVBox(u.historyToggle, u.historyBody),
-		nil,
-		nil,
-		u.table,
-	)
+	u.historyEmpty = widget.NewLabel("No history yet.")
+	u.historyEmpty.Hide()
 
-	// A left margin keeps the header and the table off the window edge, as on
-	// the Commands tab. historyRoot stays inner so the toggles refresh the
-	// layout that owns them.
-	return container.NewBorder(nil, nil, gap(theme.Padding()*2, 0), nil, u.historyRoot)
+	u.historyList = container.NewVBox()
+
+	u.historyLoadMore = widget.NewButton("Load older", func() {
+		u.loadOlderHistory()
+	})
+	u.historyLoadMore.Importance = widget.LowImportance
+	u.historyLoadMore.Hide()
+
+	u.historyPage = container.NewVBox(header, u.historyEmpty, u.historyList, u.historyLoadMore)
+	u.historyScroll = container.NewVScroll(page(u.historyPage))
+
+	u.refreshHistory()
+
+	return u.historyScroll
 }
 
-// historyCellView is one table cell: a label over a background the row
-// selection tints. widget.Table recycles cells, so UpdateCell re-points the
-// label and the tint on every pass.
-//
-// Like commandRow, it is a widget holding a container: a struct that embeds a
-// container is opaque to the canvas walk and paints nothing (#406).
-type historyCellView struct {
-	widget.BaseWidget
-
-	bg    *canvas.Rectangle
-	label *widget.Label
-	body  *fyne.Container
-}
-
-func newHistoryCell() *historyCellView {
-	cell := &historyCellView{
-		bg:    canvas.NewRectangle(color.Transparent),
-		label: widget.NewLabel(""),
-	}
-
-	cell.body = container.NewMax(cell.bg, cell.label)
-	cell.ExtendBaseWidget(cell)
-
-	return cell
-}
-
-func (c *historyCellView) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(c.body)
-}
-
-func (c *historyCellView) setSelected(selected bool) {
-	if selected {
-		c.bg.FillColor = theme.Color(theme.ColorNameSelection)
-	} else {
-		c.bg.FillColor = color.Transparent
-	}
-
-	c.bg.Refresh()
-}
-
-func historyCell(row desktop.HistoryRow, column int) string {
-	switch column {
-	case 0:
-		return row.When
-	case 1:
-		return row.Operation
-	case 2:
-		if row.Command == "" {
-			return "-"
-		}
-
-		return row.Command
-	case 3:
-		return strconv.Itoa(row.Version)
-	default:
-		return ""
-	}
-}
-
-// refreshHistory rebuilds the table's snapshot. A command edit changes the log,
-// and refreshing a hidden table on every keystroke would be wasted work.
+// refreshHistory rebuilds the first page from the current log. It formats at
+// most historyPageSize entries and parses no notes.
 func (u *ui) refreshHistory() {
-	u.historyRows = u.model.HistoryRows()
-	u.historyRow = -1
-
-	if u.table != nil {
-		u.table.Refresh()
-		u.table.UnselectAll()
-	}
-
-	if u.revert != nil {
-		u.revert.Disable()
-	}
-
-	u.clearHistoryDetail()
-}
-
-// setHistoryDetailVisible is the Details toggle below the table.
-//
-// As on the Commands tab, showing a panel that was hidden at build time needs the
-// tab root to lay out again: Fyne's layouts skip invisible children, so without
-// the refresh the panel would keep the zero size it was never given.
-func (u *ui) setHistoryDetailVisible(visible bool) {
-	u.historyDetailShown = visible
-
-	if u.historyBody == nil {
+	if u.historyList == nil {
 		return
 	}
 
-	if visible {
-		u.historyBody.Show()
+	u.historyTotal = len(u.model.History.AllData)
+	u.historyLimit = min(historyPageSize, u.historyTotal)
+	u.historyOpen = nil
+	u.historyCards = nil
+
+	u.historyList.RemoveAll()
+	u.loadHistoryPage(0, u.historyLimit)
+
+	if u.historyTotal == 0 {
+		u.historyEmpty.Show()
 	} else {
-		u.historyBody.Hide()
+		u.historyEmpty.Hide()
 	}
 
-	if u.historyRoot != nil {
-		u.historyRoot.Refresh()
-	}
+	u.updateHistoryLoad()
+	u.historyPage.Refresh()
 }
 
-// clearHistoryDetail empties and collapses the panel, so a refresh cannot leave
-// another entry's text on screen.
-func (u *ui) clearHistoryDetail() {
-	if u.historyDetail != nil {
-		u.historyDetail.SetText("")
-	}
+// loadOlderHistory appends the next page without rebuilding the cards already
+// on screen.
+func (u *ui) loadOlderHistory() {
+	offset := u.historyLimit
 
-	if u.historyFields != nil {
-		u.historyFields.RemoveAll()
-		u.historyFields.Refresh()
-	}
-
-	if u.historyRaw != nil {
-		u.historyRaw.SetText("")
-	}
-
-	u.setHistoryRawVisible(false)
-
-	if u.runHistory != nil {
-		u.runHistory.Disable()
-	}
-
-	if u.editHistory != nil {
-		u.editHistory.Disable()
-	}
-
-	if u.revert != nil {
-		u.revert.Disable()
-	}
-
-	if u.historyHint != nil {
-		u.historyHint.SetText("")
-		u.historyHint.Hide()
-	}
-
-	u.setHistoryDetailVisible(false)
-}
-
-// setHistoryRawVisible is the Raw note toggle.
-//
-// Like the Details panel it has to refresh the tab root: a label hidden at build
-// time was skipped by the layout, so showing it alone gives it no height.
-func (u *ui) setHistoryRawVisible(visible bool) {
-	u.historyRawShown = visible
-
-	if u.historyRaw == nil {
+	summaries := u.model.HistoryPage(offset, historyPageSize)
+	if len(summaries) == 0 {
 		return
 	}
 
-	if visible {
-		u.historyRaw.Show()
-	} else {
-		u.historyRaw.Hide()
-	}
+	u.loadHistoryPage(offset, len(summaries))
+	u.historyLimit += len(summaries)
+	u.updateHistoryLoad()
+	u.historyPage.Refresh()
+}
 
-	if u.historyRoot != nil {
-		u.historyRoot.Refresh()
+func (u *ui) loadHistoryPage(offset, limit int) {
+	for _, summary := range u.model.HistoryPage(offset, limit) {
+		card := u.newHistoryCard(summary)
+		u.historyCards = append(u.historyCards, card)
+		u.historyList.Add(card.expandableCard)
 	}
 }
 
-// selectedHistoryRow is the chosen entry, or false when nothing is selected.
-func (u *ui) selectedHistoryRow() (desktop.HistoryRow, bool) {
-	if u.historyRow < 0 || u.historyRow >= len(u.historyRows) {
-		return desktop.HistoryRow{}, false
-	}
-
-	return u.historyRows[u.historyRow], true
-}
-
-func (u *ui) showHistoryDetail() {
-	row, ok := u.selectedHistoryRow()
-	if !ok {
+func (u *ui) updateHistoryLoad() {
+	if u.historyLimit < u.historyTotal {
+		u.historyLoadMore.Show()
 		return
 	}
 
-	headline := fmt.Sprintf("Version %d — %s", row.Version, row.Operation)
-	if row.Command != "" {
-		headline += " · " + row.Command
-	}
-	headline += " · " + row.When
-
-	u.historyDetail.SetText(headline)
-	u.showHistoryFields(row.Fields)
-	u.historyRaw.SetText(row.Note)
-	u.setHistoryRawVisible(false)
-	u.updateHistoryActions(row)
-	u.revert.Enable()
-
-	u.setHistoryDetailVisible(true)
+	u.historyLoadMore.Hide()
 }
 
-// showHistoryFields lays the note out as label/value pairs. The keys are the
-// stored field names, mapped to words a reader recognises; an unknown key is
-// still shown (humanised), so a newer note format does not lose information.
-func (u *ui) showHistoryFields(fields []desktop.HistoryField) {
-	if u.historyFields == nil {
+func (u *ui) newHistoryCard(summary desktop.HistorySummary) *historyCard {
+	card := &historyCard{version: summary.Version}
+	card.expandableCard = newExpandableCard(historySummaryTitle(summary), func() fyne.CanvasObject {
+		return u.buildHistoryBody(card)
+	})
+	card.header.OnTapped = func() { u.toggleHistoryCard(card) }
+
+	return card
+}
+
+// historySummaryTitle is the collapsed row: when, what, which command, version.
+func historySummaryTitle(summary desktop.HistorySummary) string {
+	command := summary.Command
+	if command == "" {
+		command = "-"
+	}
+
+	return fmt.Sprintf("%s · %s · %s · #%d", summary.When, summary.Operation, command, summary.Version)
+}
+
+// toggleHistoryCard opens a card and closes the one that was open, so the page
+// never holds two detail bodies.
+func (u *ui) toggleHistoryCard(card *historyCard) {
+	if card.isOpen() {
+		card.setOpen(false)
+		u.historyOpen = nil
+		u.historyPage.Refresh()
+
 		return
 	}
 
-	rows := make([]detailField, 0, len(fields))
+	if u.historyOpen != nil && u.historyOpen != card {
+		u.historyOpen.setOpen(false)
+	}
 
-	for _, field := range fields {
-		rows = append(rows, detailField{
+	card.setOpen(true)
+	u.historyOpen = card
+	u.historyPage.Refresh()
+	u.scrollHistoryTo(card)
+}
+
+// scrollHistoryTo brings an opened card into view. The position is relative to
+// the page, which is what the scroll wraps.
+func (u *ui) scrollHistoryTo(card *historyCard) {
+	if u.historyScroll == nil || u.historyPage == nil || u.historyList == nil {
+		return
+	}
+
+	y := u.historyPage.Position().Y + u.historyList.Position().Y + card.Position().Y
+	u.historyScroll.ScrollToOffset(fyne.NewPos(0, y))
+}
+
+// buildHistoryBody builds the detail for one card on first open.
+func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
+	detail, found := u.model.HistoryDetail(card.version)
+	if !found {
+		return widget.NewLabel("This entry is no longer in the history.")
+	}
+
+	card.detail = detail
+
+	fields := make([]detailField, 0, len(detail.Fields))
+	for _, field := range detail.Fields {
+		fields = append(fields, detailField{
 			Label: historyFieldLabel(field.Key),
 			Value: historyFieldValue(field.Key, field.Value),
 		})
 	}
 
-	if len(rows) == 0 {
-		rows = append(rows, detailField{Value: "(no note)"})
+	if len(fields) == 0 {
+		fields = append(fields, detailField{Value: "(no note)"})
 	}
 
-	setFieldGrid(u.historyFields, rows)
+	grid := container.NewGridWithColumns(2)
+	setFieldGrid(grid, fields)
+
+	card.raw = widget.NewLabel(detail.Note)
+	card.raw.Wrapping = fyne.TextWrapWord
+	card.raw.Hide()
+
+	card.rawToggle = widget.NewButton("Raw note", func() {
+		card.rawShown = !card.rawShown
+		if card.rawShown {
+			card.raw.Show()
+		} else {
+			card.raw.Hide()
+		}
+
+		card.box.Refresh()
+		u.historyPage.Refresh()
+	})
+	card.rawToggle.Importance = widget.LowImportance
+
+	card.run = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
+		u.runHistoryEntry(card)
+	})
+	card.edit = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() {
+		u.editHistoryEntry(card)
+	})
+	card.restore = widget.NewButtonWithIcon("Restore this state…", theme.HistoryIcon(), func() {
+		u.showRevert(card)
+	})
+
+	card.hint = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	card.hint.Wrapping = fyne.TextWrapWord
+
+	u.updateHistoryActions(card, detail)
+
+	return container.NewVBox(
+		grid,
+		card.rawToggle,
+		card.raw,
+		container.NewHBox(card.run, card.edit, card.restore),
+		card.hint,
+	)
+}
+
+// updateHistoryActions enables only what this entry can do: Run needs an execute
+// entry whose command still exists, Edit needs the command to exist. A disabled
+// action says why.
+func (u *ui) updateHistoryActions(card *historyCard, detail desktop.HistoryDetail) {
+	if card.run == nil || card.edit == nil {
+		return
+	}
+
+	command, exists := u.model.Commands.Get(detail.Command)
+
+	if exists && detail.Operation == string(operation.Execute) {
+		card.run.Enable()
+	} else {
+		card.run.Disable()
+	}
+
+	if exists {
+		card.edit.Enable()
+	} else {
+		card.edit.Disable()
+	}
+
+	card.restore.Enable()
+
+	card.hint.SetText(historyActionHint(detail, exists, command))
+	if card.hint.Text == "" {
+		card.hint.Hide()
+	} else {
+		card.hint.Show()
+	}
+}
+
+// historyActionHint explains a disabled action, or says nothing when all apply.
+func historyActionHint(detail desktop.HistoryDetail, exists bool, command catalog.Command) string {
+	if !exists {
+		return "This command is not in the current setup, so it cannot be run or edited."
+	}
+
+	if detail.Operation != string(operation.Execute) {
+		return "Run replays execute entries; this entry recorded a " + detail.Operation + "."
+	}
+
+	if !detail.ParamsRecorded && len(command.Params) > 0 {
+		return "This entry did not record its parameters; Run asks for them."
+	}
+
+	return ""
+}
+
+// runHistoryEntry runs the managed command again with the parameters the entry
+// recorded. It never re-creates or deletes.
+func (u *ui) runHistoryEntry(card *historyCard) {
+	command, found := u.model.Commands.Get(card.detail.Command)
+	if !found {
+		return
+	}
+
+	if !card.detail.ParamsRecorded && len(command.Params) > 0 {
+		u.askParams(card.detail.Command, command)
+		return
+	}
+
+	u.model.RunWithParams(card.detail.Command, card.detail.Params)
+	u.showOutput()
+}
+
+// editHistoryEntry takes the entry's command to the Commands tab and opens its
+// edit dialog.
+func (u *ui) editHistoryEntry(card *historyCard) {
+	if _, found := u.model.Commands.Get(card.detail.Command); !found {
+		return
+	}
+
+	u.selectCommand(card.detail.Command)
+	u.showEditFor(card.detail.Command)
+}
+
+// showRevert asks before restoring, then applies the change through the
+// Reverter port. Position is 0 for the newest entry, so steps is one more.
+func (u *ui) showRevert(card *historyCard) {
+	detail := card.detail
+	steps := detail.Position + 1
+
+	dropped := steps - 1
+
+	detailText := "No newer entries are dropped."
+	switch {
+	case dropped == 1:
+		detailText = "One newer entry is dropped."
+	case dropped > 1:
+		detailText = fmt.Sprintf("%d newer entries are dropped.", dropped)
+	}
+
+	question := fmt.Sprintf(
+		"Restore the command set recorded at version %d (%s, %s)?\n\n%s",
+		detail.Version, detail.Operation, detail.Command, detailText,
+	)
+
+	dialog.ShowConfirm("Restore command set", question, func(ok bool) {
+		if !ok {
+			return
+		}
+
+		u.applyRevert(steps)
+	}, u.window)
+}
+
+// applyRevert is the confirmation's submit path.
+func (u *ui) applyRevert(steps int) bool {
+	commands, history, err := u.reverter.Revert(steps)
+	if err != nil {
+		showError(err.Error(), u.window)
+		return false
+	}
+
+	u.reload(commands, history)
+	return true
 }
 
 // historyFieldLabel is what the grid calls a stored key.
@@ -411,142 +417,4 @@ func historyFieldValue(key, value string) string {
 	}
 
 	return value
-}
-
-// updateHistoryActions enables only what this entry can do: Run needs an execute
-// entry whose command still exists, Edit needs the command to exist. A disabled
-// action says why, so a grey button is not a dead end.
-func (u *ui) updateHistoryActions(row desktop.HistoryRow) {
-	if u.runHistory == nil || u.editHistory == nil {
-		return
-	}
-
-	command, exists := u.model.Commands.Get(row.Command)
-
-	if exists && row.Operation == string(operation.Execute) {
-		u.runHistory.Enable()
-	} else {
-		u.runHistory.Disable()
-	}
-
-	if exists {
-		u.editHistory.Enable()
-	} else {
-		u.editHistory.Disable()
-	}
-
-	if u.historyHint != nil {
-		u.historyHint.SetText(historyActionHint(row, exists, command))
-		if u.historyHint.Text == "" {
-			u.historyHint.Hide()
-		} else {
-			u.historyHint.Show()
-		}
-	}
-}
-
-// historyActionHint explains a disabled action, or says nothing when both apply.
-func historyActionHint(row desktop.HistoryRow, exists bool, command catalog.Command) string {
-	if !exists {
-		return "This command is not in the current setup, so it cannot be run or edited."
-	}
-
-	if row.Operation != string(operation.Execute) {
-		return "Run replays execute entries; this entry recorded a " + row.Operation + "."
-	}
-
-	if !row.ParamsRecorded && len(command.Params) > 0 {
-		return "This entry did not record its parameters; Run asks for them."
-	}
-
-	return ""
-}
-
-// runHistoryEntry runs the managed command again with the parameters the entry
-// recorded. It is the safe half of "replay": it never re-creates or deletes.
-//
-// An entry written before command_params existed has no record of its arguments.
-// When the command declares parameters, the user is asked for them rather than
-// having the command run with literal placeholders.
-func (u *ui) runHistoryEntry() {
-	row, ok := u.selectedHistoryRow()
-	if !ok {
-		return
-	}
-
-	command, found := u.model.Commands.Get(row.Command)
-	if !found {
-		return
-	}
-
-	if !row.ParamsRecorded && len(command.Params) > 0 {
-		u.askParams(row.Command, command)
-		return
-	}
-
-	u.model.RunWithParams(row.Command, row.Params)
-	u.showOutput()
-}
-
-// editHistoryEntry takes the entry's command to the Commands tab and opens its
-// edit dialog, so the user does not have to find it by hand.
-func (u *ui) editHistoryEntry() {
-	row, ok := u.selectedHistoryRow()
-	if !ok {
-		return
-	}
-
-	if _, found := u.model.Commands.Get(row.Command); !found {
-		return
-	}
-
-	u.selectCommand(row.Command)
-	u.showEditFor(row.Command)
-}
-
-// showRevert asks before restoring, then applies the change through the
-// Reverter port.
-func (u *ui) showRevert() {
-	if u.historyRow < 0 || u.historyRow >= len(u.historyRows) {
-		return
-	}
-
-	row := u.historyRows[u.historyRow]
-
-	// RevertTo(steps) restores the entry steps back from the newest, so row 0
-	// (the newest) is one step and the entry itself stays in the log.
-	steps := u.historyRow + 1
-
-	dropped := steps - 1
-	detail := "No newer entries are dropped."
-	if dropped == 1 {
-		detail = "One newer entry is dropped."
-	} else if dropped > 1 {
-		detail = fmt.Sprintf("%d newer entries are dropped.", dropped)
-	}
-
-	question := fmt.Sprintf(
-		"Restore the command set recorded at version %d (%s, %s)?\n\n%s",
-		row.Version, row.Operation, row.Command, detail,
-	)
-
-	dialog.ShowConfirm("Restore command set", question, func(ok bool) {
-		if !ok {
-			return
-		}
-
-		u.applyRevert(steps)
-	}, u.window)
-}
-
-// applyRevert is the confirmation's submit path.
-func (u *ui) applyRevert(steps int) bool {
-	commands, history, err := u.reverter.Revert(steps)
-	if err != nil {
-		showError(err.Error(), u.window)
-		return false
-	}
-
-	u.reload(commands, history)
-	return true
 }

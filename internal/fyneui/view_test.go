@@ -16,7 +16,6 @@ import (
 
 	"github.com/fiwon123/crower/internal/desktop"
 	"github.com/fiwon123/crower/internal/domain/catalog"
-	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
@@ -157,7 +156,6 @@ func newTestUIWithUpdater(t *testing.T, model *desktop.Model, editor Editor, rev
 		setups:      &stubSetups{current: "default", names: []string{"default"}},
 		activeSetup: "default",
 		groupIcons:  map[string]string{},
-		historyRow:  -1,
 	}
 
 	return front, window
@@ -725,43 +723,6 @@ func TestApplyDeleteReloadsTheModel(t *testing.T) {
 
 	if got := front.model.Selected(); got != "" {
 		t.Errorf("Selected() = %q, want an empty set", got)
-	}
-}
-
-// The history tab shows every entry, not the 21 the old text view capped at.
-func TestHistoryTabHoldsEveryEntry(t *testing.T) {
-	var history timeline.Log
-	for i := 0; i < 30; i++ {
-		history.Add(operation.Create, "greet", "note")
-	}
-
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
-		history,
-		stubExecutor{},
-	)
-
-	front, _ := newTestUI(t, model, stubEditor{}, stubReverter{})
-	content := front.historyTab()
-	if content == nil {
-		t.Fatal("historyTab returned nil")
-	}
-
-	rows, cols := front.table.Length()
-	if rows != 30 {
-		t.Errorf("table rows = %d, want 30", rows)
-	}
-
-	if cols != len(historyHeaders) {
-		t.Errorf("table columns = %d, want %d", cols, len(historyHeaders))
-	}
-
-	// Selecting a row enables the restore action.
-	front.historyRow = 0
-	front.showHistoryDetail()
-
-	if front.revert.Disabled() {
-		t.Error("restore stayed disabled after a row was selected")
 	}
 }
 

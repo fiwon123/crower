@@ -108,35 +108,49 @@ func TestStartRunKeyRunsTheChosenRow(t *testing.T) {
 	}
 }
 
-// The rows are newest first and carry the command, or nothing when the
-// operation touched none (the table renders the dash).
-func TestHistoryRowsAreNewestFirst(t *testing.T) {
+// A page is newest first, bounded, and carries the command (empty when the
+// operation touched none).
+func TestHistoryPageIsNewestFirstAndBounded(t *testing.T) {
 	var history timeline.Log
-	history.Add(operation.Create, "greet", "note")
+	for i := 0; i < 5; i++ {
+		history.Add(operation.Create, "greet", "note")
+	}
 	history.Add(operation.Copy, "", "note")
 
-	m := modelWithCommands([]catalog.Command{{Name: "hello", Exec: "echo hello"}}, history)
-	rows := m.HistoryRows()
+	m := modelWithCommands(nil, history)
+	page := m.HistoryPage(0, 2)
 
-	if len(rows) != 2 {
-		t.Fatalf("got %d rows, want 2", len(rows))
+	if len(page) != 2 {
+		t.Fatalf("page = %d rows, want 2", len(page))
 	}
 
-	if rows[0].Version != 2 || rows[0].Operation != "copy" || rows[0].Command != "" {
-		t.Errorf("row 0 = %+v, want the newest entry with no command", rows[0])
+	if page[0].Version != 6 || page[0].Operation != "copy" || page[0].Command != "" {
+		t.Errorf("page[0] = %+v, want the newest entry with no command", page[0])
 	}
 
-	if rows[1].Version != 1 || rows[1].Command != "greet" {
-		t.Errorf("row 1 = %+v, want the create entry for greet", rows[1])
+	if page[1].Version != 5 || page[1].Command != "greet" {
+		t.Errorf("page[1] = %+v, want the create entry for greet", page[1])
 	}
 
-	if len(rows[0].When) != len("2006-01-02 15:04") {
-		t.Errorf("When = %q, want a formatted local timestamp", rows[0].When)
+	if len(page[0].When) != len("2006-01-02 15:04") {
+		t.Errorf("When = %q, want a formatted local timestamp", page[0].When)
+	}
+
+	if last := m.HistoryPage(5, 10); len(last) != 1 || last[0].Version != 1 {
+		t.Errorf("last page = %+v, want the oldest entry only", last)
+	}
+
+	if empty := m.HistoryPage(20, 10); len(empty) != 0 {
+		t.Errorf("out-of-range page = %+v, want empty", empty)
+	}
+
+	if empty := m.HistoryPage(0, 0); len(empty) != 0 {
+		t.Errorf("zero-limit page = %+v, want empty", empty)
 	}
 }
 
 // A timestamp that does not parse is shown as stored rather than dropped.
-func TestHistoryRowsKeepAnUnparseableTimestamp(t *testing.T) {
+func TestHistoryPageKeepsAnUnparseableTimestamp(t *testing.T) {
 	history := timeline.Log{AllData: []timeline.Content{{
 		Version:   1,
 		Timestemp: "not a timestamp",
@@ -144,10 +158,10 @@ func TestHistoryRowsKeepAnUnparseableTimestamp(t *testing.T) {
 	}}}
 
 	m := modelWithCommands(nil, history)
-	rows := m.HistoryRows()
+	page := m.HistoryPage(0, 1)
 
-	if len(rows) != 1 || rows[0].When != "not a timestamp" {
-		t.Fatalf("rows = %+v, want the raw timestamp", rows)
+	if len(page) != 1 || page[0].When != "not a timestamp" {
+		t.Fatalf("page = %+v, want the raw timestamp", page)
 	}
 }
 
@@ -250,36 +264,48 @@ func TestGroupFilterAndGroups(t *testing.T) {
 	}
 }
 
-// A row carries the note split into fields and the parameters an execute entry
-// recorded, so the window can label the entry and run it again.
-func TestHistoryRowsExposeFieldsAndParams(t *testing.T) {
+// The detail is read on demand, by version, and knows its position from the
+// newest entry so Restore can count the steps.
+func TestHistoryDetailReturnsTheEntry(t *testing.T) {
 	var history timeline.Log
 	history.Add(operation.Copy, "", "main_operation=copy;sub_operation=file")
 	history.Add(operation.Execute, "greet",
 		`main_operation=execute;sub_operation=command;command_name=greet;command_exec=echo hi;command_params=["a b","-x"]`)
 
 	m := modelWithCommands([]catalog.Command{{Name: "greet", Exec: "echo hi"}}, history)
-	rows := m.HistoryRows()
 
-	if len(rows) != 2 {
-		t.Fatalf("got %d rows, want 2", len(rows))
+	detail, found := m.HistoryDetail(2)
+	if !found {
+		t.Fatal("HistoryDetail(2) = missing")
 	}
 
-	execute := rows[0]
-	if len(execute.Fields) != 5 || execute.Fields[2] != (HistoryField{Key: "command_name", Value: "greet"}) {
-		t.Errorf("Fields = %v, want the note in order with decoded values", execute.Fields)
+	if detail.Version != 2 || detail.Position != 0 {
+		t.Errorf("detail version/position = %d/%d, want 2/0", detail.Version, detail.Position)
 	}
 
-	if !slices.Equal(execute.Params, []string{"a b", "-x"}) {
-		t.Errorf("Params = %v, want the recorded arguments", execute.Params)
+	if len(detail.Fields) != 5 || detail.Fields[2] != (HistoryField{Key: "command_name", Value: "greet"}) {
+		t.Errorf("Fields = %v, want the note in order with decoded values", detail.Fields)
 	}
 
-	if !execute.ParamsRecorded {
-		t.Error("ParamsRecorded = false, want true for a note that carries the field")
+	if !slices.Equal(detail.Params, []string{"a b", "-x"}) || !detail.ParamsRecorded {
+		t.Errorf("Params/recorded = %v/%v, want the recorded arguments", detail.Params, detail.ParamsRecorded)
 	}
 
-	if rows[1].Params != nil || rows[1].ParamsRecorded {
-		t.Errorf("Params/recorded on a copy row = %v/%v, want none recorded", rows[1].Params, rows[1].ParamsRecorded)
+	if !strings.Contains(detail.Note, "command_exec=echo hi") {
+		t.Errorf("Note = %q, want the decoded line", detail.Note)
+	}
+
+	older, found := m.HistoryDetail(1)
+	if !found || older.Position != 1 {
+		t.Fatalf("detail(1) = %+v, %v, want position 1", older, found)
+	}
+
+	if older.Params != nil || older.ParamsRecorded {
+		t.Errorf("Params/recorded = %v/%v, want none recorded", older.Params, older.ParamsRecorded)
+	}
+
+	if _, found := m.HistoryDetail(99); found {
+		t.Error("HistoryDetail(99) found an entry that is not there")
 	}
 }
 
