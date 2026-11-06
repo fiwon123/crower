@@ -98,10 +98,14 @@ The About tab checks GitHub for a newer release when the window opens and
 reports what it finds. When there is one, an **Install `<version>`** button
 appears; nothing is installed without a confirmation, and the download goes
 through the same checksum-verified path as `crower --upgrade`. Once a release is
-on disk the install action gives way to **Restart now**, which starts the new
-binary and closes the window. **Restore previous** appears only when the
+on disk the install action gives way to **Restart now**, which closes the window
+and replaces the running process with the new binary — on Linux and macOS it
+takes over the same process rather than spawning a child a service manager could
+reap with the old window. **Restore previous** appears only when the
 installation recorded an earlier version. Neither the install nor the restart
-button is a permanent control, so they never contradict the status line.
+button is a permanent control, so they never contradict the status line. If a
+restart cannot start the new binary, `restart-error.log` is written beside
+`crower.yaml`.
 
 The Tools tab runs the file operations through the same use cases as the CLI
 commands, and every run lands in the History tab. Path fields take a
