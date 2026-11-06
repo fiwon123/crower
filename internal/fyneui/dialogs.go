@@ -313,9 +313,7 @@ func (u *ui) showOutput() {
 }
 
 func showText(title, text string, window fyne.Window) {
-	label := widget.NewLabel(text)
-	label.Wrapping = fyne.TextWrapWord
-
+	label := newSelectableText(text)
 	content := container.NewVScroll(label)
 
 	show := dialog.NewCustom(title, "Close", content, window)
@@ -323,6 +321,16 @@ func showText(title, text string, window fyne.Window) {
 	show.Show()
 }
 
+// newSelectableText is a wrapping label whose text can be selected and copied,
+// for output and errors: a user needs to be able to share what happened.
+func newSelectableText(text string) *widget.Label {
+	label := widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapWord
+	label.Selectable = true
+
+	return label
+}
+
 func showError(message string, window fyne.Window) {
-	dialog.ShowError(fmt.Errorf("%s", message), window)
+	showText("Error", message, window)
 }

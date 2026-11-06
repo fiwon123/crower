@@ -77,6 +77,10 @@ entries on screen are formatted. **Run** replays an execute entry with the
 parameters it recorded; older entries without them ask when the command declares
 parameters. **Edit** opens that command on the Commands tab.
 
+Values in a command or history card, tool results, and the output and error
+dialogs can be selected and copied with Ctrl+C (⌘C on macOS), so a failure can
+be pasted into a bug report.
+
 The About tab checks GitHub for a newer release when the window opens and
 reports what it finds. When there is one, an **Install `<version>`** button
 appears; nothing is installed without a confirmation, and the download goes

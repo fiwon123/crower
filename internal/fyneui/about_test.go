@@ -368,3 +368,19 @@ func TestAboutUpdateTitleIsCentred(t *testing.T) {
 		t.Errorf("title alignment = %v, want centre", label.Alignment)
 	}
 }
+
+// The version and status can be selected and copied for a bug report.
+func TestAboutTextIsSelectable(t *testing.T) {
+	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, &stubUpdater{current: "v1.0.0"})
+
+	content := front.aboutTab()
+
+	if !front.updateStatus.Selectable {
+		t.Error("the update status is not selectable")
+	}
+
+	version := findLabel(content, "Version v1.0.0")
+	if version == nil || !version.Selectable {
+		t.Error("the version label is missing or not selectable")
+	}
+}

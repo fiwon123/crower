@@ -129,6 +129,10 @@ func TestHistoryCardLabelsTheNoteFields(t *testing.T) {
 		t.Error("the raw note is open before the toggle was pressed")
 	}
 
+	if !card.raw.Selectable {
+		t.Error("the raw note is not selectable")
+	}
+
 	if !strings.Contains(card.raw.Text, "command_exec=echo hi") {
 		t.Errorf("raw note = %q, want the key=value line", card.raw.Text)
 	}
@@ -275,6 +279,10 @@ func TestHistoryActionsFollowTheEntry(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			front, _ := historyEntryUI(t, stubExecutor{}, nil, tt.op, tt.command, tt.note)
 			card := openHistoryCard(t, front, 0)
+
+			if !card.hint.Selectable {
+				t.Error("the disabled reason is not selectable")
+			}
 
 			if got := !card.run.Disabled(); got != tt.run {
 				t.Errorf("run enabled = %v, want %v", got, tt.run)
