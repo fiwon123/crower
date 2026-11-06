@@ -25,7 +25,7 @@ type commandCard struct {
 
 func (u *ui) newCommandCard(command catalog.Command) *commandCard {
 	card := &commandCard{key: command.Name}
-	card.expandableCard = newExpandableCard(commandLabel(command), func() fyne.CanvasObject {
+	card.expandableCard = newExpandableCard(shortLabel(commandLabel(command), 40), func() fyne.CanvasObject {
 		return u.buildCommandBody(card)
 	})
 	card.header.OnTapped = func() { u.toggleCommandCard(card) }

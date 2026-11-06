@@ -215,7 +215,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	newCommand := widget.NewButtonWithIcon("New command", theme.ContentAddIcon(), u.showCreate)
 
 	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, u.selectGroup)
-	u.groupFilter.SetSelected(allGroupsLabel)
+	u.refreshGroups()
 
 	groupsButton := widget.NewButtonWithIcon("Groups…", theme.GridIcon(), u.showGroups)
 
@@ -249,6 +249,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	controls := container.NewVBox(filterRow, setupRow, groupRow)
 
 	u.commandEmpty = widget.NewLabel("No commands match the filter.")
+	u.commandEmpty.Wrapping = fyne.TextWrapWord
 	u.commandEmpty.Hide()
 
 	u.commandList = container.NewVBox()
@@ -257,9 +258,9 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 
 	u.rebuildCommands()
 
-	// The filter and setup rows sit outside the scroll, so they get the same
-	// lateral margin the page gives the cards.
-	top := container.NewBorder(nil, nil, gap(theme.Padding()*2, 0), gap(theme.Padding()*2, 0), controls)
+	// The filter and setup rows sit outside the scroll, so they get the page's
+	// lateral margins: the same left inset and the same right gutter.
+	top := container.NewBorder(nil, nil, gap(theme.Padding()*2, 0), gap(scrollGutter(), 0), controls)
 
 	return container.NewBorder(top, nil, nil, nil, u.commandScroll)
 }
@@ -279,7 +280,9 @@ func (u *ui) rebuildCommands() {
 	for _, key := range u.model.FilteredKeys() {
 		command, found := u.model.Commands.Get(key)
 		if !found {
-			continue
+			// A key the catalog cannot resolve would otherwise vanish from the
+			// tab; show its name so the entry is still visible.
+			command = catalog.Command{Name: key}
 		}
 
 		card := u.newCommandCard(command)
@@ -303,6 +306,12 @@ func (u *ui) rebuildCommands() {
 	}
 
 	u.commandPage.Refresh()
+
+	// A filter can shrink the page under the scroll's offset; go back to the
+	// top rather than render into blank space.
+	if u.commandScroll != nil {
+		u.commandScroll.ScrollToOffset(fyne.NewPos(0, 0))
+	}
 }
 
 // selectCommand brings a command into view from another tab: it clears the
@@ -516,7 +525,7 @@ func (u *ui) switchSetup(name string) bool {
 	return true
 }
 
-// commandLabel is what a row shows: the icon when one is set, then the name.
+// commandLabel is what a card header shows: the icon when one is set, then the name.
 func commandLabel(command catalog.Command) string {
 	if command.Icon == "" {
 		return command.Name
@@ -535,7 +544,7 @@ func paramsHint(command catalog.Command) string {
 	return "Parameters — declared: " + strings.Join(command.Params, " ")
 }
 
-// commandDetailFields is the detail panel's labelled metadata, in the order a
+// commandDetailFields is a card's labelled metadata, in the order a
 // reader scans it: what it is called, what it runs, where it lives, and the
 // limits. Empty values are omitted rather than shown as blank rows.
 func commandDetailFields(command catalog.Command) []detailField {
@@ -584,8 +593,8 @@ func commandDetailFields(command catalog.Command) []detailField {
 	return fields
 }
 
-// numberedSteps keeps a multi-step command readable: the panel used to show
-// only the count, which said nothing about what would run.
+// numberedSteps keeps a multi-step command readable: the card shows the steps
+// themselves, not only a count.
 func numberedSteps(steps []string) string {
 	lines := make([]string, 0, len(steps))
 

@@ -210,9 +210,7 @@ func TestHistoryEditOpensTheCommand(t *testing.T) {
 	front.model.Group = "work"
 	front.refreshGroups()
 
-	front.model.Filter = "zzz"
 	front.filterEntry.SetText("zzz")
-	front.rebuildCommands()
 
 	card := openHistoryCard(t, front, 0)
 	card.edit.OnTapped()

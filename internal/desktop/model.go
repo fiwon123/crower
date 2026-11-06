@@ -161,9 +161,9 @@ func (m *Model) StartRun(withParams bool) {
 
 // StartRunKey runs key, or records it as the selection when withParams is set.
 //
-// The list's per-row buttons carry their own key, so they must not depend on
-// where the selection happens to be: a row's Run button runs that row even
-// when nothing was tapped first.
+// A card's Run button carries its own key, so it must not depend on where the
+// selection happens to be: a card runs its command even when nothing else was
+// opened first.
 func (m *Model) StartRunKey(key string, withParams bool) {
 	if key == "" {
 		return

@@ -357,11 +357,11 @@ func TestSetupButtonsAreNamed(t *testing.T) {
 // The canvas reaches an opened card's text. A card whose body is a container
 // subtype would paint nothing (#406).
 func TestCommandCardIsPaintable(t *testing.T) {
-	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+	front, window := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
 
-	card := openCommandCard(t, front, "greet")
+	openCommandCard(t, front, "greet")
 
-	if labels := labelsIn(card.body); !slices.Contains(labels, "echo hi") {
+	if labels := labelsIn(window.Canvas().Content()); !slices.Contains(labels, "echo hi") {
 		t.Fatalf("the open card does not expose its exec; labels = %q", labels)
 	}
 }
@@ -440,6 +440,45 @@ func TestCommandCardShowsTheDetail(t *testing.T) {
 
 	if !strings.Contains(card.params.PlaceHolder, "env") {
 		t.Errorf("placeholder = %q, want the declared parameter names", card.params.PlaceHolder)
+	}
+}
+
+// The empty state distinguishes "no commands" from "nothing matches", and a
+// filter rebuilds the cards and drops the open one.
+func TestCommandCardsFollowTheFilter(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, nil)
+
+	if !front.commandEmpty.Visible() || !strings.Contains(front.commandEmpty.Text, "No commands yet") {
+		t.Errorf("empty state = %q, want the no-commands message", front.commandEmpty.Text)
+	}
+
+	front, _ = commandUI(t, stubExecutor{}, []catalog.Command{
+		{Name: "greet", Exec: "echo hi"},
+		{Name: "ship", Exec: "echo ship"},
+	})
+
+	openCommandCard(t, front, "greet")
+
+	front.filterEntry.SetText("shi")
+
+	if len(front.commandCards) != 1 || front.commandCards[0].key != "ship" {
+		t.Fatalf("cards = %v, want only ship", front.commandCards)
+	}
+
+	if front.commandOpen != nil {
+		t.Error("a card stayed open after the filter changed")
+	}
+
+	front.filterEntry.SetText("")
+
+	if len(front.commandCards) != 2 {
+		t.Errorf("cards = %d, want both commands", len(front.commandCards))
+	}
+
+	front.filterEntry.SetText("zzz")
+
+	if !front.commandEmpty.Visible() || !strings.Contains(front.commandEmpty.Text, "match") {
+		t.Errorf("empty state = %q, want the no-match message", front.commandEmpty.Text)
 	}
 }
 

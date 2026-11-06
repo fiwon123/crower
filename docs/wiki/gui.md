@@ -27,8 +27,8 @@ The window is split into tabs:
 | **About** | Logo, version, description, the repository link, and the update controls — padded to the tab width, with actions that wrap on a narrow window |
 
 A command can carry an **icon** — a short marker such as 🚀 — shown beside its
-name, and a **group**; the filter lists every group in use, and the details panel
-shows which one the selected command belongs to. Both are set from the create
+name, and a **group**; the filter lists every group in use, and an opened card
+shows which one the command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
 `crower update --icon/--group`. The Icon field has a **Pick…** button with a grid
 of about a hundred emoji; the field stays editable, so any other emoji can be
@@ -49,7 +49,7 @@ secrets, so it stays a configuration-file field, and the window shows keys only.
 **Exec** and **Description** wrap and grow with their text (up to a cap); the
 dialog's field list scrolls, so a long script never clips the buttons.
 
-**Groups…** beside the filter gives each group an icon of its own, stored in
+**Groups…** on the group row gives each group an icon of its own, stored in
 `groups.toml` next to the configuration (the window is the only writer; the CLI
 ignores the file). The filter then reads `🚀 deploy` instead of a bare name.
 

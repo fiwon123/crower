@@ -239,6 +239,10 @@ func TestSwitchSetupRebuildsTheWindow(t *testing.T) {
 		t.Errorf("Selected() = %q, want the new setup's command", got)
 	}
 
+	if len(front.commandCards) != 1 || front.commandCards[0].key != "deploy" {
+		t.Errorf("cards = %v, want the new setup's command rendered", front.commandCards)
+	}
+
 	if front.activeSetup != "work" {
 		t.Errorf("activeSetup = %q, want work", front.activeSetup)
 	}
