@@ -16,8 +16,8 @@ import (
 func TestEmojiCatalogue(t *testing.T) {
 	entries := loadEmojiCatalogue()
 
-	if len(entries) < 1800 {
-		t.Fatalf("catalogue = %d entries, want the full gemoji set", len(entries))
+	if len(entries) < 1300 {
+		t.Fatalf("catalogue = %d entries, want the renderable gemoji set", len(entries))
 	}
 
 	categories := make(map[string]bool)
@@ -26,6 +26,10 @@ func TestEmojiCatalogue(t *testing.T) {
 	for _, entry := range entries {
 		if entry.Emoji == "" {
 			t.Fatal("the catalogue has an entry without a glyph")
+		}
+
+		if !simpleEmoji(entry.Emoji) {
+			t.Errorf("%q is a complex sequence the picker should have dropped", entry.Emoji)
 		}
 
 		if seen[entry.Emoji] {
@@ -108,15 +112,15 @@ func TestFilterEmoji(t *testing.T) {
 	}
 }
 
-// The icon field is a read-only display with Clear and Pick…; it is not an
-// entry, so an arbitrary string cannot be typed in.
+// The icon field is a large emoji button with Clear; it is not an entry, so an
+// arbitrary string cannot be typed in.
 func TestIconFieldIsReadOnly(t *testing.T) {
 	front, window := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
 
 	choice, field := front.iconField("🚀")
 
-	if choice.label.Text != "🚀" {
-		t.Errorf("display = %q, want the emoji", choice.label.Text)
+	if choice.button.text.Text != "🚀" {
+		t.Errorf("display = %q, want the emoji", choice.button.text.Text)
 	}
 
 	if hasEntry(field) {
@@ -130,19 +134,29 @@ func TestIconFieldIsReadOnly(t *testing.T) {
 
 	clear.OnTapped()
 
-	if choice.value != "" || choice.label.Text != "None" {
-		t.Errorf("cleared field = %q/%q, want None", choice.value, choice.label.Text)
+	if choice.value != "" || choice.button.text.Text != "Pick" {
+		t.Errorf("cleared field = %q/%q, want Pick", choice.value, choice.button.text.Text)
 	}
 
-	pick := findButton(field, "Pick…")
-	if pick == nil {
-		t.Fatal("the field has no Pick… button")
-	}
-
-	pick.OnTapped()
+	choice.button.Tapped(&fyne.PointEvent{})
 
 	if len(window.Canvas().Overlays().List()) == 0 {
-		t.Error("Pick… did not open the catalogue")
+		t.Error("the emoji button did not open the catalogue")
+	}
+}
+
+// The emoji button draws the selection large; an empty value says Pick.
+func TestEmojiButtonShowsTheSelection(t *testing.T) {
+	button := newEmojiButton("", nil)
+
+	if button.text.Text != "Pick" {
+		t.Errorf("empty button = %q, want Pick", button.text.Text)
+	}
+
+	button.SetEmoji("🚀")
+
+	if button.text.Text != "🚀" || button.text.TextSize < 24 {
+		t.Errorf("selected button = %q at %.1f pt, want the emoji large", button.text.Text, button.text.TextSize)
 	}
 }
 

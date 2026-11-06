@@ -28,7 +28,7 @@ func (u *ui) showNewSetup() {
 		}
 
 		u.createSetup(name.Text)
-	}, fyne.NewSize(dialogWidth, dialogHeight))
+	}, fyne.NewSize(420, 220))
 }
 
 // createSetup is the form's submit path.

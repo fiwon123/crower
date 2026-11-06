@@ -51,8 +51,10 @@ type historyCard struct {
 func (u *ui) historyTab() fyne.CanvasObject {
 	header := widget.NewLabel(historyHeader)
 	header.Wrapping = fyne.TextWrapWord
+	header.Selectable = true
 
 	u.historyEmpty = widget.NewLabel("No history yet.")
+	u.historyEmpty.Selectable = true
 	u.historyEmpty.Hide()
 
 	u.historyList = container.NewVBox()
@@ -154,16 +156,60 @@ func (u *ui) newHistoryCard(summary desktop.HistorySummary) *historyCard {
 	return card
 }
 
-// historySummaryTitle is the collapsed row: when, what, which command, version.
-// A long command is shortened so the header button's text cannot widen the
-// window's minimum size.
+// historySummaryTitle is the collapsed row: an operation icon, the command, the
+// time and the version. The full date and version are in the opened fields; a
+// long command is shortened so the header cannot widen the window.
 func historySummaryTitle(summary desktop.HistorySummary) string {
 	command := summary.Command
 	if command == "" {
 		command = "-"
 	}
 
-	return fmt.Sprintf("%s · %s · %s · #%d", summary.When, summary.Operation, shortLabel(command, 40), summary.Version)
+	return fmt.Sprintf("%s %s  ·  %s  ·  %s  ·  #%d",
+		operationIcon(summary.Operation),
+		summary.Operation,
+		shortLabel(command, 40),
+		shortTime(summary.When),
+		summary.Version,
+	)
+}
+
+// operationIcons gives each operation a colour marker in the summary. The word
+// stays beside it, so the icon is orientation rather than the only cue.
+var operationIcons = map[string]string{
+	"execute": "▶️",
+	"create":  "➕",
+	"delete":  "🗑️",
+	"update":  "✏️",
+	"list":    "📋",
+	"reset":   "🔄",
+	"open":    "📂",
+	"revert":  "↩️",
+	"search":  "🔍",
+	"extract": "📦",
+	"copy":    "📄",
+	"move":    "📦",
+	"restore": "♻️",
+	"check":   "✅",
+	"upgrade": "⬆️",
+}
+
+func operationIcon(operation string) string {
+	if icon, ok := operationIcons[operation]; ok {
+		return icon
+	}
+
+	return "•"
+}
+
+// shortTime keeps only the clock part of a formatted timestamp; a timestamp a
+// hand edit broke is shown as stored.
+func shortTime(when string) string {
+	if len(when) == len("2006-01-02 15:04") {
+		return when[11:]
+	}
+
+	return when
 }
 
 // shortLabel shortens text to limit runes, keeping an ellipsis.
@@ -201,15 +247,20 @@ func (u *ui) toggleHistoryCard(card *historyCard) {
 	u.scrollHistoryTo(card)
 }
 
-// scrollHistoryTo brings an opened card into view. The position is relative to
-// the page, which is what the scroll wraps.
+// scrollHistoryTo brings an opened card just into view. It moves the minimum,
+// so expanding a card does not jump the page to the top.
 func (u *ui) scrollHistoryTo(card *historyCard) {
 	if u.historyScroll == nil || u.historyPage == nil || u.historyList == nil {
 		return
 	}
 
 	y := u.historyPage.Position().Y + u.historyList.Position().Y + card.Position().Y
-	u.historyScroll.ScrollToOffset(fyne.NewPos(0, y))
+	offset := revealOffset(y, card.Size().Height, u.historyScroll.Size().Height, u.historyScroll.Offset.Y)
+	if offset == u.historyScroll.Offset.Y {
+		return
+	}
+
+	u.historyScroll.ScrollToOffset(fyne.NewPos(0, offset))
 }
 
 // buildHistoryBody builds the detail for one card on first open.
@@ -221,7 +272,11 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 
 	card.detail = detail
 
-	fields := make([]detailField, 0, len(detail.Fields))
+	fields := []detailField{
+		{Label: "When", Value: detail.When},
+		{Label: "Version", Value: fmt.Sprintf("#%d", detail.Version)},
+	}
+
 	for _, field := range detail.Fields {
 		fields = append(fields, detailField{
 			Label: historyFieldLabel(field.Key),
@@ -229,7 +284,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 		})
 	}
 
-	if len(fields) == 0 {
+	if len(detail.Fields) == 0 {
 		fields = append(fields, detailField{Value: "(no note)"})
 	}
 
@@ -262,7 +317,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 	card.edit = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() {
 		u.editHistoryEntry(card)
 	})
-	card.restore = widget.NewButtonWithIcon("Restore this state…", theme.HistoryIcon(), func() {
+	card.restore = widget.NewButtonWithIcon("Restore this state", theme.HistoryIcon(), func() {
 		u.showRevert(card)
 	})
 
