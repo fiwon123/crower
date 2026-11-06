@@ -5,10 +5,12 @@ package fyneui
 import (
 	"context"
 	"fmt"
+	"image/color"
 	"path/filepath"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -209,6 +211,59 @@ func setFieldGrid(grid *fyne.Container, fields []detailField) {
 	}
 
 	grid.Refresh()
+}
+
+// gap is an invisible spacer. An HBox's spacing is fixed, so a row that has to
+// stop short of the list's scrollbar adds one of these at its end.
+func gap(width, height float32) fyne.CanvasObject {
+	space := canvas.NewRectangle(color.Transparent)
+	space.SetMinSize(fyne.NewSize(width, height))
+
+	return space
+}
+
+// scrollGutter is the space a viewport takes for its scrollbar plus a little
+// padding. Fyne overlays the bar instead of reserving a column, so content at the
+// right edge needs this much inset to stay clear of it.
+func scrollGutter() float32 {
+	return theme.ScrollBarSize() + theme.Padding()
+}
+
+// page pads a scrolling tab: lateral margins, and a right inset wide enough for
+// the overlaid scrollbar.
+func page(content fyne.CanvasObject) fyne.CanvasObject {
+	pad := theme.Padding()
+
+	return container.NewBorder(
+		gap(0, pad),
+		gap(0, pad),
+		gap(pad*2, 0),
+		gap(scrollGutter(), 0),
+		content,
+	)
+}
+
+// actionRow separates a card's actions from the form above it and lets them
+// wrap: at a narrow width the grid stacks the buttons instead of pushing the
+// last one off the card.
+func actionRow(buttons ...fyne.CanvasObject) fyne.CanvasObject {
+	return container.NewVBox(
+		widget.NewSeparator(),
+		container.NewGridWrap(fyne.NewSize(150, 40), buttons...),
+	)
+}
+
+// newCard builds a card whose description wraps.
+//
+// widget.NewCard paints its subtitle with a canvas.Text, which does not wrap, so
+// the subtitle's full width becomes the card's minimum and a long sentence makes
+// the page wider than a narrow window (#415). The description is a wrapping
+// label in the body instead.
+func newCard(title, description string, content fyne.CanvasObject) fyne.CanvasObject {
+	desc := widget.NewLabel(description)
+	desc.Wrapping = fyne.TextWrapWord
+
+	return widget.NewCard(title, "", container.NewVBox(desc, content))
 }
 
 // appendPath adds a picked path to a comma-separated list, so repeated Browse

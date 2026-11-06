@@ -254,3 +254,76 @@ func TestRestartSpawnsTheNewBinary(t *testing.T) {
 		t.Errorf("restarts = %d, want 1", updater.restarts)
 	}
 }
+
+// A narrow window must wrap the update actions instead of pushing them past the
+// edge: the old single HBox overflowed as soon as Check, Install and Restore
+// were all visible.
+func TestAboutActionsFitANarrowWindow(t *testing.T) {
+	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
+	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
+
+	// Reveal Install before the first real layout: the software canvas never
+	// lays out a widget that was shown after the window settled.
+	content := front.aboutTab()
+	front.applyLatest("v1.1.0", nil)
+
+	window.SetContent(content)
+	window.Resize(fyne.NewSize(360, 640))
+
+	visible := 0
+	rows := make(map[float32]bool)
+
+	for _, button := range []*widget.Button{front.checkButton, front.installButton, front.restartButton, front.restoreButton} {
+		if button == nil || !button.Visible() {
+			continue
+		}
+
+		visible++
+
+		if button.Size().Width == 0 {
+			t.Errorf("%q was never laid out", button.Text)
+		}
+
+		pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(button)
+		if right := pos.X + button.Size().Width; right > 360 {
+			t.Errorf("%q right edge = %.1f, want it inside the 360 px window", button.Text, right)
+		}
+
+		rows[pos.Y] = true
+	}
+
+	if visible < 3 {
+		t.Fatalf("only %d actions visible, want Check, Install and Restore", visible)
+	}
+
+	if len(rows) < 2 {
+		t.Errorf("actions share one row (%v), want them to wrap at 360 px", rows)
+	}
+}
+
+// Hiding an action must re-run the wrapping grid: GridWrap's minimum height is
+// whatever its last layout counted, so a hidden button would otherwise keep its
+// row reserved until the window is resized.
+func TestHidingAnAboutActionReclaimsItsRow(t *testing.T) {
+	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
+	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
+
+	content := front.aboutTab()
+	front.applyLatest("v1.1.0", nil)
+
+	window.SetContent(content)
+	window.Resize(fyne.NewSize(360, 640))
+
+	before := front.aboutActions.MinSize().Height
+
+	front.showInstall("")
+
+	after := front.aboutActions.MinSize().Height
+	if after >= before {
+		t.Errorf("actions height = %.1f after hiding Install, want less than %.1f", after, before)
+	}
+
+	if front.installButton.Visible() {
+		t.Error("install is still visible")
+	}
+}

@@ -25,12 +25,12 @@ func (u *ui) toolsTab() fyne.CanvasObject {
 	u.extractResult = newToolResult()
 	u.openResult = newToolResult()
 
-	return container.NewVScroll(container.NewVBox(
+	return container.NewVScroll(page(container.NewVBox(
 		u.transferCard(),
 		u.searchCard(),
 		u.extractCard(),
 		u.openCard(),
-	))
+	)))
 }
 
 // browseButton is the "pick it instead of typing it" control beside a path
@@ -73,10 +73,10 @@ func (u *ui) transferCard() fyne.CanvasObject {
 		widget.NewFormItem("Destination", fieldWithBrowse(destination, func() { u.browseFolder(destination) })),
 	)
 
-	return widget.NewCard(
+	return newCard(
 		"Copy or move",
 		"One or more paths and the destination folder.",
-		container.NewVBox(form, container.NewHBox(copyButton, moveButton), u.transferResult.object()),
+		container.NewVBox(form, actionRow(copyButton, moveButton), u.transferResult.object()),
 	)
 }
 
@@ -119,10 +119,10 @@ func (u *ui) searchCard() fyne.CanvasObject {
 		widget.NewFormItem("Look in", mode),
 	)
 
-	return widget.NewCard(
+	return newCard(
 		"Search",
 		"File and folder names, or a web search.",
-		container.NewVBox(form, container.NewHBox(searchButton), u.searchResult.object()),
+		container.NewVBox(form, actionRow(searchButton), u.searchResult.object()),
 	)
 }
 
@@ -175,10 +175,10 @@ func (u *ui) extractCard() fyne.CanvasObject {
 		widget.NewFormItem("Into", fieldWithBrowse(outDir, func() { u.browseFolder(outDir) })),
 	)
 
-	return widget.NewCard(
+	return newCard(
 		"Extract",
 		"Zip, tar, tar.gz, 7z and rar archives.",
-		container.NewVBox(form, container.NewHBox(extractButton), u.extractResult.object()),
+		container.NewVBox(form, actionRow(extractButton), u.extractResult.object()),
 	)
 }
 
@@ -201,12 +201,12 @@ func (u *ui) openCard() fyne.CanvasObject {
 		})
 	})
 
-	return widget.NewCard(
+	return newCard(
 		"Open",
 		"Open paths with the platform's default application.",
 		container.NewVBox(
 			fieldWithBrowse(paths, func() { u.browseFiles(paths) }),
-			container.NewHBox(openButton),
+			actionRow(openButton),
 			u.openResult.object(),
 		),
 	)

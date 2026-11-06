@@ -506,6 +506,7 @@ func TestCommandDetailFields(t *testing.T) {
 	})
 
 	want := []detailField{
+		{Label: "Name", Value: "deploy"},
 		{Label: "Exec", Value: "make deploy"},
 		{Label: "Aliases", Value: "d, ship"},
 		{Label: "Group", Value: "work"},
@@ -521,8 +522,11 @@ func TestCommandDetailFields(t *testing.T) {
 		t.Errorf("commandDetailFields() = %v, want %v", fields, want)
 	}
 
-	if got := commandDetailFields(catalog.Command{Name: "plain", Exec: "echo hi"}); !slices.Equal(got, []detailField{{Label: "Exec", Value: "echo hi"}}) {
-		t.Errorf("plain command = %v, want only Exec", got)
+	if got := commandDetailFields(catalog.Command{Name: "plain", Exec: "echo hi"}); !slices.Equal(got, []detailField{
+		{Label: "Name", Value: "plain"},
+		{Label: "Exec", Value: "echo hi"},
+	}) {
+		t.Errorf("plain command = %v, want Name and Exec", got)
 	}
 }
 
