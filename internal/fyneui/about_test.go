@@ -47,6 +47,32 @@ func (u *stubUpdater) Restart() error {
 	return u.restartErr
 }
 
+// findLabel returns the label with exactly this text, or nil.
+func findLabel(object fyne.CanvasObject, want string) *widget.Label {
+	switch typed := object.(type) {
+	case *widget.Label:
+		if typed.Text == want {
+			return typed
+		}
+	case *fyne.Container:
+		for _, child := range typed.Objects {
+			if label := findLabel(child, want); label != nil {
+				return label
+			}
+		}
+	case *container.Scroll:
+		if typed.Content != nil {
+			return findLabel(typed.Content, want)
+		}
+	case *widget.Card:
+		if typed.Content != nil {
+			return findLabel(typed.Content, want)
+		}
+	}
+
+	return nil
+}
+
 // findLabelText walks the widget tree for a label whose text contains want.
 func findLabelText(object fyne.CanvasObject, want string) bool {
 	switch typed := object.(type) {
@@ -325,5 +351,20 @@ func TestHidingAnAboutActionReclaimsItsRow(t *testing.T) {
 
 	if front.installButton.Visible() {
 		t.Error("install is still visible")
+	}
+}
+
+// The About card's title is centred like the rest of the page. It used to be
+// widget.Card's left-aligned canvas.Text, which no tree walk could re-align.
+func TestAboutUpdateTitleIsCentred(t *testing.T) {
+	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, &stubUpdater{current: "v0.0.0-test"})
+
+	label := findLabel(front.aboutTab(), "Updates")
+	if label == nil {
+		t.Fatal("the Updates title is not a label")
+	}
+
+	if label.Alignment != fyne.TextAlignCenter {
+		t.Errorf("title alignment = %v, want centre", label.Alignment)
 	}
 }

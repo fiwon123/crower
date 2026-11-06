@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
@@ -477,5 +478,22 @@ func TestHistoryRunAsksWhenParamsWereNotRecorded(t *testing.T) {
 
 	if len(window.Canvas().Overlays().List()) == 0 {
 		t.Error("run did not open the parameters dialog")
+	}
+}
+
+// The History tab keeps its header and table off the window edge, like the
+// Commands tab.
+func TestHistoryHasALeftMargin(t *testing.T) {
+	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
+
+	_, window := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
+
+	pos, found := labelPosition(window.Canvas().Content(), historyHeader)
+	if !found {
+		t.Fatal("the history header is not in the rendered tree")
+	}
+
+	if pos.X < theme.Padding()*2 {
+		t.Errorf("header x = %.1f, want at least %.1f from the window edge", pos.X, theme.Padding()*2)
 	}
 }
