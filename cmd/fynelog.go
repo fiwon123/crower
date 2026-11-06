@@ -44,7 +44,7 @@ func startWindowLog(folder string) *windowLog {
 	record := &windowLog{path: path, file: file}
 
 	writer := io.MultiWriter(file, os.Stderr)
-	log.SetOutput(&startupErrors{writer: writer, path: path})
+	log.SetOutput(&startupErrors{writer: writer, path: path, notify: notifyStartupError})
 	log.Printf("crower-gui %s starting (%s/%s)", Version, runtime.GOOS, runtime.GOARCH)
 
 	return record
@@ -102,6 +102,10 @@ type startupErrors struct {
 	path     string
 	reported bool
 	mutex    sync.Mutex
+
+	// notify is captured when the run starts, so an error reported after a
+	// test replaced the variable still belongs to the run that saw it.
+	notify func(string)
 }
 
 // openGLHint explains the one failure that has nothing to do with the download:
@@ -161,7 +165,9 @@ func (s *startupErrors) report(fatal bool) {
 		message += "\n\n" + openGLHint
 	}
 
-	notifyStartupError(message)
+	if s.notify != nil {
+		s.notify(message)
+	}
 
 	// Without a window the process would sit in the task manager doing
 	// nothing, which is what "nothing happens" looks like to the user.
