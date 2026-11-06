@@ -52,10 +52,12 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 
 	name := widget.NewLabelWithStyle("crower", fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
 	version := widget.NewLabelWithStyle("Version "+u.updater.Current(), fyne.TextAlignCenter, fyne.TextStyle{})
+	version.Selectable = true
 
 	summary := widget.NewLabel(projectSummary)
 	summary.Alignment = fyne.TextAlignCenter
 	summary.Wrapping = fyne.TextWrapWord
+	summary.Selectable = true
 
 	var homepage fyne.CanvasObject
 
@@ -74,6 +76,7 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 	u.updateStatus = widget.NewLabel("Updates are checked when the window opens.")
 	u.updateStatus.Wrapping = fyne.TextWrapWord
 	u.updateStatus.Alignment = fyne.TextAlignCenter
+	u.updateStatus.Selectable = true
 
 	u.checkButton = widget.NewButtonWithIcon("Check for updates", theme.ViewRefreshIcon(), u.checkForUpdates)
 
