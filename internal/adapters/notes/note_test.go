@@ -187,3 +187,64 @@ func TestDisplayKeepsStepsReadable(t *testing.T) {
 		t.Errorf("Display(%q) = %q, want the step as written", built, Display(built))
 	}
 }
+
+// Fields keeps the written order and decodes each value, so a front end can
+// label a note without knowing its format.
+func TestFieldsKeepsOrderAndDecodesValues(t *testing.T) {
+	built := "main_operation=execute;command_name=a%3Bb;command_exec=echo 100%25;bare;command_exec=x=y"
+
+	got := Fields(built)
+	want := []Field{
+		{Key: "main_operation", Value: "execute"},
+		{Key: "command_name", Value: "a;b"},
+		{Key: "command_exec", Value: "echo 100%"},
+		{Key: "bare"},
+		{Key: "command_exec", Value: "x=y"},
+	}
+
+	if !slices.Equal(got, want) {
+		t.Errorf("Fields(%q) = %v, want %v", built, got, want)
+	}
+}
+
+// A parameter list may contain the separator, a quote or a leading dash, so it
+// is stored as JSON and has to come back exactly.
+func TestCommandParamsRoundTrip(t *testing.T) {
+	params := []string{"a b", "-x", `"q"`, "make; echo done"}
+
+	built := New().
+		AddMainOperation(operation.Execute).
+		AddSubOperation(operation.Command).
+		AddCommandName("greet").
+		AddCommandParams(params).
+		Build()
+
+	got, present := CommandParams(built)
+	if !present || !slices.Equal(got, params) {
+		t.Errorf("CommandParams(%q) = %v, %v, want %v, true", built, got, present, params)
+	}
+}
+
+// An execute note written before the field existed has no params: that is
+// "not recorded", not "ran with none".
+func TestCommandParamsAreAbsentWhenNotRecorded(t *testing.T) {
+	legacy := "main_operation=execute;sub_operation=command;command_name=greet;command_exec=echo hi"
+
+	if got, present := CommandParams(legacy); present || got != nil {
+		t.Errorf("CommandParams(legacy) = %v, %v, want nil, false", got, present)
+	}
+
+	if got, present := CommandParams(New().AddCommandParams([]string{"a"}).Build()); present || got != nil {
+		t.Errorf("CommandParams(no sub-operation) = %v, %v, want nil, false", got, present)
+	}
+}
+
+// A corrupt field is present, not absent, so a caller cannot mistake it for an
+// entry that ran without arguments.
+func TestCommandParamsCorruptIsPresent(t *testing.T) {
+	built := "main_operation=execute;sub_operation=command;command_params=[bad"
+
+	if got, present := CommandParams(built); !present || got != nil {
+		t.Errorf("CommandParams(corrupt) = %v, %v, want nil, true", got, present)
+	}
+}

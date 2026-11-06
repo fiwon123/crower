@@ -83,6 +83,89 @@ func (note *Note) AddCommandSteps(steps []string) *Note {
 	return note
 }
 
+// Field is one key/value pair of a built note, in the order it was written.
+type Field struct {
+	Key   string
+	Value string
+}
+
+// Fields parses a built note into its ordered fields, decoding each value the
+// way Display does.
+//
+// It is for presentation: a fragment without "=" is returned as a key with an
+// empty value, so a hand-edited note is shown rather than silently dropped. Read
+// a value with CommandName or CommandExec, never by splitting Fields' result.
+func Fields(built string) []Field {
+	fields := make([]Field, 0)
+
+	for fragment := range strings.SplitSeq(built, ";") {
+		if fragment == "" {
+			continue
+		}
+
+		key, value, ok := strings.Cut(fragment, "=")
+		if !ok {
+			fields = append(fields, Field{Key: fragment})
+			continue
+		}
+
+		fields = append(fields, Field{Key: key, Value: unescapeValue(value)})
+	}
+
+	return fields
+}
+
+// AddCommandParams records the arguments an execute ran with, so a history
+// entry can be run again without retyping them.
+//
+// The list is JSON for the same reason as the steps: a parameter can contain the
+// note separator. Absent means "no parameters recorded" — a note written before
+// the field existed must not be read as "ran with none".
+func (note *Note) AddCommandParams(params []string) *Note {
+	if len(params) == 0 {
+		return note
+	}
+
+	var encoded bytes.Buffer
+
+	writer := json.NewEncoder(&encoded)
+	writer.SetEscapeHTML(false)
+
+	if err := writer.Encode(params); err != nil {
+		// []string cannot fail to marshal; keep the note valid if it ever does.
+		return note
+	}
+
+	fmt.Fprintf(&note.builder, ";command_params=%s", escapeValue(strings.TrimSuffix(encoded.String(), "\n")))
+	return note
+}
+
+// CommandParams reads the parameters an execute entry ran with. present is true
+// when the field exists, even if it cannot be parsed: a corrupt field must not
+// look like "ran without parameters".
+func CommandParams(built string) (params []string, present bool) {
+	if !namesACommand(built) {
+		return nil, false
+	}
+
+	for field := range strings.SplitSeq(built, ";") {
+		encoded, ok := strings.CutPrefix(field, "command_params=")
+		if !ok {
+			continue
+		}
+
+		var decoded []string
+		if err := json.Unmarshal([]byte(unescapeValue(encoded)), &decoded); err != nil {
+			return nil, true
+		}
+
+		return decoded, true
+	}
+
+	return nil, false
+}
+
+// AddOldCommandName records the name a command had before an update.
 func (note *Note) AddOldCommandName(name string) *Note {
 	fmt.Fprintf(&note.builder, ";old_command_name=%s", escapeValue(name))
 	return note
