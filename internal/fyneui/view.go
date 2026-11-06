@@ -87,7 +87,7 @@ func Run(commands catalog.Catalog, history timeline.Log, deps Deps) {
 }
 
 // ui is the widget set the tabs share. Reloading after an edit has to refresh
-// both the command list and the history table, so both live here instead of
+// both the command list and the history cards, so both live here instead of
 // being captured by one tab.
 type ui struct {
 	model    *desktop.Model

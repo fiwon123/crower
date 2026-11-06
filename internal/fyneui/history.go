@@ -23,8 +23,8 @@ import (
 const historyHeader = "Every recorded operation, newest first. Open an entry to see what it recorded and to restore that state."
 
 // historyPageSize is how many entries a page renders. The log stays in memory,
-// but only this many cards exist at once, which is what keeps a long history
-// responsive.
+// but only this many cards are rendered per page, which is what keeps a long
+// history responsive.
 const historyPageSize = 100
 
 // historyCard is one entry: a summary header that opens into its detail.
@@ -67,8 +67,6 @@ func (u *ui) historyTab() fyne.CanvasObject {
 	u.historyPage = container.NewVBox(header, u.historyEmpty, u.historyList, u.historyLoadMore)
 	u.historyScroll = container.NewVScroll(page(u.historyPage))
 
-	u.refreshHistory()
-
 	return u.historyScroll
 }
 
@@ -85,7 +83,7 @@ func (u *ui) refreshHistory() {
 	u.historyCards = nil
 
 	u.historyList.RemoveAll()
-	u.loadHistoryPage(0, u.historyLimit)
+	u.addHistoryCards(u.model.HistoryPage(0, u.historyLimit))
 
 	if u.historyTotal == 0 {
 		u.historyEmpty.Show()
@@ -95,6 +93,12 @@ func (u *ui) refreshHistory() {
 
 	u.updateHistoryLoad()
 	u.historyPage.Refresh()
+
+	// A restore drops entries, so the page can be shorter than the offset the
+	// scroll was holding; go back to the top rather than show blank space.
+	if u.historyScroll != nil {
+		u.historyScroll.ScrollToOffset(fyne.NewPos(0, 0))
+	}
 }
 
 // loadOlderHistory appends the next page without rebuilding the cards already
@@ -107,18 +111,29 @@ func (u *ui) loadOlderHistory() {
 		return
 	}
 
-	u.loadHistoryPage(offset, len(summaries))
+	u.addHistoryCards(summaries)
 	u.historyLimit += len(summaries)
 	u.updateHistoryLoad()
 	u.historyPage.Refresh()
 }
 
-func (u *ui) loadHistoryPage(offset, limit int) {
-	for _, summary := range u.model.HistoryPage(offset, limit) {
+// addHistoryCards builds the summaries' cards in one batch: Add lays the VBox
+// out on every call, and a page is up to a hundred of them.
+func (u *ui) addHistoryCards(summaries []desktop.HistorySummary) {
+	if len(summaries) == 0 {
+		return
+	}
+
+	objects := make([]fyne.CanvasObject, 0, len(summaries))
+
+	for _, summary := range summaries {
 		card := u.newHistoryCard(summary)
 		u.historyCards = append(u.historyCards, card)
-		u.historyList.Add(card.expandableCard)
+		objects = append(objects, card.expandableCard)
 	}
+
+	u.historyList.Objects = append(u.historyList.Objects, objects...)
+	u.historyList.Refresh()
 }
 
 func (u *ui) updateHistoryLoad() {
@@ -141,13 +156,25 @@ func (u *ui) newHistoryCard(summary desktop.HistorySummary) *historyCard {
 }
 
 // historySummaryTitle is the collapsed row: when, what, which command, version.
+// A long command is shortened so the header button's text cannot widen the
+// window's minimum size.
 func historySummaryTitle(summary desktop.HistorySummary) string {
 	command := summary.Command
 	if command == "" {
 		command = "-"
 	}
 
-	return fmt.Sprintf("%s · %s · %s · #%d", summary.When, summary.Operation, command, summary.Version)
+	return fmt.Sprintf("%s · %s · %s · #%d", summary.When, summary.Operation, shortLabel(command, 40), summary.Version)
+}
+
+// shortLabel shortens text to limit runes, keeping an ellipsis.
+func shortLabel(text string, limit int) string {
+	runes := []rune(text)
+	if len(runes) <= limit {
+		return text
+	}
+
+	return string(runes[:limit-1]) + "…"
 }
 
 // toggleHistoryCard opens a card and closes the one that was open, so the page
@@ -157,6 +184,10 @@ func (u *ui) toggleHistoryCard(card *historyCard) {
 		card.setOpen(false)
 		u.historyOpen = nil
 		u.historyPage.Refresh()
+
+		if u.historyScroll != nil {
+			u.historyScroll.Refresh()
+		}
 
 		return
 	}
@@ -218,8 +249,11 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 			card.raw.Hide()
 		}
 
-		card.box.Refresh()
 		u.historyPage.Refresh()
+
+		if u.historyScroll != nil {
+			u.historyScroll.Refresh()
+		}
 	})
 	card.rawToggle.Importance = widget.LowImportance
 
@@ -324,11 +358,17 @@ func (u *ui) editHistoryEntry(card *historyCard) {
 	u.showEditFor(card.detail.Command)
 }
 
+// revertSteps is how many entries back the card is, which is what the Reverter
+// expects (the newest entry is one step).
+func (u *ui) revertSteps(card *historyCard) int {
+	return card.detail.Position + 1
+}
+
 // showRevert asks before restoring, then applies the change through the
-// Reverter port. Position is 0 for the newest entry, so steps is one more.
+// Reverter port.
 func (u *ui) showRevert(card *historyCard) {
 	detail := card.detail
-	steps := detail.Position + 1
+	steps := u.revertSteps(card)
 
 	dropped := steps - 1
 

@@ -341,6 +341,14 @@ func TestHistoryPagesOlderEntries(t *testing.T) {
 		t.Fatalf("cards = %d, want the first page (%d)", len(front.historyCards), historyPageSize)
 	}
 
+	if !strings.Contains(front.historyCards[0].header.Text, "#150") {
+		t.Errorf("first card = %q, want the newest entry (#150)", front.historyCards[0].header.Text)
+	}
+
+	if !strings.Contains(front.historyCards[99].header.Text, "#51") {
+		t.Errorf("last card on page 1 = %q, want #51", front.historyCards[99].header.Text)
+	}
+
 	if !front.historyLoadMore.Visible() {
 		t.Error("Load older is hidden while entries remain")
 	}
@@ -351,8 +359,82 @@ func TestHistoryPagesOlderEntries(t *testing.T) {
 		t.Errorf("cards = %d, want all 150 after loading older", len(front.historyCards))
 	}
 
+	if !strings.Contains(front.historyCards[149].header.Text, "#1") {
+		t.Errorf("last card = %q, want the oldest entry (#1)", front.historyCards[149].header.Text)
+	}
+
 	if front.historyLoadMore.Visible() {
 		t.Error("Load older is still visible with nothing left")
+	}
+}
+
+// A reload (an edit, a revert or a setup switch) rebuilds the rendered cards.
+func TestHistoryReloadRebuildsTheCards(t *testing.T) {
+	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Create, "greet", "note")
+
+	if len(front.historyCards) != 1 {
+		t.Fatalf("cards = %d, want 1", len(front.historyCards))
+	}
+
+	var next timeline.Log
+	next.Add(operation.Copy, "", "note")
+	next.Add(operation.Delete, "greet", "note")
+
+	front.reload(catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}), next)
+
+	if len(front.historyCards) != 2 {
+		t.Fatalf("cards = %d, want the new page", len(front.historyCards))
+	}
+
+	if !strings.Contains(front.historyCards[0].header.Text, "delete") {
+		t.Errorf("first card = %q, want the newest entry", front.historyCards[0].header.Text)
+	}
+}
+
+// Restore counts the entry's distance from the newest; the newest is one step.
+func TestHistoryRestoreCountsFromTheNewest(t *testing.T) {
+	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
+
+	var history timeline.Log
+	for i := 0; i < 3; i++ {
+		history.Add(operation.Execute, "greet", note)
+	}
+
+	front, window := historyUI(t, stubExecutor{}, nil, history)
+
+	newest := openHistoryCard(t, front, 0)
+	if got := front.revertSteps(newest); got != 1 {
+		t.Errorf("steps for the newest = %d, want 1", got)
+	}
+
+	second := openHistoryCard(t, front, 1)
+	if got := front.revertSteps(second); got != 2 {
+		t.Errorf("steps for the second = %d, want 2", got)
+	}
+
+	second.restore.OnTapped()
+
+	if len(window.Canvas().Overlays().List()) == 0 {
+		t.Error("restore did not ask for confirmation")
+	}
+}
+
+// A long command is shortened in the summary so the header cannot widen the
+// window's minimum.
+func TestHistorySummaryTitleTruncatesLongCommands(t *testing.T) {
+	title := historySummaryTitle(desktop.HistorySummary{
+		Version:   7,
+		When:      "2026-11-06 12:00",
+		Operation: "execute",
+		Command:   strings.Repeat("a", 60),
+	})
+
+	if !strings.Contains(title, "…") {
+		t.Errorf("title = %q, want an ellipsis", title)
+	}
+
+	if len([]rune(title)) > 90 {
+		t.Errorf("title = %q, want it bounded", title)
 	}
 }
 
