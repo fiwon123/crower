@@ -270,17 +270,6 @@ func TestInstallNowReportsAFailure(t *testing.T) {
 	}
 }
 
-func TestRestartSpawnsTheNewBinary(t *testing.T) {
-	updater := &stubUpdater{current: "v1.0.0"}
-	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
-
-	front.restart()
-
-	if updater.restarts != 1 {
-		t.Errorf("restarts = %d, want 1", updater.restarts)
-	}
-}
-
 // A narrow window must wrap the update actions instead of pushing them past the
 // edge: the old single HBox overflowed as soon as Check, Install and Restore
 // were all visible.
@@ -382,5 +371,21 @@ func TestAboutTextIsSelectable(t *testing.T) {
 	version := findLabel(content, "Version v1.0.0")
 	if version == nil || !version.Selectable {
 		t.Error("the version label is missing or not selectable")
+	}
+}
+
+// Restart closes the window; Run spawns/execs after the window loop returns.
+func TestRestartDefersTheSpawnUntilTheWindowCloses(t *testing.T) {
+	updater := &stubUpdater{current: "v1.0.0"}
+	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
+
+	front.restart()
+
+	if !front.restartRequested {
+		t.Error("restart did not record the request")
+	}
+
+	if updater.restarts != 0 {
+		t.Error("restart spawned before the window closed")
 	}
 }

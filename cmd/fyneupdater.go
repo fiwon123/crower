@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"os"
-	osexec "os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -45,7 +45,7 @@ func newFyneUpdater(cfg *session.Session, current string) fyneUpdater {
 		current:    current,
 		executable: executable,
 		args:       os.Args[1:],
-		start:      startReplacementProcess,
+		start:      startReplacement,
 	}
 }
 
@@ -76,15 +76,39 @@ func (u fyneUpdater) Install(version string) error {
 	)
 }
 
-// Restart starts the binary on disk again. The caller closes the window so the
-// old process exits.
+// Restart starts the binary on disk again. On Unix it replaces this process
+// image; on Windows it spawns a new process. The caller has already closed the
+// window.
 func (u fyneUpdater) Restart() error {
 	start := u.start
 	if start == nil {
-		start = startReplacementProcess
+		start = startReplacement
 	}
 
-	return start(u.executable, u.args)
+	err := start(u.executable, u.args)
+	if err == nil {
+		return nil
+	}
+
+	// There is no window left to report to; leave a note next to the
+	// configuration so a failed restart can still be diagnosed.
+	if u.cfg != nil {
+		_ = os.WriteFile(filepath.Join(u.cfg.ConfigFolder(), "restart-error.log"), []byte(err.Error()+"\n"), 0o644)
+	}
+
+	return err
+}
+
+// cleanExecutable drops the " (deleted)" suffix Linux appends to
+// /proc/self/exe once the running binary has been replaced by an update.
+func cleanExecutable(executable string) string {
+	return strings.TrimSuffix(executable, " (deleted)")
+}
+
+// replacementArgv is the argv for the replacement: the executable first, then
+// the arguments this process was started with.
+func replacementArgv(executable string, args []string) []string {
+	return append([]string{cleanExecutable(executable)}, args...)
 }
 
 // quietOutput swallows the use case's progress lines: the window shows them in
@@ -92,38 +116,3 @@ func (u fyneUpdater) Restart() error {
 type quietOutput struct{}
 
 func (quietOutput) Info(string, ...any) {}
-
-// replacementCommand builds the process that runs the binary at the path the
-// window was started from. The path is captured before an update because
-// selfupdate renames the running binary aside: on Linux /proc/self/exe then
-// resolves to the old file, or to "<path> (deleted)" once it is removed.
-func replacementCommand(executable string, args []string) (*osexec.Cmd, error) {
-	if executable == "" {
-		var err error
-
-		executable, err = os.Executable()
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	executable = strings.TrimSuffix(executable, " (deleted)")
-
-	command := osexec.Command(executable, args...)
-	command.Stdin = os.Stdin
-	command.Stdout = os.Stdout
-	command.Stderr = os.Stderr
-
-	return command, nil
-}
-
-// startReplacementProcess runs the executable at the current path with the
-// same arguments. After a self-update that path holds the new binary.
-func startReplacementProcess(executable string, args []string) error {
-	command, err := replacementCommand(executable, args)
-	if err != nil {
-		return err
-	}
-
-	return command.Start()
-}

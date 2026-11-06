@@ -1,8 +1,11 @@
 package cmd
 
 import (
+	"errors"
+	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/adapters/storage"
@@ -92,18 +95,33 @@ func TestFyneUpdaterCapturesTheExecutable(t *testing.T) {
 }
 
 // A path whose file was already replaced may carry the " (deleted)" suffix on
-// Linux; the path without it is the new binary.
-func TestReplacementCommandStripsADeletedSuffix(t *testing.T) {
-	command, err := replacementCommand("/opt/crower-gui (deleted)", []string{"--x"})
+// Linux; the replacement argv uses the path without it.
+func TestReplacementArgvStripsADeletedSuffix(t *testing.T) {
+	argv := replacementArgv("/opt/crower-gui (deleted)", []string{"--x"})
+
+	if !slices.Equal(argv, []string{"/opt/crower-gui", "--x"}) {
+		t.Errorf("argv = %v, want [/opt/crower-gui --x]", argv)
+	}
+}
+
+// A failed restart has no window to report to, so it leaves a note next to the
+// configuration.
+func TestFyneUpdaterLogsARestartFailure(t *testing.T) {
+	cfg := loadFyneConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
+
+	updater := newFyneUpdater(cfg, "v1.2.3")
+	updater.start = func(string, []string) error { return errors.New("boom") }
+
+	if err := updater.Restart(); err == nil {
+		t.Fatal("Restart accepted a failing spawn")
+	}
+
+	data, err := os.ReadFile(filepath.Join(cfg.ConfigFolder(), "restart-error.log"))
 	if err != nil {
-		t.Fatalf("replacementCommand: %v", err)
+		t.Fatalf("restart-error.log: %v", err)
 	}
 
-	if command.Path != "/opt/crower-gui" {
-		t.Errorf("path = %q, want the suffix removed", command.Path)
-	}
-
-	if !slices.Equal(command.Args[1:], []string{"--x"}) {
-		t.Errorf("args = %v, want [--x]", command.Args[1:])
+	if !strings.Contains(string(data), "boom") {
+		t.Errorf("log = %q, want the failure", data)
 	}
 }

@@ -338,11 +338,13 @@ func (u *ui) installNow(version string) error {
 	return nil
 }
 
+// restart closes the window; Run performs the restart once the window loop has
+// returned, so the new process starts with the old one shut down.
 func (u *ui) restart() {
-	if err := u.updater.Restart(); err != nil {
-		showError("Restart failed: "+err.Error()+". Close the window and start crower-gui again.", u.window)
+	if u.updater == nil {
 		return
 	}
 
+	u.restartRequested = true
 	u.window.Close()
 }
