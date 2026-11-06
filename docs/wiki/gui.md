@@ -30,9 +30,10 @@ A command can carry an **icon** — a short marker such as 🚀 — shown beside
 name, and a **group**; the filter lists every group in use, and an opened card
 shows which one the command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
-`crower update --icon/--group`. The Icon field has a **Pick…** button with a grid
-of about a hundred emoji; the field stays editable, so any other emoji can be
-typed or pasted.
+`crower update --icon/--group`. The Icon field is read-only: **Pick…** opens the
+full emoji catalogue with a category selector and a search over names, aliases,
+tags and the glyph, and **Clear** removes the icon. Picking from the window
+always yields a catalogue emoji; a value set with `--icon` is shown as stored.
 
 On the Commands tab, each command is a card: a name with a chevron that opens
 into the labelled fields (name, exec, aliases, group, description, params, cwd,
@@ -49,9 +50,10 @@ secrets, so it stays a configuration-file field, and the window shows keys only.
 **Exec** and **Description** wrap and grow with their text (up to a cap); the
 dialog's field list scrolls, so a long script never clips the buttons.
 
-**Groups…** on the group row gives each group an icon of its own, stored in
-`groups.toml` next to the configuration (the window is the only writer; the CLI
-ignores the file). The filter then reads `🚀 deploy` instead of a bare name.
+**Groups…** on the group row gives each group an icon of its own through the
+same catalogue picker, stored in `groups.toml` next to the configuration (the
+window is the only writer; the CLI ignores the file). The filter then reads
+`🚀 deploy` instead of a bare name.
 
 The **Setup** list beside it switches between the named setups the CLI creates
 with `crower setup new`; **New setup…** and **Delete setup…** manage them without
