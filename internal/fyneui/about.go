@@ -85,11 +85,10 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 	u.restartButton = widget.NewButtonWithIcon("Restart now", theme.ViewRefreshIcon(), u.restart)
 	u.restartButton.Hide()
 
-	// A wrapping grid keeps the actions usable when the window narrows: a
-	// single HBox pushed the last button past the edge instead of stacking.
-	// It is kept on ui because hiding a button alone does not re-run this
-	// layout, and GridWrap otherwise reserves the empty cell.
-	actions := container.NewGridWrap(fyne.NewSize(220, 40), u.checkButton, u.installButton, u.restartButton)
+	// The actions flow at their natural width and centre each row: fixed grid
+	// cells clipped longer labels and left a short row off-centre. It is kept on
+	// ui because hiding a button alone does not re-run this layout.
+	actions := container.New(&centeredFlowLayout{gap: theme.Padding()}, u.checkButton, u.installButton, u.restartButton)
 	u.aboutActions = actions
 
 	if previous, found := u.updater.Previous(); found {
@@ -97,7 +96,7 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 		actions.Add(u.restoreButton)
 	}
 
-	updates := newCard(
+	updates := newCenteredCard(
 		"Updates",
 		"Checks GitHub for the newest release. Nothing is replaced without confirmation.",
 		container.NewVBox(u.updateStatus, actions),

@@ -308,7 +308,10 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		u.list,
 	)
 
-	return u.commandsRoot
+	// A left margin keeps the filter, controls and row names off the window
+	// edge. commandsRoot stays the inner border so showing the detail panel
+	// still re-runs that layout, not the wrapper's.
+	return container.NewBorder(nil, nil, gap(theme.Padding()*2, 0), nil, u.commandsRoot)
 }
 
 // allGroupsLabel is the group filter's "no filter" entry.
