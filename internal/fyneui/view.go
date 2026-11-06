@@ -7,7 +7,6 @@ package fyneui
 
 import (
 	"fmt"
-	"slices"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -87,7 +86,7 @@ func Run(commands catalog.Catalog, history timeline.Log, deps Deps) {
 }
 
 // ui is the widget set the tabs share. Reloading after an edit has to refresh
-// both the command list and the history table, so both live here instead of
+// both the command list and the history cards, so both live here instead of
 // being captured by one tab.
 type ui struct {
 	model    *desktop.Model
@@ -110,39 +109,27 @@ type ui struct {
 	// Commands tab changes the setup selector's labels, so both need it.
 	tabs *container.AppTabs
 
-	// commandsRoot and historyRoot are the tab contents. Showing a panel that
-	// was hidden at build time needs a layout pass from the root: Fyne's
-	// layouts skip invisible children, so the panel has no size until then.
-	commandsRoot *fyne.Container
-	historyRoot  *fyne.Container
+	// commandScroll holds the command cards; commandPage is the VBox the page
+	// refresh re-lays out when a card opens or closes.
+	commandScroll *container.Scroll
+	commandPage   *fyne.Container
+	commandList   *fyne.Container
+	commandEmpty  *widget.Label
+	commandCards  []*commandCard
+	commandOpen   *commandCard
 
-	list               *widget.List
-	detail             *widget.Label
-	detailFields       *fyne.Container
-	detailBody         *fyne.Container
-	detailToggle       *widget.Button
-	detailShown        bool
-	paramsEntry        *widget.Entry
-	filterEntry        *widget.Entry
-	groupFilter        *widget.Select
-	table              *widget.Table
-	historyDetail      *widget.Label
-	historyFields      *fyne.Container
-	historyRaw         *widget.Label
-	historyRawToggle   *widget.Button
-	historyRawShown    bool
-	historyBody        *fyne.Container
-	historyToggle      *widget.Button
-	historyDetailShown bool
-	runHistory         *widget.Button
-	editHistory        *widget.Button
-	historyHint        *widget.Label
-	revert             *widget.Button
+	filterEntry *widget.Entry
+	groupFilter *widget.Select
 
-	// historyRows is the table's snapshot: rebuild it on reload or tab open
-	// rather than recomputing the whole log for every cell.
-	historyRows []desktop.HistoryRow
-	historyRow  int
+	historyScroll   *container.Scroll
+	historyPage     *fyne.Container
+	historyList     *fyne.Container
+	historyEmpty    *widget.Label
+	historyLoadMore *widget.Button
+	historyCards    []*historyCard
+	historyOpen     *historyCard
+	historyTotal    int
+	historyLimit    int
 
 	// tools tab: one result square per card, plus the sources a drop fills
 	sourcesEntry   *widget.Entry
@@ -174,7 +161,6 @@ func newUI(model *desktop.Model, window fyne.Window, deps Deps) *ui {
 		groups:     deps.Groups,
 		setups:     deps.Setups,
 		groupIcons: map[string]string{},
-		historyRow: -1,
 	}
 
 	if deps.Setups != nil {
@@ -213,56 +199,23 @@ func (u *ui) content() fyne.CanvasObject {
 	return u.tabs
 }
 
-// commandsTab is the command list with its filter, the per-row actions and a
-// detail panel that opens below the list.
+// commandsTab is the command cards with the filter and the setup/group
+// controls. Collapsed cards are just a name; opening one reveals its fields,
+// parameters and actions.
 func (u *ui) commandsTab() fyne.CanvasObject {
-	u.detail = widget.NewLabel("")
-	u.detail.Wrapping = fyne.TextWrapWord
-
-	u.detailFields = container.NewGridWithColumns(2)
-
-	u.paramsEntry = newScrollFreeEntry()
-	u.paramsEntry.SetPlaceHolder("Parameters (space-separated)")
-	u.paramsEntry.OnSubmitted = func(string) { u.runFromDetail() }
-
-	runDetail := widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), u.runFromDetail)
-
-	// The body is hidden rather than built on demand: Fyne's layouts skip an
-	// invisible child, so collapsing it gives the height back to the list.
-	u.detailBody = container.NewVBox(
-		u.detail,
-		u.detailFields,
-		container.NewBorder(nil, nil, nil, runDetail, u.paramsEntry),
-	)
-	u.detailBody.Hide()
-
-	u.detailToggle = widget.NewButtonWithIcon("Details", theme.MenuDropDownIcon(), func() {
-		u.setDetailVisible(!u.detailShown)
-	})
-	u.detailToggle.Importance = widget.LowImportance
-
-	u.list = widget.NewList(
-		func() int { return len(u.model.FilteredKeys()) },
-		func() fyne.CanvasObject { return newCommandRow() },
-		func(id widget.ListItemID, object fyne.CanvasObject) { u.updateRow(id, object) },
-	)
-
-	u.list.OnSelected = func(id widget.ListItemID) { u.selectRow(id) }
-	u.list.OnUnselected = func(widget.ListItemID) { u.clearDetail() }
-
 	filter := newScrollFreeEntry()
 	u.filterEntry = filter
 	filter.SetPlaceHolder("Filter commands")
 	filter.OnChanged = func(string) {
 		u.model.Filter = filter.Text
 		u.model.Index = 0
-		u.list.Refresh()
-		u.list.UnselectAll()
-		u.clearDetail()
+		u.rebuildCommands()
 	}
 
+	newCommand := widget.NewButtonWithIcon("New command", theme.ContentAddIcon(), u.showCreate)
+
 	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, u.selectGroup)
-	u.groupFilter.SetSelected(allGroupsLabel)
+	u.refreshGroups()
 
 	groupsButton := widget.NewButtonWithIcon("Groups…", theme.GridIcon(), u.showGroups)
 
@@ -279,41 +232,119 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	})
 	u.setupSelect.SetSelected(u.setupLabel(u.activeSetup))
 
-	controls := container.NewHBox(widget.NewLabel("Setup"), u.setupSelect)
+	setupRow := container.NewHBox(widget.NewLabel("Setup"), u.setupSelect)
 
 	if u.setups != nil {
-		removeSetup := widget.NewButtonWithIcon("Delete…", theme.DeleteIcon(), u.showDeleteSetup)
+		removeSetup := widget.NewButtonWithIcon("Delete setup…", theme.DeleteIcon(), u.showDeleteSetup)
 		removeSetup.Importance = widget.DangerImportance
 
-		controls.Add(container.NewHBox(
-			widget.NewButtonWithIcon("New…", theme.ContentAddIcon(), u.showNewSetup),
-			removeSetup,
-		))
+		setupRow.Add(widget.NewButtonWithIcon("New setup…", theme.ContentAddIcon(), u.showNewSetup))
+		setupRow.Add(removeSetup)
 	}
 
-	controls.Add(widget.NewLabel("Group"))
-	controls.Add(u.groupFilter)
-	controls.Add(groupsButton)
+	groupRow := container.NewHBox(widget.NewLabel("Group"), u.groupFilter, groupsButton)
 
-	toolbar := container.NewHBox(
-		widget.NewButtonWithIcon("New", theme.ContentAddIcon(), u.showCreate),
-		widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), u.runSelected),
-	)
+	filterRow := container.NewBorder(nil, nil, nil, newCommand, filter)
 
-	detail := container.NewVBox(u.detailToggle, u.detailBody)
+	controls := container.NewVBox(filterRow, setupRow, groupRow)
 
-	u.commandsRoot = container.NewBorder(
-		container.NewVBox(filter, controls),
-		container.NewVBox(detail, toolbar),
-		nil,
-		nil,
-		u.list,
-	)
+	u.commandEmpty = widget.NewLabel("No commands match the filter.")
+	u.commandEmpty.Wrapping = fyne.TextWrapWord
+	u.commandEmpty.Hide()
 
-	// A left margin keeps the filter, controls and row names off the window
-	// edge. commandsRoot stays the inner border so showing the detail panel
-	// still re-runs that layout, not the wrapper's.
-	return container.NewBorder(nil, nil, gap(theme.Padding()*2, 0), nil, u.commandsRoot)
+	u.commandList = container.NewVBox()
+	u.commandPage = container.NewVBox(u.commandEmpty, u.commandList)
+	u.commandScroll = container.NewVScroll(page(u.commandPage))
+
+	u.rebuildCommands()
+
+	// The filter and setup rows sit outside the scroll, so they get the page's
+	// lateral margins: the same left inset and the same right gutter.
+	top := container.NewBorder(nil, nil, gap(theme.Padding()*2, 0), gap(scrollGutter(), 0), controls)
+
+	return container.NewBorder(top, nil, nil, nil, u.commandScroll)
+}
+
+// rebuildCommands replaces the cards from the current filter, group and setup.
+// It drops any open card: its command may no longer be in the list.
+func (u *ui) rebuildCommands() {
+	if u.commandList == nil {
+		return
+	}
+
+	u.commandOpen = nil
+	u.commandCards = nil
+
+	objects := make([]fyne.CanvasObject, 0)
+
+	for _, key := range u.model.FilteredKeys() {
+		command, found := u.model.Commands.Get(key)
+		if !found {
+			// A key the catalog cannot resolve would otherwise vanish from the
+			// tab; show its name so the entry is still visible.
+			command = catalog.Command{Name: key}
+		}
+
+		card := u.newCommandCard(command)
+		u.commandCards = append(u.commandCards, card)
+		objects = append(objects, card.expandableCard)
+	}
+
+	u.commandList.Objects = objects
+	u.commandList.Refresh()
+
+	if len(objects) == 0 {
+		text := "No commands match the filter."
+		if u.model.Commands.Len() == 0 {
+			text = "No commands yet. Use New command to add one."
+		}
+
+		u.commandEmpty.SetText(text)
+		u.commandEmpty.Show()
+	} else {
+		u.commandEmpty.Hide()
+	}
+
+	u.commandPage.Refresh()
+
+	// A filter can shrink the page under the scroll's offset; go back to the
+	// top rather than render into blank space.
+	if u.commandScroll != nil {
+		u.commandScroll.ScrollToOffset(fyne.NewPos(0, 0))
+	}
+}
+
+// selectCommand brings a command into view from another tab: it clears the
+// filters, opens Commands and opens the command's card.
+func (u *ui) selectCommand(key string) {
+	if u.filterEntry != nil {
+		u.filterEntry.SetText("")
+	}
+
+	u.model.Filter = ""
+
+	if u.groupFilter != nil {
+		u.groupFilter.SetSelected(allGroupsLabel)
+	}
+
+	u.model.Group = ""
+
+	if u.tabs != nil {
+		u.tabs.SelectIndex(0)
+	}
+
+	u.rebuildCommands()
+
+	for index, card := range u.commandCards {
+		if card.key != key {
+			continue
+		}
+
+		u.model.Index = index
+		u.toggleCommandCard(card)
+
+		return
+	}
 }
 
 // allGroupsLabel is the group filter's "no filter" entry.
@@ -356,9 +387,7 @@ func (u *ui) selectGroup(label string) {
 
 	u.model.Group = group
 	u.model.Index = 0
-	u.list.Refresh()
-	u.list.UnselectAll()
-	u.clearDetail()
+	u.rebuildCommands()
 }
 
 // refreshGroups rebuilds the filter's options after an edit, a removal or a
@@ -398,81 +427,6 @@ func (u *ui) refreshGroups() {
 	}
 
 	u.groupFilter.SetSelected(selected)
-}
-
-// commandRow is one list row: the command name on the left, its actions on the
-// right. widget.List recycles templates, so updateRow re-points every button at
-// the row's own key on each update.
-//
-// It is a widget holding a container, not a container subtype: Fyne walks a
-// canvas by concrete type, descending into *fyne.Container and fyne.Widget only,
-// so a struct that embeds a container is opaque and its children never paint
-// (#406).
-type commandRow struct {
-	widget.BaseWidget
-
-	name   *widget.Label
-	run    *widget.Button
-	edit   *widget.Button
-	remove *widget.Button
-	body   *fyne.Container
-}
-
-func newCommandRow() *commandRow {
-	row := &commandRow{
-		name:   widget.NewLabel(""),
-		run:    widget.NewButtonWithIcon("", theme.MediaPlayIcon(), nil),
-		edit:   widget.NewButtonWithIcon("", theme.DocumentCreateIcon(), nil),
-		remove: widget.NewButtonWithIcon("", theme.DeleteIcon(), nil),
-	}
-
-	row.run.Importance = widget.LowImportance
-	row.edit.Importance = widget.LowImportance
-	row.remove.Importance = widget.DangerImportance
-
-	row.body = container.NewBorder(
-		nil,
-		nil,
-		nil,
-		container.NewHBox(row.run, row.edit, row.remove, gap(scrollGutter(), 0)),
-		row.name,
-	)
-
-	row.ExtendBaseWidget(row)
-
-	return row
-}
-
-// CreateRenderer hands the row's container to the canvas. BaseWidget.Resize then
-// lays the body out at the row's size, so a recycled row stretches with the list.
-func (r *commandRow) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(r.body)
-}
-
-func (u *ui) updateRow(id widget.ListItemID, object fyne.CanvasObject) {
-	row, ok := object.(*commandRow)
-	if !ok {
-		return
-	}
-
-	keys := u.model.FilteredKeys()
-	if int(id) >= len(keys) {
-		row.name.SetText("")
-		return
-	}
-
-	key := keys[id]
-
-	label := key
-	if command, found := u.model.Commands.Get(key); found {
-		label = commandLabel(command)
-	}
-
-	row.name.SetText(label)
-
-	row.run.OnTapped = func() { u.runKey(key) }
-	row.edit.OnTapped = func() { u.showEditFor(key) }
-	row.remove.OnTapped = func() { u.showDeleteFor(key) }
 }
 
 // setupOption maps a selector label to the setup it selects; the label carries
@@ -561,13 +515,7 @@ func (u *ui) switchSetup(name string) bool {
 	u.activeSetup = name
 	u.model.Reload(state.Catalog, state.History)
 	u.loadGroupIcons()
-
-	if u.list != nil {
-		u.list.Refresh()
-		u.list.UnselectAll()
-	}
-
-	u.clearDetail()
+	u.rebuildCommands()
 
 	u.refreshSetupSelect()
 	u.refreshGroups()
@@ -577,113 +525,13 @@ func (u *ui) switchSetup(name string) bool {
 	return true
 }
 
-// commandLabel is what a row shows: the icon when one is set, then the name.
+// commandLabel is what a card header shows: the icon when one is set, then the name.
 func commandLabel(command catalog.Command) string {
 	if command.Icon == "" {
 		return command.Name
 	}
 
 	return command.Icon + " " + command.Name
-}
-
-func (u *ui) selectRow(id widget.ListItemID) {
-	u.model.Index = int(id)
-
-	selected := u.model.Selected()
-	if selected == "" {
-		u.clearDetail()
-		return
-	}
-
-	command, found := u.model.Commands.Get(selected)
-	if !found {
-		u.detail.SetText(selected)
-		setFieldGrid(u.detailFields, nil)
-		u.setDetailVisible(true)
-		return
-	}
-
-	u.detail.SetText(commandLabel(command))
-	setFieldGrid(u.detailFields, commandDetailFields(command))
-	u.paramsEntry.SetPlaceHolder(paramsHint(command))
-	u.setDetailVisible(true)
-}
-
-// selectCommand brings a command into view from another tab: it clears the
-// filters, opens Commands and selects the row, so the detail panel follows.
-func (u *ui) selectCommand(key string) {
-	if u.filterEntry != nil {
-		u.filterEntry.SetText("")
-	}
-
-	u.model.Filter = ""
-
-	if u.groupFilter != nil {
-		u.groupFilter.SetSelected(allGroupsLabel)
-	}
-
-	u.model.Group = ""
-
-	if u.tabs != nil {
-		u.tabs.SelectIndex(0)
-	}
-
-	if u.list == nil {
-		return
-	}
-
-	u.list.Refresh()
-	u.list.UnselectAll()
-	u.clearDetail()
-
-	index := slices.Index(u.model.FilteredKeys(), key)
-	if index < 0 {
-		return
-	}
-
-	u.model.Index = index
-	u.list.Select(index)
-}
-
-// setDetailVisible is the Details toggle.
-//
-// Showing or hiding is not enough on its own: Fyne's layouts skip an invisible
-// child, so a panel hidden at build time has no size, and making it visible does
-// not re-run the parent's layout. Refreshing the tab root lays the whole chain
-// out again, which is what gives the panel a height to draw its text in.
-func (u *ui) setDetailVisible(visible bool) {
-	u.detailShown = visible
-
-	if u.detailBody == nil {
-		return
-	}
-
-	if visible {
-		u.detailBody.Show()
-	} else {
-		u.detailBody.Hide()
-	}
-
-	if u.commandsRoot != nil {
-		u.commandsRoot.Refresh()
-	}
-}
-
-// clearDetail empties and collapses the panel, so a filter change, a reload or
-// an unselect cannot leave another command's text on screen.
-func (u *ui) clearDetail() {
-	if u.detail != nil {
-		u.detail.SetText("")
-	}
-
-	setFieldGrid(u.detailFields, nil)
-
-	if u.paramsEntry != nil {
-		u.paramsEntry.SetText("")
-		u.paramsEntry.SetPlaceHolder("Parameters (space-separated)")
-	}
-
-	u.setDetailVisible(false)
 }
 
 // paramsHint tells the user what the command's parameters mean without making
@@ -696,50 +544,7 @@ func paramsHint(command catalog.Command) string {
 	return "Parameters — declared: " + strings.Join(command.Params, " ")
 }
 
-func (u *ui) runSelected() {
-	u.runKey(u.model.Selected())
-}
-
-// runKey runs one command: the row's key when a row button asked, the
-// selection when the toolbar did.
-//
-// It is smart about parameters: a command that declares them asks for them, one
-// that does not runs straight away. The detail panel's Run button is the path
-// for supplying them from the window without a prompt.
-func (u *ui) runKey(key string) {
-	if key == "" {
-		return
-	}
-
-	command, found := u.model.Commands.Get(key)
-	if !found {
-		return
-	}
-
-	if len(command.Params) > 0 {
-		u.askParams(key, command)
-		return
-	}
-
-	u.model.StartRunKey(key, false)
-	u.showOutput()
-}
-
-// runFromDetail runs the selected command with the detail panel's entry as its
-// parameters. An empty entry runs it without parameters.
-func (u *ui) runFromDetail() {
-	key := u.model.Selected()
-	if key == "" {
-		return
-	}
-
-	u.model.StartRunKey(key, true)
-	u.model.ParamInput = u.paramsEntry.Text
-	u.model.SubmitParams()
-	u.showOutput()
-}
-
-// commandDetailFields is the detail panel's labelled metadata, in the order a
+// commandDetailFields is a card's labelled metadata, in the order a
 // reader scans it: what it is called, what it runs, where it lives, and the
 // limits. Empty values are omitted rather than shown as blank rows.
 func commandDetailFields(command catalog.Command) []detailField {
@@ -788,8 +593,8 @@ func commandDetailFields(command catalog.Command) []detailField {
 	return fields
 }
 
-// numberedSteps keeps a multi-step command readable: the panel used to show
-// only the count, which said nothing about what would run.
+// numberedSteps keeps a multi-step command readable: the card shows the steps
+// themselves, not only a count.
 func numberedSteps(steps []string) string {
 	lines := make([]string, 0, len(steps))
 
@@ -806,13 +611,7 @@ func numberedSteps(steps []string) string {
 func (u *ui) reload(commands catalog.Catalog, history timeline.Log) {
 	u.model.Reload(commands, history)
 
-	if u.list != nil {
-		u.list.Refresh()
-		u.list.UnselectAll()
-	}
-
-	u.clearDetail()
-
+	u.rebuildCommands()
 	u.refreshGroups()
 	u.refreshHistory()
 }

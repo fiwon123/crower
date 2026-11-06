@@ -21,26 +21,27 @@ The window is split into tabs:
 
 | Tab | What it holds |
 | --- | --- |
-| **Commands** | The list, with a filter, a group filter and **Run**, **Edit** and **Delete** on every row; selecting one opens the **Details** panel below the list |
-| **History** | Every recorded operation as a table, newest first; clicking a row selects the whole row and opens its details below the table, with **Restore this state** |
+| **Commands** | The command cards, a filter, a setup row and a group row; a card opens into its fields, parameters and **Run**, **Edit** and **Delete** |
+| **History** | Every recorded operation, newest first, as expandable cards: a summary line opens into the labelled note fields, the raw line, and **Run**, **Edit** and **Restore this state** |
 | **Tools** | Copy, move, search, extract and open; every path field has **Browse…**, and each card has its own result square that opens when an action runs |
 | **About** | Logo, version, description, the repository link, and the update controls — padded to the tab width, with actions that wrap on a narrow window |
 
 A command can carry an **icon** — a short marker such as 🚀 — shown beside its
-name, and a **group**; the filter lists every group in use, and the details panel
-shows which one the selected command belongs to. Both are set from the create
+name, and a **group**; the filter lists every group in use, and an opened card
+shows which one the command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
-`crower update --icon/--group`. The Icon field has a **Pick…** button with a grid
-of about a hundred emoji; the field stays editable, so any other emoji can be
-typed or pasted.
+`crower update --icon/--group`. The Icon field is read-only: **Pick…** opens the
+full emoji catalogue with a category selector and a search over names, aliases,
+tags and the glyph, and **Clear** removes the icon. Picking from the window
+always yields a catalogue emoji; a value set with `--icon` is shown as stored.
 
-Selecting a row opens a **Details** panel below the list; the **Details** toggle
-collapses it again. The panel shows the exec line and the command's metadata,
-and carries a **params entry** with its own **Run**: the entry's text is passed
-as parameters, and an empty entry runs the command without any. The row's ▶ and
-the toolbar's **Run** are smart — a command that declares `Params` asks for them
-first (an empty answer runs it without), and a command that declares none runs
-straight away.
+On the Commands tab, each command is a card: a name with a chevron that opens
+into the labelled fields (name, exec, aliases, group, description, params, cwd,
+shell, timeout and numbered steps), a parameter entry, and **Run**, **Edit** and
+**Delete**. Opening one closes the previous card; a collapsed card carries no
+actions. **Run** passes the entry's text as parameters (an empty entry runs
+without any), **Edit** opens the command dialog and **Delete** asks first.
+**New command** sits beside the filter.
 
 The edit dialog also changes the rest of the command: **Description**,
 **Params** (comma-separated), **Cwd**, **Shell** and **Timeout**. Emptying a
@@ -49,15 +50,16 @@ secrets, so it stays a configuration-file field, and the window shows keys only.
 **Exec** and **Description** wrap and grow with their text (up to a cap); the
 dialog's field list scrolls, so a long script never clips the buttons.
 
-**Groups…** beside the filter gives each group an icon of its own, stored in
-`groups.toml` next to the configuration (the window is the only writer; the CLI
-ignores the file). The filter then reads `🚀 deploy` instead of a bare name.
+**Groups…** on the group row gives each group an icon of its own through the
+same catalogue picker, stored in `groups.toml` next to the configuration (the
+window is the only writer; the CLI ignores the file). The filter then reads
+`🚀 deploy` instead of a bare name.
 
 The **Setup** list beside it switches between the named setups the CLI creates
-with `crower setup new`; **New…** and **Delete…** manage them without leaving the
-window (the default and the active setup cannot be deleted). Each entry says how
-many commands it holds — `work (12)` — so switching to an empty setup is a
-choice rather than a surprise. Switching reloads
+with `crower setup new`; **New setup…** and **Delete setup…** manage them without
+leaving the window (the default and the active setup cannot be deleted). Each
+entry says how many commands it holds — `work (12)` — so switching to an empty
+setup is a choice rather than a surprise. Switching reloads
 the commands, the history and the group icons without restarting, and saves the
 choice the way `crower setup use` does — so the next `crower` run opens the same
 setup.
@@ -65,6 +67,15 @@ setup.
 Delete and restore both ask first. Restoring puts the command set back to what a
 history entry recorded and drops the newer entries, through the same
 `Session.RevertTo` path `crower revert` uses.
+
+The History tab lists entries as cards, newest first. A card shows its summary —
+when, operation, command and version — and opens into the labelled note fields,
+the raw `key=value` line, and **Run**, **Edit** and **Restore this state**.
+Opening one closes the previous card. The newest hundred are rendered;
+**Load older** appends the next hundred, so a long log opens quickly and only the
+entries on screen are formatted. **Run** replays an execute entry with the
+parameters it recorded; older entries without them ask when the command declares
+parameters. **Edit** opens that command on the Commands tab.
 
 The About tab checks GitHub for a newer release when the window opens and
 reports what it finds. When there is one, an **Install `<version>`** button

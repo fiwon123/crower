@@ -30,8 +30,7 @@ func (u *ui) showCreate() {
 	name := newScrollFreeEntry()
 	aliases := newScrollFreeEntry()
 
-	icon := newScrollFreeEntry()
-	icon.SetPlaceHolder("🚀")
+	icon, iconWidget := u.iconField("")
 
 	group := newScrollFreeEntry()
 	group.SetPlaceHolder("deploy")
@@ -41,7 +40,7 @@ func (u *ui) showCreate() {
 	items := []*widget.FormItem{
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
-		widget.NewFormItem("Icon", u.iconField(icon)),
+		widget.NewFormItem("Icon", iconWidget),
 		widget.NewFormItem("Group", group),
 		widget.NewFormItem("Exec", exec),
 	}
@@ -55,7 +54,7 @@ func (u *ui) showCreate() {
 			return
 		}
 
-		u.applyCreate(name.Text, aliases.Text, icon.Text, group.Text, exec.Text)
+		u.applyCreate(name.Text, aliases.Text, icon.value, group.Text, exec.Text)
 	}, u.window)
 
 	create.Resize(fyne.NewSize(dialogWidth, dialogHeight))
@@ -102,9 +101,7 @@ func (u *ui) showEditFor(key string) {
 	aliases := newScrollFreeEntry()
 	aliases.SetText(strings.Join(command.Aliases, ", "))
 
-	icon := newScrollFreeEntry()
-	icon.SetText(command.Icon)
-	icon.SetPlaceHolder("🚀")
+	icon, iconWidget := u.iconField(command.Icon)
 
 	group := newScrollFreeEntry()
 	group.SetText(command.Group)
@@ -136,7 +133,7 @@ func (u *ui) showEditFor(key string) {
 	items := []*widget.FormItem{
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
-		widget.NewFormItem("Icon", u.iconField(icon)),
+		widget.NewFormItem("Icon", iconWidget),
 		widget.NewFormItem("Group", group),
 		widget.NewFormItem("Exec", exec),
 		widget.NewFormItem("Description", description),
@@ -156,7 +153,7 @@ func (u *ui) showEditFor(key string) {
 		u.applyEdit(key, commandForm{
 			Name:        name.Text,
 			Aliases:     aliases.Text,
-			Icon:        icon.Text,
+			Icon:        icon.value,
 			Group:       group.Text,
 			Exec:        exec.Text,
 			Description: description.Text,

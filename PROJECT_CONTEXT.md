@@ -102,14 +102,33 @@ scripts/             add_to_path installers
 
 ## Status
 
-- **Done**: command-alias management (add, update, delete, reset, list, search, extract); file operations (create, copy, move, open, restore, revert); notes and history; self-update; release archives for Windows, Linux and macOS (amd64 and arm64).
-- **In progress**: v0.5.0 — `listdom` support for macOS, installation documentation that runs as written, and a draft-first release workflow that refuses a stale source and asserts build provenance.
+- **Done**: the hexagonal layering (#215) — `cmd` → `internal/session` →
+  `internal/application` use cases → `internal/adapters`, with `internal/domain`
+  on the standard library only. Every operation from the old `*dom` packages is
+  ported, and `internal/legacy`, `internal/app`, `internal/data` and
+  `internal/helper` are gone.
+- **Done**: command-alias management (add, update, delete, reset, list, search,
+  extract); file operations (create, copy, move, open, restore, revert); notes
+  and history; setups; share/import; self-update; the CLI, TUI and Fyne window.
+- **Done**: the Fyne window grew Commands, History, Tools and About tabs, icons
+  and groups, setup switching, drag-and-drop, a remembered window size, the
+  update flow, History Run/Edit, and a responsive detail/layout pass.
+- **Done**: every package has a test, and the release workflow builds six
+  targets — `linux/{amd64,arm64}`, `windows/{amd64,arm64}`,
+  `darwin/{amd64,arm64}`.
+- **Released**: v0.20.6 is the newest release; `dev` is the integration branch
+  and the repository's default branch.
 
 ## Backlog
 
-1. ~~Fix the shared test fixture directory so the suite passes when the packages run in parallel~~ — done in #47: every test gets its own `os.MkdirTemp` directory.
-2. Add tests for the domains that have none — `executedom`, `extractdom`, `resetdom`, `restoredom`, `revertdom`, `upgradedom`, `checkdom`.
-3. ~~Extend the release matrix to macOS and Linux arm64~~ — done: `.github/workflows/release.yml` builds `linux/{amd64,arm64}`, `windows/{amd64,arm64}` and `darwin/{amd64,arm64}`.
+1. **The wiki sync is manual** — `docs/wiki/` is the source and the wiki is a
+   second git repository, so a page edit needs the three commands in
+   `docs/wiki/README.md` in the same change.
+2. **`internal/fyneui` is outside `make check`** — every file is
+   `//go:build fyne`, so the local gate neither compiles nor lists the package;
+   the dispatched `fyne.yml` run is its only gate.
+3. **Windows behaviour has no executing gate** — `cmd /c` quoting, paths and
+   the process/script launches are build claims, never runs, on every CI job.
 
 ## Notes
 

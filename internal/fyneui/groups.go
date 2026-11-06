@@ -34,16 +34,14 @@ func (u *ui) showGroups() {
 		return
 	}
 
-	entries := make(map[string]*widget.Entry, len(groups))
+	entries := make(map[string]*iconChoice, len(groups))
 	items := make([]*widget.FormItem, 0, len(groups))
 
 	for _, name := range groups {
-		entry := newScrollFreeEntry()
-		entry.SetText(u.groupIcons[name])
-		entry.SetPlaceHolder("🚀")
-		entries[name] = entry
+		choice, field := u.iconField(u.groupIcons[name])
+		entries[name] = choice
 
-		items = append(items, widget.NewFormItem(name, entry))
+		items = append(items, widget.NewFormItem(name, field))
 	}
 
 	form := container.NewVScroll(widget.NewForm(items...))
@@ -55,8 +53,8 @@ func (u *ui) showGroups() {
 		}
 
 		icons := make(map[string]string, len(entries))
-		for name, entry := range entries {
-			icons[name] = entry.Text
+		for name, choice := range entries {
+			icons[name] = choice.value
 		}
 
 		u.applyGroupIcons(icons)
