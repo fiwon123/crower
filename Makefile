@@ -17,6 +17,11 @@ ifeq ($(GOOS),windows)
 GUI_LDFLAGS += -H windowsgui
 endif
 
+# Build tools run on the host even when GOOS points at the release target: a
+# GOOS=windows `go run` would produce a Windows binary the Linux runner cannot
+# execute (the mingw cross-build sets GOOS=windows for the whole recipe).
+HOST_GO := GOOS=$$(go env GOHOSTOS) GOARCH=$$(go env GOHOSTARCH)
+
 VERSION ?= $(shell git describe --tags --always)
 DIST_DIR := $(BUILD_DIR)/dist
 
@@ -100,16 +105,16 @@ release-gui-platform: $(BUILD_DIR)
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(APP_NAME)$(EXT)
 	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT)
 ifeq ($(GOOS),windows)
-	@go run ./internal/tools/winres -icon internal/fyneui/logo.png \
+	@$(HOST_GO) go run ./internal/tools/winres -icon internal/fyneui/logo.png \
 		-out cmd/crowergui/rsrc_windows_$(GOARCH).syso -arch $(GOARCH) \
 		-name $(GUI_NAME) -version "$(VERSION)"
 endif
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go build -tags fyne -ldflags "$(GUI_LDFLAGS)" -o $(BUILD_DIR)/$(GUI_NAME)$(EXT) ./cmd/crowergui
 ifeq ($(GOOS),windows)
 	@rm -f cmd/crowergui/rsrc_windows_$(GOARCH).syso
-	@go run ./internal/tools/winres -verify $(BUILD_DIR)/$(GUI_NAME).exe
-	@go run ./internal/tools/winres -verify-console $(BUILD_DIR)/$(APP_NAME).exe
-	@go run ./internal/tools/winres -verify-console $(BUILD_DIR)/$(APP_NAME_SHORT).exe
+	@$(HOST_GO) go run ./internal/tools/winres -verify $(BUILD_DIR)/$(GUI_NAME).exe
+	@$(HOST_GO) go run ./internal/tools/winres -verify-console $(BUILD_DIR)/$(APP_NAME).exe
+	@$(HOST_GO) go run ./internal/tools/winres -verify-console $(BUILD_DIR)/$(APP_NAME_SHORT).exe
 endif
 	@$(MAKE) package-gui GOOS=$(GOOS) GOARCH=$(GOARCH)
 	@$(MAKE) verify-release GUI=1
