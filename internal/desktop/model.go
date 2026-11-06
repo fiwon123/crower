@@ -178,6 +178,22 @@ func (m *Model) StartRunKey(key string, withParams bool) {
 	m.execute()
 }
 
+// RunWithParams runs key with the arguments a history entry recorded.
+//
+// It is the history tab's Run action: unlike StartRunKey it has nothing to ask
+// for, because the entry already holds what ran. A caller that has no recorded
+// parameters passes nil, which is the same as running without any.
+func (m *Model) RunWithParams(key string, params []string) {
+	if key == "" {
+		return
+	}
+
+	m.SelectedKey = key
+	m.Params = slices.Clone(params)
+	m.ParamInput = ""
+	m.execute()
+}
+
 func (m *Model) AddParamChar(c rune) {
 	if c >= 32 && c < 127 {
 		m.ParamInput += string(c)
