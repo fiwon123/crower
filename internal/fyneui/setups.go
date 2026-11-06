@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -20,15 +20,15 @@ func (u *ui) showNewSetup() {
 	name := newScrollFreeEntry()
 	name.SetPlaceHolder("streamer")
 
-	dialog.ShowForm("New setup", "Create", "Cancel", []*widget.FormItem{
-		widget.NewFormItem("Name", name),
-	}, func(ok bool) {
+	form := widget.NewForm(widget.NewFormItem("Name", name))
+
+	showForm("New setup", "Create", "Cancel", form, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
 
 		u.createSetup(name.Text)
-	}, u.window)
+	}, fyne.NewSize(dialogWidth, dialogHeight))
 }
 
 // createSetup is the form's submit path.
@@ -72,13 +72,13 @@ func (u *ui) showDeleteSetup() {
 		name,
 	)
 
-	dialog.ShowConfirm("Delete setup", question, func(ok bool) {
+	showConfirm("Delete setup", question, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
 
 		u.deleteSetup(name)
-	}, u.window)
+	})
 }
 
 // deleteSetup is the confirmation's submit path.

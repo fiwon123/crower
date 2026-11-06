@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
 )
@@ -194,6 +195,74 @@ func findButton(object fyne.CanvasObject, text string) *widget.Button {
 		for _, child := range renderer.Objects() {
 			if button := findButton(child, text); button != nil {
 				return button
+			}
+		}
+	}
+
+	return nil
+}
+
+// The picker cells draw the glyph at a readable size, not the theme's 14 pt.
+func TestEmojiCellIsLarge(t *testing.T) {
+	cell, ok := emojiCell().(*fyne.Container)
+	if !ok || len(cell.Objects) == 0 {
+		t.Fatalf("emojiCell = %T, want a container with a glyph", emojiCell())
+	}
+
+	text, ok := cell.Objects[0].(*canvas.Text)
+	if !ok {
+		t.Fatalf("cell object = %T, want a canvas text", cell.Objects[0])
+	}
+
+	if text.TextSize != emojiTextSize || emojiTextSize < 24 {
+		t.Errorf("emoji text size = %.1f, want the catalog size (>= 24)", text.TextSize)
+	}
+}
+
+// Selecting a cell picks that emoji and closes the pop-up.
+func TestEmojiPickerPicksACell(t *testing.T) {
+	front, window := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
+
+	picked := ""
+	front.showEmojiPicker("", func(emoji string) { picked = emoji })
+
+	overlays := window.Canvas().Overlays().List()
+	if len(overlays) == 0 {
+		t.Fatal("the picker did not open")
+	}
+
+	table := findTable(overlays[len(overlays)-1])
+	if table == nil {
+		t.Fatal("the picker has no table")
+	}
+
+	table.OnSelected(widget.TableCellID{Row: 0, Col: 0})
+
+	if want := loadEmojiCatalogue()[0].Emoji; picked != want {
+		t.Errorf("picked %q, want %q", picked, want)
+	}
+}
+
+// findTable returns the first table in a rendered tree.
+func findTable(object fyne.CanvasObject) *widget.Table {
+	switch typed := object.(type) {
+	case *widget.Table:
+		return typed
+	case *fyne.Container:
+		for _, child := range typed.Objects {
+			if table := findTable(child); table != nil {
+				return table
+			}
+		}
+	case fyne.Widget:
+		renderer := test.WidgetRenderer(typed)
+		if renderer == nil {
+			return nil
+		}
+
+		for _, child := range renderer.Objects() {
+			if table := findTable(child); table != nil {
+				return table
 			}
 		}
 	}

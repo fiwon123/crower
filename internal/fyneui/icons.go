@@ -10,8 +10,8 @@ import (
 	"sync"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -121,6 +121,22 @@ func emojiMatches(entry emojiEntry, query string) bool {
 // emojiColumns is how many emoji a picker row holds.
 const emojiColumns = 8
 
+// emojiTextSize is the glyph size in the picker. The theme's default text size
+// makes an emoji a tiny dot in a grid cell.
+const emojiTextSize = 30
+
+var emojiCellSize = fyne.NewSize(56, 56)
+
+// emojiCell is one picker cell: a large glyph centred in a fixed box. The table
+// handles the tap, so the cell itself does not need to be a button.
+func emojiCell() fyne.CanvasObject {
+	text := canvas.NewText("", theme.Color(theme.ColorNameForeground))
+	text.TextSize = emojiTextSize
+	text.Alignment = fyne.TextAlignCenter
+
+	return container.NewGridWrap(emojiCellSize, text)
+}
+
 // emojiRows is the table row count for n entries.
 func emojiRows(n int) int {
 	if n == 0 {
@@ -131,10 +147,10 @@ func emojiRows(n int) int {
 }
 
 // showEmojiPicker opens the catalogue over the window. Choosing an emoji calls
-// onPick and closes the dialog.
+// onPick and closes the pop-up; clicking outside closes it too.
 //
 // The grid is a widget.Table, so only the visible cells exist: the catalogue is
-// nearly two thousand entries, and a plain grid would create a button for every
+// nearly two thousand entries, and a plain grid would create a cell for every
 // one of them.
 func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 	entries := loadEmojiCatalogue()
@@ -149,11 +165,7 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 	count := widget.NewLabel("")
 	count.Alignment = fyne.TextAlignCenter
 
-	var picker *dialog.CustomDialog
-
-	createCell := func() fyne.CanvasObject {
-		return container.NewGridWrap(fyne.NewSize(48, 48), widget.NewButton("", nil))
-	}
+	var pop *widget.PopUp
 
 	updateCell := func(id widget.TableCellID, object fyne.CanvasObject) {
 		cell, ok := object.(*fyne.Container)
@@ -161,42 +173,44 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 			return
 		}
 
-		button, ok := cell.Objects[0].(*widget.Button)
+		text, ok := cell.Objects[0].(*canvas.Text)
 		if !ok {
 			return
 		}
 
 		index := id.Row*emojiColumns + id.Col
 		if index >= len(filtered) {
-			button.SetText("")
-			button.Hide()
-			button.OnTapped = nil
+			text.Text = ""
+			text.Refresh()
 
 			return
 		}
 
-		entry := filtered[index]
-		button.SetText(entry.Emoji)
-		button.Show()
-		button.Enable()
-		button.OnTapped = func() {
-			onPick(entry.Emoji)
-
-			if picker != nil {
-				picker.Dismiss()
-			}
-		}
+		text.Text = filtered[index].Emoji
+		text.Refresh()
 	}
 
 	table := widget.NewTable(
 		func() (int, int) { return emojiRows(len(filtered)), emojiColumns },
-		createCell,
+		emojiCell,
 		updateCell,
 	)
 	table.HideSeparators = true
+	table.OnSelected = func(id widget.TableCellID) {
+		index := id.Row*emojiColumns + id.Col
+		if index >= len(filtered) {
+			return
+		}
+
+		onPick(filtered[index].Emoji)
+
+		if pop != nil {
+			pop.Hide()
+		}
+	}
 
 	for column := 0; column < emojiColumns; column++ {
-		table.SetColumnWidth(column, 52)
+		table.SetColumnWidth(column, 60)
 	}
 
 	refilter := func() {
@@ -222,9 +236,7 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 		title += " — " + current
 	}
 
-	picker = dialog.NewCustom(title, "Close", content, u.window)
-	picker.Resize(fyne.NewSize(520, 560))
-	picker.Show()
+	pop = showDismissible(title, content, u.window, fyne.NewSize(560, 620))
 }
 
 // iconChoice is the read-only icon value a form holds between the picker and
