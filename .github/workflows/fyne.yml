@@ -38,6 +38,10 @@ jobs:
       - name: Test the Fyne view headlessly
         run: xvfb-run -a go test -tags fyne ./internal/fyneui
 
+      - name: Test the window startup log
+        run: go test -tags fyne ./cmd -run 'TestWindowLog|TestFirstFyneError|TestOrdinaryLogLines'
+
+
   windows:
     name: Fyne Windows
     runs-on: windows-latest
@@ -81,6 +85,25 @@ jobs:
             throw 'crower-gui.exe --help did not exit within 60 s'
           }
           if ($gui.ExitCode -ne 0) { throw "crower-gui.exe --help failed (exit $($gui.ExitCode))" }
+
+      # A window that cannot be created is invisible in a GUI-subsystem binary.
+      # Start it here for a bounded time and print what it recorded: a runner
+      # with no GPU is a useful record of the failure mode (#465).
+      - name: Start the window and report its log
+        shell: pwsh
+        continue-on-error: true
+        run: |
+          $env:CROWER_GUI_NO_DIALOG = '1'
+          $p = Start-Process build/crower-gui.exe -PassThru
+          Start-Sleep -Seconds 8
+          if ($p.HasExited) {
+            Write-Host "window run exited early: $($p.ExitCode)"
+          } else {
+            Write-Host 'window run stayed open'
+            $p.Kill()
+          }
+          $log = Join-Path $env:USERPROFILE 'crower/fyne.log'
+          if (Test-Path $log) { Write-Host '--- fyne.log'; Get-Content $log } else { Write-Host 'no fyne.log' }
 
   macos:
     name: Fyne macOS
