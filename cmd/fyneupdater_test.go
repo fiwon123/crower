@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/fiwon123/crower/internal/adapters/storage"
@@ -49,8 +50,17 @@ func TestFyneUpdaterRestartSpawnsTheReplacement(t *testing.T) {
 
 	spawned := 0
 	updater := newFyneUpdater(cfg, "v1.2.3")
-	updater.start = func() error {
+	updater.executable = "/opt/crower-gui"
+	updater.args = []string{"--flag"}
+
+	var gotExecutable string
+	var gotArgs []string
+
+	updater.start = func(executable string, args []string) error {
 		spawned++
+		gotExecutable = executable
+		gotArgs = args
+
 		return nil
 	}
 
@@ -60,5 +70,40 @@ func TestFyneUpdaterRestartSpawnsTheReplacement(t *testing.T) {
 
 	if spawned != 1 {
 		t.Errorf("spawned %d times, want 1", spawned)
+	}
+
+	if gotExecutable != "/opt/crower-gui" {
+		t.Errorf("executable = %q, want the captured path", gotExecutable)
+	}
+
+	if !slices.Equal(gotArgs, []string{"--flag"}) {
+		t.Errorf("args = %v, want the captured arguments", gotArgs)
+	}
+}
+
+// The executable is captured when the updater is built, before an install moves
+// the running binary aside.
+func TestFyneUpdaterCapturesTheExecutable(t *testing.T) {
+	cfg := loadFyneConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
+
+	if updater := newFyneUpdater(cfg, "v1.2.3"); updater.executable == "" {
+		t.Error("the updater did not capture an executable path")
+	}
+}
+
+// A path whose file was already replaced may carry the " (deleted)" suffix on
+// Linux; the path without it is the new binary.
+func TestReplacementCommandStripsADeletedSuffix(t *testing.T) {
+	command, err := replacementCommand("/opt/crower-gui (deleted)", []string{"--x"})
+	if err != nil {
+		t.Fatalf("replacementCommand: %v", err)
+	}
+
+	if command.Path != "/opt/crower-gui" {
+		t.Errorf("path = %q, want the suffix removed", command.Path)
+	}
+
+	if !slices.Equal(command.Args[1:], []string{"--x"}) {
+		t.Errorf("args = %v, want [--x]", command.Args[1:])
 	}
 }
