@@ -85,14 +85,19 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 	u.restartButton = widget.NewButtonWithIcon("Restart now", theme.ViewRefreshIcon(), u.restart)
 	u.restartButton.Hide()
 
-	actions := container.NewHBox(u.checkButton, u.installButton, u.restartButton)
+	// A wrapping grid keeps the actions usable when the window narrows: a
+	// single HBox pushed the last button past the edge instead of stacking.
+	// It is kept on ui because hiding a button alone does not re-run this
+	// layout, and GridWrap otherwise reserves the empty cell.
+	actions := container.NewGridWrap(fyne.NewSize(220, 40), u.checkButton, u.installButton, u.restartButton)
+	u.aboutActions = actions
 
 	if previous, found := u.updater.Previous(); found {
-		u.restoreButton = widget.NewButton("Restore previous ("+previous+")", u.restorePrevious)
+		u.restoreButton = widget.NewButton("Restore "+previous, u.restorePrevious)
 		actions.Add(u.restoreButton)
 	}
 
-	updates := widget.NewCard(
+	updates := newCard(
 		"Updates",
 		"Checks GitHub for the newest release. Nothing is replaced without confirmation.",
 		container.NewVBox(u.updateStatus, actions),
@@ -108,8 +113,10 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 		updates,
 	)
 
-	// Centre the block in the window; the scroll only matters on a short one.
-	return container.NewVScroll(container.NewCenter(body))
+	// The body fills the width so the summary and the card wrap with the window;
+	// the page adds the margins and clears the scrollbar. Centring the block
+	// pinned it to its minimum width and defeated both.
+	return container.NewVScroll(page(body))
 }
 
 // checkForUpdates is the startup courtesy: one lookup, in the background, with
@@ -166,11 +173,22 @@ func (u *ui) showInstall(version string) {
 
 	if version == "" {
 		u.installButton.Hide()
+		u.refreshAboutActions()
 		return
 	}
 
 	u.installButton.SetText("Install " + version)
 	u.installButton.Show()
+	u.refreshAboutActions()
+}
+
+// refreshAboutActions re-runs the action grid's layout. Hiding a widget only
+// repaints it, and GridWrap's minimum height is whatever the last layout used,
+// so without this an install button that disappears leaves its row behind.
+func (u *ui) refreshAboutActions() {
+	if u.aboutActions != nil {
+		u.aboutActions.Refresh()
+	}
 }
 
 // afterInstall is what a successful install or restore leaves: no install
@@ -186,6 +204,8 @@ func (u *ui) afterInstall() {
 	if u.restartButton != nil {
 		u.restartButton.Show()
 	}
+
+	u.refreshAboutActions()
 }
 
 func (u *ui) setBusy(status string) {
