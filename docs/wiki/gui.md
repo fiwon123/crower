@@ -31,9 +31,9 @@ name, and a **group**; the filter lists every group in use, and an opened card
 shows which one the command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
 `crower update --icon/--group`. The Icon field is read-only: **Pick…** opens the
-full emoji catalogue with a category selector and a search over names, aliases
-and tags, and **Clear** removes the icon. There is no text field, so the value is
-always a real emoji from the catalogue.
+full emoji catalogue with a category selector and a search over names, aliases,
+tags and the glyph, and **Clear** removes the icon. Picking from the window
+always yields a catalogue emoji; a value set with `--icon` is shown as stored.
 
 On the Commands tab, each command is a card: a name with a chevron that opens
 into the labelled fields (name, exec, aliases, group, description, params, cwd,

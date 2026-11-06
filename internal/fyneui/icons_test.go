@@ -15,17 +15,23 @@ import (
 func TestEmojiCatalogue(t *testing.T) {
 	entries := loadEmojiCatalogue()
 
-	if len(entries) < 1000 {
-		t.Fatalf("catalogue = %d entries, want the full set", len(entries))
+	if len(entries) < 1800 {
+		t.Fatalf("catalogue = %d entries, want the full gemoji set", len(entries))
 	}
 
 	categories := make(map[string]bool)
+	seen := make(map[string]bool)
 
 	for _, entry := range entries {
 		if entry.Emoji == "" {
 			t.Fatal("the catalogue has an entry without a glyph")
 		}
 
+		if seen[entry.Emoji] {
+			t.Errorf("%q appears twice", entry.Emoji)
+		}
+
+		seen[entry.Emoji] = true
 		categories[entry.Category] = true
 	}
 
@@ -50,9 +56,30 @@ func TestFilterEmoji(t *testing.T) {
 		t.Error("query SMILE matched nothing")
 	}
 
+	found := false
 	for _, entry := range smiles {
-		if !emojiMatches(entry, "smile") {
-			t.Errorf("%q matched but does not contain the query", entry.Emoji)
+		if entry.Emoji == "😀" {
+			found = true
+		}
+	}
+
+	if !found {
+		t.Error("query SMILE did not match the grinning face")
+	}
+
+	rocket := filterEmoji(entries, "🚀", "All")
+	if len(rocket) == 0 {
+		t.Error("searching for the emoji glyph matched nothing")
+	}
+
+	flagMatches := filterEmoji(entries, "flag", "Flags")
+	if len(flagMatches) == 0 {
+		t.Error("category+query matched nothing")
+	}
+
+	for _, entry := range flagMatches {
+		if entry.Category != "Flags" || !emojiMatches(entry, "flag") {
+			t.Errorf("%q does not satisfy the category and query", entry.Emoji)
 		}
 	}
 

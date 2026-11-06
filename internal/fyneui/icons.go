@@ -53,6 +53,7 @@ func loadEmojiCatalogue() []emojiEntry {
 	emojiOnce.Do(func() {
 		var raw []emojiEntry
 		if err := json.Unmarshal(emojiJSON, &raw); err != nil {
+			fyne.LogError("loading the emoji catalogue", err)
 			return
 		}
 
@@ -92,7 +93,13 @@ func filterEmoji(entries []emojiEntry, query, category string) []emojiEntry {
 }
 
 func emojiMatches(entry emojiEntry, query string) bool {
+	query = strings.ToLower(strings.TrimSpace(query))
+
 	if strings.Contains(strings.ToLower(entry.Description), query) {
+		return true
+	}
+
+	if strings.Contains(entry.Emoji, query) {
 		return true
 	}
 
@@ -134,7 +141,7 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 	filtered := filterEmoji(entries, "", "All")
 
 	search := newScrollFreeEntry()
-	search.SetPlaceHolder("Search by name or tag")
+	search.SetPlaceHolder("Search by name, tag or emoji")
 
 	category := widget.NewSelect(append([]string{"All"}, emojiCategories...), nil)
 	category.SetSelected("All")
@@ -162,7 +169,7 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 		index := id.Row*emojiColumns + id.Col
 		if index >= len(filtered) {
 			button.SetText("")
-			button.Disable()
+			button.Hide()
 			button.OnTapped = nil
 
 			return
@@ -170,6 +177,7 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 
 		entry := filtered[index]
 		button.SetText(entry.Emoji)
+		button.Show()
 		button.Enable()
 		button.OnTapped = func() {
 			onPick(entry.Emoji)
@@ -195,6 +203,7 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 		filtered = filterEmoji(entries, search.Text, category.Selected)
 		count.SetText(fmt.Sprintf("%d emoji", len(filtered)))
 		table.Refresh()
+		table.ScrollToTop()
 	}
 
 	search.OnChanged = func(string) { refilter() }
@@ -225,8 +234,8 @@ type iconChoice struct {
 	label *widget.Label
 }
 
-// iconText is what the field shows: the emoji, or "None".
-func iconText(value string) string {
+// iconDisplay is what the field shows: the emoji, or "None".
+func iconDisplay(value string) string {
 	if strings.TrimSpace(value) == "" {
 		return "None"
 	}
@@ -238,19 +247,19 @@ func iconText(value string) string {
 // the value can only come from the catalogue.
 func (u *ui) iconField(initial string) (*iconChoice, fyne.CanvasObject) {
 	choice := &iconChoice{value: strings.TrimSpace(initial)}
-	choice.label = widget.NewLabel(iconText(choice.value))
+	choice.label = widget.NewLabel(iconDisplay(choice.value))
 
 	pick := widget.NewButtonWithIcon("Pick…", theme.GridIcon(), func() {
 		u.showEmojiPicker(choice.value, func(emoji string) {
 			choice.value = emoji
-			choice.label.SetText(iconText(emoji))
+			choice.label.SetText(iconDisplay(emoji))
 		})
 	})
 	pick.Importance = widget.LowImportance
 
 	clear := widget.NewButton("Clear", func() {
 		choice.value = ""
-		choice.label.SetText(iconText(""))
+		choice.label.SetText(iconDisplay(""))
 	})
 
 	return choice, container.NewBorder(nil, nil, nil, container.NewHBox(clear, pick), choice.label)
