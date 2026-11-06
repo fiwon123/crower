@@ -94,7 +94,7 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 		actions.Add(u.restoreButton)
 	}
 
-	updates := widget.NewCard(
+	updates := newCard(
 		"Updates",
 		"Checks GitHub for the newest release. Nothing is replaced without confirmation.",
 		container.NewVBox(u.updateStatus, actions),

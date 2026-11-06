@@ -73,7 +73,7 @@ func (u *ui) transferCard() fyne.CanvasObject {
 		widget.NewFormItem("Destination", fieldWithBrowse(destination, func() { u.browseFolder(destination) })),
 	)
 
-	return widget.NewCard(
+	return newCard(
 		"Copy or move",
 		"One or more paths and the destination folder.",
 		container.NewVBox(form, actionRow(copyButton, moveButton), u.transferResult.object()),
@@ -119,7 +119,7 @@ func (u *ui) searchCard() fyne.CanvasObject {
 		widget.NewFormItem("Look in", mode),
 	)
 
-	return widget.NewCard(
+	return newCard(
 		"Search",
 		"File and folder names, or a web search.",
 		container.NewVBox(form, actionRow(searchButton), u.searchResult.object()),
@@ -175,7 +175,7 @@ func (u *ui) extractCard() fyne.CanvasObject {
 		widget.NewFormItem("Into", fieldWithBrowse(outDir, func() { u.browseFolder(outDir) })),
 	)
 
-	return widget.NewCard(
+	return newCard(
 		"Extract",
 		"Zip, tar, tar.gz, 7z and rar archives.",
 		container.NewVBox(form, actionRow(extractButton), u.extractResult.object()),
@@ -201,7 +201,7 @@ func (u *ui) openCard() fyne.CanvasObject {
 		})
 	})
 
-	return widget.NewCard(
+	return newCard(
 		"Open",
 		"Open paths with the platform's default application.",
 		container.NewVBox(

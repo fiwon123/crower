@@ -247,6 +247,19 @@ func actionRow(buttons ...fyne.CanvasObject) fyne.CanvasObject {
 	)
 }
 
+// newCard builds a card whose description wraps.
+//
+// widget.NewCard paints its subtitle with a canvas.Text, which does not wrap, so
+// the subtitle's full width becomes the card's minimum and a long sentence makes
+// the page wider than a narrow window (#415). The description is a wrapping
+// label in the body instead.
+func newCard(title, description string, content fyne.CanvasObject) fyne.CanvasObject {
+	desc := widget.NewLabel(description)
+	desc.Wrapping = fyne.TextWrapWord
+
+	return widget.NewCard(title, "", container.NewVBox(desc, content))
+}
+
 // appendPath adds a picked path to a comma-separated list, so repeated Browse
 // clicks build a multi-path value without a multi-select dialog.
 func appendPath(target *widget.Entry, path string) {
