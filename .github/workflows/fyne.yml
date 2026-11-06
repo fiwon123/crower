@@ -140,3 +140,32 @@ jobs:
 
       - name: Test the headless model
         run: go test ./internal/desktop
+
+  windows-mingw:
+    name: Fyne Windows (mingw cross)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Install the mingw-w64 cross compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-mingw-w64-x86-64 zip
+
+      # The release builds the Windows archive this way, so the pull request
+      # gate runs the same target: the resource, the GUI subsystem, the
+      # architecture check and WINDOWS.txt in the archive (#465).
+      - name: Build and verify the Windows archive
+        env:
+          VERSION: v0.0.0
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: '1'
+          CC: x86_64-w64-mingw32-gcc
+        run: make release-gui-platform

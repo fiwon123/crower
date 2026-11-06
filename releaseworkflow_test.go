@@ -128,8 +128,8 @@ func releaseTargets(workflow string) []releaseTarget {
 }
 
 // releaseTargetsForJobs merges the matrix rows of several release jobs. The
-// release builds four platforms natively (gui) and two arm64 platforms with
-// fyne-cross (gui-cross), so no single job lists all six.
+// release builds three platforms natively (gui) and two arm64 platforms with
+// fyne-cross (gui-cross), so no single job lists them all.
 func releaseTargetsForJobs(workflow string, jobs ...string) []releaseTarget {
 	var all []releaseTarget
 	for _, job := range jobs {
@@ -138,8 +138,50 @@ func releaseTargetsForJobs(workflow string, jobs ...string) []releaseTarget {
 	return all
 }
 
+// releaseSingleTarget reads the goos/goarch a job without a matrix builds, from
+// its env block. The Windows GUI is one target cross-linked with mingw, so it
+// has no matrix row for releaseTargets to read.
+func releaseSingleTarget(workflow, job, runner string) (releaseTarget, bool) {
+	section := releaseJobSection(workflow, job)
+	if section == "" {
+		return releaseTarget{}, false
+	}
+
+	target := releaseTarget{runner: runner}
+
+	for _, line := range strings.Split(section, "\n") {
+		trimmed := strings.TrimSpace(line)
+
+		if value, ok := strings.CutPrefix(trimmed, "GOOS:"); ok {
+			target.goos = strings.TrimSpace(value)
+		}
+
+		if value, ok := strings.CutPrefix(trimmed, "GOARCH:"); ok {
+			target.goarch = strings.TrimSpace(value)
+		}
+	}
+
+	if target.goos == "" || target.goarch == "" {
+		return releaseTarget{}, false
+	}
+
+	return target, true
+}
+
+// releaseTargetsAll is every platform the release builds: the two matrices plus
+// the single-target Windows job.
+func releaseTargetsAll(workflow string) []releaseTarget {
+	targets := releaseTargetsForJobs(workflow, "gui", "gui-cross")
+
+	if windows, ok := releaseSingleTarget(workflow, "gui-windows", "ubuntu-latest"); ok {
+		targets = append(targets, windows)
+	}
+
+	return targets
+}
+
 func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
-	targets := releaseTargetsForJobs(readRepositoryFile(t, releaseWorkflowPath), "gui", "gui-cross")
+	targets := releaseTargetsAll(readRepositoryFile(t, releaseWorkflowPath))
 	if len(targets) == 0 {
 		t.Fatal("no build matrix rows found in the release workflow — the guard is not looking at anything")
 	}
@@ -161,12 +203,14 @@ func TestReleaseWorkflowBuildsEveryAdvertisedPlatform(t *testing.T) {
 	}
 }
 
-// The native GUI job is a CGO build. It targets Linux/Windows amd64 and macOS
-// arm64/Intel; the two arm64 targets are built by gui-cross.
+// The native GUI job is a CGO build for Linux amd64 and macOS arm64/Intel; the
+// two arm64 targets are built by gui-cross, and Windows amd64 by gui-windows.
 func TestReleaseWorkflowBuildsTheGUIPlatforms(t *testing.T) {
-	targets := releaseTargets(releaseJobSection(readRepositoryFile(t, releaseWorkflowPath), "gui"))
-	if len(targets) != 4 {
-		t.Fatalf("found %d GUI targets, want 4", len(targets))
+	workflow := readRepositoryFile(t, releaseWorkflowPath)
+
+	targets := releaseTargets(releaseJobSection(workflow, "gui"))
+	if len(targets) != 3 {
+		t.Fatalf("found %d native GUI targets, want 3", len(targets))
 	}
 
 	built := make(map[string]bool, len(targets))
@@ -178,10 +222,15 @@ func TestReleaseWorkflowBuildsTheGUIPlatforms(t *testing.T) {
 		}
 	}
 
-	for _, platform := range []string{"linux/amd64", "windows/amd64", "darwin/arm64", "darwin/amd64"} {
+	for _, platform := range []string{"linux/amd64", "darwin/arm64", "darwin/amd64"} {
 		if !built[platform] {
 			t.Errorf("the GUI release no longer builds %s", platform)
 		}
+	}
+
+	windows, found := releaseSingleTarget(workflow, "gui-windows", "ubuntu-latest")
+	if !found || windows.goos != "windows" || windows.goarch != "amd64" {
+		t.Errorf("gui-windows = %+v, want windows/amd64 cross-linked on ubuntu-latest", windows)
 	}
 }
 
@@ -211,7 +260,7 @@ func TestReleaseWorkflowBuildsTheGUICrossPlatforms(t *testing.T) {
 }
 
 func TestReleaseWorkflowRunnersAreSupported(t *testing.T) {
-	targets := releaseTargetsForJobs(readRepositoryFile(t, releaseWorkflowPath), "gui", "gui-cross")
+	targets := releaseTargetsAll(readRepositoryFile(t, releaseWorkflowPath))
 	if len(targets) == 0 {
 		t.Fatal("no build matrix rows found in the release workflow — the guard is not looking at anything")
 	}
@@ -475,7 +524,7 @@ func TestWorkflowGuardsCatchTheReleaseNotesBug(t *testing.T) {
 // platform and the architecture the build matrix actually produces, or the
 // request is a 404 (#143).
 func TestEveryReleaseTargetHasAnUpgradeAsset(t *testing.T) {
-	targets := releaseTargetsForJobs(readRepositoryFile(t, releaseWorkflowPath), "gui", "gui-cross")
+	targets := releaseTargetsAll(readRepositoryFile(t, releaseWorkflowPath))
 	if len(targets) != 6 {
 		t.Fatalf("found %d release targets, want 6", len(targets))
 	}

@@ -34,6 +34,10 @@ type windowLog struct {
 // exits the process itself on a window it cannot create: that is the only
 // moment a dialog can still be shown.
 func startWindowLog(folder string) *windowLog {
+	if err := os.MkdirAll(folder, 0o700); err != nil {
+		return &windowLog{}
+	}
+
 	path := filepath.Join(folder, "fyne.log")
 
 	file, err := os.Create(path)
@@ -76,6 +80,15 @@ func (l *windowLog) keep() {
 	log.SetOutput(os.Stderr)
 	_ = l.file.Close()
 	l.file = nil
+}
+
+// logError records a start that failed before the window existed.
+func (l *windowLog) logError(err error) {
+	if l == nil || l.file == nil || err == nil {
+		return
+	}
+
+	log.Printf("start failed: %v", err)
 }
 
 // recordPanic appends a recovered panic and its stack to the file.
