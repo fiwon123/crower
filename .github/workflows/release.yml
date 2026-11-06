@@ -180,7 +180,8 @@ jobs:
           # gives it a console window, so double-clicking it opens a terminal
           # instead of the window; without the .syso it has no icon at all.
           go run ./internal/tools/winres -icon internal/fyneui/logo.png `
-            -out cmd/crowergui/rsrc_windows_amd64.syso -arch amd64 -version $env:VERSION
+            -out cmd/crowergui/rsrc_windows_amd64.syso -arch amd64 `
+            -name crower-gui -version $env:VERSION
 
           $env:CGO_ENABLED = '1'
           go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION -H windowsgui" -o build/crower-gui.exe ./cmd/crowergui
@@ -193,7 +194,24 @@ jobs:
           go run ./internal/tools/winres -verify-console build/crower.exe
           go run ./internal/tools/winres -verify-console build/cr.exe
 
-          Copy-Item build/crower.exe, build/cr.exe, build/crower-gui.exe, scripts/add_to_path.bat, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/gui-package/
+          # A file that parses is not a file Windows can start. Run what ships:
+          # the CLI reports its version and the window executable answers --help
+          # without opening a window, which proves the loader accepts all three.
+          $reported = (& build/crower.exe --version | Out-String).Trim()
+          if ($LASTEXITCODE -ne 0 -or $reported -ne $env:VERSION) {
+            throw "crower.exe --version printed '$reported' (exit $LASTEXITCODE)"
+          }
+          & build/cr.exe --version | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "cr.exe --version failed (exit $LASTEXITCODE)" }
+
+          $gui = Start-Process build/crower-gui.exe -ArgumentList '--help' -PassThru
+          if (-not $gui.WaitForExit(60000)) {
+            $gui.Kill()
+            throw 'crower-gui.exe --help did not exit within 60 s'
+          }
+          if ($gui.ExitCode -ne 0) { throw "crower-gui.exe --help failed (exit $($gui.ExitCode))" }
+
+          Copy-Item build/crower.exe, build/cr.exe, build/crower-gui.exe, scripts/add_to_path.bat, scripts/WINDOWS.txt, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/gui-package/
           Push-Location build/gui-package
           Compress-Archive -Path * -DestinationPath "../dist/crower_${env:VERSION}_windows_amd64.zip" -Force
           Pop-Location

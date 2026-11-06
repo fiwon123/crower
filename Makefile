@@ -101,7 +101,8 @@ release-gui-platform: $(BUILD_DIR)
 	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT)
 ifeq ($(GOOS),windows)
 	@go run ./internal/tools/winres -icon internal/fyneui/logo.png \
-		-out cmd/crowergui/rsrc_windows_$(GOARCH).syso -arch $(GOARCH) -version "$(VERSION)"
+		-out cmd/crowergui/rsrc_windows_$(GOARCH).syso -arch $(GOARCH) \
+		-name $(GUI_NAME) -version "$(VERSION)"
 endif
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go build -tags fyne -ldflags "$(GUI_LDFLAGS)" -o $(BUILD_DIR)/$(GUI_NAME)$(EXT) ./cmd/crowergui
 ifeq ($(GOOS),windows)
@@ -146,6 +147,7 @@ package-gui: $(BUILD_DIR)
 	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT) $(BUILD_DIR)/$(GUI_NAME)$(EXT) \
 		$(SCRIPTS_DIR)/$(SCRIPT_NAME)$(SCRIPT_EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE $(GUI_PACKAGE)/
 ifeq ($(GOOS),windows)
+	cp $(SCRIPTS_DIR)/WINDOWS.txt $(GUI_PACKAGE)/
 	cd $(GUI_PACKAGE) && zip -j $(abspath $(CLI_ARCHIVE)) *
 else
 	tar -czvf $(CLI_ARCHIVE) -C $(GUI_PACKAGE) $(APP_NAME)$(EXT) $(APP_NAME_SHORT)$(EXT) $(GUI_NAME)$(EXT) $(SCRIPT_NAME)$(SCRIPT_EXT) README.md NOTICE LICENSE LICENSE-APACHE LICENSE-FYNE

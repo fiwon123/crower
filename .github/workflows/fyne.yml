@@ -67,7 +67,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $env:CGO_ENABLED = '1'
           New-Item -ItemType Directory -Force build | Out-Null
-          go run ./internal/tools/winres -icon internal/fyneui/logo.png -out cmd/crowergui/rsrc_windows_amd64.syso -arch amd64 -version v0.0.0
+          go run ./internal/tools/winres -icon internal/fyneui/logo.png -out cmd/crowergui/rsrc_windows_amd64.syso -arch amd64 -name crower-gui -version v0.0.0
           go build -tags fyne -ldflags "-H windowsgui" -o build/crower-gui.exe ./cmd/crowergui
           Remove-Item cmd/crowergui/rsrc_windows_amd64.syso
           go run ./internal/tools/winres -verify build/crower-gui.exe

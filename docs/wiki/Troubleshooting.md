@@ -72,6 +72,26 @@ graphical program, so a console window does not open and closing one cannot take
 the window with it. If a build without the icon or the graphical subsystem is in
 front of you, reinstall from the release archive: the release checks both.
 
+## Windows says "This app can't run on your PC"
+
+That dialog is the Windows loader rejecting the file, before crower runs a single
+line. For a release download the cause is the architecture: the release ships one
+archive per architecture, and an arm64 archive does not run on an Intel/AMD PC
+(or the reverse).
+
+Check which machine the PC is — Settings → System → About → System type:
+
+- "64-bit operating system, x64-based processor" → `crower_<version>_windows_amd64.zip`
+- "64-bit operating system, ARM-based processor" → `crower_<version>_windows_arm64.zip`
+
+Every Windows archive contains `WINDOWS.txt`, which names the architecture it
+was built for. A file that was damaged on the way down fails the same way: check
+the download against the release's `checksums.txt` before extracting.
+
+```powershell
+certutil -hashfile crower_<version>_windows_amd64.zip SHA256
+```
+
 ## Still stuck
 
 Open an [issue](https://github.com/fiwon123/crower/issues/new) with:
