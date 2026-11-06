@@ -384,3 +384,19 @@ func TestAboutTextIsSelectable(t *testing.T) {
 		t.Error("the version label is missing or not selectable")
 	}
 }
+
+// Restart closes the window; Run spawns/execs after the window loop returns.
+func TestRestartDefersTheSpawnUntilTheWindowCloses(t *testing.T) {
+	updater := &stubUpdater{current: "v1.0.0"}
+	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
+
+	front.restart()
+
+	if !front.restartRequested {
+		t.Error("restart did not record the request")
+	}
+
+	if updater.restarts != 0 {
+		t.Error("restart spawned before the window closed")
+	}
+}
