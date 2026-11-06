@@ -1,0 +1,36 @@
+crower — Windows archive
+========================
+
+This archive holds three executables. They are all built for one architecture,
+and the archive file name says which:
+
+  * crower_<version>_windows_amd64.zip  → 64-bit Intel or AMD PC
+  * crower_<version>_windows_arm64.zip  → Windows on ARM (Snapdragon, Surface Pro X)
+
+Which one to run
+----------------
+
+  crower-gui.exe   the window. Double-click it. It is a graphical program, so no
+                   console opens with it, and the crow icon identifies it.
+  crower.exe       the terminal program: crower --help
+  cr.exe           the same terminal program under its short name.
+
+If Windows says "This app can't run on your PC"
+-----------------------------------------------
+
+That dialog means the loader rejected the file, and for a release download the
+cause is almost always the architecture: an arm64 archive on an Intel/AMD PC, or
+the other way round. Download the archive that matches the PC:
+
+  Settings → System → About → System type
+    "64-bit operating system, x64-based processor"  → windows_amd64.zip
+    "64-bit operating system, ARM-based processor"  → windows_arm64.zip
+
+The second most common cause is a damaged copy. Check the download against the
+release's checksums.txt before extracting:
+
+  certutil -hashfile crower_<version>_windows_amd64.zip SHA256
+
+The file also carries the crow icon, a description and a version in its
+Properties, so you can confirm the archive was extracted completely: right-click
+crower-gui.exe → Properties → Details.
