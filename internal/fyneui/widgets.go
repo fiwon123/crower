@@ -378,20 +378,25 @@ func (l *centeredFlowLayout) Layout(objects []fyne.CanvasObject, size fyne.Size)
 // the page wider than a narrow window (#415). The description is a wrapping
 // label in the body instead.
 func newCard(title, description string, content fyne.CanvasObject) fyne.CanvasObject {
-	return cardWithDescription(title, description, fyne.TextAlignLeading, content)
-}
-
-// newCenteredCard is newCard with its description centred, for the About page.
-func newCenteredCard(title, description string, content fyne.CanvasObject) fyne.CanvasObject {
-	return cardWithDescription(title, description, fyne.TextAlignCenter, content)
-}
-
-func cardWithDescription(title, description string, align fyne.TextAlign, content fyne.CanvasObject) fyne.CanvasObject {
 	desc := widget.NewLabel(description)
 	desc.Wrapping = fyne.TextWrapWord
-	desc.Alignment = align
 
 	return widget.NewCard(title, "", container.NewVBox(desc, content))
+}
+
+// newCenteredCard is newCard with its title and description centred, for the
+// About page.
+//
+// The native card title is a left-aligned canvas.Text, so the centred card
+// carries its own title label and leaves the native one empty.
+func newCenteredCard(title, description string, content fyne.CanvasObject) fyne.CanvasObject {
+	head := widget.NewLabelWithStyle(title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+
+	desc := widget.NewLabel(description)
+	desc.Wrapping = fyne.TextWrapWord
+	desc.Alignment = fyne.TextAlignCenter
+
+	return widget.NewCard("", "", container.NewVBox(head, desc, content))
 }
 
 // appendPath adds a picked path to a comma-separated list, so repeated Browse
