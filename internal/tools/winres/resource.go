@@ -24,6 +24,20 @@ type resource struct {
 	children []*resource
 }
 
+// neutralLanguage is the language id every resource is stored under. Zero is
+// LANG_NEUTRAL, which a lookup for any language falls back to.
+const neutralLanguage = 0
+
+// leaf places a payload on the third level of the tree: type → name →
+// language → data entry.
+//
+// The loader's activation-context lookup walks that path. A payload hung
+// directly off the name directory still parses as a resource tree, but Windows
+// refuses to start the image: "This app can't run on your PC" (#459).
+func leaf(id uint32, value []byte) *resource {
+	return &resource{id: id, children: []*resource{{id: neutralLanguage, value: value}}}
+}
+
 // reloc is a 4-byte field that must hold the address of the resource data
 // relative to the image base, not relative to the section. Go's linker patches
 // it from the relocation record.
@@ -42,19 +56,19 @@ func resources(icons []icon, manifestXML, version []byte) ([]byte, []reloc, erro
 	iconEntries := make([]*resource, 0, len(icons))
 
 	for index, image := range sortedIcons(icons) {
-		iconEntries = append(iconEntries, &resource{id: uint32(index + 1), value: image.png})
+		iconEntries = append(iconEntries, leaf(uint32(index+1), image.png))
 	}
 
 	root := &resource{children: []*resource{
 		{id: rtIcon, children: iconEntries},
-		{id: rtGroupIcon, children: []*resource{{id: 1, value: groupIcon(icons)}}},
-		{id: rtManifest, children: []*resource{{id: 1, value: manifestXML}}},
+		{id: rtGroupIcon, children: []*resource{leaf(1, groupIcon(icons))}},
+		{id: rtManifest, children: []*resource{leaf(1, manifestXML)}},
 	}}
 
 	if len(version) > 0 {
 		root.children = append(root.children, &resource{
 			id:       rtVersion,
-			children: []*resource{{id: 1, value: version}},
+			children: []*resource{leaf(1, version)},
 		})
 	}
 
