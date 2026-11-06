@@ -35,6 +35,15 @@ func TestFyneGroupsSetAndReload(t *testing.T) {
 		t.Fatalf("Icons: %v", err)
 	}
 
+	if icon, found := icons["ship"]; !found || icon != "" {
+		t.Errorf("icons = %v, want the group kept without an icon", icons)
+	}
+
+	icons, err = groups.Remove("ship")
+	if err != nil {
+		t.Fatalf("Remove: %v", err)
+	}
+
 	if _, found := icons["ship"]; found {
 		t.Errorf("icons = %v, want the group removed", icons)
 	}

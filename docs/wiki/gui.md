@@ -39,18 +39,24 @@ always yields a catalogue emoji; a value set with `--icon` is shown as stored.
 The **Group** field is a dropdown of the groups in use plus **New group**, which
 asks for a name and selects it, so a group never has to be typed.
 
+`New command` sits at the top right of the Commands tab, above the list it adds
+to; the **Filter** row under it narrows the cards by name, alias, exec, group and
+description. Rules separate the create and filter controls, the setup and group
+rows, and the cards themselves.
+
 On the Commands tab, each command is a card: a name with a chevron that opens
 into the labelled fields (name, exec, aliases, group, description, params, cwd,
 shell, timeout and numbered steps), a parameter entry, and **Run**, **Edit** and
 **Delete**. Opening one closes the previous card; a collapsed card carries no
 actions. **Run** passes the entry's text as parameters (an empty entry runs
 without any), **Edit** opens the command dialog and **Delete** asks first.
-**New command** sits beside the filter.
 
 Each command and history entry is a card panel: the header is the summary and the
-opened body groups the fields in a label/value form, with the actions under a
-rule. **Run** sits beside the parameters entry, so it is clear what it passes to
-the command.
+opened body is indented from it, pairing each field label with its value in a
+left-aligned two-column list, with the actions under a rule. Labels and values
+are both selectable. The action row is spaced and coloured: **Run** green,
+**Edit** blue, **Delete** red and **Restore this state** amber, so the risk of
+each action reads before its label.
 
 The edit dialog also changes the rest of the command: **Description**,
 **Params** (comma-separated), **Cwd**, **Shell** and **Timeout**. Emptying a
@@ -59,11 +65,14 @@ secrets, so it stays a configuration-file field, and the window shows keys only.
 **Exec** and **Description** wrap and grow with their text (up to a cap); the
 dialog's field list scrolls, so a long script never clips the buttons.
 
-**Groups** on the group row gives each group an icon of its own through the
-same catalogue picker, stored in `groups.toml` next to the configuration (the
-window is the only writer; the CLI ignores the file). The filter then reads
-`🚀 deploy` instead of a bare name. A group exists through the commands that use
-it; create one from a command's Group dropdown.
+**Groups** on the group row opens one compact row per group — its emoji button,
+its name and **Delete** — plus **New group**, which asks for a name and an icon
+and stores them. Groups live in `groups.toml` next to the configuration (the
+window is the only writer; the CLI ignores the file), so a group exists before a
+command uses it and survives a restart. The filter then reads `🚀 deploy` instead
+of a bare name. A command's Group dropdown lists the same groups and creates one
+the same way. The dialog sizes itself from the window: it fits a small one and
+does not stretch across a maximised one.
 
 The **Setup** list beside it switches between the named setups the CLI creates
 with `crower setup new`; **New setup** and **Delete setup** manage them without
@@ -80,18 +89,20 @@ history entry recorded and drops the newer entries, through the same
 
 The History tab lists entries as cards, newest first. A card shows an operation
 icon, the command, the time and the version; it opens into the labelled fields
-(the full date and version included), the raw `key=value` line, and **Run**,
-**Edit** and **Restore this state**. Opening a card expands it in place and only
-scrolls if it would otherwise leave the viewport.
+(the full date and version included), the raw `key=value` note behind a toggle
+with **Copy**, and **Run**, **Edit** and **Restore this state**. The raw note
+sits on its own inset panel rather than as a stray line of text. Opening a card
+expands it in place and only scrolls if it would otherwise leave the viewport.
 Opening one closes the previous card. The newest hundred are rendered;
 **Load older** appends the next hundred, so a long log opens quickly and only the
 entries on screen are formatted. **Run** replays an execute entry with the
 parameters it recorded; older entries without them ask when the command declares
 parameters. **Edit** opens that command on the Commands tab.
 
-Values in a command or history card, card descriptions, help text, tool results,
-and the output and error dialogs can be selected and copied with Ctrl+C (⌘C on
-macOS), so a failure can be pasted into a bug report. Information, picker and form dialogs close when you
+Field labels and values in a command or history card, card descriptions, help
+text, the raw note, tool results, and the output and error dialogs can be
+selected and copied with Ctrl+C (⌘C on macOS), so a failure can be pasted into a
+bug report. Information, picker and form dialogs close when you
 click outside them; confirmation dialogs wait for an answer.
 
 The About tab checks GitHub for a newer release when the window opens and
@@ -111,8 +122,9 @@ The Tools tab runs the file operations through the same use cases as the CLI
 commands, and every run lands in the History tab. Path fields take a
 comma-separated list, and **Browse…** beside each one fills it from a file or
 folder picker — Fyne's dialog is single-select, so pressing Browse again appends
-another path. Each card keeps its own result square: it appears when that card
-runs something and collapses with its toggle. A copy, move or extract reports
+another path. Each card keeps its own result panel: it appears when that card
+runs something and collapses with its toggle. The panel's left bar is green for
+a success, amber for a stop and red for a failure, and its message is selectable. A copy, move or extract reports
 how many items are done and offers **Cancel**, which stops the batch between
 items — the platform command already running is not interrupted.
 

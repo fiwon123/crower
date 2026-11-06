@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -70,33 +72,103 @@ func TestGrowingEntryGrowsWithItsText(t *testing.T) {
 	}
 }
 
-// A detail form's values can be selected and copied.
-func TestFieldFormValuesAreSelectable(t *testing.T) {
+// A detail list starts both columns at the left edge and keeps every label and
+// value selectable.
+func TestFieldListAlignsLabelsAndKeepsTextSelectable(t *testing.T) {
 	app := test.NewApp()
 	t.Cleanup(app.Quit)
 
-	form := newFieldForm([]detailField{
+	list := newFieldList([]detailField{
 		{Label: "Exec", Value: "echo hi"},
 		{Label: "Shell", Value: "sh"},
 	})
 
-	if len(form.Items) != 2 {
-		t.Fatalf("form = %d items, want two rows", len(form.Items))
+	if len(list.Objects) != 4 {
+		t.Fatalf("list = %d objects, want two label/value pairs", len(list.Objects))
 	}
 
-	if form.Items[0].Text != "Exec" || form.Items[1].Text != "Shell" {
-		t.Errorf("form keys = %q/%q, want Exec/Shell", form.Items[0].Text, form.Items[1].Text)
-	}
-
-	for _, item := range form.Items {
-		label, ok := item.Widget.(*widget.Label)
+	for index, want := range []string{"Exec", "echo hi", "Shell", "sh"} {
+		label, ok := list.Objects[index].(*widget.Label)
 		if !ok {
-			t.Fatalf("%s value = %T, want a label", item.Text, item.Widget)
+			t.Fatalf("object %d = %T, want a label", index, list.Objects[index])
+		}
+
+		if label.Text != want {
+			t.Errorf("object %d = %q, want %q", index, label.Text, want)
 		}
 
 		if !label.Selectable {
-			t.Errorf("value %q is not selectable", label.Text)
+			t.Errorf("%q is not selectable", label.Text)
 		}
+	}
+
+	for _, index := range []int{0, 2} {
+		label := list.Objects[index].(*widget.Label)
+		if label.Alignment != fyne.TextAlignLeading {
+			t.Errorf("label %q is not left-aligned", label.Text)
+		}
+
+		if !label.TextStyle.Bold {
+			t.Errorf("label %q is not emphasised", label.Text)
+		}
+	}
+}
+
+// Spaced actions lay their buttons out in one row with a gap, and wrap instead
+// of running past the card.
+func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	buttons := []fyne.CanvasObject{
+		widget.NewButton("Run", nil),
+		widget.NewButton("Edit", nil),
+		widget.NewButton("Delete", nil),
+	}
+
+	row := spacedActions(buttons...)
+	row.Resize(fyne.NewSize(600, 40))
+	row.Layout.Layout(row.Objects, row.Size())
+
+	for index := 1; index < len(buttons); index++ {
+		previous := buttons[index-1]
+		current := buttons[index]
+		gap := current.Position().X - (previous.Position().X + previous.Size().Width)
+
+		if gap != theme.Padding()*2 {
+			t.Errorf("gap between buttons = %v, want %v", gap, theme.Padding()*2)
+		}
+	}
+
+	row.Resize(fyne.NewSize(120, 40))
+	row.Layout.Layout(row.Objects, row.Size())
+
+	if buttons[1].Position().Y <= buttons[0].Position().Y {
+		t.Error("a narrow row did not wrap its buttons")
+	}
+}
+
+// A result block colours its accent bar by the outcome.
+func TestBlockAccentFollowsTheOutcome(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	result := newToolResult()
+	result.report("done")
+
+	bar, ok := result.panel.accent.(*canvas.Rectangle)
+	if !ok {
+		t.Fatalf("accent = %T, want a rectangle", result.panel.accent)
+	}
+
+	if bar.FillColor != theme.Color(theme.ColorNameSuccess) {
+		t.Errorf("success accent = %v, want the success colour", bar.FillColor)
+	}
+
+	result.reportWith("error: permission denied", theme.ColorNameError)
+
+	if bar.FillColor != theme.Color(theme.ColorNameError) {
+		t.Errorf("failure accent = %v, want the error colour", bar.FillColor)
 	}
 }
 

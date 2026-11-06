@@ -263,11 +263,11 @@ func (u *ui) reportTool(result *toolResult, message string, history timeline.Log
 
 	if err != nil {
 		if errors.Is(err, context.Canceled) {
-			result.report("Stopped: " + err.Error())
+			result.reportWith("Stopped: "+err.Error(), theme.ColorNameWarning)
 			return
 		}
 
-		result.report("Error: " + err.Error())
+		result.reportWith("Error: "+err.Error(), theme.ColorNameError)
 		return
 	}
 
