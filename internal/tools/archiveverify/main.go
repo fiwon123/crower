@@ -23,6 +23,7 @@ package main
 import (
 	"archive/tar"
 	"archive/zip"
+	"bytes"
 	"compress/gzip"
 	"errors"
 	"flag"
@@ -32,6 +33,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/fiwon123/crower/internal/tools/winpe"
 )
 
 const (
@@ -64,6 +67,8 @@ func main() {
 			continue
 		}
 		problems := checkNames(*gui, names)
+		problems = append(problems, checkWindowsBinaries(path, names)...)
+
 		if len(problems) > 0 {
 			fmt.Fprintf(os.Stderr, "FAIL %s\n", path)
 			for _, p := range problems {
@@ -86,6 +91,98 @@ func main() {
 		os.Exit(1)
 	}
 	fmt.Printf("\narchiveverify: %d archive(s) are valid\n", len(archives))
+}
+
+// checkWindowsBinaries opens a Windows archive and checks the executables are
+// the programs their names promise: the architecture in the archive name, a GUI
+// without a console and with its icon, and a console CLI pair.
+//
+// It is the gate for the failure a build directory cannot show — an arm64 image
+// packaged as amd64, or a window executable linked as a console program. Both
+// reach the user as "This app can't run on your PC" or as a console window that
+// closes the moment they click it.
+func checkWindowsBinaries(path string, names []string) []string {
+	machine, windows := winpe.MachineForArchive(filepath.Base(path))
+	if !windows {
+		return nil
+	}
+
+	have := make(map[string]bool, len(names))
+	for _, name := range names {
+		have[filepath.Base(name)] = true
+	}
+
+	problems := []string{}
+
+	if !have[windowsNoteName] {
+		problems = append(problems, fmt.Sprintf(
+			"missing %q: a Windows archive has to say which architecture it is for", windowsNoteName,
+		))
+	}
+
+	for _, member := range []string{"crower.exe", "cr.exe", "crower-gui.exe"} {
+		if !have[member] {
+			continue
+		}
+
+		info, err := inspectMember(path, member)
+		if err != nil {
+			problems = append(problems, fmt.Sprintf("%s: %v", member, err))
+			continue
+		}
+
+		if err := info.VerifyMachine(machine); err != nil {
+			problems = append(problems, fmt.Sprintf("%s: %v (archive is %s)", member, err, winpe.MachineName(machine)))
+			continue
+		}
+
+		if member == "crower-gui.exe" {
+			if err := info.VerifyGUI(); err != nil {
+				problems = append(problems, fmt.Sprintf("%s: %v", member, err))
+			}
+
+			continue
+		}
+
+		if err := info.VerifyConsole(); err != nil {
+			problems = append(problems, fmt.Sprintf("%s: %v", member, err))
+		}
+	}
+
+	return problems
+}
+
+// windowsNoteName is the plain-text note every Windows archive carries.
+const windowsNoteName = "WINDOWS.txt"
+
+// inspectMember decodes one executable out of a zip archive.
+func inspectMember(archive, member string) (winpe.Info, error) {
+	reader, err := zip.OpenReader(archive)
+	if err != nil {
+		return winpe.Info{}, err
+	}
+	defer reader.Close()
+
+	for _, file := range reader.File {
+		if filepath.Base(file.Name) != member {
+			continue
+		}
+
+		opened, err := file.Open()
+		if err != nil {
+			return winpe.Info{}, err
+		}
+		defer opened.Close()
+
+		body, err := io.ReadAll(opened)
+		if err != nil {
+			return winpe.Info{}, err
+		}
+
+		return winpe.Inspect(bytes.NewReader(body))
+	}
+
+	return winpe.Info{}, fmt.Errorf("not in the archive")
 }
 
 // findArchives lists the release archives in dir. No archive is an error: a

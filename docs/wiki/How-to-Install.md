@@ -46,6 +46,10 @@ sudo mv crower cr crower-gui /usr/local/bin/
 `crower-gui.exe`** — the one carrying the crow icon — to open the window; it is
 built as a graphical program, so no console window opens with it.
 
+The archive's `WINDOWS.txt` says which architecture it is for. An `arm64` archive
+does not run on an Intel/AMD PC; Windows reports that as *"This app can't run on
+your PC"*.
+
 Verify either install:
 
 ```bash
