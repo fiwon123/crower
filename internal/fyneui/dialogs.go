@@ -33,8 +33,7 @@ func (u *ui) showCreate() {
 
 	icon, iconWidget := u.iconField("")
 
-	group := newScrollFreeEntry()
-	group.SetPlaceHolder("deploy")
+	group, groupWidget := u.groupField("")
 
 	exec := newExecEntry()
 
@@ -42,7 +41,7 @@ func (u *ui) showCreate() {
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
 		widget.NewFormItem("Icon", iconWidget),
-		widget.NewFormItem("Group", group),
+		widget.NewFormItem("Group", groupWidget),
 		widget.NewFormItem("Exec", exec),
 	}
 
@@ -55,8 +54,75 @@ func (u *ui) showCreate() {
 			return
 		}
 
-		u.applyCreate(name.Text, aliases.Text, icon.value, group.Text, exec.Text)
+		u.applyCreate(name.Text, aliases.Text, icon.value, group.value, exec.Text)
 	}, fyne.NewSize(dialogWidth, dialogHeight))
+}
+
+// noGroupLabel is the group select's empty choice.
+const noGroupLabel = "No group"
+
+// groupChoice is the group field's value and selector.
+type groupChoice struct {
+	value        string
+	selectWidget *widget.Select
+}
+
+// groupField lets a command pick an existing group or create one, instead of
+// typing a name. A group exists through the commands that use it.
+func (u *ui) groupField(initial string) (*groupChoice, fyne.CanvasObject) {
+	choice := &groupChoice{value: strings.TrimSpace(initial)}
+
+	options := append([]string{noGroupLabel}, u.model.Groups()...)
+	choice.selectWidget = widget.NewSelect(options, func(label string) {
+		if label == noGroupLabel {
+			choice.value = ""
+			return
+		}
+
+		choice.value = label
+	})
+	choice.selectWidget.SetSelected(choice.groupLabel())
+
+	newGroup := widget.NewButton("New group", func() {
+		u.promptNewGroup(func(name string) {
+			choice.selectWidget.Options = append(choice.selectWidget.Options, name)
+			choice.selectWidget.Refresh()
+			choice.selectWidget.SetSelected(name)
+			choice.value = name
+		})
+	})
+
+	return choice, container.NewBorder(nil, nil, nil, newGroup, choice.selectWidget)
+}
+
+func (c *groupChoice) groupLabel() string {
+	if c.value == "" {
+		return noGroupLabel
+	}
+
+	return c.value
+}
+
+// promptNewGroup asks for a group name and hands it to onCreate.
+func (u *ui) promptNewGroup(onCreate func(string)) {
+	name := newScrollFreeEntry()
+	name.SetPlaceHolder("deploy")
+
+	form := widget.NewForm(widget.NewFormItem("Name", name))
+
+	showForm("New group", "Create", "Cancel", form, u.window, func(ok bool) {
+		if !ok {
+			return
+		}
+
+		value := strings.TrimSpace(name.Text)
+		if value == "" {
+			showError("Enter a group name.", u.window)
+			return
+		}
+
+		onCreate(value)
+	}, fyne.NewSize(420, 220))
 }
 
 // applyCreate is the form's submit path, separate from the dialog so a test
@@ -101,9 +167,7 @@ func (u *ui) showEditFor(key string) {
 
 	icon, iconWidget := u.iconField(command.Icon)
 
-	group := newScrollFreeEntry()
-	group.SetText(command.Group)
-	group.SetPlaceHolder("deploy")
+	group, groupWidget := u.groupField(command.Group)
 
 	exec := newExecEntry()
 	exec.SetText(command.Exec)
@@ -132,7 +196,7 @@ func (u *ui) showEditFor(key string) {
 		widget.NewFormItem("Name", name),
 		widget.NewFormItem("Aliases", aliases),
 		widget.NewFormItem("Icon", iconWidget),
-		widget.NewFormItem("Group", group),
+		widget.NewFormItem("Group", groupWidget),
 		widget.NewFormItem("Exec", exec),
 		widget.NewFormItem("Description", description),
 		widget.NewFormItem("Params", params),
@@ -152,7 +216,7 @@ func (u *ui) showEditFor(key string) {
 			Name:        name.Text,
 			Aliases:     aliases.Text,
 			Icon:        icon.value,
-			Group:       group.Text,
+			Group:       group.value,
 			Exec:        exec.Text,
 			Description: description.Text,
 			Params:      params.Text,
@@ -364,7 +428,9 @@ func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window 
 // showConfirm asks a question. It stays modal so an outside click cannot answer
 // it, and its body is a selectable label so the message can be copied.
 func showConfirm(title, message string, window fyne.Window, onConfirm func(bool)) {
-	dialog.ShowCustomConfirm(title, "Yes", "No", newSelectableText(message), onConfirm, window)
+	confirm := dialog.NewCustomConfirm(title, "Yes", "No", newSelectableText(message), onConfirm, window)
+	confirm.Resize(fyne.NewSize(560, 300))
+	confirm.Show()
 }
 
 func showText(title, text string, window fyne.Window) *widget.PopUp {

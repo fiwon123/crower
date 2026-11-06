@@ -242,37 +242,85 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 // iconChoice is the read-only icon value a form holds between the picker and
 // its submit.
 type iconChoice struct {
-	value string
-	label *widget.Label
+	value  string
+	button *emojiButton
 }
 
-// iconDisplay is what the field shows: the emoji, or "None".
-func iconDisplay(value string) string {
-	if strings.TrimSpace(value) == "" {
-		return "None"
+// emojiButton is the icon control: a large emoji (or "Pick") in a bordered
+// square. Tapping it opens the catalogue, so there is no separate Pick button
+// to truncate.
+type emojiButton struct {
+	widget.BaseWidget
+
+	text       *canvas.Text
+	background *canvas.Rectangle
+	box        *fyne.Container
+	value      string
+	onTapped   func()
+}
+
+func newEmojiButton(value string, onTapped func()) *emojiButton {
+	button := &emojiButton{onTapped: onTapped}
+
+	button.background = canvas.NewRectangle(theme.Color(theme.ColorNameInputBackground))
+	button.background.CornerRadius = theme.Size(theme.SizeNameInputRadius)
+	button.background.StrokeColor = theme.Color(theme.ColorNameSeparator)
+	button.background.StrokeWidth = theme.Size(theme.SizeNameSeparatorThickness)
+
+	button.text = canvas.NewText("", theme.Color(theme.ColorNameForeground))
+	button.text.Alignment = fyne.TextAlignCenter
+
+	button.box = container.NewGridWrap(fyne.NewSize(48, 48), container.NewStack(
+		button.background,
+		container.NewCenter(button.text),
+	))
+
+	button.ExtendBaseWidget(button)
+	button.SetEmoji(value)
+
+	return button
+}
+
+func (b *emojiButton) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(b.box)
+}
+
+func (b *emojiButton) Tapped(*fyne.PointEvent) {
+	if b.onTapped != nil {
+		b.onTapped()
+	}
+}
+
+// SetEmoji shows the emoji at a readable size; an empty value shows "Pick".
+func (b *emojiButton) SetEmoji(value string) {
+	b.value = strings.TrimSpace(value)
+
+	if b.value == "" {
+		b.text.Text = "Pick"
+		b.text.TextSize = theme.Size(theme.SizeNameText)
+	} else {
+		b.text.Text = b.value
+		b.text.TextSize = 28
 	}
 
-	return value
+	b.text.Refresh()
 }
 
-// iconField builds the Icon row: a read-only display with Pick… and Clear, so
-// the value can only come from the catalogue.
+// iconField builds the Icon row: a large emoji button that opens the catalogue,
+// with Clear beside it.
 func (u *ui) iconField(initial string) (*iconChoice, fyne.CanvasObject) {
 	choice := &iconChoice{value: strings.TrimSpace(initial)}
-	choice.label = widget.NewLabel(iconDisplay(choice.value))
-
-	pick := widget.NewButtonWithIcon("Pick…", theme.GridIcon(), func() {
+	choice.button = newEmojiButton(choice.value, func() {
 		u.showEmojiPicker(choice.value, func(emoji string) {
 			choice.value = emoji
-			choice.label.SetText(iconDisplay(emoji))
+			choice.button.SetEmoji(emoji)
 		})
 	})
-	pick.Importance = widget.LowImportance
 
 	clear := widget.NewButton("Clear", func() {
 		choice.value = ""
-		choice.label.SetText(iconDisplay(""))
+		choice.button.SetEmoji("")
 	})
 
-	return choice, container.NewBorder(nil, nil, nil, container.NewHBox(clear, pick), choice.label)
+	return choice, container.NewHBox(choice.button, clear)
 }

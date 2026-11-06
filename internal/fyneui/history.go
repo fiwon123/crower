@@ -51,8 +51,10 @@ type historyCard struct {
 func (u *ui) historyTab() fyne.CanvasObject {
 	header := widget.NewLabel(historyHeader)
 	header.Wrapping = fyne.TextWrapWord
+	header.Selectable = true
 
 	u.historyEmpty = widget.NewLabel("No history yet.")
+	u.historyEmpty.Selectable = true
 	u.historyEmpty.Hide()
 
 	u.historyList = container.NewVBox()
@@ -262,7 +264,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 	card.edit = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() {
 		u.editHistoryEntry(card)
 	})
-	card.restore = widget.NewButtonWithIcon("Restore this state…", theme.HistoryIcon(), func() {
+	card.restore = widget.NewButtonWithIcon("Restore this state", theme.HistoryIcon(), func() {
 		u.showRevert(card)
 	})
 

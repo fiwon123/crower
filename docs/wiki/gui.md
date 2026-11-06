@@ -24,16 +24,18 @@ The window is split into tabs:
 | **Commands** | The command cards, a filter, a setup row and a group row; a card opens into its fields, parameters and **Run**, **Edit** and **Delete** |
 | **History** | Every recorded operation, newest first, as expandable cards: a summary line opens into the labelled note fields, the raw line, and **Run**, **Edit** and **Restore this state** |
 | **Tools** | Copy, move, search, extract and open; every path field has **Browse…**, and each card has its own result square that opens when an action runs |
-| **About** | Logo, version, description, the repository link, and the update controls — padded to the tab width, with actions that wrap on a narrow window |
+| **About** | Logo, version, description, the repository link, and the update controls — padded to the tab width, with the actions stacked vertically |
 
 A command can carry an **icon** — a short marker such as 🚀 — shown beside its
 name, and a **group**; the filter lists every group in use, and an opened card
 shows which one the command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
-`crower update --icon/--group`. The Icon field is read-only: **Pick…** opens the
-full emoji catalogue with a category selector and a search over names, aliases,
-tags and the glyph, and **Clear** removes the icon. Picking from the window
+`crower update --icon/--group`. The Icon control is a large emoji button:
+tapping it opens the full catalogue with a category selector and a search over
+names, aliases, tags and the glyph; **Clear** removes it. Picking from the window
 always yields a catalogue emoji; a value set with `--icon` is shown as stored.
+The **Group** field is a dropdown of the groups in use plus **New group**, which
+asks for a name and selects it, so a group never has to be typed.
 
 On the Commands tab, each command is a card: a name with a chevron that opens
 into the labelled fields (name, exec, aliases, group, description, params, cwd,
@@ -55,13 +57,14 @@ secrets, so it stays a configuration-file field, and the window shows keys only.
 **Exec** and **Description** wrap and grow with their text (up to a cap); the
 dialog's field list scrolls, so a long script never clips the buttons.
 
-**Groups…** on the group row gives each group an icon of its own through the
+**Groups** on the group row gives each group an icon of its own through the
 same catalogue picker, stored in `groups.toml` next to the configuration (the
 window is the only writer; the CLI ignores the file). The filter then reads
-`🚀 deploy` instead of a bare name.
+`🚀 deploy` instead of a bare name. A group exists through the commands that use
+it; create one from a command's Group dropdown.
 
 The **Setup** list beside it switches between the named setups the CLI creates
-with `crower setup new`; **New setup…** and **Delete setup…** manage them without
+with `crower setup new`; **New setup** and **Delete setup** manage them without
 leaving the window (the default and the active setup cannot be deleted). Each
 entry says how many commands it holds — `work (12)` — so switching to an empty
 setup is a choice rather than a surprise. Switching reloads
@@ -82,9 +85,9 @@ entries on screen are formatted. **Run** replays an execute entry with the
 parameters it recorded; older entries without them ask when the command declares
 parameters. **Edit** opens that command on the Commands tab.
 
-Values in a command or history card, tool results, and the output and error
-dialogs can be selected and copied with Ctrl+C (⌘C on macOS), so a failure can
-be pasted into a bug report. Information, picker and form dialogs close when you
+Values in a command or history card, card descriptions, help text, tool results,
+and the output and error dialogs can be selected and copied with Ctrl+C (⌘C on
+macOS), so a failure can be pasted into a bug report. Information, picker and form dialogs close when you
 click outside them; confirmation dialogs wait for an answer.
 
 The About tab checks GitHub for a newer release when the window opens and

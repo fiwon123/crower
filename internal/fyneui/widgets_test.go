@@ -117,3 +117,13 @@ func TestToolResultIsSelectable(t *testing.T) {
 		t.Error("the tool result label is not selectable")
 	}
 }
+
+// A card's description is selectable like the values.
+func TestCardDescriptionsAreSelectable(t *testing.T) {
+	card := newCard("Title", "description", widget.NewLabel("content"))
+
+	label := findLabel(card, "description")
+	if label == nil || !label.Selectable {
+		t.Error("the card description is missing or not selectable")
+	}
+}

@@ -247,124 +247,6 @@ func actionRow(buttons ...fyne.CanvasObject) fyne.CanvasObject {
 	)
 }
 
-// centeredFlowLayout lays children out at their natural size, wraps them into
-// rows when the width runs out, and centres each row. A fixed-cell grid would
-// either clip a long label or leave a short row off-centre, which is why the
-// About actions use this instead.
-//
-// Like GridWrap, the row heights come from the last Layout: a minimum size
-// cannot know how many rows a width will need, and guessing one row would let a
-// wrapped row overflow its card. A caller that hides a child must refresh the
-// container so this re-runs.
-type centeredFlowLayout struct {
-	gap  float32
-	rows []float32
-}
-
-func (l *centeredFlowLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	var width float32
-
-	for _, object := range objects {
-		if object.Visible() {
-			width = max(width, object.MinSize().Width)
-		}
-	}
-
-	if len(l.rows) == 0 {
-		// Before the first layout, assume the buttons share one row.
-		var height float32
-
-		for _, object := range objects {
-			if object.Visible() {
-				height = max(height, object.MinSize().Height)
-			}
-		}
-
-		return fyne.NewSize(width, height)
-	}
-
-	var height float32
-
-	for i, rowHeight := range l.rows {
-		if i > 0 {
-			height += l.gap
-		}
-
-		height += rowHeight
-	}
-
-	return fyne.NewSize(width, height)
-}
-
-func (l *centeredFlowLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
-	if size.Width <= 0 {
-		// A container that has not been sized yet cannot wrap anything: leave
-		// the row heights unset rather than recording one row per button.
-		return
-	}
-
-	type flowRow struct {
-		objects []fyne.CanvasObject
-		width   float32
-		height  float32
-	}
-
-	rows := make([]flowRow, 0)
-	row := flowRow{}
-
-	for _, object := range objects {
-		if !object.Visible() {
-			continue
-		}
-
-		min := object.MinSize()
-		needed := min.Width
-		if len(row.objects) > 0 {
-			needed += row.width + l.gap
-		}
-
-		if len(row.objects) > 0 && needed > size.Width {
-			rows = append(rows, row)
-			row = flowRow{}
-		}
-
-		if len(row.objects) > 0 {
-			row.width += l.gap
-		}
-
-		row.objects = append(row.objects, object)
-		row.width += min.Width
-		row.height = max(row.height, min.Height)
-	}
-
-	if len(row.objects) > 0 {
-		rows = append(rows, row)
-	}
-
-	l.rows = l.rows[:0]
-	for _, current := range rows {
-		l.rows = append(l.rows, current.height)
-	}
-
-	y := float32(0)
-
-	for _, current := range rows {
-		x := (size.Width - current.width) / 2
-		if x < 0 {
-			x = 0
-		}
-
-		for _, object := range current.objects {
-			min := object.MinSize()
-			object.Move(fyne.NewPos(x, y))
-			object.Resize(min)
-			x += min.Width + l.gap
-		}
-
-		y += current.height + l.gap
-	}
-}
-
 // newCard builds a card whose description wraps.
 //
 // widget.NewCard paints its subtitle with a canvas.Text, which does not wrap, so
@@ -374,6 +256,7 @@ func (l *centeredFlowLayout) Layout(objects []fyne.CanvasObject, size fyne.Size)
 func newCard(title, description string, content fyne.CanvasObject) fyne.CanvasObject {
 	desc := widget.NewLabel(description)
 	desc.Wrapping = fyne.TextWrapWord
+	desc.Selectable = true
 
 	return widget.NewCard(title, "", container.NewVBox(desc, content))
 }
@@ -389,6 +272,7 @@ func newCenteredCard(title, description string, content fyne.CanvasObject) fyne.
 	desc := widget.NewLabel(description)
 	desc.Wrapping = fyne.TextWrapWord
 	desc.Alignment = fyne.TextAlignCenter
+	desc.Selectable = true
 
 	return widget.NewCard("", "", container.NewVBox(head, desc, content))
 }
