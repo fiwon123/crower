@@ -57,6 +57,21 @@ jobs:
           $env:CGO_ENABLED = '1'
           go build -tags fyne ./...
 
+      # The release builds this file for double-clicking, so the pull request
+      # gate builds it the same way: a GUI subsystem, the crow icon, the
+      # manifest and the version. A plain `go build` passes the step above and
+      # still ships a console program with no icon (#456).
+      - name: Build the window executable with its resource
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:CGO_ENABLED = '1'
+          New-Item -ItemType Directory -Force build | Out-Null
+          go run ./internal/tools/winres -icon internal/fyneui/logo.png -out cmd/crowergui/rsrc_windows_amd64.syso -arch amd64 -version v0.0.0
+          go build -tags fyne -ldflags "-H windowsgui" -o build/crower-gui.exe ./cmd/crowergui
+          Remove-Item cmd/crowergui/rsrc_windows_amd64.syso
+          go run ./internal/tools/winres -verify build/crower-gui.exe
+
   macos:
     name: Fyne macOS
     runs-on: macos-latest

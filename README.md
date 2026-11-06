@@ -107,6 +107,9 @@ it next to the binaries and run `./add_to_path.sh`.
 **Windows:** extract `crower_<tag>_windows_amd64.zip` (or `..._arm64.zip`), then
 either run `add_to_path.bat` from the extracted folder or add the folder
 containing `crower.exe`, `cr.exe` and `crower-gui.exe` to your PATH.
+`crower.exe` and `cr.exe` are terminal programs; **double-click
+`crower-gui.exe`** (the one with the crow icon) to open the window, with no
+console behind it.
 
 Verify either install with `crower --version`.
 

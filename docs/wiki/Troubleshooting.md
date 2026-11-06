@@ -67,6 +67,11 @@ command line and cannot be quoted away either. Keep `Exec` single-line and use
 graphical session. In a terminal-only environment use `crower gui`, which
 renders in the terminal itself.
 
+On Windows, run `crower-gui.exe` — the one with the crow icon. It is built as a
+graphical program, so a console window does not open and closing one cannot take
+the window with it. If a build without the icon or the graphical subsystem is in
+front of you, reinstall from the release archive: the release checks both.
+
 ## Still stuck
 
 Open an [issue](https://github.com/fiwon123/crower/issues/new) with:
