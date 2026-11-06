@@ -16,8 +16,8 @@ import (
 func TestEmojiCatalogue(t *testing.T) {
 	entries := loadEmojiCatalogue()
 
-	if len(entries) < 1800 {
-		t.Fatalf("catalogue = %d entries, want the full gemoji set", len(entries))
+	if len(entries) < 1300 {
+		t.Fatalf("catalogue = %d entries, want the renderable gemoji set", len(entries))
 	}
 
 	categories := make(map[string]bool)
@@ -26,6 +26,10 @@ func TestEmojiCatalogue(t *testing.T) {
 	for _, entry := range entries {
 		if entry.Emoji == "" {
 			t.Fatal("the catalogue has an entry without a glyph")
+		}
+
+		if !simpleEmoji(entry.Emoji) {
+			t.Errorf("%q is a complex sequence the picker should have dropped", entry.Emoji)
 		}
 
 		if seen[entry.Emoji] {

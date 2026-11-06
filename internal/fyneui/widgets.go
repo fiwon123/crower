@@ -247,6 +247,23 @@ func actionRow(buttons ...fyne.CanvasObject) fyne.CanvasObject {
 	)
 }
 
+// revealOffset is the scroll offset that brings a card into view with a small
+// margin, or the current offset when it already is. It moves the minimum, so an
+// expanded card stays where the user put it instead of jumping to the top.
+func revealOffset(cardTop, height, viewHeight, current float32) float32 {
+	margin := theme.Padding()
+
+	if cardTop < current+margin {
+		return max(0, cardTop-margin)
+	}
+
+	if bottom := cardTop + height; bottom > current+viewHeight-margin {
+		return bottom - viewHeight + margin
+	}
+
+	return current
+}
+
 // newCard builds a card whose description wraps.
 //
 // widget.NewCard paints its subtitle with a canvas.Text, which does not wrap, so

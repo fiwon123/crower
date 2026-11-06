@@ -429,6 +429,27 @@ func TestHistoryRestoreCountsFromTheNewest(t *testing.T) {
 	}
 }
 
+// The summary uses the operation icon and the clock, not the full date; the
+// expanded fields carry the date and version.
+func TestHistorySummaryTitleIsCompact(t *testing.T) {
+	title := historySummaryTitle(desktop.HistorySummary{
+		Version:   7,
+		When:      "2026-11-06 12:00",
+		Operation: "execute",
+		Command:   "greet",
+	})
+
+	for _, want := range []string{"▶️", "execute", "greet", "12:00", "#7"} {
+		if !strings.Contains(title, want) {
+			t.Errorf("title = %q, want it to contain %q", title, want)
+		}
+	}
+
+	if strings.Contains(title, "2026-11-06") {
+		t.Errorf("title = %q, want the clock only", title)
+	}
+}
+
 // A long command is shortened in the summary so the header cannot widen the
 // window's minimum.
 func TestHistorySummaryTitleTruncatesLongCommands(t *testing.T) {

@@ -96,14 +96,20 @@ func (u *ui) toggleCommandCard(card *commandCard) {
 	u.scrollCommandTo(card)
 }
 
-// scrollCommandTo brings an opened card into view.
+// scrollCommandTo brings an opened card just into view, moving the minimum so
+// the page does not jump to the top.
 func (u *ui) scrollCommandTo(card *commandCard) {
 	if u.commandScroll == nil || u.commandPage == nil || u.commandList == nil {
 		return
 	}
 
 	y := u.commandPage.Position().Y + u.commandList.Position().Y + card.Position().Y
-	u.commandScroll.ScrollToOffset(fyne.NewPos(0, y))
+	offset := revealOffset(y, card.Size().Height, u.commandScroll.Size().Height, u.commandScroll.Offset.Y)
+	if offset == u.commandScroll.Offset.Y {
+		return
+	}
+
+	u.commandScroll.ScrollToOffset(fyne.NewPos(0, offset))
 }
 
 // runCommandCard runs the command with the card's parameter entry as its

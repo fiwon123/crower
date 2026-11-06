@@ -60,7 +60,7 @@ func loadEmojiCatalogue() []emojiEntry {
 		emojiCatalogue = make([]emojiEntry, 0, len(raw))
 
 		for _, entry := range raw {
-			if entry.Emoji == "" {
+			if entry.Emoji == "" || !simpleEmoji(entry.Emoji) {
 				continue
 			}
 
@@ -69,6 +69,24 @@ func loadEmojiCatalogue() []emojiEntry {
 	})
 
 	return emojiCatalogue
+}
+
+// simpleEmoji drops the multi-codepoint sequences (ZWJ, skin-tone modifiers,
+// regional-indicator flags) that the platform font commonly renders as a blank
+// cell. A shorter catalogue is better than picker cells that show nothing.
+func simpleEmoji(glyph string) bool {
+	for _, r := range glyph {
+		switch {
+		case r == '\u200d':
+			return false
+		case r >= 0x1F1E6 && r <= 0x1F1FF:
+			return false
+		case r >= 0x1F3FB && r <= 0x1F3FF:
+			return false
+		}
+	}
+
+	return true
 }
 
 // filterEmoji returns entries whose name, alias or tag contains query, and
@@ -181,12 +199,14 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 		index := id.Row*emojiColumns + id.Col
 		if index >= len(filtered) {
 			text.Text = ""
+			text.Hide()
 			text.Refresh()
 
 			return
 		}
 
 		text.Text = filtered[index].Emoji
+		text.Show()
 		text.Refresh()
 	}
 

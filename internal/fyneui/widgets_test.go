@@ -127,3 +127,28 @@ func TestCardDescriptionsAreSelectable(t *testing.T) {
 		t.Error("the card description is missing or not selectable")
 	}
 }
+
+// Revealing a card scrolls the minimum: visible stays put, above and below move
+// just enough.
+func TestRevealOffset(t *testing.T) {
+	tests := []struct {
+		name    string
+		top     float32
+		height  float32
+		view    float32
+		current float32
+		want    float32
+	}{
+		{"already visible", 100, 50, 400, 0, 0},
+		{"above the viewport", 10, 50, 400, 100, 6},
+		{"below the viewport", 500, 80, 400, 0, 184},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := revealOffset(tt.top, tt.height, tt.view, tt.current); got != tt.want {
+				t.Errorf("revealOffset = %.1f, want %.1f", got, tt.want)
+			}
+		})
+	}
+}

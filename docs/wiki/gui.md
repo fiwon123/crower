@@ -22,7 +22,7 @@ The window is split into tabs:
 | Tab | What it holds |
 | --- | --- |
 | **Commands** | The command cards, a filter, a setup row and a group row; a card opens into its fields, parameters and **Run**, **Edit** and **Delete** |
-| **History** | Every recorded operation, newest first, as expandable cards: a summary line opens into the labelled note fields, the raw line, and **Run**, **Edit** and **Restore this state** |
+| **History** | Every recorded operation, newest first, as expandable cards: an operation icon, command, time and version open into the labelled fields (with the full date), the raw line, and **Run**, **Edit** and **Restore this state** |
 | **Tools** | Copy, move, search, extract and open; every path field has **Browse…**, and each card has its own result square that opens when an action runs |
 | **About** | Logo, version, description, the repository link, and the update controls — padded to the tab width, with the actions stacked vertically |
 
@@ -32,7 +32,9 @@ shows which one the command belongs to. Both are set from the create
 and edit dialogs, or with `crower create --icon/--group` and
 `crower update --icon/--group`. The Icon control is a large emoji button:
 tapping it opens the full catalogue with a category selector and a search over
-names, aliases, tags and the glyph; **Clear** removes it. Picking from the window
+names, aliases, tags and the glyph; **Clear** removes it. The catalogue omits
+multi-codepoint sequences (joined faces, skin-tone variants, flags) that the
+platform font commonly renders as a blank cell. Picking from the window
 always yields a catalogue emoji; a value set with `--icon` is shown as stored.
 The **Group** field is a dropdown of the groups in use plus **New group**, which
 asks for a name and selects it, so a group never has to be typed.
@@ -76,9 +78,11 @@ Delete and restore both ask first. Restoring puts the command set back to what a
 history entry recorded and drops the newer entries, through the same
 `Session.RevertTo` path `crower revert` uses.
 
-The History tab lists entries as cards, newest first. A card shows its summary —
-when, operation, command and version — and opens into the labelled note fields,
-the raw `key=value` line, and **Run**, **Edit** and **Restore this state**.
+The History tab lists entries as cards, newest first. A card shows an operation
+icon, the command, the time and the version; it opens into the labelled fields
+(the full date and version included), the raw `key=value` line, and **Run**,
+**Edit** and **Restore this state**. Opening a card expands it in place and only
+scrolls if it would otherwise leave the viewport.
 Opening one closes the previous card. The newest hundred are rendered;
 **Load older** appends the next hundred, so a long log opens quickly and only the
 entries on screen are formatted. **Run** replays an execute entry with the
