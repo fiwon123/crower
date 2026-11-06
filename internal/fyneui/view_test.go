@@ -475,7 +475,16 @@ func TestCommandCardsFollowTheFilter(t *testing.T) {
 		t.Errorf("cards = %d, want both commands", len(front.commandCards))
 	}
 
+	// A text filter falls back to the whole set, so the no-match state is the
+	// empty-group one.
 	front.filterEntry.SetText("zzz")
+
+	if len(front.commandCards) != 2 || front.commandEmpty.Visible() {
+		t.Errorf("text fallback = %d cards, empty=%v, want the whole set", len(front.commandCards), front.commandEmpty.Visible())
+	}
+
+	front.model.Group = "missing"
+	front.rebuildCommands()
 
 	if !front.commandEmpty.Visible() || !strings.Contains(front.commandEmpty.Text, "match") {
 		t.Errorf("empty state = %q, want the no-match message", front.commandEmpty.Text)
