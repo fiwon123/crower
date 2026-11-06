@@ -87,7 +87,7 @@ func Run(commands catalog.Catalog, history timeline.Log, deps Deps) {
 }
 
 // ui is the widget set the tabs share. Reloading after an edit has to refresh
-// both the command list and the history table, so both live here instead of
+// both the command list and the history cards, so both live here instead of
 // being captured by one tab.
 type ui struct {
 	model    *desktop.Model
@@ -110,39 +110,30 @@ type ui struct {
 	// Commands tab changes the setup selector's labels, so both need it.
 	tabs *container.AppTabs
 
-	// commandsRoot and historyRoot are the tab contents. Showing a panel that
-	// was hidden at build time needs a layout pass from the root: Fyne's
-	// layouts skip invisible children, so the panel has no size until then.
+	// commandsRoot is the Commands tab's border. Showing the details panel needs
+	// a layout pass from it: Fyne's layouts skip invisible children, so the panel
+	// has no size until then.
 	commandsRoot *fyne.Container
-	historyRoot  *fyne.Container
 
-	list               *widget.List
-	detail             *widget.Label
-	detailFields       *fyne.Container
-	detailBody         *fyne.Container
-	detailToggle       *widget.Button
-	detailShown        bool
-	paramsEntry        *widget.Entry
-	filterEntry        *widget.Entry
-	groupFilter        *widget.Select
-	table              *widget.Table
-	historyDetail      *widget.Label
-	historyFields      *fyne.Container
-	historyRaw         *widget.Label
-	historyRawToggle   *widget.Button
-	historyRawShown    bool
-	historyBody        *fyne.Container
-	historyToggle      *widget.Button
-	historyDetailShown bool
-	runHistory         *widget.Button
-	editHistory        *widget.Button
-	historyHint        *widget.Label
-	revert             *widget.Button
+	list         *widget.List
+	detail       *widget.Label
+	detailFields *fyne.Container
+	detailBody   *fyne.Container
+	detailToggle *widget.Button
+	detailShown  bool
+	paramsEntry  *widget.Entry
+	filterEntry  *widget.Entry
+	groupFilter  *widget.Select
 
-	// historyRows is the table's snapshot: rebuild it on reload or tab open
-	// rather than recomputing the whole log for every cell.
-	historyRows []desktop.HistoryRow
-	historyRow  int
+	historyScroll   *container.Scroll
+	historyPage     *fyne.Container
+	historyList     *fyne.Container
+	historyEmpty    *widget.Label
+	historyLoadMore *widget.Button
+	historyCards    []*historyCard
+	historyOpen     *historyCard
+	historyTotal    int
+	historyLimit    int
 
 	// tools tab: one result square per card, plus the sources a drop fills
 	sourcesEntry   *widget.Entry
@@ -174,7 +165,6 @@ func newUI(model *desktop.Model, window fyne.Window, deps Deps) *ui {
 		groups:     deps.Groups,
 		setups:     deps.Setups,
 		groupIcons: map[string]string{},
-		historyRow: -1,
 	}
 
 	if deps.Setups != nil {

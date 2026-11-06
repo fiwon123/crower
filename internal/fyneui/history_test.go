@@ -3,14 +3,12 @@
 package fyneui
 
 import (
-	"image/color"
 	"slices"
 	"strings"
 	"testing"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/adapters/notes"
 	"github.com/fiwon123/crower/internal/desktop"
@@ -19,230 +17,130 @@ import (
 	"github.com/fiwon123/crower/internal/domain/timeline"
 )
 
-func historyTestUI(t *testing.T) (*ui, int) {
-	t.Helper()
-
-	var history timeline.Log
-	for i := 0; i < 3; i++ {
-		history.Add(operation.Create, "greet", "note")
-	}
-
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
-		history,
-		stubExecutor{},
-	)
-
-	front, _ := newTestUI(t, model, stubEditor{}, stubReverter{})
-	front.historyTab()
-
-	return front, len(history.AllData)
-}
-
-// The history table's cells have to be reachable by the canvas walk for the
-// same reason as the command rows: the cell type embeds a container (#406).
-func TestHistoryCellsArePaintable(t *testing.T) {
-	var history timeline.Log
-	for i := 0; i < 3; i++ {
-		history.Add(operation.Create, "greet", "note")
-	}
-
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
-		history,
-		stubExecutor{},
-	)
-
-	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
-	window.SetContent(front.content())
-	window.Resize(fyneSize())
-
-	front.tabs.SelectIndex(1)
-	window.Resize(fyneSize())
-
-	if labels := labelsIn(window.Canvas().Content()); !slices.Contains(labels, "greet") {
-		t.Fatalf("the history cell text is not reachable in the rendered tree; labels = %q", labels)
-	}
-}
-
-// Selecting any cell selects the row it belongs to, not the cell, and opens the
-// panel below the table.
-func TestHistorySelectsTheWholeRow(t *testing.T) {
-	front, rows := historyTestUI(t)
-
-	if rows == 0 {
-		t.Fatal("the fixture has no history")
-	}
-
-	front.table.OnSelected(widget.TableCellID{Row: 1, Col: 3})
-
-	if front.historyRow != 1 {
-		t.Errorf("historyRow = %d, want the row of the clicked cell", front.historyRow)
-	}
-
-	if !front.historyBody.Visible() {
-		t.Error("selecting a row did not open the detail panel")
-	}
-
-	if !strings.Contains(front.historyDetail.Text, "Version") {
-		t.Errorf("detail = %q, want the entry's version", front.historyDetail.Text)
-	}
-
-	if front.revert.Disabled() {
-		t.Error("restore stayed disabled after a row was selected")
-	}
-}
-
-// Selecting a row must give the history panel a height, not only make it
-// visible: Fyne's layouts skip an invisible child, so a panel hidden at build
-// time has no size until the tab lays out again.
-func TestSelectingAHistoryRowSizesTheDetailPanel(t *testing.T) {
-	var history timeline.Log
-	for i := 0; i < 3; i++ {
-		history.Add(operation.Create, "greet", "note")
-	}
-
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
-		history,
-		stubExecutor{},
-	)
-
-	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
-	window.SetContent(front.content())
-	window.Resize(fyneSize())
-
-	if size := front.historyBody.Size(); size.Height != 0 {
-		t.Fatalf("the panel already has a size before a selection: %v", size)
-	}
-
-	front.table.OnSelected(widget.TableCellID{Row: 0, Col: 1})
-
-	if !front.historyBody.Visible() {
-		t.Fatal("selecting a row did not open the panel")
-	}
-
-	if size := front.historyBody.Size(); size.Height == 0 {
-		t.Fatalf("panel size = %v, want the tab to lay it out", size)
-	}
-}
-
-// Unselecting closes the panel again, so the table keeps the height.
-func TestHistoryUnselectClosesTheDetail(t *testing.T) {
-	front, _ := historyTestUI(t)
-
-	front.table.OnSelected(widget.TableCellID{Row: 0, Col: 1})
-	front.table.OnUnselected(widget.TableCellID{Row: 0, Col: 1})
-
-	if front.historyRow != -1 {
-		t.Errorf("historyRow = %d, want -1", front.historyRow)
-	}
-
-	if front.historyBody.Visible() {
-		t.Error("the detail panel stayed open after the selection was cleared")
-	}
-
-	if front.historyDetail.Text != "" {
-		t.Errorf("detail = %q, want it cleared", front.historyDetail.Text)
-	}
-
-	if len(front.historyFields.Objects) != 0 {
-		t.Error("the field grid stayed populated after the selection was cleared")
-	}
-
-	if !front.runHistory.Disabled() || !front.editHistory.Disabled() {
-		t.Error("an action stayed enabled without a selected row")
-	}
-
-	if !front.revert.Disabled() {
-		t.Error("restore stayed enabled without a selected row")
-	}
-}
-
-// The Details toggle collapses the panel without losing the selection.
-func TestHistoryDetailToggle(t *testing.T) {
-	front, _ := historyTestUI(t)
-
-	front.table.OnSelected(widget.TableCellID{Row: 0, Col: 0})
-	front.setHistoryDetailVisible(false)
-
-	if front.historyBody.Visible() {
-		t.Error("the toggle did not collapse the panel")
-	}
-
-	if front.historyRow != 0 {
-		t.Error("collapsing the panel dropped the selected row")
-	}
-}
-
-// A cell's background is the row highlight: tinted while its row is selected,
-// transparent otherwise.
-func TestHistoryCellPaintsTheRowSelection(t *testing.T) {
-	cell := newHistoryCell()
-	cell.label.SetText("Version 1")
-
-	cell.setSelected(true)
-
-	if cell.bg.FillColor == color.Transparent {
-		t.Error("the selected row is not tinted")
-	}
-
-	cell.setSelected(false)
-
-	if cell.bg.FillColor != color.Transparent {
-		t.Errorf("FillColor = %v, want transparent for an unselected row", cell.bg.FillColor)
-	}
-}
-
-// historyEntryUI lays out the window over one or more commands and one recorded
-// entry, with History selected and that row chosen. A nil commands slice means
-// the usual single greet command.
-func historyEntryUI(t *testing.T, exec desktop.Executor, commands []catalog.Command, op operation.Operation, command, note string) (*ui, fyne.Window) {
+// historyUI lays out the window over a log and opens History.
+func historyUI(t *testing.T, exec desktop.Executor, commands []catalog.Command, history timeline.Log) (*ui, fyne.Window) {
 	t.Helper()
 
 	if commands == nil {
 		commands = []catalog.Command{{Name: "greet", Exec: "echo hi"}}
 	}
 
-	var history timeline.Log
-	history.Add(op, command, note)
-
-	model := desktop.NewModel(
-		catalog.New(nil, commands),
-		history,
-		exec,
-	)
+	model := desktop.NewModel(catalog.New(nil, commands), history, exec)
 
 	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
 	window.SetContent(front.content())
 	window.Resize(fyneSize())
 	front.tabs.SelectIndex(1)
-	front.table.OnSelected(widget.TableCellID{Row: 0, Col: 1})
 
 	return front, window
 }
 
-// The note is shown as labelled fields rather than one key=value line, and the
-// original line stays behind the Raw note toggle.
-func TestHistoryDetailLabelsTheNoteFields(t *testing.T) {
+// historyEntryUI lays out the window over one recorded entry.
+func historyEntryUI(t *testing.T, exec desktop.Executor, commands []catalog.Command, op operation.Operation, command, note string) (*ui, fyne.Window) {
+	t.Helper()
+
+	var history timeline.Log
+	history.Add(op, command, note)
+
+	return historyUI(t, exec, commands, history)
+}
+
+// openHistoryCard opens the card at index and returns it.
+func openHistoryCard(t *testing.T, front *ui, index int) *historyCard {
+	t.Helper()
+
+	if index < 0 || index >= len(front.historyCards) {
+		t.Fatalf("card %d does not exist; %d cards", index, len(front.historyCards))
+	}
+
+	card := front.historyCards[index]
+	front.toggleHistoryCard(card)
+
+	return card
+}
+
+// Opening an entry builds its detail inline; nothing is built while collapsed.
+func TestHistoryEntryOpensInline(t *testing.T) {
+	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, []string{"a b"})
+	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
+
+	if len(front.historyCards) != 1 {
+		t.Fatalf("cards = %d, want 1", len(front.historyCards))
+	}
+
+	card := front.historyCards[0]
+	if card.isOpen() {
+		t.Fatal("the entry is open before it was tapped")
+	}
+
+	if len(card.body.Objects) != 0 {
+		t.Fatal("a collapsed card built its body")
+	}
+
+	card.header.OnTapped()
+
+	if !card.isOpen() || !card.body.Visible() {
+		t.Fatal("tapping the header did not open the card")
+	}
+
+	if len(card.body.Objects) == 0 {
+		t.Fatal("the opened card has no body")
+	}
+}
+
+// Opening another entry closes the first, so the page holds one detail at a time.
+func TestHistoryOpeningAnotherCardClosesTheFirst(t *testing.T) {
+	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
+
+	var history timeline.Log
+	history.Add(operation.Execute, "greet", note)
+	history.Add(operation.Execute, "greet", note)
+
+	front, _ := historyUI(t, stubExecutor{}, nil, history)
+
+	first := openHistoryCard(t, front, 0)
+	second := openHistoryCard(t, front, 1)
+
+	if first.isOpen() {
+		t.Error("the first card stayed open")
+	}
+
+	if !second.isOpen() {
+		t.Error("the second card did not open")
+	}
+}
+
+// The note is shown as labelled fields, with the raw line behind a toggle.
+func TestHistoryCardLabelsTheNoteFields(t *testing.T) {
 	command := catalog.Command{Name: "greet", Aliases: []string{"hi"}, Exec: "echo hi"}
 	note := notes.ExecuteCommandNote(command, []string{"a b"})
 
 	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
+	card := openHistoryCard(t, front, 0)
 
-	labels := labelsIn(front.historyFields)
+	labels := labelsIn(card.body)
 	for _, want := range []string{"Operation", "Name", "Aliases", "Exec", "Params", "execute", "greet", "hi", "echo hi", "a b"} {
 		if !slices.Contains(labels, want) {
 			t.Errorf("fields %q do not contain %q", labels, want)
 		}
 	}
 
-	if front.historyRaw.Visible() {
+	if card.raw.Visible() {
 		t.Error("the raw note is open before the toggle was pressed")
 	}
 
-	if !strings.Contains(front.historyRaw.Text, "command_exec=echo hi") {
-		t.Errorf("raw note = %q, want the key=value line", front.historyRaw.Text)
+	if !strings.Contains(card.raw.Text, "command_exec=echo hi") {
+		t.Errorf("raw note = %q, want the key=value line", card.raw.Text)
+	}
+}
+
+// An entry whose note is empty says so.
+func TestHistoryCardShowsNoNotePlaceholder(t *testing.T) {
+	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", "")
+	card := openHistoryCard(t, front, 0)
+
+	if labels := labelsIn(card.body); !slices.Contains(labels, "(no note)") {
+		t.Errorf("fields %q do not say the entry has no note", labels)
 	}
 }
 
@@ -252,12 +150,13 @@ func TestHistoryRunReplaysTheRecordedParams(t *testing.T) {
 	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, []string{"a b", "-x"})
 
 	front, _ := historyEntryUI(t, exec, nil, operation.Execute, "greet", note)
+	card := openHistoryCard(t, front, 0)
 
-	if front.runHistory.Disabled() {
+	if card.run.Disabled() {
 		t.Fatal("run is disabled for an execute entry whose command exists")
 	}
 
-	front.runHistoryEntry()
+	card.run.OnTapped()
 
 	if !slices.Equal(exec.keys, []string{"greet"}) {
 		t.Fatalf("executed %v, want [greet]", exec.keys)
@@ -268,10 +167,37 @@ func TestHistoryRunReplaysTheRecordedParams(t *testing.T) {
 	}
 }
 
+// An execute entry written before command_params existed asks for them when the
+// command declares any.
+func TestHistoryRunAsksWhenParamsWereNotRecorded(t *testing.T) {
+	exec := &recordingExecutor{}
+	commands := []catalog.Command{{Name: "greet", Exec: "echo {1}", Params: []string{"who"}}}
+	legacy := "main_operation=execute;sub_operation=command;command_name=greet;command_exec=echo {1}"
+
+	front, window := historyEntryUI(t, exec, commands, operation.Execute, "greet", legacy)
+	card := openHistoryCard(t, front, 0)
+
+	if card.run.Disabled() {
+		t.Fatal("run is disabled for an execute entry whose command exists")
+	}
+
+	card.run.OnTapped()
+
+	if len(exec.keys) != 0 {
+		t.Errorf("executed %v before the parameters were supplied", exec.keys)
+	}
+
+	if front.model.State != desktop.ViewParams {
+		t.Errorf("state = %v, want the params prompt", front.model.State)
+	}
+
+	if len(window.Canvas().Overlays().List()) == 0 {
+		t.Error("run did not open the parameters dialog")
+	}
+}
+
 // Edit clears the Commands filters, selects the entry's command and opens its
-// dialog, so the user does not have to find it by hand. The command sits second
-// in a two-command catalog and the list is filtered to something else, so the
-// selection and the filter reset are both load-bearing.
+// dialog.
 func TestHistoryEditOpensTheCommand(t *testing.T) {
 	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
 	commands := []catalog.Command{
@@ -288,7 +214,8 @@ func TestHistoryEditOpensTheCommand(t *testing.T) {
 	front.filterEntry.SetText("zzz")
 	front.list.Refresh()
 
-	front.editHistoryEntry()
+	card := openHistoryCard(t, front, 0)
+	card.edit.OnTapped()
 
 	if front.tabs.SelectedIndex() != 0 {
 		t.Errorf("selected tab = %d, want Commands", front.tabs.SelectedIndex())
@@ -306,17 +233,12 @@ func TestHistoryEditOpensTheCommand(t *testing.T) {
 		t.Errorf("selected command = %q, want greet", got)
 	}
 
-	if front.model.Index != 1 {
-		t.Errorf("index = %d, want greet's row", front.model.Index)
-	}
-
 	if len(window.Canvas().Overlays().List()) == 0 {
 		t.Error("edit did not open a dialog")
 	}
 }
 
-// An action is offered only where it can work: Run needs an execute entry whose
-// command exists, Edit only needs the command to exist.
+// An action is offered only where it can work, and a disabled one says why.
 func TestHistoryActionsFollowTheEntry(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -350,56 +272,196 @@ func TestHistoryActionsFollowTheEntry(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			front, _ := historyEntryUI(t, stubExecutor{}, nil, tt.op, tt.command, tt.note)
+			card := openHistoryCard(t, front, 0)
 
-			if got := !front.runHistory.Disabled(); got != tt.run {
+			if got := !card.run.Disabled(); got != tt.run {
 				t.Errorf("run enabled = %v, want %v", got, tt.run)
 			}
 
-			if got := !front.editHistory.Disabled(); got != tt.edit {
+			if got := !card.edit.Disabled(); got != tt.edit {
 				t.Errorf("edit enabled = %v, want %v", got, tt.edit)
 			}
 
 			if tt.hint == "" {
-				if front.historyHint.Text != "" || front.historyHint.Visible() {
-					t.Errorf("hint = %q, want none when both actions apply", front.historyHint.Text)
+				if card.hint.Text != "" || card.hint.Visible() {
+					t.Errorf("hint = %q, want none when all actions apply", card.hint.Text)
 				}
 
 				return
 			}
 
-			if !strings.Contains(front.historyHint.Text, tt.hint) {
-				t.Errorf("hint = %q, want it to contain %q", front.historyHint.Text, tt.hint)
+			if !strings.Contains(card.hint.Text, tt.hint) {
+				t.Errorf("hint = %q, want it to contain %q", card.hint.Text, tt.hint)
 			}
 
-			if !front.historyHint.Visible() {
+			if !card.hint.Visible() {
 				t.Error("a disabled action left no visible reason")
 			}
 		})
 	}
 }
 
-// The Raw note toggle opens and closes the stored line.
+// The Raw note toggle opens and closes the stored line, and the page lays the
+// opened label out.
 func TestHistoryRawNoteToggle(t *testing.T) {
 	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
 
 	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
+	card := openHistoryCard(t, front, 0)
 
-	if front.historyRaw.Visible() {
+	if card.raw.Visible() {
 		t.Fatal("the raw note starts open")
 	}
 
-	front.historyRawToggle.OnTapped()
-	if !front.historyRaw.Visible() || !front.historyRawShown {
+	card.rawToggle.OnTapped()
+	if !card.raw.Visible() || !card.rawShown {
 		t.Error("the toggle did not open the raw note")
 	}
 
-	if front.historyRaw.Size().Height == 0 {
-		t.Error("the opened raw note has no height: the tab did not lay it out")
+	if card.raw.Size().Height == 0 {
+		t.Error("the opened raw note has no height: the page did not lay it out")
 	}
 
-	front.historyRawToggle.OnTapped()
-	if front.historyRaw.Visible() || front.historyRawShown {
+	card.rawToggle.OnTapped()
+	if card.raw.Visible() || card.rawShown {
 		t.Error("the toggle did not close the raw note")
+	}
+}
+
+// The page renders the newest hundred entries and loads the rest on request.
+func TestHistoryPagesOlderEntries(t *testing.T) {
+	var history timeline.Log
+	for i := 0; i < 150; i++ {
+		history.Add(operation.Create, "greet", "note")
+	}
+
+	front, _ := historyUI(t, stubExecutor{}, nil, history)
+
+	if len(front.historyCards) != historyPageSize {
+		t.Fatalf("cards = %d, want the first page (%d)", len(front.historyCards), historyPageSize)
+	}
+
+	if !strings.Contains(front.historyCards[0].header.Text, "#150") {
+		t.Errorf("first card = %q, want the newest entry (#150)", front.historyCards[0].header.Text)
+	}
+
+	if !strings.Contains(front.historyCards[99].header.Text, "#51") {
+		t.Errorf("last card on page 1 = %q, want #51", front.historyCards[99].header.Text)
+	}
+
+	if !front.historyLoadMore.Visible() {
+		t.Error("Load older is hidden while entries remain")
+	}
+
+	front.loadOlderHistory()
+
+	if len(front.historyCards) != 150 {
+		t.Errorf("cards = %d, want all 150 after loading older", len(front.historyCards))
+	}
+
+	if !strings.Contains(front.historyCards[149].header.Text, "#1") {
+		t.Errorf("last card = %q, want the oldest entry (#1)", front.historyCards[149].header.Text)
+	}
+
+	if front.historyLoadMore.Visible() {
+		t.Error("Load older is still visible with nothing left")
+	}
+}
+
+// A reload (an edit, a revert or a setup switch) rebuilds the rendered cards.
+func TestHistoryReloadRebuildsTheCards(t *testing.T) {
+	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Create, "greet", "note")
+
+	if len(front.historyCards) != 1 {
+		t.Fatalf("cards = %d, want 1", len(front.historyCards))
+	}
+
+	var next timeline.Log
+	next.Add(operation.Copy, "", "note")
+	next.Add(operation.Delete, "greet", "note")
+
+	front.reload(catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}), next)
+
+	if len(front.historyCards) != 2 {
+		t.Fatalf("cards = %d, want the new page", len(front.historyCards))
+	}
+
+	if !strings.Contains(front.historyCards[0].header.Text, "delete") {
+		t.Errorf("first card = %q, want the newest entry", front.historyCards[0].header.Text)
+	}
+}
+
+// Restore counts the entry's distance from the newest; the newest is one step.
+func TestHistoryRestoreCountsFromTheNewest(t *testing.T) {
+	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
+
+	var history timeline.Log
+	for i := 0; i < 3; i++ {
+		history.Add(operation.Execute, "greet", note)
+	}
+
+	front, window := historyUI(t, stubExecutor{}, nil, history)
+
+	newest := openHistoryCard(t, front, 0)
+	if got := front.revertSteps(newest); got != 1 {
+		t.Errorf("steps for the newest = %d, want 1", got)
+	}
+
+	second := openHistoryCard(t, front, 1)
+	if got := front.revertSteps(second); got != 2 {
+		t.Errorf("steps for the second = %d, want 2", got)
+	}
+
+	second.restore.OnTapped()
+
+	if len(window.Canvas().Overlays().List()) == 0 {
+		t.Error("restore did not ask for confirmation")
+	}
+}
+
+// A long command is shortened in the summary so the header cannot widen the
+// window's minimum.
+func TestHistorySummaryTitleTruncatesLongCommands(t *testing.T) {
+	title := historySummaryTitle(desktop.HistorySummary{
+		Version:   7,
+		When:      "2026-11-06 12:00",
+		Operation: "execute",
+		Command:   strings.Repeat("a", 60),
+	})
+
+	if !strings.Contains(title, "…") {
+		t.Errorf("title = %q, want an ellipsis", title)
+	}
+
+	if len([]rune(title)) > 90 {
+		t.Errorf("title = %q, want it bounded", title)
+	}
+}
+
+// An empty log says so instead of showing an empty page.
+func TestHistoryEmptyState(t *testing.T) {
+	front, _ := historyUI(t, stubExecutor{}, nil, timeline.Log{})
+
+	if len(front.historyCards) != 0 {
+		t.Errorf("cards = %d, want none", len(front.historyCards))
+	}
+
+	if !front.historyEmpty.Visible() {
+		t.Error("the empty state is hidden")
+	}
+}
+
+// The History tab keeps its header and cards off the window edge.
+func TestHistoryHasALeftMargin(t *testing.T) {
+	_, window := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", "main_operation=execute")
+
+	pos, found := labelPosition(window.Canvas().Content(), historyHeader)
+	if !found {
+		t.Fatal("the history header is not in the rendered tree")
+	}
+
+	if pos.X < theme.Padding()*2 {
+		t.Errorf("header x = %.1f, want at least %.1f from the window edge", pos.X, theme.Padding()*2)
 	}
 }
 
@@ -440,60 +502,5 @@ func TestHistoryFieldLabel(t *testing.T) {
 		if got := historyFieldLabel(key); got != want {
 			t.Errorf("historyFieldLabel(%q) = %q, want %q", key, got, want)
 		}
-	}
-}
-
-// An entry whose note is empty says so, rather than showing a blank panel.
-func TestHistoryDetailShowsNoNotePlaceholder(t *testing.T) {
-	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", "")
-
-	if labels := labelsIn(front.historyFields); !slices.Contains(labels, "(no note)") {
-		t.Errorf("fields %q do not say the entry has no note", labels)
-	}
-}
-
-// An execute entry written before command_params existed has no record of its
-// arguments. When the command declares parameters, Run asks for them instead of
-// running the exec with literal placeholders.
-func TestHistoryRunAsksWhenParamsWereNotRecorded(t *testing.T) {
-	exec := &recordingExecutor{}
-	commands := []catalog.Command{{Name: "greet", Exec: "echo {1}", Params: []string{"who"}}}
-	legacy := "main_operation=execute;sub_operation=command;command_name=greet;command_exec=echo {1}"
-
-	front, window := historyEntryUI(t, exec, commands, operation.Execute, "greet", legacy)
-
-	if front.runHistory.Disabled() {
-		t.Fatal("run is disabled for an execute entry whose command exists")
-	}
-
-	front.runHistoryEntry()
-
-	if len(exec.keys) != 0 {
-		t.Errorf("executed %v before the parameters were supplied", exec.keys)
-	}
-
-	if front.model.State != desktop.ViewParams {
-		t.Errorf("state = %v, want the params prompt", front.model.State)
-	}
-
-	if len(window.Canvas().Overlays().List()) == 0 {
-		t.Error("run did not open the parameters dialog")
-	}
-}
-
-// The History tab keeps its header and table off the window edge, like the
-// Commands tab.
-func TestHistoryHasALeftMargin(t *testing.T) {
-	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
-
-	_, window := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
-
-	pos, found := labelPosition(window.Canvas().Content(), historyHeader)
-	if !found {
-		t.Fatal("the history header is not in the rendered tree")
-	}
-
-	if pos.X < theme.Padding()*2 {
-		t.Errorf("header x = %.1f, want at least %.1f from the window edge", pos.X, theme.Padding()*2)
 	}
 }

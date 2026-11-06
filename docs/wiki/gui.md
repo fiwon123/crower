@@ -22,7 +22,7 @@ The window is split into tabs:
 | Tab | What it holds |
 | --- | --- |
 | **Commands** | The list, with a filter, a group filter and **Run**, **Edit** and **Delete** on every row; selecting one opens the **Details** panel below the list |
-| **History** | Every recorded operation as a table, newest first; clicking a row selects the whole row and opens its details below the table, with **Restore this state** |
+| **History** | Every recorded operation, newest first, as expandable cards: a summary line opens into the labelled note fields, the raw line, and **Run**, **Edit** and **Restore this state** |
 | **Tools** | Copy, move, search, extract and open; every path field has **Browse…**, and each card has its own result square that opens when an action runs |
 | **About** | Logo, version, description, the repository link, and the update controls — padded to the tab width, with actions that wrap on a narrow window |
 
@@ -34,8 +34,9 @@ and edit dialogs, or with `crower create --icon/--group` and
 of about a hundred emoji; the field stays editable, so any other emoji can be
 typed or pasted.
 
-Selecting a row opens a **Details** panel below the list; the **Details** toggle
-collapses it again. The panel shows the exec line and the command's metadata,
+On the Commands tab, selecting a row opens a **Details** panel below the list;
+the **Details** toggle collapses it again. The panel shows the exec line and the
+command's metadata,
 and carries a **params entry** with its own **Run**: the entry's text is passed
 as parameters, and an empty entry runs the command without any. The row's ▶ and
 the toolbar's **Run** are smart — a command that declares `Params` asks for them
@@ -65,6 +66,15 @@ setup.
 Delete and restore both ask first. Restoring puts the command set back to what a
 history entry recorded and drops the newer entries, through the same
 `Session.RevertTo` path `crower revert` uses.
+
+The History tab lists entries as cards, newest first. A card shows its summary —
+when, operation, command and version — and opens into the labelled note fields,
+the raw `key=value` line, and **Run**, **Edit** and **Restore this state**.
+Opening one closes the previous card. The newest hundred are rendered;
+**Load older** appends the next hundred, so a long log opens quickly and only the
+entries on screen are formatted. **Run** replays an execute entry with the
+parameters it recorded; older entries without them ask when the command declares
+parameters. **Edit** opens that command on the Commands tab.
 
 The About tab checks GitHub for a newer release when the window opens and
 reports what it finds. When there is one, an **Install `<version>`** button
