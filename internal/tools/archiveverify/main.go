@@ -1,7 +1,8 @@
 // Command archiveverify checks the release archives in a directory.
 //
 // Every archive must contain the executables the documentation tells users to
-// run — `crower` and `cr`, or `crower.exe` and `cr.exe` on Windows. The
+// run — `crower` and `cr`, or `crower.exe` and `cr.exe` on Windows — and the
+// README and NOTICE the licence requires every distributed copy to carry. The
 // platform and architecture belong in the archive filename only; a binary
 // called `cr_linux_amd64` is unreachable by the name the README uses, which is
 // exactly how v0.4.0 shipped a release where `cr` did not exist.
@@ -140,6 +141,13 @@ func checkNames(gui bool, entries []string) []string {
 		problems = append(problems, fmt.Sprintf(
 			"missing %q (or %q); the archive holds %v", guiName, guiName+".exe", entries,
 		))
+	}
+	for _, required := range []string{"README.md", "NOTICE"} {
+		if !have[required] {
+			problems = append(problems, fmt.Sprintf(
+				"missing %q; every archive ships the README and the licence notices", required,
+			))
+		}
 	}
 	for _, name := range suffixed {
 		problems = append(problems, fmt.Sprintf(
