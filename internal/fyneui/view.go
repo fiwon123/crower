@@ -7,6 +7,7 @@ package fyneui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -121,12 +122,19 @@ type ui struct {
 	detailToggle       *widget.Button
 	detailShown        bool
 	paramsEntry        *widget.Entry
+	filterEntry        *widget.Entry
 	groupFilter        *widget.Select
 	table              *widget.Table
 	historyDetail      *widget.Label
+	historyFields      *fyne.Container
+	historyRaw         *widget.Label
+	historyRawToggle   *widget.Button
+	historyRawShown    bool
 	historyBody        *fyne.Container
 	historyToggle      *widget.Button
 	historyDetailShown bool
+	runHistory         *widget.Button
+	editHistory        *widget.Button
 	revert             *widget.Button
 
 	// historyRows is the table's snapshot: rebuild it on reload or tab open
@@ -235,6 +243,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	u.list.OnUnselected = func(widget.ListItemID) { u.clearDetail() }
 
 	filter := newScrollFreeEntry()
+	u.filterEntry = filter
 	filter.SetPlaceHolder("Filter commands")
 	filter.OnChanged = func(string) {
 		u.model.Filter = filter.Text
@@ -585,6 +594,42 @@ func (u *ui) selectRow(id widget.ListItemID) {
 	u.detail.SetText(describe(command))
 	u.paramsEntry.SetPlaceHolder(paramsHint(command))
 	u.setDetailVisible(true)
+}
+
+// selectCommand brings a command into view from another tab: it clears the
+// filters, opens Commands and selects the row, so the detail panel follows.
+func (u *ui) selectCommand(key string) {
+	if u.filterEntry != nil {
+		u.filterEntry.SetText("")
+	}
+
+	u.model.Filter = ""
+
+	if u.groupFilter != nil {
+		u.groupFilter.SetSelected(allGroupsLabel)
+	}
+
+	u.model.Group = ""
+
+	if u.tabs != nil {
+		u.tabs.SelectIndex(0)
+	}
+
+	if u.list == nil {
+		return
+	}
+
+	u.list.Refresh()
+	u.list.UnselectAll()
+	u.clearDetail()
+
+	index := slices.Index(u.model.FilteredKeys(), key)
+	if index < 0 {
+		return
+	}
+
+	u.model.Index = index
+	u.list.Select(index)
 }
 
 // setDetailVisible is the Details toggle.
