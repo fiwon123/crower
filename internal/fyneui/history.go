@@ -338,27 +338,20 @@ func (u *ui) showHistoryFields(fields []desktop.HistoryField) {
 		return
 	}
 
-	u.historyFields.RemoveAll()
-
-	if len(fields) == 0 {
-		u.historyFields.Add(widget.NewLabel(""))
-		u.historyFields.Add(widget.NewLabel("(no note)"))
-		u.historyFields.Refresh()
-		return
-	}
+	rows := make([]detailField, 0, len(fields))
 
 	for _, field := range fields {
-		key := widget.NewLabelWithStyle(historyFieldLabel(field.Key), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		key.Wrapping = fyne.TextWrapWord
-
-		value := widget.NewLabel(historyFieldValue(field.Key, field.Value))
-		value.Wrapping = fyne.TextWrapWord
-
-		u.historyFields.Add(key)
-		u.historyFields.Add(value)
+		rows = append(rows, detailField{
+			Label: historyFieldLabel(field.Key),
+			Value: historyFieldValue(field.Key, field.Value),
+		})
 	}
 
-	u.historyFields.Refresh()
+	if len(rows) == 0 {
+		rows = append(rows, detailField{Value: "(no note)"})
+	}
+
+	setFieldGrid(u.historyFields, rows)
 }
 
 // historyFieldLabel is what the grid calls a stored key.

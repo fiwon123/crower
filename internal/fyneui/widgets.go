@@ -181,6 +181,36 @@ func (r *toolResult) progress(p desktop.Progress) {
 	})
 }
 
+// detailField is one labelled value in a detail panel.
+type detailField struct {
+	Label string
+	Value string
+}
+
+// setFieldGrid replaces a two-column grid with label/value rows. Keys are bold,
+// values wrap, and an empty list leaves the grid empty — both detail panels use
+// it, so a command and a history entry read the same way.
+func setFieldGrid(grid *fyne.Container, fields []detailField) {
+	if grid == nil {
+		return
+	}
+
+	grid.RemoveAll()
+
+	for _, field := range fields {
+		label := widget.NewLabelWithStyle(field.Label, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		label.Wrapping = fyne.TextWrapWord
+
+		value := widget.NewLabel(field.Value)
+		value.Wrapping = fyne.TextWrapWord
+
+		grid.Add(label)
+		grid.Add(value)
+	}
+
+	grid.Refresh()
+}
+
 // appendPath adds a picked path to a comma-separated list, so repeated Browse
 // clicks build a multi-path value without a multi-select dialog.
 func appendPath(target *widget.Entry, path string) {
