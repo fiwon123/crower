@@ -7,6 +7,7 @@ package fyneui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -83,6 +84,16 @@ func Run(commands catalog.Catalog, history timeline.Log, deps Deps) {
 	front.checkForUpdates()
 
 	window.ShowAndRun()
+
+	// Restart is deferred until the window loop has returned: on Unix the
+	// updater replaces this process image, which cannot happen while the Fyne
+	// loop is still running. A failure has no window left to report to, so it
+	// goes to stderr (the updater also writes restart-error.log).
+	if front.restartRequested && front.updater != nil {
+		if err := front.updater.Restart(); err != nil {
+			fmt.Fprintln(os.Stderr, "restart failed:", err)
+		}
+	}
 }
 
 // ui is the widget set the tabs share. Reloading after an edit has to refresh
@@ -94,9 +105,13 @@ type ui struct {
 	editor   Editor
 	reverter Reverter
 	updater  Updater
-	tools    desktop.Tools
-	groups   desktop.Groups
-	setups   desktop.Setups
+
+	// restartRequested is set by the About tab's Restart button; Run performs the
+	// actual restart after the window loop ends.
+	restartRequested bool
+	tools            desktop.Tools
+	groups           desktop.Groups
+	setups           desktop.Setups
 
 	activeSetup  string
 	setupSelect  *widget.Select
