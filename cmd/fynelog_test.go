@@ -19,7 +19,10 @@ func TestWindowLogKeepsAFailedRun(t *testing.T) {
 
 	t.Cleanup(func() { log.SetOutput(os.Stderr) })
 
-	log.Printf("Fyne error: failed to initialise GLFW")
+	// A recoverable Fyne error: the fatal window-creation path exits the
+	// process, which is the right behaviour but not something a unit test can
+	// survive.
+	log.Printf("Fyne error: the clipboard is unavailable")
 
 	entry.keep()
 
@@ -28,7 +31,7 @@ func TestWindowLogKeepsAFailedRun(t *testing.T) {
 		t.Fatalf("fyne.log was not kept: %v", err)
 	}
 
-	if !strings.Contains(string(body), "failed to initialise GLFW") {
+	if !strings.Contains(string(body), "the clipboard is unavailable") {
 		t.Errorf("log = %q, want Fyne's reason", body)
 	}
 
