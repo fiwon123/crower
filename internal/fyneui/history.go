@@ -10,7 +10,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -387,13 +386,13 @@ func (u *ui) showRevert(card *historyCard) {
 		detail.Version, detail.Operation, detail.Command, detailText,
 	)
 
-	dialog.ShowConfirm("Restore command set", question, func(ok bool) {
+	showConfirm("Restore command set", question, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
 
 		u.applyRevert(steps)
-	}, u.window)
+	})
 }
 
 // applyRevert is the confirmation's submit path.
