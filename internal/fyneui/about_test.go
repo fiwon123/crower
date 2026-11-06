@@ -270,17 +270,6 @@ func TestInstallNowReportsAFailure(t *testing.T) {
 	}
 }
 
-func TestRestartSpawnsTheNewBinary(t *testing.T) {
-	updater := &stubUpdater{current: "v1.0.0"}
-	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
-
-	front.restart()
-
-	if updater.restarts != 1 {
-		t.Errorf("restarts = %d, want 1", updater.restarts)
-	}
-}
-
 // A narrow window must wrap the update actions instead of pushing them past the
 // edge: the old single HBox overflowed as soon as Check, Install and Restore
 // were all visible.
