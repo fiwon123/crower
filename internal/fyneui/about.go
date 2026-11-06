@@ -112,6 +112,9 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 		updates,
 	)
 
+	u.aboutBody = body
+	u.aboutUpdates = updates
+
 	// The body fills the width so the summary and the card wrap with the window;
 	// the page adds the margins and clears the scrollbar. Centring the block
 	// pinned it to its minimum width and defeated both.
@@ -181,12 +184,18 @@ func (u *ui) showInstall(version string) {
 	u.refreshAboutActions()
 }
 
-// refreshAboutActions re-runs the action grid's layout. Hiding a widget only
-// repaints it, and GridWrap's minimum height is whatever the last layout used,
-// so without this an install button that disappears leaves its row behind.
+// refreshAboutActions re-runs the action flow and then the body above it.
+//
+// Hiding a widget only repaints it, and the flow layout reports the minimum
+// height of its last layout, so the actions container alone would keep the old
+// height. Refreshing the body re-reads the card's minimum and lets it shrink.
 func (u *ui) refreshAboutActions() {
 	if u.aboutActions != nil {
 		u.aboutActions.Refresh()
+	}
+
+	if u.aboutBody != nil {
+		u.aboutBody.Refresh()
 	}
 }
 

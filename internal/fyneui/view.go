@@ -158,6 +158,8 @@ type ui struct {
 	restoreButton *widget.Button
 	restartButton *widget.Button
 	aboutActions  *fyne.Container
+	aboutBody     *fyne.Container
+	aboutUpdates  fyne.CanvasObject
 	latest        string
 }
 

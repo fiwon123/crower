@@ -303,6 +303,12 @@ func (l *centeredFlowLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 }
 
 func (l *centeredFlowLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	if size.Width <= 0 {
+		// A container that has not been sized yet cannot wrap anything: leave
+		// the row heights unset rather than recording one row per button.
+		return
+	}
+
 	type flowRow struct {
 		objects []fyne.CanvasObject
 		width   float32
