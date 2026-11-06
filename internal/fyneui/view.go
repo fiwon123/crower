@@ -428,7 +428,7 @@ func newCommandRow() *commandRow {
 		nil,
 		nil,
 		nil,
-		container.NewHBox(row.run, row.edit, row.remove),
+		container.NewHBox(row.run, row.edit, row.remove, gap(theme.Padding()*3, 0)),
 		row.name,
 	)
 
@@ -737,7 +737,11 @@ func (u *ui) runFromDetail() {
 // reader scans it: what runs, what it is called, where it lives, and the limits.
 // Empty values are omitted rather than shown as blank rows.
 func commandDetailFields(command catalog.Command) []detailField {
-	fields := make([]detailField, 0, 9)
+	fields := make([]detailField, 0, 10)
+
+	if command.Name != "" {
+		fields = append(fields, detailField{Label: "Name", Value: command.Name})
+	}
 
 	if command.Exec != "" {
 		fields = append(fields, detailField{Label: "Exec", Value: command.Exec})
