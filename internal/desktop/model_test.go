@@ -108,8 +108,8 @@ func TestStartRunKeyRunsTheChosenRow(t *testing.T) {
 	}
 }
 
-// The rows are newest first and carry the command, or a dash when the
-// operation touched none.
+// The rows are newest first and carry the command, or nothing when the
+// operation touched none (the table renders the dash).
 func TestHistoryRowsAreNewestFirst(t *testing.T) {
 	var history timeline.Log
 	history.Add(operation.Create, "greet", "note")
@@ -122,8 +122,8 @@ func TestHistoryRowsAreNewestFirst(t *testing.T) {
 		t.Fatalf("got %d rows, want 2", len(rows))
 	}
 
-	if rows[0].Version != 2 || rows[0].Operation != "copy" || rows[0].Command != "-" {
-		t.Errorf("row 0 = %+v, want the newest entry with a dash for its command", rows[0])
+	if rows[0].Version != 2 || rows[0].Operation != "copy" || rows[0].Command != "" {
+		t.Errorf("row 0 = %+v, want the newest entry with no command", rows[0])
 	}
 
 	if rows[1].Version != 1 || rows[1].Command != "greet" {
@@ -247,5 +247,65 @@ func TestGroupFilterAndGroups(t *testing.T) {
 	m.Filter = "zzz"
 	if got := m.FilteredKeys(); len(got) != 4 {
 		t.Errorf("text filter fallback = %v, want the whole set", got)
+	}
+}
+
+// A row carries the note split into fields and the parameters an execute entry
+// recorded, so the window can label the entry and run it again.
+func TestHistoryRowsExposeFieldsAndParams(t *testing.T) {
+	var history timeline.Log
+	history.Add(operation.Copy, "", "main_operation=copy;sub_operation=file")
+	history.Add(operation.Execute, "greet",
+		`main_operation=execute;sub_operation=command;command_name=greet;command_exec=echo hi;command_params=["a b","-x"]`)
+
+	m := modelWithCommands([]catalog.Command{{Name: "greet", Exec: "echo hi"}}, history)
+	rows := m.HistoryRows()
+
+	if len(rows) != 2 {
+		t.Fatalf("got %d rows, want 2", len(rows))
+	}
+
+	execute := rows[0]
+	if len(execute.Fields) != 5 || execute.Fields[2] != (HistoryField{Key: "command_name", Value: "greet"}) {
+		t.Errorf("Fields = %v, want the note in order with decoded values", execute.Fields)
+	}
+
+	if !slices.Equal(execute.Params, []string{"a b", "-x"}) {
+		t.Errorf("Params = %v, want the recorded arguments", execute.Params)
+	}
+
+	if !execute.ParamsRecorded {
+		t.Error("ParamsRecorded = false, want true for a note that carries the field")
+	}
+
+	if rows[1].Params != nil || rows[1].ParamsRecorded {
+		t.Errorf("Params/recorded on a copy row = %v/%v, want none recorded", rows[1].Params, rows[1].ParamsRecorded)
+	}
+}
+
+// The history Run action replays the entry's arguments and does not keep a
+// reference the caller could mutate afterwards.
+func TestRunWithParamsUsesTheRecordedArguments(t *testing.T) {
+	exec := &recordingExecutor{}
+	m := NewModel(
+		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
+		timeline.Log{},
+		exec,
+	)
+
+	params := []string{"a b", "-x"}
+	m.RunWithParams("greet", params)
+	params[0] = "changed"
+
+	if !slices.Equal(exec.keys, []string{"greet"}) {
+		t.Fatalf("executed %v, want [greet]", exec.keys)
+	}
+
+	if !slices.Equal(exec.params[0], []string{"a b", "-x"}) {
+		t.Errorf("params = %v, want the recorded arguments", exec.params[0])
+	}
+
+	if m.State != ViewOutput || m.SelectedKey != "greet" {
+		t.Errorf("state/selected = %v/%q, want the output view for greet", m.State, m.SelectedKey)
 	}
 }

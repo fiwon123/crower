@@ -17,7 +17,8 @@ func ExecuteCommandNote(command catalog.Command, params []string) string {
 		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.Aliases).
-		AddCommandExec(command.Exec)
+		AddCommandExec(command.Exec).
+		AddCommandParams(params)
 
 	// A command with steps never runs Exec; name the steps that did run.
 	if len(command.Steps) > 0 {
@@ -53,7 +54,8 @@ func ExecuteLastNote(op operation.Operation, command catalog.Command, params []s
 		AddSubOperation(operation.Command).
 		AddCommandName(command.Name).
 		AddCommandAlias(command.Aliases).
-		AddCommandExec(command.Exec)
+		AddCommandExec(command.Exec).
+		AddCommandParams(params)
 
 	if len(command.Steps) > 0 {
 		builder.AddCommandSteps(command.Steps)

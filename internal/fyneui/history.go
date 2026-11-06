@@ -3,9 +3,12 @@
 package fyneui
 
 import (
+	"encoding/json"
 	"fmt"
 	"image/color"
 	"strconv"
+	"strings"
+	"unicode"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -15,6 +18,8 @@ import (
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/desktop"
+	"github.com/fiwon123/crower/internal/domain/catalog"
+	"github.com/fiwon123/crower/internal/domain/operation"
 )
 
 // historyHeaders is the table's column order. Version is last because the
@@ -74,16 +79,45 @@ func (u *ui) historyTab() fyne.CanvasObject {
 	u.table.OnUnselected = func(widget.TableCellID) {
 		u.historyRow = -1
 		u.table.Refresh()
-		u.revert.Disable()
 		u.clearHistoryDetail()
 	}
+
+	u.runHistory = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), u.runHistoryEntry)
+	u.runHistory.Disable()
+
+	u.editHistory = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), u.editHistoryEntry)
+	u.editHistory.Disable()
 
 	u.revert = widget.NewButtonWithIcon("Restore this state…", theme.HistoryIcon(), u.showRevert)
 	u.revert.Disable()
 
+	u.historyHint = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
+	u.historyHint.Wrapping = fyne.TextWrapWord
+	u.historyHint.Hide()
+
+	// The note is shown as labelled fields; the original key=value line stays
+	// one click away because it is what a bug report and `list --history` show.
+	u.historyFields = container.NewGridWithColumns(2)
+
+	u.historyRaw = widget.NewLabel("")
+	u.historyRaw.Wrapping = fyne.TextWrapWord
+	u.historyRaw.Hide()
+
+	u.historyRawToggle = widget.NewButton("Raw note", func() {
+		u.setHistoryRawVisible(!u.historyRawShown)
+	})
+	u.historyRawToggle.Importance = widget.LowImportance
+
 	// The detail panel sits below the table, as on the Commands tab, and stays
 	// collapsed until an entry is chosen.
-	u.historyBody = container.NewVBox(u.historyDetail, container.NewHBox(u.revert))
+	u.historyBody = container.NewVBox(
+		u.historyDetail,
+		u.historyFields,
+		u.historyRawToggle,
+		u.historyRaw,
+		container.NewHBox(u.runHistory, u.editHistory, u.revert),
+		u.historyHint,
+	)
 	u.historyBody.Hide()
 
 	u.historyToggle = widget.NewButtonWithIcon("Details", theme.MenuDropDownIcon(), func() {
@@ -152,6 +186,10 @@ func historyCell(row desktop.HistoryRow, column int) string {
 	case 1:
 		return row.Operation
 	case 2:
+		if row.Command == "" {
+			return "-"
+		}
+
 		return row.Command
 	case 3:
 		return strconv.Itoa(row.Version)
@@ -208,24 +246,263 @@ func (u *ui) clearHistoryDetail() {
 		u.historyDetail.SetText("")
 	}
 
+	if u.historyFields != nil {
+		u.historyFields.RemoveAll()
+		u.historyFields.Refresh()
+	}
+
+	if u.historyRaw != nil {
+		u.historyRaw.SetText("")
+	}
+
+	u.setHistoryRawVisible(false)
+
+	if u.runHistory != nil {
+		u.runHistory.Disable()
+	}
+
+	if u.editHistory != nil {
+		u.editHistory.Disable()
+	}
+
+	if u.revert != nil {
+		u.revert.Disable()
+	}
+
+	if u.historyHint != nil {
+		u.historyHint.SetText("")
+		u.historyHint.Hide()
+	}
+
 	u.setHistoryDetailVisible(false)
 }
 
-func (u *ui) showHistoryDetail() {
-	if u.historyRow < 0 || u.historyRow >= len(u.historyRows) {
+// setHistoryRawVisible is the Raw note toggle.
+//
+// Like the Details panel it has to refresh the tab root: a label hidden at build
+// time was skipped by the layout, so showing it alone gives it no height.
+func (u *ui) setHistoryRawVisible(visible bool) {
+	u.historyRawShown = visible
+
+	if u.historyRaw == nil {
 		return
 	}
 
-	row := u.historyRows[u.historyRow]
-
-	note := row.Note
-	if note == "" {
-		note = "(no note)"
+	if visible {
+		u.historyRaw.Show()
+	} else {
+		u.historyRaw.Hide()
 	}
 
-	u.historyDetail.SetText(fmt.Sprintf("Version %d — %s, %s\n%s", row.Version, row.Operation, row.Command, note))
+	if u.historyRoot != nil {
+		u.historyRoot.Refresh()
+	}
+}
+
+// selectedHistoryRow is the chosen entry, or false when nothing is selected.
+func (u *ui) selectedHistoryRow() (desktop.HistoryRow, bool) {
+	if u.historyRow < 0 || u.historyRow >= len(u.historyRows) {
+		return desktop.HistoryRow{}, false
+	}
+
+	return u.historyRows[u.historyRow], true
+}
+
+func (u *ui) showHistoryDetail() {
+	row, ok := u.selectedHistoryRow()
+	if !ok {
+		return
+	}
+
+	headline := fmt.Sprintf("Version %d — %s", row.Version, row.Operation)
+	if row.Command != "" {
+		headline += " · " + row.Command
+	}
+	headline += " · " + row.When
+
+	u.historyDetail.SetText(headline)
+	u.showHistoryFields(row.Fields)
+	u.historyRaw.SetText(row.Note)
+	u.setHistoryRawVisible(false)
+	u.updateHistoryActions(row)
 	u.revert.Enable()
+
 	u.setHistoryDetailVisible(true)
+}
+
+// showHistoryFields lays the note out as label/value pairs. The keys are the
+// stored field names, mapped to words a reader recognises; an unknown key is
+// still shown (humanised), so a newer note format does not lose information.
+func (u *ui) showHistoryFields(fields []desktop.HistoryField) {
+	if u.historyFields == nil {
+		return
+	}
+
+	u.historyFields.RemoveAll()
+
+	if len(fields) == 0 {
+		u.historyFields.Add(widget.NewLabel(""))
+		u.historyFields.Add(widget.NewLabel("(no note)"))
+		u.historyFields.Refresh()
+		return
+	}
+
+	for _, field := range fields {
+		key := widget.NewLabelWithStyle(historyFieldLabel(field.Key), fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		key.Wrapping = fyne.TextWrapWord
+
+		value := widget.NewLabel(historyFieldValue(field.Key, field.Value))
+		value.Wrapping = fyne.TextWrapWord
+
+		u.historyFields.Add(key)
+		u.historyFields.Add(value)
+	}
+
+	u.historyFields.Refresh()
+}
+
+// historyFieldLabel is what the grid calls a stored key.
+func historyFieldLabel(key string) string {
+	if label, ok := historyFieldLabels[key]; ok {
+		return label
+	}
+
+	words := strings.Split(key, "_")
+	for i, word := range words {
+		if word == "" {
+			continue
+		}
+
+		runes := []rune(word)
+		runes[0] = unicode.ToUpper(runes[0])
+		words[i] = string(runes)
+	}
+
+	return strings.Join(words, " ")
+}
+
+var historyFieldLabels = map[string]string{
+	"main_operation":    "Operation",
+	"sub_operation":     "Kind",
+	"command_name":      "Name",
+	"command_alias":     "Aliases",
+	"command_exec":      "Exec",
+	"command_steps":     "Steps",
+	"command_shell":     "Shell",
+	"command_env":       "Env keys",
+	"command_timeout":   "Timeout",
+	"command_params":    "Params",
+	"old_command_name":  "Old name",
+	"old_command_alias": "Old aliases",
+	"old_command_exec":  "Old exec",
+	"crower_exec":       "Recorded as",
+}
+
+// historyFieldValue renders a stored value for a reader: lists are lists, not
+// Go's bracket syntax or raw JSON.
+func historyFieldValue(key, value string) string {
+	switch key {
+	case "command_alias", "old_command_alias":
+		return strings.TrimSpace(strings.Trim(value, "[]"))
+	case "command_steps", "command_params":
+		var items []string
+		if err := json.Unmarshal([]byte(value), &items); err == nil {
+			return strings.Join(items, "\n")
+		}
+	}
+
+	return value
+}
+
+// updateHistoryActions enables only what this entry can do: Run needs an execute
+// entry whose command still exists, Edit needs the command to exist. A disabled
+// action says why, so a grey button is not a dead end.
+func (u *ui) updateHistoryActions(row desktop.HistoryRow) {
+	if u.runHistory == nil || u.editHistory == nil {
+		return
+	}
+
+	command, exists := u.model.Commands.Get(row.Command)
+
+	if exists && row.Operation == string(operation.Execute) {
+		u.runHistory.Enable()
+	} else {
+		u.runHistory.Disable()
+	}
+
+	if exists {
+		u.editHistory.Enable()
+	} else {
+		u.editHistory.Disable()
+	}
+
+	if u.historyHint != nil {
+		u.historyHint.SetText(historyActionHint(row, exists, command))
+		if u.historyHint.Text == "" {
+			u.historyHint.Hide()
+		} else {
+			u.historyHint.Show()
+		}
+	}
+}
+
+// historyActionHint explains a disabled action, or says nothing when both apply.
+func historyActionHint(row desktop.HistoryRow, exists bool, command catalog.Command) string {
+	if !exists {
+		return "This command is not in the current setup, so it cannot be run or edited."
+	}
+
+	if row.Operation != string(operation.Execute) {
+		return "Run replays execute entries; this entry recorded a " + row.Operation + "."
+	}
+
+	if !row.ParamsRecorded && len(command.Params) > 0 {
+		return "This entry did not record its parameters; Run asks for them."
+	}
+
+	return ""
+}
+
+// runHistoryEntry runs the managed command again with the parameters the entry
+// recorded. It is the safe half of "replay": it never re-creates or deletes.
+//
+// An entry written before command_params existed has no record of its arguments.
+// When the command declares parameters, the user is asked for them rather than
+// having the command run with literal placeholders.
+func (u *ui) runHistoryEntry() {
+	row, ok := u.selectedHistoryRow()
+	if !ok {
+		return
+	}
+
+	command, found := u.model.Commands.Get(row.Command)
+	if !found {
+		return
+	}
+
+	if !row.ParamsRecorded && len(command.Params) > 0 {
+		u.askParams(row.Command, command)
+		return
+	}
+
+	u.model.RunWithParams(row.Command, row.Params)
+	u.showOutput()
+}
+
+// editHistoryEntry takes the entry's command to the Commands tab and opens its
+// edit dialog, so the user does not have to find it by hand.
+func (u *ui) editHistoryEntry() {
+	row, ok := u.selectedHistoryRow()
+	if !ok {
+		return
+	}
+
+	if _, found := u.model.Commands.Get(row.Command); !found {
+		return
+	}
+
+	u.selectCommand(row.Command)
+	u.showEditFor(row.Command)
 }
 
 // showRevert asks before restoring, then applies the change through the

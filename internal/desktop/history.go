@@ -6,17 +6,29 @@ import (
 	"github.com/fiwon123/crower/internal/adapters/notes"
 )
 
+// HistoryField is one key/value pair of an entry's note, in the order it was
+// written, with the value decoded for display.
+type HistoryField struct {
+	Key   string
+	Value string
+}
+
 // HistoryRow is one history entry rendered as a table row.
 //
-// It is a presentation shape, not the stored entry: the timestamp is formatted
-// and the note is shown the way the CLI shows it, so a front end does not have
-// to know either format.
+// It is a presentation shape, not the stored entry: the timestamp is formatted,
+// the note is shown the way the CLI shows it, and the note is also split into
+// its fields so a front end can label them. Params are what an execute entry ran
+// with; ParamsRecorded is false for an entry written before the field existed (or
+// whose field is corrupt), which is not the same as "ran with none".
 type HistoryRow struct {
-	Version   int
-	When      string
-	Operation string
-	Command   string
-	Note      string
+	Version        int
+	When           string
+	Operation      string
+	Command        string
+	Note           string
+	Fields         []HistoryField
+	Params         []string
+	ParamsRecorded bool
 }
 
 // HistoryText renders the history screen for another front end. The Fyne
@@ -35,16 +47,25 @@ func (m *Model) HistoryRows() []HistoryRow {
 		entry := m.History.AllData[i]
 
 		command := entry.CommandName
-		if command == "" {
-			command = "-"
+
+		fields := notes.Fields(entry.Note)
+		historyFields := make([]HistoryField, 0, len(fields))
+
+		for _, field := range fields {
+			historyFields = append(historyFields, HistoryField{Key: field.Key, Value: field.Value})
 		}
 
+		params, paramsRecorded := notes.CommandParams(entry.Note)
+
 		rows = append(rows, HistoryRow{
-			Version:   entry.Version,
-			When:      historyWhen(entry.Timestemp),
-			Operation: string(entry.Operation),
-			Command:   command,
-			Note:      notes.Display(entry.Note),
+			Version:        entry.Version,
+			When:           historyWhen(entry.Timestemp),
+			Operation:      string(entry.Operation),
+			Command:        command,
+			Note:           notes.Display(entry.Note),
+			Fields:         historyFields,
+			Params:         params,
+			ParamsRecorded: paramsRecorded,
 		})
 	}
 
