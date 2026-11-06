@@ -118,6 +118,7 @@ type ui struct {
 
 	list               *widget.List
 	detail             *widget.Label
+	detailFields       *fyne.Container
 	detailBody         *fyne.Container
 	detailToggle       *widget.Button
 	detailShown        bool
@@ -215,6 +216,8 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	u.detail = widget.NewLabel("")
 	u.detail.Wrapping = fyne.TextWrapWord
 
+	u.detailFields = container.NewGridWithColumns(2)
+
 	u.paramsEntry = newScrollFreeEntry()
 	u.paramsEntry.SetPlaceHolder("Parameters (space-separated)")
 	u.paramsEntry.OnSubmitted = func(string) { u.runFromDetail() }
@@ -225,6 +228,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	// invisible child, so collapsing it gives the height back to the list.
 	u.detailBody = container.NewVBox(
 		u.detail,
+		u.detailFields,
 		container.NewBorder(nil, nil, nil, runDetail, u.paramsEntry),
 	)
 	u.detailBody.Hide()
@@ -588,11 +592,13 @@ func (u *ui) selectRow(id widget.ListItemID) {
 	command, found := u.model.Commands.Get(selected)
 	if !found {
 		u.detail.SetText(selected)
+		setFieldGrid(u.detailFields, nil)
 		u.setDetailVisible(true)
 		return
 	}
 
-	u.detail.SetText(describe(command))
+	u.detail.SetText(commandLabel(command))
+	setFieldGrid(u.detailFields, commandDetailFields(command))
 	u.paramsEntry.SetPlaceHolder(paramsHint(command))
 	u.setDetailVisible(true)
 }
@@ -664,6 +670,8 @@ func (u *ui) clearDetail() {
 		u.detail.SetText("")
 	}
 
+	setFieldGrid(u.detailFields, nil)
+
 	if u.paramsEntry != nil {
 		u.paramsEntry.SetText("")
 		u.paramsEntry.SetPlaceHolder("Parameters (space-separated)")
@@ -725,41 +733,58 @@ func (u *ui) runFromDetail() {
 	u.showOutput()
 }
 
-// describe is the detail line: what the command runs, plus the metadata that
-// does not fit on a row.
-func describe(command catalog.Command) string {
-	lines := []string{command.Name, command.Exec}
+// commandDetailFields is the detail panel's labelled metadata, in the order a
+// reader scans it: what runs, what it is called, where it lives, and the limits.
+// Empty values are omitted rather than shown as blank rows.
+func commandDetailFields(command catalog.Command) []detailField {
+	fields := make([]detailField, 0, 9)
+
+	if command.Exec != "" {
+		fields = append(fields, detailField{Label: "Exec", Value: command.Exec})
+	}
 
 	if len(command.Aliases) > 0 {
-		lines = append(lines, "aliases: "+strings.Join(command.Aliases, ", "))
+		fields = append(fields, detailField{Label: "Aliases", Value: strings.Join(command.Aliases, ", ")})
 	}
 
 	if command.Group != "" {
-		lines = append(lines, "group: "+command.Group)
+		fields = append(fields, detailField{Label: "Group", Value: command.Group})
 	}
 
 	if command.Description != "" {
-		lines = append(lines, "about: "+command.Description)
+		fields = append(fields, detailField{Label: "Description", Value: command.Description})
 	}
 
 	if len(command.Params) > 0 {
-		lines = append(lines, "params: "+strings.Join(command.Params, ", "))
+		fields = append(fields, detailField{Label: "Params", Value: strings.Join(command.Params, ", ")})
 	}
 
 	if command.Cwd != "" {
-		lines = append(lines, "cwd: "+command.Cwd)
+		fields = append(fields, detailField{Label: "Cwd", Value: command.Cwd})
 	}
 
 	if command.Shell != "" {
-		lines = append(lines, "shell: "+command.Shell)
+		fields = append(fields, detailField{Label: "Shell", Value: command.Shell})
 	}
 
 	if command.Timeout != "" {
-		lines = append(lines, "timeout: "+command.Timeout)
+		fields = append(fields, detailField{Label: "Timeout", Value: command.Timeout})
 	}
 
 	if len(command.Steps) > 0 {
-		lines = append(lines, fmt.Sprintf("%d steps", len(command.Steps)))
+		fields = append(fields, detailField{Label: "Steps", Value: numberedSteps(command.Steps)})
+	}
+
+	return fields
+}
+
+// numberedSteps keeps a multi-step command readable: the panel used to show
+// only the count, which said nothing about what would run.
+func numberedSteps(steps []string) string {
+	lines := make([]string, 0, len(steps))
+
+	for i, step := range steps {
+		lines = append(lines, fmt.Sprintf("%d. %s", i+1, step))
 	}
 
 	return strings.Join(lines, "\n")
