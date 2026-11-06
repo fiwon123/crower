@@ -394,8 +394,12 @@ func TestSelectRowShowsTheDetail(t *testing.T) {
 		t.Fatal("selecting a row did not open the detail panel")
 	}
 
-	if !strings.Contains(front.detail.Text, "make deploy") {
-		t.Errorf("detail = %q, want the command's exec", front.detail.Text)
+	if labels := labelsIn(front.detailFields); !slices.Contains(labels, "make deploy") {
+		t.Errorf("fields = %q, want the command's exec", labels)
+	}
+
+	if front.detail.Text != "deploy" {
+		t.Errorf("headline = %q, want the command label", front.detail.Text)
 	}
 
 	if !strings.Contains(front.paramsEntry.PlaceHolder, "env") {
@@ -413,6 +417,10 @@ func TestSelectRowShowsTheDetail(t *testing.T) {
 
 	if front.detailBody.Visible() || front.detail.Text != "" || front.paramsEntry.Text != "" {
 		t.Error("clearDetail left the panel populated")
+	}
+
+	if len(front.detailFields.Objects) != 0 {
+		t.Error("clearDetail left the field grid populated")
 	}
 }
 
@@ -481,23 +489,40 @@ func TestCommandRowEditOpensTheDialog(t *testing.T) {
 	}
 }
 
-// The detail line carries the metadata that does not fit on a row.
-func TestDescribeShowsTheMetadata(t *testing.T) {
-	text := describe(catalog.Command{
+// The detail grid carries the metadata that does not fit on a row, and omits
+// what the command does not set.
+func TestCommandDetailFields(t *testing.T) {
+	fields := commandDetailFields(catalog.Command{
 		Name:        "deploy",
 		Exec:        "make deploy",
-		Aliases:     []string{"d"},
+		Aliases:     []string{"d", "ship"},
+		Group:       "work",
 		Description: "ship to production",
-		Params:      []string{"env"},
+		Params:      []string{"env", "region"},
 		Cwd:         "~/src/app",
 		Shell:       "sh",
 		Timeout:     "120s",
+		Steps:       []string{"make build", "make deploy"},
 	})
 
-	for _, want := range []string{"deploy", "make deploy", "aliases: d", "about: ship to production", "params: env", "cwd: ~/src/app", "shell: sh", "timeout: 120s"} {
-		if !strings.Contains(text, want) {
-			t.Errorf("describe() = %q, want it to contain %q", text, want)
-		}
+	want := []detailField{
+		{Label: "Exec", Value: "make deploy"},
+		{Label: "Aliases", Value: "d, ship"},
+		{Label: "Group", Value: "work"},
+		{Label: "Description", Value: "ship to production"},
+		{Label: "Params", Value: "env, region"},
+		{Label: "Cwd", Value: "~/src/app"},
+		{Label: "Shell", Value: "sh"},
+		{Label: "Timeout", Value: "120s"},
+		{Label: "Steps", Value: "1. make build\n2. make deploy"},
+	}
+
+	if !slices.Equal(fields, want) {
+		t.Errorf("commandDetailFields() = %v, want %v", fields, want)
+	}
+
+	if got := commandDetailFields(catalog.Command{Name: "plain", Exec: "echo hi"}); !slices.Equal(got, []detailField{{Label: "Exec", Value: "echo hi"}}) {
+		t.Errorf("plain command = %v, want only Exec", got)
 	}
 }
 
