@@ -126,9 +126,9 @@ func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
 		widget.NewButton("Delete", nil),
 	}
 
-	row := spacedActions(buttons...)
-	row.Resize(fyne.NewSize(600, 40))
-	row.Layout.Layout(row.Objects, row.Size())
+	flow := &rowFlow{gap: theme.Padding() * 2}
+
+	flow.Layout(buttons, fyne.NewSize(600, 40))
 
 	for index := 1; index < len(buttons); index++ {
 		previous := buttons[index-1]
@@ -140,11 +140,14 @@ func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
 		}
 	}
 
-	row.Resize(fyne.NewSize(120, 40))
-	row.Layout.Layout(row.Objects, row.Size())
+	flow.Layout(buttons, fyne.NewSize(120, 40))
 
 	if buttons[1].Position().Y <= buttons[0].Position().Y {
 		t.Error("a narrow row did not wrap its buttons")
+	}
+
+	if size := flow.MinSize(buttons); size.Height < buttons[0].Size().Height*2 {
+		t.Errorf("wrapped minimum height = %v, want room for two rows", size.Height)
 	}
 }
 
