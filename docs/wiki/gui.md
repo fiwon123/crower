@@ -144,7 +144,9 @@ paths and hands them to the platform's default application.
 > `crower-gui` needs a graphical session; in a terminal-only environment use
 > `crower gui`. It ships in every platform archive next to `crower` and `cr`,
 > not as a `crower` subcommand. The CLI binaries are cgo-free and need no
-> display.
+> display. On Windows, `crower-gui.exe` is the executable to double-click: it is
+> a graphical program with the crow icon, while `crower.exe` and `cr.exe` stay
+> terminal programs.
 
 ## 🔗 Related
 

@@ -7,6 +7,16 @@ SCRIPTS_DIR := scripts
 SCRIPT_NAME := add_to_path
 INJECT_VERSION:= github.com/fiwon123/crower/cmd.Version
 
+# The Fyne window is a GUI-subsystem program on Windows. Without -H windowsgui
+# the loader gives it a console window, so double-clicking the executable opens
+# a terminal instead of the window. The icon, manifest and version are a .syso
+# in the package directory — the only hook Go offers for a Windows resource.
+GUI_LDFLAGS = -X $(INJECT_VERSION)=$(VERSION)
+
+ifeq ($(GOOS),windows)
+GUI_LDFLAGS += -H windowsgui
+endif
+
 VERSION ?= $(shell git describe --tags --always)
 DIST_DIR := $(BUILD_DIR)/dist
 
@@ -89,7 +99,17 @@ release-gui-platform: $(BUILD_DIR)
 	@echo "Building $(APP_NAME), $(APP_NAME_SHORT) and $(GUI_NAME) for $(GOOS)/$(GOARCH) with version $(VERSION)"
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0 go build -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(APP_NAME)$(EXT)
 	cp $(BUILD_DIR)/$(APP_NAME)$(EXT) $(BUILD_DIR)/$(APP_NAME_SHORT)$(EXT)
-	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go build -tags fyne -ldflags "-X $(INJECT_VERSION)=$(VERSION)" -o $(BUILD_DIR)/$(GUI_NAME)$(EXT) ./cmd/crowergui
+ifeq ($(GOOS),windows)
+	@go run ./internal/tools/winres -icon internal/fyneui/logo.png \
+		-out cmd/crowergui/rsrc_windows_$(GOARCH).syso -arch $(GOARCH) -version "$(VERSION)"
+endif
+	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=1 go build -tags fyne -ldflags "$(GUI_LDFLAGS)" -o $(BUILD_DIR)/$(GUI_NAME)$(EXT) ./cmd/crowergui
+ifeq ($(GOOS),windows)
+	@rm -f cmd/crowergui/rsrc_windows_$(GOARCH).syso
+	@go run ./internal/tools/winres -verify $(BUILD_DIR)/$(GUI_NAME).exe
+	@go run ./internal/tools/winres -verify-console $(BUILD_DIR)/$(APP_NAME).exe
+	@go run ./internal/tools/winres -verify-console $(BUILD_DIR)/$(APP_NAME_SHORT).exe
+endif
 	@$(MAKE) package-gui GOOS=$(GOOS) GOARCH=$(GOARCH)
 	@$(MAKE) verify-release GUI=1
 

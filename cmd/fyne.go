@@ -51,7 +51,14 @@ func ExecuteFyne(args []string) {
 	rootCmd.SetArgs(append([]string{"fyne"}, args...))
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(streams.Err, "error:", err)
+		message := "error: " + err.Error()
+		fmt.Fprintln(streams.Err, message)
+
+		// On Windows the executable is linked without a console, so the line
+		// above goes nowhere a double-clicking user can see. The message box
+		// is what turns "nothing happens" into a readable failure.
+		showFyneStartupError(message)
+
 		os.Exit(1)
 	}
 }
