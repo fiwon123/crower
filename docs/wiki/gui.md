@@ -21,7 +21,7 @@ The window is split into tabs:
 
 | Tab | What it holds |
 | --- | --- |
-| **Commands** | The list, with a filter, a group filter and **Run**, **Edit** and **Delete** on every row; selecting one opens the **Details** panel below the list |
+| **Commands** | The command cards, a filter, a setup row and a group row; a card opens into its fields, parameters and **Run**, **Edit** and **Delete** |
 | **History** | Every recorded operation, newest first, as expandable cards: a summary line opens into the labelled note fields, the raw line, and **Run**, **Edit** and **Restore this state** |
 | **Tools** | Copy, move, search, extract and open; every path field has **Browse…**, and each card has its own result square that opens when an action runs |
 | **About** | Logo, version, description, the repository link, and the update controls — padded to the tab width, with actions that wrap on a narrow window |
@@ -34,14 +34,13 @@ and edit dialogs, or with `crower create --icon/--group` and
 of about a hundred emoji; the field stays editable, so any other emoji can be
 typed or pasted.
 
-On the Commands tab, selecting a row opens a **Details** panel below the list;
-the **Details** toggle collapses it again. The panel shows the exec line and the
-command's metadata,
-and carries a **params entry** with its own **Run**: the entry's text is passed
-as parameters, and an empty entry runs the command without any. The row's ▶ and
-the toolbar's **Run** are smart — a command that declares `Params` asks for them
-first (an empty answer runs it without), and a command that declares none runs
-straight away.
+On the Commands tab, each command is a card: a name with a chevron that opens
+into the labelled fields (name, exec, aliases, group, description, params, cwd,
+shell, timeout and numbered steps), a parameter entry, and **Run**, **Edit** and
+**Delete**. Opening one closes the previous card; a collapsed card carries no
+actions. **Run** passes the entry's text as parameters (an empty entry runs
+without any), **Edit** opens the command dialog and **Delete** asks first.
+**New command** sits beside the filter.
 
 The edit dialog also changes the rest of the command: **Description**,
 **Params** (comma-separated), **Cwd**, **Shell** and **Timeout**. Emptying a
@@ -55,10 +54,10 @@ dialog's field list scrolls, so a long script never clips the buttons.
 ignores the file). The filter then reads `🚀 deploy` instead of a bare name.
 
 The **Setup** list beside it switches between the named setups the CLI creates
-with `crower setup new`; **New…** and **Delete…** manage them without leaving the
-window (the default and the active setup cannot be deleted). Each entry says how
-many commands it holds — `work (12)` — so switching to an empty setup is a
-choice rather than a surprise. Switching reloads
+with `crower setup new`; **New setup…** and **Delete setup…** manage them without
+leaving the window (the default and the active setup cannot be deleted). Each
+entry says how many commands it holds — `work (12)` — so switching to an empty
+setup is a choice rather than a surprise. Switching reloads
 the commands, the history and the group icons without restarting, and saves the
 choice the way `crower setup use` does — so the next `crower` run opens the same
 setup.

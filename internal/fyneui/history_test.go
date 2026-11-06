@@ -212,7 +212,7 @@ func TestHistoryEditOpensTheCommand(t *testing.T) {
 
 	front.model.Filter = "zzz"
 	front.filterEntry.SetText("zzz")
-	front.list.Refresh()
+	front.rebuildCommands()
 
 	card := openHistoryCard(t, front, 0)
 	card.edit.OnTapped()
@@ -231,6 +231,10 @@ func TestHistoryEditOpensTheCommand(t *testing.T) {
 
 	if got := front.model.Selected(); got != "greet" {
 		t.Errorf("selected command = %q, want greet", got)
+	}
+
+	if front.commandOpen == nil || front.commandOpen.key != "greet" {
+		t.Error("the greet card is not open after Edit")
 	}
 
 	if len(window.Canvas().Overlays().List()) == 0 {
