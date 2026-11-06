@@ -3,6 +3,7 @@
 package cmd
 
 import (
+	"os"
 	"syscall"
 	"unsafe"
 )
@@ -18,6 +19,12 @@ var (
 const messageBoxIconError = 0x00000010
 
 func showFyneStartupError(message string) {
+	// A CI runner has no one to dismiss a dialog; the environment variable
+	// lets the window-start diagnostic run without blocking on one.
+	if os.Getenv("CROWER_GUI_NO_DIALOG") != "" {
+		return
+	}
+
 	text, err := syscall.UTF16PtrFromString(message)
 	if err != nil {
 		return

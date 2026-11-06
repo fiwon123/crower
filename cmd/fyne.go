@@ -27,6 +27,21 @@ This command is the entrypoint of the crower-gui executable, built with
 			return err
 		}
 
+		// Fyne reports a window it cannot create through the standard logger
+		// and then exits the process; a GUI-subsystem executable has no console
+		// for that to reach. The log file and the dialog on its first error are
+		// what turn a double-click that does nothing into a readable failure.
+		windowLog := startWindowLog(cfg.ConfigFolder())
+
+		defer func() {
+			if recovered := recover(); recovered != nil {
+				windowLog.recordPanic(recovered)
+				windowLog.keep()
+				notifyStartupError(fmt.Sprintf("crower-gui stopped unexpectedly.\n\n%v\n\nDetails: %s", recovered, windowLog.path))
+				os.Exit(1)
+			}
+		}()
+
 		fyneui.Run(cfg.Catalog(), cfg.History, fyneui.Deps{
 			Exec:     newExecutor(cfg),
 			Editor:   newFyneEditor(cfg),
@@ -37,6 +52,9 @@ This command is the entrypoint of the crower-gui executable, built with
 			Setups:   newFyneSetups(cfg),
 			Window:   newFyneWindow(cfg.ConfigFolder()),
 		})
+
+		windowLog.clean()
+
 		return nil
 	},
 }
