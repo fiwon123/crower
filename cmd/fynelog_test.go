@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 )
 
 // A run that fails leaves fyne.log with what Fyne said.
@@ -62,13 +63,20 @@ func TestFirstFyneErrorRaisesOneDialog(t *testing.T) {
 
 	entry := startWindowLog(t.TempDir())
 
-	log.Printf("Fyne error: failed to create window")
+	log.Printf("Fyne error: something recoverable")
 	log.Printf("Fyne error: another failure")
 
 	entry.keep()
 
+	if !waitFor(calls.Load, 1) {
+		t.Errorf("notifications = %d, want exactly one", calls.Load())
+	}
+
+	// A second error must not raise a second dialog.
+	time.Sleep(400 * time.Millisecond)
+
 	if got := calls.Load(); got != 1 {
-		t.Errorf("notifications = %d, want exactly one", got)
+		t.Errorf("notifications = %d after a second error, want one", got)
 	}
 }
 
@@ -90,7 +98,43 @@ func TestOrdinaryLogLinesRaiseNoDialog(t *testing.T) {
 
 	entry.keep()
 
+	time.Sleep(400 * time.Millisecond)
+
 	if got := calls.Load(); got != 0 {
 		t.Errorf("notifications = %d, want none", got)
 	}
+}
+
+// A window that cannot be created is fatal; a recoverable Fyne error is not.
+func TestIsFatalWindowError(t *testing.T) {
+	tests := []struct {
+		line  string
+		fatal bool
+	}{
+		{"Fyne error:  window creation error", true},
+		{"Fyne error: failed to initialise GLFW", true},
+		{"Fyne error: something recoverable", false},
+	}
+
+	for _, tt := range tests {
+		if got := isFatalWindowError(tt.line); got != tt.fatal {
+			t.Errorf("isFatalWindowError(%q) = %v, want %v", tt.line, got, tt.fatal)
+		}
+	}
+}
+
+// waitFor polls until get reports want, so an asynchronous notification does
+// not need a fixed sleep in the assertion.
+func waitFor(get func() int32, want int32) bool {
+	deadline := time.Now().Add(3 * time.Second)
+
+	for time.Now().Before(deadline) {
+		if get() == want {
+			return true
+		}
+
+		time.Sleep(20 * time.Millisecond)
+	}
+
+	return false
 }

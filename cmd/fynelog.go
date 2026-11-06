@@ -12,6 +12,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
+	"time"
 )
 
 // windowLog is the record of one window run.
@@ -103,6 +104,13 @@ type startupErrors struct {
 	mutex    sync.Mutex
 }
 
+// openGLHint explains the one failure that has nothing to do with the download:
+// Fyne needs a driver that provides OpenGL 2.1, and Remote Desktop and the basic
+// display driver do not.
+const openGLHint = "The display driver does not provide OpenGL 2.1. That is what " +
+	"Remote Desktop and the basic display driver report; a local session with the " +
+	"graphics driver installed is needed. `crower gui` offers the same tools in a terminal."
+
 func (s *startupErrors) Write(data []byte) (int, error) {
 	written, err := s.writer.Write(data)
 
@@ -125,15 +133,65 @@ func (s *startupErrors) Write(data []byte) (int, error) {
 	}
 
 	s.reported = true
+	fatal := isFatalWindowError(line)
 
-	message := "crower-gui could not open its window.\n\n" + line
+	// Fyne writes its reason on the next line, so the dialog waits for it
+	// instead of reporting a sentence that ends at the colon.
+	go s.report(fatal)
+
+	return written, err
+}
+
+// report collects the lines Fyne just wrote, shows them, and ends a run whose
+// window cannot exist.
+func (s *startupErrors) report(fatal bool) {
+	time.Sleep(250 * time.Millisecond)
+
+	details := s.details()
+	if details == "" {
+		details = "Fyne reported an error while opening the window."
+	}
+
+	message := "crower-gui could not open its window.\n\n" + details
 	if s.path != "" {
-		message += "\n\nDetails: " + s.path
+		message += "\n\nLog: " + s.path
+	}
+
+	if fatal {
+		message += "\n\n" + openGLHint
 	}
 
 	notifyStartupError(message)
 
-	return written, err
+	// Without a window the process would sit in the task manager doing
+	// nothing, which is what "nothing happens" looks like to the user.
+	if fatal {
+		os.Exit(1)
+	}
+}
+
+// details is the log written so far, from the first Fyne error on.
+func (s *startupErrors) details() string {
+	if s.path == "" {
+		return ""
+	}
+
+	body, err := os.ReadFile(s.path)
+	if err != nil {
+		return ""
+	}
+
+	if index := strings.Index(string(body), "Fyne error"); index >= 0 {
+		return strings.TrimSpace(string(body[index:]))
+	}
+
+	return strings.TrimSpace(string(body))
+}
+
+// isFatalWindowError reports whether Fyne could not create a window at all.
+func isFatalWindowError(line string) bool {
+	return strings.Contains(line, "window creation error") ||
+		strings.Contains(line, "initialise GLFW")
 }
 
 // notifyStartupError is showFyneStartupError, and a variable so a test can see

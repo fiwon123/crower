@@ -146,7 +146,9 @@ paths and hands them to the platform's default application.
 > not as a `crower` subcommand. The CLI binaries are cgo-free and need no
 > display. On Windows, `crower-gui.exe` is the executable to double-click: it is
 > a graphical program with the crow icon, while `crower.exe` and `cr.exe` stay
-> terminal programs.
+> terminal programs. It needs a driver that provides OpenGL 2.1; a start that
+> cannot get one writes the reason to `fyne.log` beside `crower.yaml` and says so
+> in a dialog.
 
 ## 🔗 Related
 
