@@ -5,10 +5,12 @@ package fyneui
 import (
 	"context"
 	"fmt"
+	"image/color"
 	"path/filepath"
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
@@ -209,6 +211,40 @@ func setFieldGrid(grid *fyne.Container, fields []detailField) {
 	}
 
 	grid.Refresh()
+}
+
+// gap is an invisible spacer. An HBox's spacing is fixed, so a row that has to
+// stop short of the list's scrollbar adds one of these at its end.
+func gap(width, height float32) fyne.CanvasObject {
+	space := canvas.NewRectangle(color.Transparent)
+	space.SetMinSize(fyne.NewSize(width, height))
+
+	return space
+}
+
+// page pads a scrolling tab. Fyne's scrollbar overlays the viewport instead of
+// reserving a column, so the right inset is wider than the edge padding: without
+// it a control at the edge sits under the scrollbar.
+func page(content fyne.CanvasObject) fyne.CanvasObject {
+	pad := theme.Padding()
+
+	return container.NewBorder(
+		gap(0, pad),
+		gap(0, pad),
+		gap(pad*2, 0),
+		gap(pad*3, 0),
+		content,
+	)
+}
+
+// actionRow separates a card's actions from the form above it and lets them
+// wrap: at a narrow width the grid stacks the buttons instead of pushing the
+// last one off the card.
+func actionRow(buttons ...fyne.CanvasObject) fyne.CanvasObject {
+	return container.NewVBox(
+		widget.NewSeparator(),
+		container.NewGridWrap(fyne.NewSize(150, 40), buttons...),
+	)
 }
 
 // appendPath adds a picked path to a comma-separated list, so repeated Browse
