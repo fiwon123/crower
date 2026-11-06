@@ -254,3 +254,36 @@ func TestRestartSpawnsTheNewBinary(t *testing.T) {
 		t.Errorf("restarts = %d, want 1", updater.restarts)
 	}
 }
+
+// A narrow window must wrap the update actions instead of pushing them past the
+// edge: the old single HBox overflowed as soon as Check, Install and Restore
+// were all visible.
+func TestAboutActionsFitANarrowWindow(t *testing.T) {
+	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
+	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
+
+	window.SetContent(front.aboutTab())
+	window.Resize(fyne.NewSize(360, 640))
+
+	front.applyLatest("v1.1.0", nil)
+	window.Resize(fyne.NewSize(360, 640))
+
+	visible := 0
+
+	for _, button := range []*widget.Button{front.checkButton, front.installButton, front.restartButton, front.restoreButton} {
+		if button == nil || !button.Visible() {
+			continue
+		}
+
+		visible++
+
+		pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(button)
+		if right := pos.X + button.Size().Width; right > 360 {
+			t.Errorf("%q right edge = %.1f, want it inside the 360 px window", button.Text, right)
+		}
+	}
+
+	if visible < 3 {
+		t.Fatalf("only %d actions visible, want Check, Install and Restore", visible)
+	}
+}

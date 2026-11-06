@@ -85,7 +85,9 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 	u.restartButton = widget.NewButtonWithIcon("Restart now", theme.ViewRefreshIcon(), u.restart)
 	u.restartButton.Hide()
 
-	actions := container.NewHBox(u.checkButton, u.installButton, u.restartButton)
+	// A wrapping grid keeps the actions usable when the window narrows: a
+	// single HBox pushed the last button past the edge instead of stacking.
+	actions := container.NewGridWrap(fyne.NewSize(220, 40), u.checkButton, u.installButton, u.restartButton)
 
 	if previous, found := u.updater.Previous(); found {
 		u.restoreButton = widget.NewButton("Restore previous ("+previous+")", u.restorePrevious)
@@ -108,8 +110,10 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 		updates,
 	)
 
-	// Centre the block in the window; the scroll only matters on a short one.
-	return container.NewVScroll(container.NewCenter(body))
+	// The body fills the width so the summary and the card wrap with the window;
+	// the page adds the margins and clears the scrollbar. Centring the block
+	// pinned it to its minimum width and defeated both.
+	return container.NewVScroll(page(body))
 }
 
 // checkForUpdates is the startup courtesy: one lookup, in the background, with
