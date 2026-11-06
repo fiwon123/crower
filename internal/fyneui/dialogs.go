@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/desktop"
@@ -49,16 +50,13 @@ func (u *ui) showCreate() {
 	// last row or the buttons.
 	form := widget.NewForm(items...)
 
-	create := dialog.NewCustomConfirm("New command", "Create", "Cancel", container.NewVScroll(form), func(ok bool) {
+	showForm("New command", "Create", "Cancel", container.NewVScroll(form), u.window, func(ok bool) {
 		if !ok {
 			return
 		}
 
 		u.applyCreate(name.Text, aliases.Text, icon.value, group.Text, exec.Text)
-	}, u.window)
-
-	create.Resize(fyne.NewSize(dialogWidth, dialogHeight))
-	create.Show()
+	}, fyne.NewSize(dialogWidth, dialogHeight))
 }
 
 // applyCreate is the form's submit path, separate from the dialog so a test
@@ -145,7 +143,7 @@ func (u *ui) showEditFor(key string) {
 
 	form := widget.NewForm(items...)
 
-	edit := dialog.NewCustomConfirm("Edit command", "Save", "Cancel", container.NewVScroll(form), func(ok bool) {
+	showForm("Edit command", "Save", "Cancel", container.NewVScroll(form), u.window, func(ok bool) {
 		if !ok {
 			return
 		}
@@ -162,10 +160,7 @@ func (u *ui) showEditFor(key string) {
 			Shell:       shell.Text,
 			Timeout:     timeout.Text,
 		})
-	}, u.window)
-
-	edit.Resize(fyne.NewSize(dialogWidth, editDialogHeight))
-	edit.Show()
+	}, fyne.NewSize(dialogWidth, editDialogHeight))
 }
 
 // commandForm is what the edit dialog holds. Every field is always supplied by
@@ -239,13 +234,13 @@ func (u *ui) showDeleteFor(key string) {
 
 	question := fmt.Sprintf("Delete %q?\n\nIts aliases go with it. You can restore it from the History tab.", key)
 
-	dialog.ShowConfirm("Delete command", question, func(ok bool) {
+	showConfirm("Delete command", question, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
 
 		u.applyDelete(key)
-	}, u.window)
+	})
 }
 
 // applyDelete is the confirmation's submit path.
@@ -312,13 +307,71 @@ func (u *ui) showOutput() {
 	showText(title, text, u.window)
 }
 
-func showText(title, text string, window fyne.Window) {
+// showDismissible shows content in a non-modal pop-up: a click outside closes
+// it. Dialogs that need a decision use showConfirm instead, which stays modal.
+func showDismissible(title string, content fyne.CanvasObject, window fyne.Window, size fyne.Size) *widget.PopUp {
+	closeButton := widget.NewButton("Close", nil)
+
+	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	body := container.NewBorder(
+		container.NewVBox(head, widget.NewSeparator()),
+		container.NewHBox(layout.NewSpacer(), closeButton),
+		nil,
+		nil,
+		content,
+	)
+
+	pop := widget.NewPopUp(container.NewPadded(body), window.Canvas())
+	closeButton.OnTapped = pop.Hide
+	pop.Resize(size)
+	pop.Show()
+
+	return pop
+}
+
+// showForm is showDismissible with a confirm/dismiss row. The dismiss button or
+// a click outside discards the form; only confirm calls onConfirm.
+func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window fyne.Window, onConfirm func(bool), size fyne.Size) *widget.PopUp {
+	var pop *widget.PopUp
+
+	confirmButton := widget.NewButton(confirm, func() {
+		pop.Hide()
+		onConfirm(true)
+	})
+
+	dismissButton := widget.NewButton(dismiss, func() {
+		if pop != nil {
+			pop.Hide()
+		}
+	})
+
+	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	body := container.NewBorder(
+		container.NewVBox(head, widget.NewSeparator()),
+		container.NewHBox(layout.NewSpacer(), dismissButton, confirmButton),
+		nil,
+		nil,
+		content,
+	)
+
+	pop = widget.NewPopUp(container.NewPadded(body), window.Canvas())
+	pop.Resize(size)
+	pop.Show()
+
+	return pop
+}
+
+// showConfirm asks a question. It stays modal so an outside click cannot answer
+// it, and its body is a selectable label so the message can be copied.
+func showConfirm(title, message string, window fyne.Window, onConfirm func(bool)) {
+	dialog.ShowCustomConfirm(title, "Yes", "No", newSelectableText(message), onConfirm, window)
+}
+
+func showText(title, text string, window fyne.Window) *widget.PopUp {
 	label := newSelectableText(text)
 	content := container.NewVScroll(label)
 
-	show := dialog.NewCustom(title, "Close", content, window)
-	show.Resize(fyne.NewSize(dialogWidth, dialogHeight))
-	show.Show()
+	return showDismissible(title, content, window, fyne.NewSize(dialogWidth, dialogHeight))
 }
 
 // newSelectableText is a wrapping label whose text can be selected and copied,

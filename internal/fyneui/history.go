@@ -10,7 +10,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -234,8 +233,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 		fields = append(fields, detailField{Value: "(no note)"})
 	}
 
-	grid := container.NewGridWithColumns(2)
-	setFieldGrid(grid, fields)
+	form := newFieldForm(fields)
 
 	card.raw = widget.NewLabel(detail.Note)
 	card.raw.Wrapping = fyne.TextWrapWord
@@ -275,9 +273,10 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 	u.updateHistoryActions(card, detail)
 
 	return container.NewVBox(
-		grid,
+		form,
 		card.rawToggle,
 		card.raw,
+		widget.NewSeparator(),
 		container.NewHBox(card.run, card.edit, card.restore),
 		card.hint,
 	)
@@ -387,13 +386,13 @@ func (u *ui) showRevert(card *historyCard) {
 		detail.Version, detail.Operation, detail.Command, detailText,
 	)
 
-	dialog.ShowConfirm("Restore command set", question, func(ok bool) {
+	showConfirm("Restore command set", question, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
 
 		u.applyRevert(steps)
-	}, u.window)
+	})
 }
 
 // applyRevert is the confirmation's submit path.

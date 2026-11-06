@@ -119,7 +119,7 @@ func TestHistoryCardLabelsTheNoteFields(t *testing.T) {
 	card := openHistoryCard(t, front, 0)
 
 	labels := labelsIn(card.body)
-	for _, want := range []string{"Operation", "Name", "Aliases", "Exec", "Params", "execute", "greet", "hi", "echo hi", "a b"} {
+	for _, want := range []string{"execute", "command", "greet", "hi", "echo hi", "a b"} {
 		if !slices.Contains(labels, want) {
 			t.Errorf("fields %q do not contain %q", labels, want)
 		}

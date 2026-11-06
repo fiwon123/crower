@@ -7,7 +7,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -47,7 +46,7 @@ func (u *ui) showGroups() {
 	form := container.NewVScroll(widget.NewForm(items...))
 	form.SetMinSize(fyne.NewSize(420, 320))
 
-	dialog.ShowCustomConfirm("Group icons", "Save", "Cancel", form, func(ok bool) {
+	showForm("Group icons", "Save", "Cancel", form, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
@@ -58,7 +57,7 @@ func (u *ui) showGroups() {
 		}
 
 		u.applyGroupIcons(icons)
-	}, u.window)
+	}, fyne.NewSize(420, 320))
 }
 
 // applyGroupIcons stores what the dialog holds and refreshes the filter. It is

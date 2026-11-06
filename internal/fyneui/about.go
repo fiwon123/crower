@@ -8,7 +8,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -276,13 +275,13 @@ func (u *ui) installLatest() {
 func (u *ui) confirmInstall(version string) {
 	question := "Install crower " + version + "?\n\nIt replaces the binary on disk; a restart finishes the update."
 
-	dialog.ShowConfirm("Install "+version, question, func(ok bool) {
+	showConfirm("Install "+version, question, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
 
 		u.installInBackground(version)
-	}, u.window)
+	})
 }
 
 // restorePrevious installs the version the installation ran before this one.
@@ -295,13 +294,13 @@ func (u *ui) restorePrevious() {
 
 	question := "Install crower " + previous + " again?\n\nIt replaces the binary on disk; a restart finishes the change."
 
-	dialog.ShowConfirm("Restore "+previous, question, func(ok bool) {
+	showConfirm("Restore "+previous, question, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
 
 		u.installInBackground(previous)
-	}, u.window)
+	})
 }
 
 func (u *ui) installInBackground(version string) {

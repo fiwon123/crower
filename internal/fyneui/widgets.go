@@ -190,29 +190,21 @@ type detailField struct {
 	Value string
 }
 
-// setFieldGrid replaces a two-column grid with label/value rows. Keys are bold,
-// values wrap, and an empty list leaves the grid empty — both detail panels use
-// it, so a command and a history entry read the same way.
-func setFieldGrid(grid *fyne.Container, fields []detailField) {
-	if grid == nil {
-		return
-	}
-
-	grid.RemoveAll()
+// newFieldForm lays detail fields out as a read-only form: the key column sizes
+// to the longest label, so a value sits next to its key instead of half a card
+// away. Values wrap and can be selected and copied.
+func newFieldForm(fields []detailField) *widget.Form {
+	items := make([]*widget.FormItem, 0, len(fields))
 
 	for _, field := range fields {
-		label := widget.NewLabelWithStyle(field.Label, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-		label.Wrapping = fyne.TextWrapWord
-
 		value := widget.NewLabel(field.Value)
 		value.Wrapping = fyne.TextWrapWord
 		value.Selectable = true
 
-		grid.Add(label)
-		grid.Add(value)
+		items = append(items, widget.NewFormItem(field.Label, value))
 	}
 
-	grid.Refresh()
+	return widget.NewForm(items...)
 }
 
 // gap is an invisible spacer. An HBox's spacing is fixed, so a row that has to
