@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/desktop"
@@ -235,6 +236,52 @@ func labelsIn(object fyne.CanvasObject) []string {
 	}
 
 	return nil
+}
+
+// labelPosition finds a label by text and returns its absolute position.
+func labelPosition(object fyne.CanvasObject, text string) (fyne.Position, bool) {
+	switch typed := object.(type) {
+	case *widget.Label:
+		if typed.Text == text {
+			return fyne.CurrentApp().Driver().AbsolutePositionForObject(typed), true
+		}
+	case *fyne.Container:
+		for _, child := range typed.Objects {
+			if pos, found := labelPosition(child, text); found {
+				return pos, true
+			}
+		}
+	case fyne.Widget:
+		renderer := test.WidgetRenderer(typed)
+		if renderer == nil {
+			return fyne.Position{}, false
+		}
+
+		for _, child := range renderer.Objects() {
+			if pos, found := labelPosition(child, text); found {
+				return pos, true
+			}
+		}
+	}
+
+	return fyne.Position{}, false
+}
+
+// The Commands tab keeps the filter, controls and row names off the window edge.
+func TestCommandsHaveALeftMargin(t *testing.T) {
+	front, window := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
+
+	window.SetContent(front.content())
+	window.Resize(fyneSize())
+
+	pos, found := labelPosition(window.Canvas().Content(), "greet")
+	if !found {
+		t.Fatal("the command label is not in the rendered tree")
+	}
+
+	if pos.X < theme.Padding()*2 {
+		t.Errorf("label x = %.1f, want at least %.1f from the window edge", pos.X, theme.Padding()*2)
+	}
 }
 
 // The canvas has to reach a command row's text. The row can have a size and a

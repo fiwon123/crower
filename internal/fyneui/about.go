@@ -85,11 +85,10 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 	u.restartButton = widget.NewButtonWithIcon("Restart now", theme.ViewRefreshIcon(), u.restart)
 	u.restartButton.Hide()
 
-	// A wrapping grid keeps the actions usable when the window narrows: a
-	// single HBox pushed the last button past the edge instead of stacking.
-	// It is kept on ui because hiding a button alone does not re-run this
-	// layout, and GridWrap otherwise reserves the empty cell.
-	actions := container.NewGridWrap(fyne.NewSize(220, 40), u.checkButton, u.installButton, u.restartButton)
+	// The actions flow at their natural width and centre each row: fixed grid
+	// cells clipped longer labels and left a short row off-centre. It is kept on
+	// ui because hiding a button alone does not re-run this layout.
+	actions := container.New(&centeredFlowLayout{gap: theme.Padding()}, u.checkButton, u.installButton, u.restartButton)
 	u.aboutActions = actions
 
 	if previous, found := u.updater.Previous(); found {
@@ -97,7 +96,7 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 		actions.Add(u.restoreButton)
 	}
 
-	updates := newCard(
+	updates := newCenteredCard(
 		"Updates",
 		"Checks GitHub for the newest release. Nothing is replaced without confirmation.",
 		container.NewVBox(u.updateStatus, actions),
@@ -112,6 +111,9 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 		widget.NewSeparator(),
 		updates,
 	)
+
+	u.aboutBody = body
+	u.aboutUpdates = updates
 
 	// The body fills the width so the summary and the card wrap with the window;
 	// the page adds the margins and clears the scrollbar. Centring the block
@@ -182,12 +184,18 @@ func (u *ui) showInstall(version string) {
 	u.refreshAboutActions()
 }
 
-// refreshAboutActions re-runs the action grid's layout. Hiding a widget only
-// repaints it, and GridWrap's minimum height is whatever the last layout used,
-// so without this an install button that disappears leaves its row behind.
+// refreshAboutActions re-runs the action flow and then the body above it.
+//
+// Hiding a widget only repaints it, and the flow layout reports the minimum
+// height of its last layout, so the actions container alone would keep the old
+// height. Refreshing the body re-reads the card's minimum and lets it shrink.
 func (u *ui) refreshAboutActions() {
 	if u.aboutActions != nil {
 		u.aboutActions.Refresh()
+	}
+
+	if u.aboutBody != nil {
+		u.aboutBody.Refresh()
 	}
 }
 
