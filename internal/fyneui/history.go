@@ -26,6 +26,9 @@ import (
 // number is an identifier, not something a reader scans for.
 var historyHeaders = []string{"When", "Operation", "Command", "Version"}
 
+// historyHeader is the sentence above the table.
+const historyHeader = "Every recorded operation, newest first. Restoring an entry puts the command set back to what that entry recorded and drops the newer ones."
+
 // historyTab renders every recorded operation as a table, newest first, with a
 // restore action.
 //
@@ -125,7 +128,7 @@ func (u *ui) historyTab() fyne.CanvasObject {
 	})
 	u.historyToggle.Importance = widget.LowImportance
 
-	header := widget.NewLabel("Every recorded operation, newest first. Restoring an entry puts the command set back to what that entry recorded and drops the newer ones.")
+	header := widget.NewLabel(historyHeader)
 	header.Wrapping = fyne.TextWrapWord
 
 	u.historyRoot = container.NewBorder(
@@ -136,7 +139,10 @@ func (u *ui) historyTab() fyne.CanvasObject {
 		u.table,
 	)
 
-	return u.historyRoot
+	// A left margin keeps the header and the table off the window edge, as on
+	// the Commands tab. historyRoot stays inner so the toggles refresh the
+	// layout that owns them.
+	return container.NewBorder(nil, nil, gap(theme.Padding()*2, 0), nil, u.historyRoot)
 }
 
 // historyCellView is one table cell: a label over a background the row
