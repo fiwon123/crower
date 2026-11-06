@@ -72,6 +72,23 @@ graphical program, so a console window does not open and closing one cannot take
 the window with it. If a build without the icon or the graphical subsystem is in
 front of you, reinstall from the release archive: the release checks both.
 
+## The window does not open on Windows
+
+`crower-gui` is a graphical program: it has no console, so a start that fails
+inside Fyne used to look like a double-click that does nothing. It now writes
+what happened to `fyne.log` beside `crower.yaml`
+(`%USERPROFILE%\crower\fyne.log`), shows the reason in a dialog, and leaves the
+file behind. A run that opens normally removes it.
+
+The most common reason is that the display driver has no **OpenGL 2.1**. Windows
+reports this as `window creation error` / `WGL: The driver does not appear to
+support OpenGL`. Remote Desktop sessions and machines using the basic display
+driver do this:
+
+- connect to the machine locally, or over a console session rather than RDP;
+- install the graphics driver for the GPU, or update it;
+- meanwhile, `crower gui` opens the same tools in a terminal.
+
 ## Windows says "This app can't run on your PC"
 
 That dialog is the Windows loader rejecting the file, before crower runs a single
