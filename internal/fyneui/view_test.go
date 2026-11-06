@@ -265,16 +265,43 @@ func labelPosition(object fyne.CanvasObject, text string) (fyne.Position, bool) 
 	return fyne.Position{}, false
 }
 
-// The Commands tab keeps the filter, controls and row names off the window edge.
+// commandUI lays out the Commands tab over the given commands.
+func commandUI(t *testing.T, exec desktop.Executor, commands []catalog.Command) (*ui, fyne.Window) {
+	t.Helper()
+
+	model := desktop.NewModel(catalog.New(nil, commands), timeline.Log{}, exec)
+	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
+	window.SetContent(front.content())
+	window.Resize(fyneSize())
+
+	return front, window
+}
+
+// openCommandCard opens the card for key.
+func openCommandCard(t *testing.T, front *ui, key string) *commandCard {
+	t.Helper()
+
+	for _, card := range front.commandCards {
+		if card.key == key {
+			front.toggleCommandCard(card)
+			return card
+		}
+	}
+
+	t.Fatalf("command %q has no card", key)
+	return nil
+}
+
+// The Commands tab keeps its controls and cards off the window edge.
 func TestCommandsHaveALeftMargin(t *testing.T) {
 	front, window := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
 
 	window.SetContent(front.content())
 	window.Resize(fyneSize())
 
-	pos, found := labelPosition(window.Canvas().Content(), "greet")
+	pos, found := labelPosition(window.Canvas().Content(), "Setup")
 	if !found {
-		t.Fatal("the command label is not in the rendered tree")
+		t.Fatal("the Setup label is not in the rendered tree")
 	}
 
 	if pos.X < theme.Padding()*2 {
@@ -282,231 +309,228 @@ func TestCommandsHaveALeftMargin(t *testing.T) {
 	}
 }
 
-// The canvas has to reach a command row's text. The row can have a size and a
-// working set of buttons while the walk still stops at it — that is what a row
-// type embedding a container does — and the list then paints nothing (#406).
-func TestCommandRowIsPaintable(t *testing.T) {
+// hasButtonText reports whether a button with exactly this text is reachable.
+func hasButtonText(object fyne.CanvasObject, text string) bool {
+	switch typed := object.(type) {
+	case *widget.Button:
+		return typed.Text == text
+	case *fyne.Container:
+		for _, child := range typed.Objects {
+			if hasButtonText(child, text) {
+				return true
+			}
+		}
+	case fyne.Widget:
+		renderer := test.WidgetRenderer(typed)
+		if renderer == nil {
+			return false
+		}
+
+		for _, child := range renderer.Objects() {
+			if hasButtonText(child, text) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+// The setup and command controls say what they act on.
+func TestSetupButtonsAreNamed(t *testing.T) {
 	front, window := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
 
 	window.SetContent(front.content())
-	window.Resize(fyne.NewSize(960, 640))
+	window.Resize(fyneSize())
 
-	if labels := labelsIn(window.Canvas().Content()); !slices.Contains(labels, "greet") {
-		t.Fatalf("the command name is not reachable in the rendered tree; labels = %q", labels)
+	for _, want := range []string{"New command", "New setup…", "Delete setup…", "Groups…"} {
+		if !hasButtonText(window.Canvas().Content(), want) {
+			t.Errorf("no %q button in the Commands tab", want)
+		}
+	}
+
+	if hasButtonText(window.Canvas().Content(), "Details") {
+		t.Error("the global Details toggle is still there")
 	}
 }
 
-// A row's Run button runs that row, not whatever the selection happens to be.
-func TestCommandRowRunsItsOwnCommand(t *testing.T) {
+// The canvas reaches an opened card's text. A card whose body is a container
+// subtype would paint nothing (#406).
+func TestCommandCardIsPaintable(t *testing.T) {
+	front, window := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+
+	openCommandCard(t, front, "greet")
+
+	if labels := labelsIn(window.Canvas().Content()); !slices.Contains(labels, "echo hi") {
+		t.Fatalf("the open card does not expose its exec; labels = %q", labels)
+	}
+}
+
+// A card's Run runs that card's command.
+func TestCommandCardRunsItsOwnCommand(t *testing.T) {
 	exec := &recordingExecutor{}
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{
-			{Name: "greet", Exec: "echo hi"},
-			{Name: "ship", Exec: "echo ship"},
-		}),
-		timeline.Log{},
-		exec,
-	)
+	front, _ := commandUI(t, exec, []catalog.Command{
+		{Name: "greet", Exec: "echo hi"},
+		{Name: "ship", Exec: "echo ship"},
+	})
 
-	front, _ := newTestUI(t, model, stubEditor{}, stubReverter{})
-
-	first := newCommandRow()
-	front.updateRow(0, first)
-
-	second := newCommandRow()
-	front.updateRow(1, second)
-
-	if first.run.OnTapped == nil || second.run.OnTapped == nil {
-		t.Fatal("a row's run button has no action")
+	first := openCommandCard(t, front, "greet")
+	if first.run.OnTapped == nil {
+		t.Fatal("a card's run button has no action")
 	}
 
 	first.run.OnTapped()
+
+	second := openCommandCard(t, front, "ship")
 	second.run.OnTapped()
 
-	if len(exec.keys) != 2 || exec.keys[0] != "greet" || exec.keys[1] != "ship" {
+	if !slices.Equal(exec.keys, []string{"greet", "ship"}) {
 		t.Fatalf("executed %v, want [greet ship]", exec.keys)
 	}
 }
 
-// A command that declares no parameters runs on the first click.
-func TestRunKeyRunsDirectlyWithoutDeclaredParams(t *testing.T) {
+// The card's Run takes its parameters from the entry; an empty entry means
+// "run without parameters".
+func TestCommandCardRunUsesTheParamsEntry(t *testing.T) {
 	exec := &recordingExecutor{}
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
-		timeline.Log{},
-		exec,
-	)
+	front, _ := commandUI(t, exec, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
 
-	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
+	card := openCommandCard(t, front, "greet")
+	card.run.OnTapped()
 
-	window.SetContent(front.commandsTab())
-	window.Resize(fyne.NewSize(960, 640))
-
-	front.runKey("greet")
-
-	if len(exec.keys) != 1 || exec.keys[0] != "greet" {
-		t.Fatalf("executed %v, want [greet] without a prompt", exec.keys)
+	if len(exec.args) != 1 || len(exec.args[0]) != 0 {
+		t.Fatalf("args = %v, want one run with no parameters", exec.args)
 	}
 
-	if front.model.State != desktop.ViewOutput {
-		t.Errorf("State = %v, want ViewOutput", front.model.State)
-	}
-}
-
-// A command that declares parameters asks for them before running.
-func TestRunKeyPromptsWhenTheCommandDeclaresParams(t *testing.T) {
-	exec := &recordingExecutor{}
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{
-			{Name: "deploy", Exec: "make deploy", Params: []string{"env"}},
-		}),
-		timeline.Log{},
-		exec,
-	)
-
-	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
-
-	window.SetContent(front.commandsTab())
-	window.Resize(fyne.NewSize(960, 640))
-
-	front.runKey("deploy")
-
-	if len(exec.keys) != 0 {
-		t.Fatalf("executed %v before the parameters were confirmed", exec.keys)
-	}
-
-	if front.model.State != desktop.ViewParams {
-		t.Errorf("State = %v, want ViewParams", front.model.State)
-	}
-
-	if len(window.Canvas().Overlays().List()) == 0 {
-		t.Error("no parameters prompt was shown")
-	}
-}
-
-// The detail panel's Run button takes its parameters from the entry: an empty
-// entry means "run without parameters".
-func TestRunFromDetailUsesTheEntry(t *testing.T) {
-	exec := &recordingExecutor{}
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{{Name: "greet", Exec: "echo hi"}}),
-		timeline.Log{},
-		exec,
-	)
-
-	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
-
-	window.SetContent(front.commandsTab())
-	window.Resize(fyne.NewSize(960, 640))
-
-	front.selectRow(0)
-	front.runFromDetail()
-
-	if len(exec.keys) != 1 || len(exec.args[0]) != 0 {
-		t.Fatalf("run = %v %v, want one run with no parameters", exec.keys, exec.args)
-	}
-
-	front.paramsEntry.SetText("a  b")
-	front.runFromDetail()
+	card.params.SetText("a  b")
+	card.run.OnTapped()
 
 	if len(exec.args) != 2 || !slices.Equal(exec.args[1], []string{"a", "b"}) {
 		t.Fatalf("args = %v, want [a b]", exec.args)
 	}
 }
 
-// Selecting a row opens the panel below the list, and the toggle collapses it.
-func TestSelectRowShowsTheDetail(t *testing.T) {
-	model := desktop.NewModel(
-		catalog.New(nil, []catalog.Command{
-			{Name: "deploy", Exec: "make deploy", Params: []string{"env"}},
-		}),
-		timeline.Log{},
-		stubExecutor{},
-	)
+// A collapsed card carries no actions; opening it shows the fields, the params
+// entry and Run/Edit/Delete.
+func TestCommandCardShowsTheDetail(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{
+		{Name: "deploy", Exec: "make deploy", Params: []string{"env"}},
+	})
 
-	front, window := newTestUI(t, model, stubEditor{}, stubReverter{})
-
-	window.SetContent(front.commandsTab())
-	window.Resize(fyne.NewSize(960, 640))
-
-	if front.detailBody.Visible() {
-		t.Fatal("the detail panel is visible before a selection")
+	if front.commandOpen != nil {
+		t.Fatal("a card is open before one was tapped")
 	}
 
-	front.selectRow(0)
+	card := openCommandCard(t, front, "deploy")
 
-	if !front.detailBody.Visible() {
-		t.Fatal("selecting a row did not open the detail panel")
+	if !card.isOpen() || !card.body.Visible() {
+		t.Fatal("opening the card did not show its body")
 	}
 
-	if labels := labelsIn(front.detailFields); !slices.Contains(labels, "make deploy") {
-		t.Errorf("fields = %q, want the command's exec", labels)
+	labels := labelsIn(card.body)
+	for _, want := range []string{"Name", "Exec", "make deploy", "Params", "env"} {
+		if !slices.Contains(labels, want) {
+			t.Errorf("fields %q do not contain %q", labels, want)
+		}
 	}
 
-	if front.detail.Text != "deploy" {
-		t.Errorf("headline = %q, want the command label", front.detail.Text)
+	if card.run.Text != "Run" || card.edit.Text != "Edit" || card.remove.Text != "Delete" {
+		t.Errorf("actions = %q/%q/%q, want Run/Edit/Delete", card.run.Text, card.edit.Text, card.remove.Text)
 	}
 
-	if !strings.Contains(front.paramsEntry.PlaceHolder, "env") {
-		t.Errorf("placeholder = %q, want the declared parameter names", front.paramsEntry.PlaceHolder)
-	}
-
-	front.setDetailVisible(false)
-
-	if front.detailBody.Visible() {
-		t.Error("the toggle did not collapse the panel")
-	}
-
-	front.selectRow(0)
-	front.clearDetail()
-
-	if front.detailBody.Visible() || front.detail.Text != "" || front.paramsEntry.Text != "" {
-		t.Error("clearDetail left the panel populated")
-	}
-
-	if len(front.detailFields.Objects) != 0 {
-		t.Error("clearDetail left the field grid populated")
+	if !strings.Contains(card.params.PlaceHolder, "env") {
+		t.Errorf("placeholder = %q, want the declared parameter names", card.params.PlaceHolder)
 	}
 }
 
-// Selecting a row must give the detail panel a height, not only make it
-// visible: Fyne's layouts skip an invisible child, so a panel hidden at build
-// time has no size until the tab lays out again.
-func TestSelectingARowSizesTheDetailPanel(t *testing.T) {
-	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, &stubUpdater{current: "v1"})
-	window.SetContent(front.content())
-	window.Resize(fyneSize())
+// The empty state distinguishes "no commands" from "nothing matches", and a
+// filter rebuilds the cards and drops the open one.
+func TestCommandCardsFollowTheFilter(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, nil)
 
-	if size := front.detailBody.Size(); size.Height != 0 {
-		t.Fatalf("the panel already has a size before a selection: %v", size)
+	if !front.commandEmpty.Visible() || !strings.Contains(front.commandEmpty.Text, "No commands yet") {
+		t.Errorf("empty state = %q, want the no-commands message", front.commandEmpty.Text)
 	}
 
-	front.selectRow(0)
+	front, _ = commandUI(t, stubExecutor{}, []catalog.Command{
+		{Name: "greet", Exec: "echo hi"},
+		{Name: "ship", Exec: "echo ship"},
+	})
 
-	if !front.detailBody.Visible() {
-		t.Fatal("selecting a row did not open the panel")
+	openCommandCard(t, front, "greet")
+
+	front.filterEntry.SetText("shi")
+
+	if len(front.commandCards) != 1 || front.commandCards[0].key != "ship" {
+		t.Fatalf("cards = %v, want only ship", front.commandCards)
 	}
 
-	if size := front.detailBody.Size(); size.Height == 0 {
-		t.Fatalf("panel size = %v, want the tab to lay it out", size)
+	if front.commandOpen != nil {
+		t.Error("a card stayed open after the filter changed")
+	}
+
+	front.filterEntry.SetText("")
+
+	if len(front.commandCards) != 2 {
+		t.Errorf("cards = %d, want both commands", len(front.commandCards))
+	}
+
+	// A text filter falls back to the whole set, so the no-match state is the
+	// empty-group one.
+	front.filterEntry.SetText("zzz")
+
+	if len(front.commandCards) != 2 || front.commandEmpty.Visible() {
+		t.Errorf("text fallback = %d cards, empty=%v, want the whole set", len(front.commandCards), front.commandEmpty.Visible())
+	}
+
+	front.model.Group = "missing"
+	front.rebuildCommands()
+
+	if !front.commandEmpty.Visible() || !strings.Contains(front.commandEmpty.Text, "match") {
+		t.Errorf("empty state = %q, want the no-match message", front.commandEmpty.Text)
+	}
+}
+
+// Opening another card closes the first.
+func TestOpeningAnotherCommandCardClosesTheFirst(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{
+		{Name: "greet", Exec: "echo hi"},
+		{Name: "ship", Exec: "echo ship"},
+	})
+
+	first := openCommandCard(t, front, "greet")
+	second := openCommandCard(t, front, "ship")
+
+	if first.isOpen() {
+		t.Error("the first card stayed open")
+	}
+
+	if !second.isOpen() {
+		t.Error("the second card did not open")
+	}
+}
+
+// Opening a card gives its body a height, so the page can lay it out.
+func TestCommandCardSizesTheBody(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+
+	card := openCommandCard(t, front, "greet")
+
+	if size := card.body.Size(); size.Height == 0 {
+		t.Fatalf("body size = %v, want the page to lay it out", size)
 	}
 }
 
 // Delete never happens on the first click.
-func TestCommandRowDeleteAsksFirst(t *testing.T) {
-	front, window := newTestUI(t, testModel(), &recordingEditor{next: testModel().Commands}, stubReverter{})
+func TestCommandCardDeleteAsksFirst(t *testing.T) {
+	front, window := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
 
-	window.SetContent(front.commandsTab())
-	window.Resize(fyne.NewSize(960, 640))
-
-	row := newCommandRow()
-	front.updateRow(0, row)
-
-	if row.remove.OnTapped == nil {
+	card := openCommandCard(t, front, "greet")
+	if card.remove.OnTapped == nil {
 		t.Fatal("the delete button has no action")
 	}
 
-	row.remove.OnTapped()
+	card.remove.OnTapped()
 
 	if len(window.Canvas().Overlays().List()) == 0 {
 		t.Error("delete did not ask for confirmation")
@@ -514,20 +538,15 @@ func TestCommandRowDeleteAsksFirst(t *testing.T) {
 }
 
 // Edit opens a dialog rather than changing the command in place.
-func TestCommandRowEditOpensTheDialog(t *testing.T) {
-	front, window := newTestUI(t, testModel(), &recordingEditor{next: testModel().Commands}, stubReverter{})
+func TestCommandCardEditOpensTheDialog(t *testing.T) {
+	front, window := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
 
-	window.SetContent(front.commandsTab())
-	window.Resize(fyne.NewSize(960, 640))
-
-	row := newCommandRow()
-	front.updateRow(0, row)
-
-	if row.edit.OnTapped == nil {
+	card := openCommandCard(t, front, "greet")
+	if card.edit.OnTapped == nil {
 		t.Fatal("the edit button has no action")
 	}
 
-	row.edit.OnTapped()
+	card.edit.OnTapped()
 
 	if len(window.Canvas().Overlays().List()) == 0 {
 		t.Error("edit did not open a dialog")
