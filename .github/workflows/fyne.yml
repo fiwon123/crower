@@ -72,6 +72,16 @@ jobs:
           Remove-Item cmd/crowergui/rsrc_windows_amd64.syso
           go run ./internal/tools/winres -verify build/crower-gui.exe
 
+          # A resource tree the loader rejects still parses, so start the file:
+          # --help exits before any window opens, which makes this a load test
+          # rather than a GUI test (#462).
+          $gui = Start-Process build/crower-gui.exe -ArgumentList '--help' -PassThru
+          if (-not $gui.WaitForExit(60000)) {
+            $gui.Kill()
+            throw 'crower-gui.exe --help did not exit within 60 s'
+          }
+          if ($gui.ExitCode -ne 0) { throw "crower-gui.exe --help failed (exit $($gui.ExitCode))" }
+
   macos:
     name: Fyne macOS
     runs-on: macos-latest

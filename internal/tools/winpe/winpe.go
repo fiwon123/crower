@@ -55,7 +55,7 @@ func Inspect(reader io.ReaderAt) (Info, error) {
 
 	info := Info{Machine: file.Machine, Subsystem: subsystemOf(file)}
 
-	types, err := resourceTypes(file)
+	types, err := resourcePayloads(file)
 	if err != nil {
 		// No resource directory is a statement, not a failure: Inspect still
 		// reports the machine and the subsystem.
@@ -78,7 +78,7 @@ func (i Info) VerifyGUI() error {
 
 	for _, want := range []uint32{RTIcon, RTGroupIcon, RTManifest, RTVersion} {
 		if !i.Resources[want] {
-			return fmt.Errorf("no resource of type %d (icon 3, group icon 14, manifest 24, version 16); found %v", want, i.ResourceList())
+			return fmt.Errorf("no payload for resource type %d (icon 3, group icon 14, manifest 24, version 16); found %v", want, i.ResourceList())
 		}
 	}
 
@@ -159,10 +159,15 @@ func subsystemOf(file *pe.File) uint16 {
 	return 0
 }
 
-// resourceTypes lists the resource types present in the image. The directory is
-// a tree: the root's entries are the types, each pointing at a subdirectory of
-// names and finally at the payload.
-func resourceTypes(file *pe.File) (map[uint32]bool, error) {
+// resourcePayloads lists the resource types that carry a payload in the image.
+//
+// The directory is a tree of three levels — type, name, language — and the
+// payload hangs off the language level. A tree that stops at the name level
+// still parses, and the loader refuses the image ("This app can't run on your
+// PC"), so a type only counts here when its payload is reachable at the
+// language level. That is what makes this check stricter than "a directory
+// exists".
+func resourcePayloads(file *pe.File) (map[uint32]bool, error) {
 	var (
 		rva  uint32
 		size uint32
@@ -193,16 +198,51 @@ func resourceTypes(file *pe.File) (map[uint32]bool, error) {
 		return nil, fmt.Errorf("resource directory is truncated")
 	}
 
-	count := int(le16(data[offset+14:]))
-	types := make(map[uint32]bool, count)
+	types := make(map[uint32]bool)
 
-	for index := 0; index < count; index++ {
-		at := int(offset) + 16 + 8*index
-		if at+8 > len(data) {
-			break
+	var walk func(at int, path []uint32) error
+
+	walk = func(at int, path []uint32) error {
+		if at+16 > len(data) {
+			return fmt.Errorf("resource directory at %#x is truncated", at)
 		}
 
-		types[le32(data[at:])] = true
+		count := int(le16(data[at+14:]))
+
+		for index := 0; index < count; index++ {
+			entry := at + 16 + 8*index
+			if entry+8 > len(data) {
+				return fmt.Errorf("resource entry at %#x is truncated", entry)
+			}
+
+			id := le32(data[entry:])
+			target := le32(data[entry+4:])
+			level := append(append([]uint32{}, path...), id)
+
+			if target&0x80000000 != 0 {
+				if len(level) > 3 {
+					return fmt.Errorf("resource type %d nests deeper than three levels", path[0])
+				}
+
+				if err := walk(int(target&^0x80000000), level); err != nil {
+					return err
+				}
+
+				continue
+			}
+
+			// A payload is only reachable the way the loader looks for it:
+			// type, then name, then language.
+			if len(level) == 3 {
+				types[level[0]] = true
+			}
+		}
+
+		return nil
+	}
+
+	if err := walk(int(offset), nil); err != nil {
+		return nil, err
 	}
 
 	return types, nil
