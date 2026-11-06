@@ -217,7 +217,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, u.selectGroup)
 	u.refreshGroups()
 
-	groupsButton := widget.NewButtonWithIcon("Groups…", theme.GridIcon(), u.showGroups)
+	groupsButton := widget.NewButtonWithIcon("Groups", theme.GridIcon(), u.showGroups)
 
 	labels, choices := u.setupChoicesList()
 	u.setupChoices = choices
@@ -235,10 +235,10 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	setupRow := container.NewHBox(widget.NewLabel("Setup"), u.setupSelect)
 
 	if u.setups != nil {
-		removeSetup := widget.NewButtonWithIcon("Delete setup…", theme.DeleteIcon(), u.showDeleteSetup)
+		removeSetup := widget.NewButtonWithIcon("Delete setup", theme.DeleteIcon(), u.showDeleteSetup)
 		removeSetup.Importance = widget.DangerImportance
 
-		setupRow.Add(widget.NewButtonWithIcon("New setup…", theme.ContentAddIcon(), u.showNewSetup))
+		setupRow.Add(widget.NewButtonWithIcon("New setup", theme.ContentAddIcon(), u.showNewSetup))
 		setupRow.Add(removeSetup)
 	}
 
@@ -250,6 +250,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 
 	u.commandEmpty = widget.NewLabel("No commands match the filter.")
 	u.commandEmpty.Wrapping = fyne.TextWrapWord
+	u.commandEmpty.Selectable = true
 	u.commandEmpty.Hide()
 
 	u.commandList = container.NewVBox()

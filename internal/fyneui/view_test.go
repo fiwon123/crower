@@ -343,7 +343,7 @@ func TestSetupButtonsAreNamed(t *testing.T) {
 	window.SetContent(front.content())
 	window.Resize(fyneSize())
 
-	for _, want := range []string{"New command", "New setup…", "Delete setup…", "Groups…"} {
+	for _, want := range []string{"New command", "New setup", "Delete setup", "Groups"} {
 		if !hasButtonText(window.Canvas().Content(), want) {
 			t.Errorf("no %q button in the Commands tab", want)
 		}
@@ -351,6 +351,25 @@ func TestSetupButtonsAreNamed(t *testing.T) {
 
 	if hasButtonText(window.Canvas().Content(), "Details") {
 		t.Error("the global Details toggle is still there")
+	}
+}
+
+// The group field offers existing groups and the empty choice.
+func TestGroupFieldSelectsExistingGroups(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{
+		{Name: "greet", Exec: "echo hi", Group: "work"},
+	})
+
+	choice, _ := front.groupField("work")
+
+	if choice.value != "work" {
+		t.Errorf("group value = %q, want work", choice.value)
+	}
+
+	for _, want := range []string{noGroupLabel, "work"} {
+		if !slices.Contains(choice.selectWidget.Options, want) {
+			t.Errorf("group options %v do not contain %q", choice.selectWidget.Options, want)
+		}
 	}
 }
 
