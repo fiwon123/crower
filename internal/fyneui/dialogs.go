@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/desktop"
@@ -61,33 +62,66 @@ func (u *ui) showCreate() {
 // noGroupLabel is the group select's empty choice.
 const noGroupLabel = "No group"
 
-// groupChoice is the group field's value and selector.
+// groupChoice is the group field's value and selector. The selector's label
+// carries the group's icon, so the two maps translate between the stored name
+// and what the row shows.
 type groupChoice struct {
 	value        string
+	labels       map[string]string
+	names        map[string]string
 	selectWidget *widget.Select
 }
 
 // groupField lets a command pick an existing group or create one, instead of
-// typing a name. A group exists through the commands that use it.
+// typing a name. A created group is stored immediately, so it is offered here
+// and in the filter before any command uses it.
 func (u *ui) groupField(initial string) (*groupChoice, fyne.CanvasObject) {
-	choice := &groupChoice{value: strings.TrimSpace(initial)}
+	choice := &groupChoice{
+		value:  strings.TrimSpace(initial),
+		labels: make(map[string]string),
+		names:  make(map[string]string),
+	}
 
-	options := append([]string{noGroupLabel}, u.model.Groups()...)
+	options := []string{noGroupLabel}
+
+	for _, name := range u.groupNames() {
+		label := groupLabel(u.groupIcons[name], name)
+		choice.labels[name] = label
+		choice.names[label] = name
+		options = append(options, label)
+	}
+
+	// A value set outside the window (`create --group`) must still show, even
+	// when no command in the list carries it any more.
+	if choice.value != "" && choice.labels[choice.value] == "" {
+		label := groupLabel(u.groupIcons[choice.value], choice.value)
+		choice.labels[choice.value] = label
+		choice.names[label] = choice.value
+		options = append(options, label)
+	}
+
 	choice.selectWidget = widget.NewSelect(options, func(label string) {
 		if label == noGroupLabel {
 			choice.value = ""
 			return
 		}
 
-		choice.value = label
+		choice.value = choice.names[label]
 	})
 	choice.selectWidget.SetSelected(choice.groupLabel())
 
 	newGroup := widget.NewButton("New group", func() {
-		u.promptNewGroup(func(name string) {
-			choice.selectWidget.Options = append(choice.selectWidget.Options, name)
+		u.promptNewGroup(func(name, icon string) {
+			if !u.createGroup(name, icon) {
+				return
+			}
+
+			label := groupLabel(icon, name)
+			choice.labels[name] = label
+			choice.names[label] = name
+			choice.selectWidget.Options = append(choice.selectWidget.Options, label)
 			choice.selectWidget.Refresh()
-			choice.selectWidget.SetSelected(name)
+			choice.selectWidget.SetSelected(label)
 			choice.value = name
 		})
 	})
@@ -100,15 +134,25 @@ func (c *groupChoice) groupLabel() string {
 		return noGroupLabel
 	}
 
+	if label, found := c.labels[c.value]; found {
+		return label
+	}
+
 	return c.value
 }
 
-// promptNewGroup asks for a group name and hands it to onCreate.
-func (u *ui) promptNewGroup(onCreate func(string)) {
+// promptNewGroup asks for a group's name and icon and hands both to onCreate.
+// A group is a name first; the icon is what the filter shows beside it.
+func (u *ui) promptNewGroup(onCreate func(name, icon string)) {
 	name := newScrollFreeEntry()
 	name.SetPlaceHolder("deploy")
 
-	form := widget.NewForm(widget.NewFormItem("Name", name))
+	icon, iconWidget := u.iconField("")
+
+	form := widget.NewForm(
+		widget.NewFormItem("Name", name),
+		widget.NewFormItem("Icon", iconWidget),
+	)
 
 	showForm("New group", "Create", "Cancel", form, u.window, func(ok bool) {
 		if !ok {
@@ -121,8 +165,8 @@ func (u *ui) promptNewGroup(onCreate func(string)) {
 			return
 		}
 
-		onCreate(value)
-	}, fyne.NewSize(420, 220))
+		onCreate(value, icon.value)
+	}, fyne.NewSize(460, 260))
 }
 
 // applyCreate is the form's submit path, separate from the dialog so a test
@@ -423,6 +467,20 @@ func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window 
 	pop.Show()
 
 	return pop
+}
+
+// dialogSizeFor fits a dialog to the window: a margin at each side, but never
+// smaller than min and never larger than max. A tiny window gets a dialog that
+// still fits on it; a maximised one does not get a dialog stretched across the
+// screen with a single column of text in the middle.
+func dialogSizeFor(window fyne.Window, minWidth, minHeight, maxWidth, maxHeight float32) fyne.Size {
+	size := window.Canvas().Size()
+	pad := theme.Padding() * 6
+
+	width := max(minWidth, min(maxWidth, size.Width-pad))
+	height := max(minHeight, min(maxHeight, size.Height-pad))
+
+	return fyne.NewSize(width, height)
 }
 
 // showConfirm asks a question. It stays modal so an outside click cannot answer

@@ -354,6 +354,64 @@ func TestSetupButtonsAreNamed(t *testing.T) {
 	}
 }
 
+// Run is the first action, a gap separates the buttons, and each action carries
+// its own colour.
+func TestCommandActionsRunFirstAndAreColoured(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+
+	card := openCommandCard(t, front, "greet")
+
+	if card.run.Importance != widget.SuccessImportance {
+		t.Errorf("Run importance = %v, want success", card.run.Importance)
+	}
+
+	if card.edit.Importance != widget.HighImportance {
+		t.Errorf("Edit importance = %v, want high", card.edit.Importance)
+	}
+
+	if card.remove.Importance != widget.DangerImportance {
+		t.Errorf("Delete importance = %v, want danger", card.remove.Importance)
+	}
+
+	if card.run.Position().X >= card.edit.Position().X {
+		t.Errorf("Run x = %.1f, Edit x = %.1f: Run is not first", card.run.Position().X, card.edit.Position().X)
+	}
+
+	if gap := card.edit.Position().X - (card.run.Position().X + card.run.Size().Width); gap < theme.Padding()*2 {
+		t.Errorf("gap between Run and Edit = %.1f, want at least %v", gap, theme.Padding()*2)
+	}
+}
+
+// The expanded body is indented from the command header, so the fields read as
+// a panel under it rather than a continuation of the title.
+func TestCommandBodyIsIndented(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+
+	card := openCommandCard(t, front, "greet")
+
+	pos, found := labelPosition(card.body, "Name")
+	if !found {
+		t.Fatal("the Name label is not in the card body")
+	}
+
+	if pos.X < card.Position().X+theme.Padding()*3 {
+		t.Errorf("body x = %.1f, want it indented from the card edge %.1f", pos.X, card.Position().X)
+	}
+}
+
+// The filter says what it filters.
+func TestCommandsFilterIsLabelled(t *testing.T) {
+	front, window := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+
+	if _, found := labelPosition(window.Canvas().Content(), "Filter"); !found {
+		t.Error("the filter has no label")
+	}
+
+	if front.filterEntry == nil {
+		t.Error("the filter entry is missing")
+	}
+}
+
 // The group field offers existing groups and the empty choice.
 func TestGroupFieldSelectsExistingGroups(t *testing.T) {
 	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{
@@ -370,6 +428,29 @@ func TestGroupFieldSelectsExistingGroups(t *testing.T) {
 		if !slices.Contains(choice.selectWidget.Options, want) {
 			t.Errorf("group options %v do not contain %q", choice.selectWidget.Options, want)
 		}
+	}
+}
+
+// A stored group is offered in the command's dropdown, with its icon, before
+// any command uses it.
+func TestGroupFieldOffersAStoredGroup(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+	front.groups = &stubGroups{}
+
+	if !front.createGroup("deploy", "🚀") {
+		t.Fatal("createGroup returned false")
+	}
+
+	choice, _ := front.groupField("")
+
+	if !slices.Contains(choice.selectWidget.Options, "🚀 deploy") {
+		t.Errorf("group options %v do not contain the stored group", choice.selectWidget.Options)
+	}
+
+	choice.selectWidget.SetSelected("🚀 deploy")
+
+	if choice.value != "deploy" {
+		t.Errorf("selected group = %q, want deploy", choice.value)
 	}
 }
 

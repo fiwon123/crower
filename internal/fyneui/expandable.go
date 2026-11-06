@@ -60,7 +60,10 @@ func (c *expandableCard) CreateRenderer() fyne.WidgetRenderer {
 // setOpen opens or closes the card, building the body on the first open.
 func (c *expandableCard) setOpen(open bool) {
 	if open && !c.built {
-		c.body.Add(c.build())
+		// The body is inset from the header text and separated from it by a
+		// little air, so an expanded card reads as a panel under its title
+		// rather than a continuation of it.
+		c.body.Add(container.NewVBox(gap(0, theme.Padding()), indented(c.build())))
 		c.built = true
 	}
 

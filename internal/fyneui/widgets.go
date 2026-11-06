@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -80,6 +81,7 @@ func newScrollFreeEntry() *widget.Entry {
 // something, then opens with the outcome; the toggle hides it again, which is
 // what gives the forms back their space.
 type toolResult struct {
+	panel        *block
 	label        *widget.Label
 	toggle       *widget.Button
 	cancelButton *widget.Button
@@ -91,15 +93,15 @@ type toolResult struct {
 }
 
 func newToolResult() *toolResult {
-	result := &toolResult{label: widget.NewLabel("")}
-	result.label.Wrapping = fyne.TextWrapWord
-	result.label.Selectable = true
+	result := &toolResult{panel: newBlock("")}
+	result.label = result.panel.label
+	result.panel.setAccent(theme.ColorNameSeparator)
 
 	result.cancelButton = widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), result.cancelRun)
 	result.cancelButton.Importance = widget.LowImportance
 	result.cancelButton.Hide()
 
-	result.body = container.NewVBox(result.label, result.cancelButton)
+	result.body = container.NewVBox(result.panel.object(), result.cancelButton)
 	result.body.Hide()
 
 	result.toggle = widget.NewButton("Hide result", func() {
@@ -131,10 +133,17 @@ func (r *toolResult) setVisible(visible bool) {
 	r.toggle.SetText("Show result")
 }
 
-// report shows an outcome and opens the area: a result square appears because an
-// action ran, not before.
+// report shows a successful outcome in green, and opens the area: a result
+// square appears because an action ran, not before.
 func (r *toolResult) report(text string) {
+	r.reportWith(text, theme.ColorNameSuccess)
+}
+
+// reportWith shows an outcome and colours the panel's bar by what happened:
+// green for success, amber for a stop, red for a failure.
+func (r *toolResult) reportWith(text string, color fyne.ThemeColorName) {
 	r.label.SetText(text)
+	r.panel.setAccent(color)
 	r.area.Show()
 	r.setVisible(true)
 }
@@ -146,6 +155,7 @@ func (r *toolResult) start(status string, cancel context.CancelFunc) {
 	r.cancel = cancel
 
 	r.label.SetText(status)
+	r.panel.setAccent(theme.ColorNameForeground)
 	r.area.Show()
 	r.setVisible(true)
 
@@ -190,21 +200,145 @@ type detailField struct {
 	Value string
 }
 
-// newFieldForm lays detail fields out as a read-only form: the key column sizes
-// to the longest label, so a value sits next to its key instead of half a card
-// away. Values wrap and can be selected and copied.
-func newFieldForm(fields []detailField) *widget.Form {
-	items := make([]*widget.FormItem, 0, len(fields))
+// newFieldList lays detail fields out as a read-only two-column list: a bold,
+// selectable label in a column sized to the longest key, and a wrapping,
+// selectable value beside it.
+//
+// It replaces widget.Form, whose keys are drawn trailing-aligned and bold, so a
+// column of labels of different widths reads as a ragged edge next to the
+// values. Here both columns start at the same left edge.
+func newFieldList(fields []detailField) *fyne.Container {
+	objects := make([]fyne.CanvasObject, 0, len(fields)*2)
 
 	for _, field := range fields {
+		label := widget.NewLabelWithStyle(field.Label, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		label.Selectable = true
+
 		value := widget.NewLabel(field.Value)
 		value.Wrapping = fyne.TextWrapWord
 		value.Selectable = true
 
-		items = append(items, widget.NewFormItem(field.Label, value))
+		objects = append(objects, label, value)
 	}
 
-	return widget.NewForm(items...)
+	return container.New(layout.NewFormLayout(), objects...)
+}
+
+// block is a message in an inset panel: an optional accent bar on the left, the
+// text padded and selectable. The History raw note and a tool result both read
+// as a block instead of a line of text floating in the card.
+type block struct {
+	accent fyne.CanvasObject
+	label  *widget.Label
+	panel  *fyne.Container
+}
+
+func newBlock(text string) *block {
+	result := &block{label: widget.NewLabel(text)}
+	result.label.Wrapping = fyne.TextWrapWord
+	result.label.Selectable = true
+
+	background := canvas.NewRectangle(theme.Color(theme.ColorNameInputBackground))
+	background.CornerRadius = theme.Size(theme.SizeNameInputRadius)
+	background.StrokeColor = theme.Color(theme.ColorNameSeparator)
+	background.StrokeWidth = theme.Size(theme.SizeNameSeparatorThickness)
+
+	bar := canvas.NewRectangle(theme.Color(theme.ColorNameSeparator))
+	bar.SetMinSize(fyne.NewSize(3, 1))
+	result.accent = bar
+
+	body := container.NewBorder(nil, nil, bar, nil, container.NewPadded(result.label))
+	result.panel = container.NewStack(background, body)
+
+	return result
+}
+
+// setAccent colours the bar, which is what tells a reader at a glance whether a
+// result succeeded, stopped or failed.
+func (b *block) setAccent(name fyne.ThemeColorName) {
+	if bar, ok := b.accent.(*canvas.Rectangle); ok {
+		bar.FillColor = theme.Color(name)
+		bar.Refresh()
+	}
+}
+
+func (b *block) object() fyne.CanvasObject {
+	return b.panel
+}
+
+// rowFlow places objects side by side at their natural size with a gap,
+// wrapping to another row when the width runs out.
+//
+// An HBox cannot wrap, and a GridWrap stretches every child to one cell size, so
+// neither gives spaced buttons that stay readable in a narrow window. The row
+// count is remembered from the last layout, which is how MinSize reports the
+// height the wrapping actually needs.
+type rowFlow struct {
+	gap  float32
+	rows int
+}
+
+func (l *rowFlow) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	var width, height float32
+
+	for _, object := range objects {
+		if object.Visible() {
+			width = max(width, object.MinSize().Width)
+			height = max(height, object.MinSize().Height)
+		}
+	}
+
+	rows := float32(max(l.rows, 1))
+
+	return fyne.NewSize(width, rows*height+(rows-1)*l.gap)
+}
+
+func (l *rowFlow) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	var x, y, rowHeight float32
+
+	rows := 1
+
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+
+		natural := object.MinSize()
+
+		if x > 0 && x+natural.Width > size.Width {
+			x = 0
+			y += rowHeight + l.gap
+			rowHeight = 0
+			rows++
+		}
+
+		object.Move(fyne.NewPos(x, y))
+		object.Resize(natural)
+		x += natural.Width + l.gap
+		rowHeight = max(rowHeight, natural.Height)
+	}
+
+	l.rows = rows
+}
+
+// spacedActions puts a card's action buttons in one row with a visible gap,
+// wrapping when the card is too narrow.
+func spacedActions(buttons ...fyne.CanvasObject) *fyne.Container {
+	return container.New(&rowFlow{gap: theme.Padding() * 2}, buttons...)
+}
+
+// indented gives a card body the left inset that separates it from the header
+// text, and a small right margin for the scrollbar.
+func indented(content fyne.CanvasObject) fyne.CanvasObject {
+	pad := theme.Padding()
+
+	return container.NewBorder(
+		nil,
+		nil,
+		gap(pad*3, 0),
+		gap(pad, 0),
+		content,
+	)
 }
 
 // gap is an invisible spacer. An HBox's spacing is fixed, so a row that has to
