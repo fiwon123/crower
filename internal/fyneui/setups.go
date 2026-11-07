@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/widget"
 )
 
 // showNewSetup asks for a name and creates an empty setup, the way
@@ -20,7 +19,7 @@ func (u *ui) showNewSetup() {
 	name := newScrollFreeEntry()
 	name.SetPlaceHolder("streamer")
 
-	form := widget.NewForm(widget.NewFormItem("Name", name))
+	form := newFormGrid([]formRow{{"Name", name}})
 
 	showForm("New setup", "Create", "Cancel", form, u.window, func(ok bool) {
 		if !ok {

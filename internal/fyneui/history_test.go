@@ -429,20 +429,27 @@ func TestHistoryRestoreCountsFromTheNewest(t *testing.T) {
 	}
 }
 
-// The summary uses the operation icon and the clock, not the full date; the
-// expanded fields carry the date and version.
+// The summary is the operation, the command, the clock and the version, and
+// the operation's icon is drawn separately at a readable size; the expanded
+// fields carry the date and version.
 func TestHistorySummaryTitleIsCompact(t *testing.T) {
-	title := historySummaryTitle(desktop.HistorySummary{
+	summary := desktop.HistorySummary{
 		Version:   7,
 		When:      "2026-11-06 12:00",
 		Operation: "execute",
 		Command:   "greet",
-	})
+	}
 
-	for _, want := range []string{"▶️", "execute", "greet", "12:00", "#7"} {
+	title := historySummaryTitle(summary)
+
+	for _, want := range []string{"execute", "greet", "12:00", "#7"} {
 		if !strings.Contains(title, want) {
 			t.Errorf("title = %q, want it to contain %q", title, want)
 		}
+	}
+
+	if operationIcon(summary.Operation) != "▶️" {
+		t.Errorf("operation icon = %q, want the play mark", operationIcon(summary.Operation))
 	}
 
 	if strings.Contains(title, "2026-11-06") {

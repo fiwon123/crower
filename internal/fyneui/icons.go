@@ -244,10 +244,22 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 	category.OnChanged = func(string) { refilter() }
 	refilter()
 
+	// Clearing an icon belongs to the picker, not to every row that shows one:
+	// the dialog stays a row of icons and names, and an empty choice is one tap
+	// away when the catalogue is open.
+	noIcon := widget.NewButtonWithIcon("No icon", theme.ContentClearIcon(), func() {
+		onPick("")
+
+		if pop != nil {
+			pop.Hide()
+		}
+	})
+	noIcon.Importance = widget.WarningImportance
+
 	top := container.NewVBox(
 		search,
 		container.NewBorder(nil, nil, widget.NewLabel("Category"), nil, category),
-		count,
+		container.NewBorder(nil, nil, count, nil, noIcon),
 	)
 	content := container.NewBorder(top, nil, nil, nil, table)
 
@@ -337,10 +349,5 @@ func (u *ui) iconField(initial string) (*iconChoice, fyne.CanvasObject) {
 		})
 	})
 
-	clear := widget.NewButton("Clear", func() {
-		choice.value = ""
-		choice.button.SetEmoji("")
-	})
-
-	return choice, container.NewHBox(choice.button, clear)
+	return choice, choice.button
 }

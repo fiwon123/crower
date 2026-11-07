@@ -60,6 +60,7 @@ func (u *ui) transferCard() fyne.CanvasObject {
 			return u.transfer(ctx, report, true, paths, destination.Text)
 		})
 	})
+	copyButton.Importance = widget.HighImportance
 
 	moveButton := widget.NewButtonWithIcon("Move", theme.ContentCutIcon(), func() {
 		paths := splitPaths(u.sourcesEntry.Text)
@@ -67,11 +68,12 @@ func (u *ui) transferCard() fyne.CanvasObject {
 			return u.transfer(ctx, report, false, paths, destination.Text)
 		})
 	})
+	moveButton.Importance = widget.HighImportance
 
-	form := widget.NewForm(
-		widget.NewFormItem("Sources", fieldWithBrowse(u.sourcesEntry, func() { u.browseFiles(u.sourcesEntry) })),
-		widget.NewFormItem("Destination", fieldWithBrowse(destination, func() { u.browseFolder(destination) })),
-	)
+	form := newFormGrid([]formRow{
+		{"Sources", fieldWithBrowse(u.sourcesEntry, func() { u.browseFiles(u.sourcesEntry) })},
+		{"Destination", fieldWithBrowse(destination, func() { u.browseFolder(destination) })},
+	})
 
 	return newCard(
 		"Copy or move",
@@ -112,12 +114,13 @@ func (u *ui) searchCard() fyne.CanvasObject {
 			return u.search(selected, term.Text, path.Text)
 		})
 	})
+	searchButton.Importance = widget.HighImportance
 
-	form := widget.NewForm(
-		widget.NewFormItem("Term", term),
-		widget.NewFormItem("Path", fieldWithBrowse(path, func() { u.browseFolder(path) })),
-		widget.NewFormItem("Look in", mode),
-	)
+	form := newFormGrid([]formRow{
+		{"Term", term},
+		{"Path", fieldWithBrowse(path, func() { u.browseFolder(path) })},
+		{"Look in", mode},
+	})
 
 	return newCard(
 		"Search",
@@ -169,11 +172,12 @@ func (u *ui) extractCard() fyne.CanvasObject {
 			return u.extract(ctx, report, paths, outDir.Text)
 		})
 	})
+	extractButton.Importance = widget.HighImportance
 
-	form := widget.NewForm(
-		widget.NewFormItem("Archives", fieldWithBrowse(archives, func() { u.browseFiles(archives) })),
-		widget.NewFormItem("Into", fieldWithBrowse(outDir, func() { u.browseFolder(outDir) })),
-	)
+	form := newFormGrid([]formRow{
+		{"Archives", fieldWithBrowse(archives, func() { u.browseFiles(archives) })},
+		{"Into", fieldWithBrowse(outDir, func() { u.browseFolder(outDir) })},
+	})
 
 	return newCard(
 		"Extract",
@@ -200,6 +204,7 @@ func (u *ui) openCard() fyne.CanvasObject {
 			return u.open(splitPaths(paths.Text))
 		})
 	})
+	openButton.Importance = widget.HighImportance
 
 	return newCard(
 		"Open",
