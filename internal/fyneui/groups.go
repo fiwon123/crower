@@ -63,10 +63,10 @@ func (u *ui) showGroups() {
 		var row fyne.CanvasObject
 
 		remove := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
-			showConfirm("Delete group", fmt.Sprintf(
+			confirmNamed("Delete group", fmt.Sprintf(
 				"Delete the group %q?\n\nA command that names it keeps the name until you change the command.",
 				name,
-			), u.window, func(confirmed bool) {
+			), name, "Delete", u.window, func(confirmed bool) {
 				if !confirmed || !u.removeGroup(name) {
 					return
 				}

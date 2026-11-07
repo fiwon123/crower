@@ -251,9 +251,8 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	})
 	u.setupSelect.SetSelected(u.setupLabel(u.activeSetup))
 
-	setupControls := container.NewHBox(selectableLabel("Setup"), u.setupSelect)
+	setupRow := container.NewHBox(selectableLabel("Setup"), u.setupSelect)
 
-	setupRow := container.NewVBox(setupControls)
 	if u.setups != nil {
 		newSetup := widget.NewButtonWithIcon("New setup", theme.ContentAddIcon(), u.showNewSetup)
 		newSetup.Importance = widget.HighImportance
@@ -261,26 +260,31 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		removeSetup := widget.NewButtonWithIcon("Delete setup", theme.DeleteIcon(), u.showDeleteSetup)
 		removeSetup.Importance = widget.DangerImportance
 
-		// The actions sit under their selector, on the same left edge as a
-		// card's Run/Edit/Delete: a Border stretched them to the selector's
-		// height, which is why they did not line up with anything (#480).
-		setupRow.Add(container.NewHBox(newSetup, removeSetup))
+		// Beside the selector, not at the window's edge: a Button stretched to
+		// the row height is wrapped in Center, so it keeps the height of every
+		// other button (#483).
+		setupRow.Add(container.NewCenter(newSetup))
+		setupRow.Add(container.NewCenter(removeSetup))
 	}
 
-	groupRow := container.NewVBox(
-		container.NewHBox(selectableLabel("Group"), u.groupFilter),
-		groupsButton,
+	groupRow := container.NewHBox(
+		selectableLabel("Group"),
+		u.groupFilter,
+		container.NewCenter(groupsButton),
 	)
 
 	filterRow := container.NewBorder(nil, nil, selectableLabel("Filter"), nil, filter)
 
 	createRow := container.NewHBox(newCommand)
 
+	// Setup and group scope the whole tab; filter and New command act on the
+	// command list, so a rule separates the two groups.
 	controls := container.NewVBox(
 		gap(0, theme.Padding()),
 		setupRow,
 		gap(0, theme.Padding()/2),
 		groupRow,
+		widget.NewSeparator(),
 		gap(0, theme.Padding()/2),
 		filterRow,
 		createRow,

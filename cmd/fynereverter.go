@@ -31,12 +31,7 @@ func (r fyneReverter) Revert(steps int) (catalog.Catalog, timeline.Log, error) {
 		return catalog.Catalog{}, timeline.Log{}, fmt.Errorf("revert needs at least one step, got %d", steps)
 	}
 
-	entry, err := r.cfg.History.GetBeforeLast(steps)
-	if err != nil {
-		return catalog.Catalog{}, timeline.Log{}, err
-	}
-
-	if err := r.cfg.RevertTo(entry); err != nil {
+	if _, err := r.cfg.RevertBack(steps); err != nil {
 		return catalog.Catalog{}, timeline.Log{}, fmt.Errorf("revert history: %w", err)
 	}
 
