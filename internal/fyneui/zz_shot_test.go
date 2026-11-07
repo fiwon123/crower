@@ -55,7 +55,7 @@ func TestScreenshots(t *testing.T) {
 		}
 	}
 
-	captureTab(t, front.content(), "commands")
+	captureTab(t, front.window.Canvas().Content(), "commands")
 
 	command := catalog.Command{Name: "greet", Exec: "echo hi", Aliases: []string{"hi"}}
 	note := notes.ExecuteCommandNote(command, []string{"a b"})
@@ -65,5 +65,8 @@ func TestScreenshots(t *testing.T) {
 		history.toggleHistoryCard(history.historyCards[0])
 	}
 
-	captureTab(t, history.content(), "history")
+	captureTab(t, history.window.Canvas().Content(), "history")
+
+	tools, _ := commandUI(t, stubExecutor{}, nil)
+	captureTab(t, tools.window.Canvas().Content(), "tools")
 }
