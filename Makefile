@@ -19,8 +19,9 @@ endif
 
 # Build tools run on the host even when GOOS points at the release target: a
 # GOOS=windows `go run` would produce a Windows binary the Linux runner cannot
-# execute (the mingw cross-build sets GOOS=windows for the whole recipe).
-HOST_GO := GOOS=$$(go env GOHOSTOS) GOARCH=$$(go env GOHOSTARCH)
+# execute. CGO is off for them too, so the cross compiler in CC is not asked to
+# build the host's runtime/cgo.
+HOST_GO := GOOS=$$(go env GOHOSTOS) GOARCH=$$(go env GOHOSTARCH) CGO_ENABLED=0
 
 VERSION ?= $(shell git describe --tags --always)
 DIST_DIR := $(BUILD_DIR)/dist
@@ -126,7 +127,7 @@ endif
 ARCHIVEVERIFY_FLAGS := $(if $(filter 1,$(GUI)),-gui,)
 
 verify-release:
-	@GOOS=$$(go env GOHOSTOS) GOARCH=$$(go env GOHOSTARCH) go run ./internal/tools/archiveverify $(ARCHIVEVERIFY_FLAGS) $(DIST_DIR)
+	@GOOS=$$(go env GOHOSTOS) GOARCH=$$(go env GOHOSTARCH) CGO_ENABLED=0 go run ./internal/tools/archiveverify $(ARCHIVEVERIFY_FLAGS) $(DIST_DIR)
 
 ifeq ($(GOOS),windows)
 EXT := .exe
