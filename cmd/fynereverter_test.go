@@ -26,8 +26,8 @@ func loadFyneConfigAt(t *testing.T, path string) *session.Session {
 	return cfg
 }
 
-// The Fyne reverter goes through Session.RevertTo, so restoring an entry puts
-// the command set back, drops the newer snapshots and records the revert.
+// One step undoes one operation: the snapshot of the entry before it is the
+// state the user had (#483).
 func TestFyneReverterRestoresAnEarlierState(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "crower.yaml")
 	cfg := loadFyneConfigAt(t, path)
@@ -41,8 +41,8 @@ func TestFyneReverterRestoresAnEarlierState(t *testing.T) {
 		t.Fatalf("Create b: %v", err)
 	}
 
-	// Two entries back is the state after "a" was created.
-	commands, history, err := newFyneReverter(cfg).Revert(2)
+	// Undoing the last operation lands on the state after "a" was created.
+	commands, history, err := newFyneReverter(cfg).Revert(1)
 	if err != nil {
 		t.Fatalf("Revert: %v", err)
 	}
@@ -67,6 +67,30 @@ func TestFyneReverterRestoresAnEarlierState(t *testing.T) {
 
 	if _, found := reloaded.Catalog().Get("a"); !found {
 		t.Error("the restored command is missing from the configuration file")
+	}
+}
+
+// Restoring after a delete brings the command back: that is the report that
+// exposed the off-by-one — the delete entry's own snapshot already lacks it.
+func TestFyneReverterBringsADeletedCommandBack(t *testing.T) {
+	cfg := loadFyneConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
+	editor := newFyneEditor(cfg)
+
+	if _, _, err := editor.Create(catalog.Command{Name: "greet", Exec: "echo hi"}); err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if _, _, err := editor.Delete("greet"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	commands, _, err := newFyneReverter(cfg).Revert(1)
+	if err != nil {
+		t.Fatalf("Revert: %v", err)
+	}
+
+	if _, found := commands.Get("greet"); !found {
+		t.Error("restoring after a delete did not bring the command back")
 	}
 }
 

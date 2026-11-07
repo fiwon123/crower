@@ -331,8 +331,8 @@ crower extract "*.zip"
 crower revert <steps>
 ```
 
-Undo operations, newest first. The argument is how many history entries to roll
-back.
+Undo operations, newest first. The argument is how many operations to roll back:
+`revert 1` undoes the last one, `revert 3` undoes the last three.
 
 ```bash
 crower revert 1
@@ -340,7 +340,9 @@ crower revert 3
 ```
 
 `crower list --history` shows what is there. Reverting writes the restored
-command map back and drops the entries it passed.
+command map back and drops the entries it passed. A snapshot records the state
+*after* its operation, so undoing one operation restores the state before it —
+which is why `revert 1` after a delete brings the command back.
 
 ## ♻️ crower restore
 
