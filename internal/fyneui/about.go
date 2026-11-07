@@ -87,19 +87,22 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 	u.restartButton = newButton("Restart now", theme.ViewRefreshIcon(), widget.SuccessImportance, u.restart)
 	u.restartButton.Hide()
 
-	// The update actions are vertical: one centred button per row follows the
-	// window width and reads as a list of steps. It is kept on ui because hiding
-	// a button alone does not re-run this layout.
-	actions := container.NewVBox(
-		container.NewCenter(u.checkButton),
-		container.NewCenter(u.installButton),
-		container.NewCenter(u.restartButton),
+	// The update actions stay vertical — one centred step per row — but with a
+	// gap tighter than the theme's padding, so they read as one group instead of
+	// four unrelated rows. The buttons go in directly: a Centre wrapper stays
+	// visible when its button is hidden and leaves an empty row and its gap
+	// behind. It is kept on ui because hiding a button alone does not re-run this
+	// layout.
+	actions := container.New(&vStack{gap: theme.Padding() / 2, center: true},
+		u.checkButton,
+		u.installButton,
+		u.restartButton,
 	)
 	u.aboutActions = actions
 
 	if previous, found := u.updater.Previous(); found {
 		u.restoreButton = newButton("Restore "+previous, nil, widget.WarningImportance, u.restorePrevious)
-		actions.Add(container.NewCenter(u.restoreButton))
+		actions.Add(u.restoreButton)
 	}
 
 	updates := newCenteredCard(
