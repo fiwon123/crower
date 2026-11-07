@@ -112,9 +112,9 @@ func TestFilterEmoji(t *testing.T) {
 	}
 }
 
-// The icon field is a large emoji button with Clear; it is not an entry, so an
-// arbitrary string cannot be typed in.
-func TestIconFieldIsReadOnly(t *testing.T) {
+// The icon field is one large emoji button — no separate Clear — and the
+// catalogue offers the empty choice, so a row stays a row.
+func TestIconFieldIsOneButtonWithAnEmptyChoice(t *testing.T) {
 	front, window := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
 
 	choice, field := front.iconField("🚀")
@@ -127,21 +127,27 @@ func TestIconFieldIsReadOnly(t *testing.T) {
 		t.Error("the icon field contains an editable entry")
 	}
 
-	clear := findButton(field, "Clear")
-	if clear == nil {
-		t.Fatal("the field has no Clear button")
-	}
-
-	clear.OnTapped()
-
-	if choice.value != "" || choice.button.text.Text != "Pick" {
-		t.Errorf("cleared field = %q/%q, want Pick", choice.value, choice.button.text.Text)
+	if findButton(field, "Clear") != nil {
+		t.Error("the icon field still carries a Clear button")
 	}
 
 	choice.button.Tapped(&fyne.PointEvent{})
 
-	if len(window.Canvas().Overlays().List()) == 0 {
-		t.Error("the emoji button did not open the catalogue")
+	top := window.Canvas().Overlays().Top()
+	pop, ok := top.(*widget.PopUp)
+	if !ok {
+		t.Fatalf("overlay = %T, want the catalogue pop-up", top)
+	}
+
+	noIcon := findButton(pop.Content, "No icon")
+	if noIcon == nil {
+		t.Fatal("the catalogue has no empty choice")
+	}
+
+	noIcon.OnTapped()
+
+	if choice.value != "" || choice.button.text.Text != "Pick" {
+		t.Errorf("cleared field = %q/%q, want Pick", choice.value, choice.button.text.Text)
 	}
 }
 

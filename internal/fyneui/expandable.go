@@ -18,7 +18,7 @@ import (
 type expandableCard struct {
 	widget.BaseWidget
 
-	header *widget.Button
+	header *cardHeader
 	body   *fyne.Container
 	box    *fyne.Container
 	build  func() fyne.CanvasObject
@@ -26,13 +26,10 @@ type expandableCard struct {
 	open   bool
 }
 
-func newExpandableCard(title string, build func() fyne.CanvasObject) *expandableCard {
+func newExpandableCard(emoji, title string, build func() fyne.CanvasObject) *expandableCard {
 	card := &expandableCard{build: build}
 
-	card.header = widget.NewButton(title, nil)
-	card.header.Alignment = widget.ButtonAlignLeading
-	card.header.IconPlacement = widget.ButtonIconTrailingText
-	card.header.Importance = widget.LowImportance
+	card.header = newCardHeader(emoji, title)
 
 	card.body = container.NewVBox()
 	card.body.Hide()
@@ -47,7 +44,6 @@ func newExpandableCard(title string, build func() fyne.CanvasObject) *expandable
 		container.NewPadded(container.NewVBox(card.header, card.body)),
 	)
 	card.ExtendBaseWidget(card)
-	card.updateIcon()
 
 	return card
 }
@@ -75,20 +71,11 @@ func (c *expandableCard) setOpen(open bool) {
 		c.body.Hide()
 	}
 
-	c.updateIcon()
+	c.header.setOpen(open)
 	c.box.Refresh()
 }
 
 // isOpen reports whether the card is showing its body.
 func (c *expandableCard) isOpen() bool {
 	return c.open
-}
-
-func (c *expandableCard) updateIcon() {
-	if c.open {
-		c.header.SetIcon(theme.MenuDropUpIcon())
-		return
-	}
-
-	c.header.SetIcon(theme.MenuDropDownIcon())
 }

@@ -78,13 +78,16 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 	u.updateStatus.Selectable = true
 
 	u.checkButton = widget.NewButtonWithIcon("Check for updates", theme.ViewRefreshIcon(), u.checkForUpdates)
+	u.checkButton.Importance = widget.MediumImportance
 
 	// Install and restart are state, not furniture: install appears when the
 	// check found a release, restart appears once a release was put on disk.
 	u.installButton = widget.NewButtonWithIcon("Install", theme.DownloadIcon(), u.installLatest)
+	u.installButton.Importance = widget.HighImportance
 	u.installButton.Hide()
 
 	u.restartButton = widget.NewButtonWithIcon("Restart now", theme.ViewRefreshIcon(), u.restart)
+	u.restartButton.Importance = widget.SuccessImportance
 	u.restartButton.Hide()
 
 	// The update actions are vertical: one centred button per row follows the
@@ -99,6 +102,7 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 
 	if previous, found := u.updater.Previous(); found {
 		u.restoreButton = widget.NewButton("Restore "+previous, u.restorePrevious)
+		u.restoreButton.Importance = widget.WarningImportance
 		actions.Add(container.NewCenter(u.restoreButton))
 	}
 

@@ -38,17 +38,15 @@ func (u *ui) showCreate() {
 
 	exec := newExecEntry()
 
-	items := []*widget.FormItem{
-		widget.NewFormItem("Name", name),
-		widget.NewFormItem("Aliases", aliases),
-		widget.NewFormItem("Icon", iconWidget),
-		widget.NewFormItem("Group", groupWidget),
-		widget.NewFormItem("Exec", exec),
-	}
-
 	// The form scrolls, so a grown exec field or a short window never clips the
 	// last row or the buttons.
-	form := widget.NewForm(items...)
+	form := newFormGrid([]formRow{
+		{"Name", name},
+		{"Aliases", aliases},
+		{"Icon", iconWidget},
+		{"Group", groupWidget},
+		{"Exec", exec},
+	})
 
 	showForm("New command", "Create", "Cancel", container.NewVScroll(form), u.window, func(ok bool) {
 		if !ok {
@@ -149,10 +147,10 @@ func (u *ui) promptNewGroup(onCreate func(name, icon string)) {
 
 	icon, iconWidget := u.iconField("")
 
-	form := widget.NewForm(
-		widget.NewFormItem("Name", name),
-		widget.NewFormItem("Icon", iconWidget),
-	)
+	form := newFormGrid([]formRow{
+		{"Name", name},
+		{"Icon", iconWidget},
+	})
 
 	showForm("New group", "Create", "Cancel", form, u.window, func(ok bool) {
 		if !ok {
@@ -236,20 +234,18 @@ func (u *ui) showEditFor(key string) {
 	timeout.SetText(command.Timeout)
 	timeout.SetPlaceHolder("120s")
 
-	items := []*widget.FormItem{
-		widget.NewFormItem("Name", name),
-		widget.NewFormItem("Aliases", aliases),
-		widget.NewFormItem("Icon", iconWidget),
-		widget.NewFormItem("Group", groupWidget),
-		widget.NewFormItem("Exec", exec),
-		widget.NewFormItem("Description", description),
-		widget.NewFormItem("Params", params),
-		widget.NewFormItem("Cwd", cwd),
-		widget.NewFormItem("Shell", shell),
-		widget.NewFormItem("Timeout", timeout),
-	}
-
-	form := widget.NewForm(items...)
+	form := newFormGrid([]formRow{
+		{"Name", name},
+		{"Aliases", aliases},
+		{"Icon", iconWidget},
+		{"Group", groupWidget},
+		{"Exec", exec},
+		{"Description", description},
+		{"Params", params},
+		{"Cwd", cwd},
+		{"Shell", shell},
+		{"Timeout", timeout},
+	})
 
 	showForm("Edit command", "Save", "Cancel", container.NewVScroll(form), u.window, func(ok bool) {
 		if !ok {
@@ -446,12 +442,14 @@ func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window 
 		pop.Hide()
 		onConfirm(true)
 	})
+	confirmButton.Importance = widget.HighImportance
 
 	dismissButton := widget.NewButton(dismiss, func() {
 		if pop != nil {
 			pop.Hide()
 		}
 	})
+	dismissButton.Importance = widget.LowImportance
 
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	body := container.NewBorder(
