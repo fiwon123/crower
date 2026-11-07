@@ -265,6 +265,63 @@ func labelPosition(object fyne.CanvasObject, text string) (fyne.Position, bool) 
 	return fyne.Position{}, false
 }
 
+// The toolbar's captions and selectors take equal cells, so the action buttons
+// under Setup and Group line up in one column (#495).
+func TestToolbarActionsShareOneColumn(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, nil)
+
+	buttons := buttonsIn(front.tabs.Items[0].Content)
+
+	position := func(text string) (fyne.Position, bool) {
+		for _, button := range buttons {
+			if button.Text == text {
+				return fyne.CurrentApp().Driver().AbsolutePositionForObject(button), true
+			}
+		}
+
+		return fyne.Position{}, false
+	}
+
+	newSetup, ok := position("New setup")
+	if !ok {
+		t.Fatal("New setup button not found")
+	}
+
+	groups, ok := position("Groups")
+	if !ok {
+		t.Fatal("Groups button not found")
+	}
+
+	if newSetup.X != groups.X {
+		t.Errorf("action column x: New setup %.1f, Groups %.1f", newSetup.X, groups.X)
+	}
+}
+
+// "New command" sits below the filter row instead of touching it (#495).
+func TestNewCommandClearsTheFilterRow(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, nil)
+
+	var newCommand *appButton
+	for _, button := range buttonsIn(front.tabs.Items[0].Content) {
+		if button.Text == "New command" {
+			newCommand = button
+			break
+		}
+	}
+
+	if newCommand == nil {
+		t.Fatal("New command button not found")
+	}
+
+	driver := fyne.CurrentApp().Driver()
+	filterBottom := driver.AbsolutePositionForObject(front.filterEntry).Y + front.filterEntry.Size().Height
+	top := driver.AbsolutePositionForObject(newCommand).Y
+
+	if top <= filterBottom {
+		t.Errorf("New command top = %.1f, want below the filter row (%.1f)", top, filterBottom)
+	}
+}
+
 // commandUI lays out the Commands tab over the given commands.
 func commandUI(t *testing.T, exec desktop.Executor, commands []catalog.Command) (*ui, fyne.Window) {
 	t.Helper()

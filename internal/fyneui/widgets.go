@@ -329,15 +329,15 @@ func (b *block) object() fyne.CanvasObject {
 	return b.panel
 }
 
-// The window's one button size. Fyne sizes a button from its content — a text
+// The window's one button height. Fyne sizes a button from its content — a text
 // label is shorter than an inline icon — so an icon button and a text-only
 // button side by side differ in height by 8 px, and a GridWrap cell overrides
-// both. Every action button goes through newButton so it shares this height;
-// a longer label widens a button, never shortens it.
-const (
-	buttonHeight   float32 = 40
-	buttonMinWidth float32 = 120
-)
+// both. Every action button goes through newButton so it shares this height.
+//
+// Width is the opposite rule: a button takes the width its label needs. A
+// minimum width stretched short labels ("Run", "Edit") and pushed the row apart,
+// and it inflated the About and dialog buttons, so there is none (#495).
+const buttonHeight float32 = 40
 
 // appButton is a widget.Button with the window's single button height. The
 // embedded button keeps its renderer and handlers; only the minimum size is
@@ -348,14 +348,15 @@ type appButton struct {
 	iconOnly bool
 }
 
-// MinSize reports the canonical height and a width that fits the label. An
-// icon-only button is square, so a row of them lines up with a row of labels.
+// MinSize reports the canonical height and the width the embedded button asks
+// for. An icon-only button is square, so a row of them lines up with a row of
+// labels.
 func (b *appButton) MinSize() fyne.Size {
 	if b.iconOnly {
 		return fyne.NewSize(buttonHeight, buttonHeight)
 	}
 
-	return fyne.NewSize(max(b.Button.MinSize().Width, buttonMinWidth), buttonHeight)
+	return fyne.NewSize(b.Button.MinSize().Width, buttonHeight)
 }
 
 // CreateRenderer paints the embedded button through this widget. Without it the
