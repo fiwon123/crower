@@ -180,8 +180,8 @@ func TestNewButtonSharesOneSize(t *testing.T) {
 	}
 
 	for name, button := range map[string]*appButton{"with icon": withIcon, "text only": textOnly} {
-		if got := button.MinSize().Width; got < buttonMinWidth {
-			t.Errorf("%s width = %.1f, want at least %.1f", name, got, buttonMinWidth)
+		if got, want := button.MinSize().Width, button.Button.MinSize().Width; got != want {
+			t.Errorf("%s width = %.1f, want the natural width %.1f", name, got, want)
 		}
 	}
 
