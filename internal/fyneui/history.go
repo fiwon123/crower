@@ -310,6 +310,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 		}
 	})
 	card.rawToggle.Importance = widget.LowImportance
+	card.rawToggle.Alignment = widget.ButtonAlignLeading
 
 	rawCopy := widget.NewButtonWithIcon("Copy", theme.ContentCopyIcon(), func() {
 		u.copyText(card.raw.Text)
