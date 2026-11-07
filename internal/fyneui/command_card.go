@@ -18,9 +18,9 @@ type commandCard struct {
 
 	key    string
 	params *widget.Entry
-	run    *widget.Button
-	edit   *widget.Button
-	remove *widget.Button
+	run    *appButton
+	edit   *appButton
+	remove *appButton
 }
 
 func (u *ui) newCommandCard(command catalog.Command) *commandCard {
@@ -47,14 +47,9 @@ func (u *ui) buildCommandBody(card *commandCard) fyne.CanvasObject {
 	card.params.SetPlaceHolder(paramsHint(command))
 	card.params.OnSubmitted = func(string) { u.runCommandCard(card) }
 
-	card.run = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() { u.runCommandCard(card) })
-	card.run.Importance = widget.SuccessImportance
-
-	card.edit = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() { u.showEditFor(card.key) })
-	card.edit.Importance = widget.HighImportance
-
-	card.remove = widget.NewButtonWithIcon("Delete", theme.DeleteIcon(), func() { u.showDeleteFor(card.key) })
-	card.remove.Importance = widget.DangerImportance
+	card.run = newButton("Run", theme.MediaPlayIcon(), widget.SuccessImportance, func() { u.runCommandCard(card) })
+	card.edit = newButton("Edit", theme.DocumentCreateIcon(), widget.HighImportance, func() { u.showEditFor(card.key) })
+	card.remove = newButton("Delete", theme.DeleteIcon(), widget.DangerImportance, func() { u.showDeleteFor(card.key) })
 
 	// Run sits with Edit and Delete, not inside the parameter row: a row of
 	// actions reads as one group, and the field gets the full card width.

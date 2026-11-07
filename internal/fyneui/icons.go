@@ -247,14 +247,13 @@ func (u *ui) showEmojiPicker(current string, onPick func(string)) {
 	// Clearing an icon belongs to the picker, not to every row that shows one:
 	// the dialog stays a row of icons and names, and an empty choice is one tap
 	// away when the catalogue is open.
-	noIcon := widget.NewButtonWithIcon("No icon", theme.ContentClearIcon(), func() {
+	noIcon := newButton("No icon", theme.ContentClearIcon(), widget.WarningImportance, func() {
 		onPick("")
 
 		if pop != nil {
 			pop.Hide()
 		}
 	})
-	noIcon.Importance = widget.WarningImportance
 
 	top := container.NewVBox(
 		search,

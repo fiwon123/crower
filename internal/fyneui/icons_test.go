@@ -195,6 +195,10 @@ func hasEntry(object fyne.CanvasObject) bool {
 // findButton returns the button with exactly this text, or nil.
 func findButton(object fyne.CanvasObject, text string) *widget.Button {
 	switch typed := object.(type) {
+	case *appButton:
+		if strings.TrimSpace(typed.Text) == text {
+			return typed.Button
+		}
 	case *widget.Button:
 		if strings.TrimSpace(typed.Text) == text {
 			return typed

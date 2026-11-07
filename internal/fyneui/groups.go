@@ -62,7 +62,7 @@ func (u *ui) showGroups() {
 
 		var row fyne.CanvasObject
 
-		remove := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
+		remove := newButton("", theme.DeleteIcon(), widget.DangerImportance, func() {
 			confirmNamed("Delete group", fmt.Sprintf(
 				"Delete the group %q?\n\nA command that names it keeps the name until you change the command.",
 				name,
@@ -77,9 +77,10 @@ func (u *ui) showGroups() {
 				list.Refresh()
 			})
 		})
-		remove.Importance = widget.DangerImportance
 
-		row = container.NewHBox(field, nameLabel, layout.NewSpacer(), remove, gap(theme.Padding()*2, 0))
+		// Centred, not stretched: an HBox grows a child to the row height and
+		// the emoji field beside it is taller than the button (#492).
+		row = container.NewHBox(field, nameLabel, layout.NewSpacer(), container.NewCenter(remove), gap(theme.Padding()*2, 0))
 		list.Add(row)
 
 		updateEmpty()
@@ -91,7 +92,7 @@ func (u *ui) showGroups() {
 
 	updateEmpty()
 
-	newGroup := widget.NewButtonWithIcon("New group", theme.ContentAddIcon(), func() {
+	newGroup := newButton("New group", theme.ContentAddIcon(), widget.HighImportance, func() {
 		u.promptNewGroup(func(name, icon string) {
 			if !u.createGroup(name, icon) {
 				return
@@ -102,8 +103,6 @@ func (u *ui) showGroups() {
 			list.Refresh()
 		})
 	})
-
-	newGroup.Importance = widget.HighImportance
 
 	content := container.NewBorder(
 		container.NewVBox(newGroup, gap(0, theme.Padding()), widget.NewSeparator()),

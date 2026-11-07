@@ -83,8 +83,8 @@ func newScrollFreeEntry() *widget.Entry {
 type toolResult struct {
 	panel        *block
 	label        *widget.Label
-	toggle       *widget.Button
-	cancelButton *widget.Button
+	toggle       *appButton
+	cancelButton *appButton
 	body         *fyne.Container
 	area         *fyne.Container
 	shown        bool
@@ -97,17 +97,15 @@ func newToolResult() *toolResult {
 	result.label = result.panel.label
 	result.panel.setAccent(theme.ColorNameSeparator)
 
-	result.cancelButton = widget.NewButtonWithIcon("Cancel", theme.CancelIcon(), result.cancelRun)
-	result.cancelButton.Importance = widget.LowImportance
+	result.cancelButton = newButton("Cancel", theme.CancelIcon(), widget.LowImportance, result.cancelRun)
 	result.cancelButton.Hide()
 
 	result.body = container.NewVBox(result.panel.object(), result.cancelButton)
 	result.body.Hide()
 
-	result.toggle = widget.NewButton("Hide result", func() {
+	result.toggle = newButton("Hide result", nil, widget.LowImportance, func() {
 		result.setVisible(!result.shown)
 	})
-	result.toggle.Importance = widget.LowImportance
 
 	result.area = container.NewVBox(result.toggle, result.body)
 	result.area.Hide()
@@ -331,6 +329,58 @@ func (b *block) object() fyne.CanvasObject {
 	return b.panel
 }
 
+// The window's one button size. Fyne sizes a button from its content — a text
+// label is shorter than an inline icon — so an icon button and a text-only
+// button side by side differ in height by 8 px, and a GridWrap cell overrides
+// both. Every action button goes through newButton so it shares this height;
+// a longer label widens a button, never shortens it.
+const (
+	buttonHeight   float32 = 40
+	buttonMinWidth float32 = 120
+)
+
+// appButton is a widget.Button with the window's single button height. The
+// embedded button keeps its renderer and handlers; only the minimum size is
+// replaced, which is what the five previous layout rules disagreed about.
+type appButton struct {
+	*widget.Button
+
+	iconOnly bool
+}
+
+// MinSize reports the canonical height and a width that fits the label. An
+// icon-only button is square, so a row of them lines up with a row of labels.
+func (b *appButton) MinSize() fyne.Size {
+	if b.iconOnly {
+		return fyne.NewSize(buttonHeight, buttonHeight)
+	}
+
+	return fyne.NewSize(max(b.Button.MinSize().Width, buttonMinWidth), buttonHeight)
+}
+
+// CreateRenderer paints the embedded button through this widget. Without it the
+// canvas would render a second copy, and a later SetText or SetIcon on the
+// embedded button would repaint only the copy nobody can see.
+func (b *appButton) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(b.Button)
+}
+
+// newButton builds every action button in the window: one height, one minimum
+// width, and the importance passed in. A nil icon means a text-only button; an
+// empty label with an icon means an icon-only button.
+func newButton(text string, icon fyne.Resource, importance widget.Importance, tapped func()) *appButton {
+	var button *widget.Button
+	if icon == nil {
+		button = widget.NewButton(text, tapped)
+	} else {
+		button = widget.NewButtonWithIcon(text, icon, tapped)
+	}
+
+	button.Importance = importance
+
+	return &appButton{Button: button, iconOnly: strings.TrimSpace(text) == "" && icon != nil}
+}
+
 // rowFlow places objects side by side at their natural size with a gap,
 // wrapping to another row when the width runs out.
 //
@@ -438,11 +488,12 @@ func page(content fyne.CanvasObject) fyne.CanvasObject {
 
 // actionRow separates a card's actions from the form above it and lets them
 // wrap: at a narrow width the grid stacks the buttons instead of pushing the
-// last one off the card.
+// last one off the card. It shares spacedActions' layout, so a tool card's
+// buttons look like a command card's.
 func actionRow(buttons ...fyne.CanvasObject) fyne.CanvasObject {
 	return container.NewVBox(
 		widget.NewSeparator(),
-		container.NewGridWrap(fyne.NewSize(150, 40), buttons...),
+		spacedActions(buttons...),
 	)
 }
 

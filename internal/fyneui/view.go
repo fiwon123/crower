@@ -142,7 +142,7 @@ type ui struct {
 	historyPage     *fyne.Container
 	historyList     *fyne.Container
 	historyEmpty    *widget.Label
-	historyLoadMore *widget.Button
+	historyLoadMore *appButton
 	historyCards    []*historyCard
 	historyOpen     *historyCard
 	historyTotal    int
@@ -157,10 +157,10 @@ type ui struct {
 
 	// about tab
 	updateStatus  *widget.Label
-	checkButton   *widget.Button
-	installButton *widget.Button
-	restoreButton *widget.Button
-	restartButton *widget.Button
+	checkButton   *appButton
+	installButton *appButton
+	restoreButton *appButton
+	restartButton *appButton
 	aboutActions  *fyne.Container
 	aboutBody     *fyne.Container
 	aboutUpdates  fyne.CanvasObject
@@ -229,14 +229,12 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		u.rebuildCommands()
 	}
 
-	newCommand := widget.NewButtonWithIcon("New command", theme.ContentAddIcon(), u.showCreate)
-	newCommand.Importance = widget.HighImportance
+	newCommand := newButton("New command", theme.ContentAddIcon(), widget.HighImportance, u.showCreate)
 
 	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, u.selectGroup)
 	u.refreshGroups()
 
-	groupsButton := widget.NewButtonWithIcon("Groups", theme.GridIcon(), u.showGroups)
-	groupsButton.Importance = widget.HighImportance
+	groupsButton := newButton("Groups", theme.GridIcon(), widget.HighImportance, u.showGroups)
 
 	labels, choices := u.setupChoicesList()
 	u.setupChoices = choices
@@ -254,11 +252,9 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	setupRow := container.NewHBox(selectableLabel("Setup"), u.setupSelect)
 
 	if u.setups != nil {
-		newSetup := widget.NewButtonWithIcon("New setup", theme.ContentAddIcon(), u.showNewSetup)
-		newSetup.Importance = widget.HighImportance
+		newSetup := newButton("New setup", theme.ContentAddIcon(), widget.HighImportance, u.showNewSetup)
 
-		removeSetup := widget.NewButtonWithIcon("Delete setup", theme.DeleteIcon(), u.showDeleteSetup)
-		removeSetup.Importance = widget.DangerImportance
+		removeSetup := newButton("Delete setup", theme.DeleteIcon(), widget.DangerImportance, u.showDeleteSetup)
 
 		// Beside the selector, not at the window's edge: a Button stretched to
 		// the row height is wrapped in Center, so it keeps the height of every
