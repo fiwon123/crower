@@ -443,8 +443,14 @@ is not a `crower` subcommand; extract the archive and launch it. The CLI
 binaries are cgo-free and need no display.
 
 ```bash
-crower-gui
+crower-gui                   # open the window
+crower-gui --config FILE     # another configuration file
+crower-gui --setup NAME      # a named setup
 ```
+
+It opens the window whatever the arguments are: an unknown argument is ignored,
+because a window has no subcommands and a double-click must never reach a command
+parser. `--help` prints the three lines above and exits.
 
 ---
 

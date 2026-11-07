@@ -148,7 +148,9 @@ paths and hands them to the platform's default application.
 > a graphical program with the crow icon, while `crower.exe` and `cr.exe` stay
 > terminal programs. It needs a driver that provides OpenGL 2.1; a start that
 > cannot get one writes the reason to `fyne.log` beside `crower.yaml` and says so
-> in a dialog.
+> in a dialog. The window binary has no subcommands: it opens whatever the
+> arguments are — `--config` and `--setup` are read, everything else is ignored —
+> so a double-click can never land in a command parser.
 
 ## 🔗 Related
 
