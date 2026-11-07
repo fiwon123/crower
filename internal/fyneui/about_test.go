@@ -288,7 +288,7 @@ func TestAboutActionsFitANarrowWindow(t *testing.T) {
 	visible := 0
 	rows := make(map[float32]bool)
 
-	for _, button := range []*widget.Button{front.checkButton, front.installButton, front.restartButton, front.restoreButton} {
+	for _, button := range []*appButton{front.checkButton, front.installButton, front.restartButton, front.restoreButton} {
 		if button == nil || !button.Visible() {
 			continue
 		}

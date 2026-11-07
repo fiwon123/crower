@@ -36,11 +36,11 @@ type historyCard struct {
 	raw       *widget.Label
 	rawBlock  *block
 	rawPanel  *fyne.Container
-	rawToggle *widget.Button
+	rawToggle *appButton
 	rawShown  bool
-	run       *widget.Button
-	edit      *widget.Button
-	restore   *widget.Button
+	run       *appButton
+	edit      *appButton
+	restore   *appButton
 	hint      *widget.Label
 }
 
@@ -61,10 +61,9 @@ func (u *ui) historyTab() fyne.CanvasObject {
 
 	u.historyList = container.NewVBox()
 
-	u.historyLoadMore = widget.NewButton("Load older", func() {
+	u.historyLoadMore = newButton("Load older", nil, widget.LowImportance, func() {
 		u.loadOlderHistory()
 	})
-	u.historyLoadMore.Importance = widget.LowImportance
 	u.historyLoadMore.Hide()
 
 	u.historyPage = container.NewVBox(header, u.historyEmpty, u.historyList, u.historyLoadMore)
@@ -299,7 +298,7 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 
 	// The raw note reads as a disclosure: a chevron that turns, like a card
 	// header, with its Copy beside the text once it is open (#486).
-	card.rawToggle = widget.NewButtonWithIcon("Raw note", theme.MenuDropDownIcon(), func() {
+	card.rawToggle = newButton("Raw note", theme.MenuDropDownIcon(), widget.LowImportance, func() {
 		card.rawShown = !card.rawShown
 		card.setRawShown(card.rawShown)
 
@@ -309,13 +308,11 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 			u.historyScroll.Refresh()
 		}
 	})
-	card.rawToggle.Importance = widget.LowImportance
 	card.rawToggle.Alignment = widget.ButtonAlignLeading
 
-	rawCopy := widget.NewButtonWithIcon("Copy", theme.ContentCopyIcon(), func() {
+	rawCopy := newButton("Copy", theme.ContentCopyIcon(), widget.LowImportance, func() {
 		u.copyText(card.raw.Text)
 	})
-	rawCopy.Importance = widget.LowImportance
 
 	card.rawPanel = container.NewVBox(
 		card.rawBlock.panel,
@@ -323,19 +320,15 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 	)
 	card.rawPanel.Hide()
 
-	card.run = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
+	card.run = newButton("Run", theme.MediaPlayIcon(), widget.SuccessImportance, func() {
 		u.runHistoryEntry(card)
 	})
-	card.edit = widget.NewButtonWithIcon("Edit", theme.DocumentCreateIcon(), func() {
+	card.edit = newButton("Edit", theme.DocumentCreateIcon(), widget.HighImportance, func() {
 		u.editHistoryEntry(card)
 	})
-	card.restore = widget.NewButtonWithIcon("Restore this state", theme.HistoryIcon(), func() {
+	card.restore = newButton("Restore this state", theme.HistoryIcon(), widget.WarningImportance, func() {
 		u.showRevert(card)
 	})
-	card.restore.Importance = widget.WarningImportance
-
-	card.run.Importance = widget.SuccessImportance
-	card.edit.Importance = widget.HighImportance
 
 	card.hint = widget.NewLabelWithStyle("", fyne.TextAlignLeading, fyne.TextStyle{Italic: true})
 	card.hint.Wrapping = fyne.TextWrapWord

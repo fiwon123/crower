@@ -35,19 +35,14 @@ func (u *ui) toolsTab() fyne.CanvasObject {
 
 // browseButton is the "pick it instead of typing it" control beside a path
 // field. Fyne's dialog is single-select, so each press adds one path.
-func browseButton(pick func()) *widget.Button {
-	button := widget.NewButtonWithIcon("Browse…", theme.FolderOpenIcon(), pick)
-	button.Importance = widget.LowImportance
-
-	return button
+func browseButton(pick func()) *appButton {
+	return newButton("Browse…", theme.FolderOpenIcon(), widget.LowImportance, pick)
 }
 
-// fieldWithBrowse puts the button at the end of the path field.
-//
-// The cell is wider than the label: a Button's minimum width truncates "Browse…"
-// to an ellipsis, and the field has the room to spare (#486).
+// fieldWithBrowse puts the button at the end of the path field. The button's
+// own minimum width keeps "Browse…" readable; the row height follows it.
 func fieldWithBrowse(entry *widget.Entry, pick func()) fyne.CanvasObject {
-	return container.NewBorder(nil, nil, nil, container.NewGridWrap(fyne.NewSize(120, 38), browseButton(pick)), entry)
+	return container.NewBorder(nil, nil, nil, browseButton(pick), entry)
 }
 
 func (u *ui) transferCard() fyne.CanvasObject {
@@ -57,21 +52,19 @@ func (u *ui) transferCard() fyne.CanvasObject {
 	destination := newScrollFreeEntry()
 	destination.SetPlaceHolder("Destination folder")
 
-	copyButton := widget.NewButtonWithIcon("Copy", theme.ContentCopyIcon(), func() {
+	copyButton := newButton("Copy", theme.ContentCopyIcon(), widget.HighImportance, func() {
 		paths := splitPaths(u.sourcesEntry.Text)
 		u.runTool(u.transferResult, "Copying…", true, func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.transfer(ctx, report, true, paths, destination.Text)
 		})
 	})
-	copyButton.Importance = widget.HighImportance
 
-	moveButton := widget.NewButtonWithIcon("Move", theme.ContentCutIcon(), func() {
+	moveButton := newButton("Move", theme.ContentCutIcon(), widget.HighImportance, func() {
 		paths := splitPaths(u.sourcesEntry.Text)
 		u.runTool(u.transferResult, "Moving…", true, func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.transfer(ctx, report, false, paths, destination.Text)
 		})
 	})
-	moveButton.Importance = widget.HighImportance
 
 	form := newFormGrid([]formRow{
 		{"Sources", fieldWithBrowse(u.sourcesEntry, func() { u.browseFiles(u.sourcesEntry) })},
@@ -111,13 +104,12 @@ func (u *ui) searchCard() fyne.CanvasObject {
 	mode := widget.NewSelect([]string{"Files and folders", "Files", "Folders", "Web"}, nil)
 	mode.SetSelected("Files and folders")
 
-	searchButton := widget.NewButtonWithIcon("Search", theme.SearchIcon(), func() {
+	searchButton := newButton("Search", theme.SearchIcon(), widget.HighImportance, func() {
 		selected := searchMode(mode.Selected)
 		u.runTool(u.searchResult, "Searching…", false, func(context.Context, func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.search(selected, term.Text, path.Text)
 		})
 	})
-	searchButton.Importance = widget.HighImportance
 
 	form := newFormGrid([]formRow{
 		{"Term", term},
@@ -169,13 +161,12 @@ func (u *ui) extractCard() fyne.CanvasObject {
 	outDir := newScrollFreeEntry()
 	outDir.SetPlaceHolder("Destination folder (default: beside each archive)")
 
-	extractButton := widget.NewButtonWithIcon("Extract", theme.FileIcon(), func() {
+	extractButton := newButton("Extract", theme.FileIcon(), widget.HighImportance, func() {
 		paths := splitPaths(archives.Text)
 		u.runTool(u.extractResult, "Extracting…", true, func(ctx context.Context, report func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.extract(ctx, report, paths, outDir.Text)
 		})
 	})
-	extractButton.Importance = widget.HighImportance
 
 	form := newFormGrid([]formRow{
 		{"Archives", fieldWithBrowse(archives, func() { u.browseFiles(archives) })},
@@ -202,12 +193,11 @@ func (u *ui) openCard() fyne.CanvasObject {
 	paths := newScrollFreeEntry()
 	paths.SetPlaceHolder("Paths, comma-separated")
 
-	openButton := widget.NewButtonWithIcon("Open", theme.FolderOpenIcon(), func() {
+	openButton := newButton("Open", theme.FolderOpenIcon(), widget.HighImportance, func() {
 		u.runTool(u.openResult, "Opening…", false, func(context.Context, func(desktop.Progress)) (string, timeline.Log, error) {
 			return u.open(splitPaths(paths.Text))
 		})
 	})
-	openButton.Importance = widget.HighImportance
 
 	return newCard(
 		"Open",
