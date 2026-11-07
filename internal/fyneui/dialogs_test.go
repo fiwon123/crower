@@ -43,7 +43,7 @@ func TestNamedConfirmationNeedsTheExactName(t *testing.T) {
 
 	var confirmed atomic.Bool
 
-	pop := confirmNamed("Delete command", `Delete "greet"?`, "greet", "Delete", window, func(ok bool) {
+	pop := confirmNamed("Delete command", `Delete "greet"?`, "greet", "Delete", widget.DangerImportance, window, func(ok bool) {
 		if ok {
 			confirmed.Store(true)
 		}

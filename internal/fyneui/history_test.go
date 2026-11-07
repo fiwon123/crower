@@ -125,7 +125,7 @@ func TestHistoryCardLabelsTheNoteFields(t *testing.T) {
 		}
 	}
 
-	if card.rawBlock.panel.Visible() {
+	if card.rawPanel.Visible() {
 		t.Error("the raw note is open before the toggle was pressed")
 	}
 
@@ -319,21 +319,21 @@ func TestHistoryRawNoteToggle(t *testing.T) {
 	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
 	card := openHistoryCard(t, front, 0)
 
-	if card.rawBlock.panel.Visible() {
+	if card.rawPanel.Visible() {
 		t.Fatal("the raw note starts open")
 	}
 
 	card.rawToggle.OnTapped()
-	if !card.rawBlock.panel.Visible() || !card.rawShown {
+	if !card.rawPanel.Visible() || !card.rawShown {
 		t.Error("the toggle did not open the raw note")
 	}
 
-	if card.rawBlock.panel.Size().Height == 0 {
+	if card.rawPanel.Size().Height == 0 {
 		t.Error("the opened raw note has no height: the page did not lay it out")
 	}
 
 	card.rawToggle.OnTapped()
-	if card.rawBlock.panel.Visible() || card.rawShown {
+	if card.rawPanel.Visible() || card.rawShown {
 		t.Error("the toggle did not close the raw note")
 	}
 }
