@@ -53,12 +53,14 @@ func newCardHeader(emoji, title string) *cardHeader {
 
 	header.chevron = widget.NewIcon(theme.MenuDropDownIcon())
 
+	// Each part is centred on the row's middle line, so the emoji and the
+	// summary opt out of the HBox's top alignment.
 	header.box = container.NewBorder(
 		nil,
 		nil,
-		nil,
+		centeredVertically(header.emoji),
 		container.NewCenter(header.chevron),
-		container.NewHBox(header.emoji, header.title),
+		container.NewHBox(centeredVertically(header.title)),
 	)
 
 	header.ExtendBaseWidget(header)
