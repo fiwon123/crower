@@ -52,8 +52,10 @@ func TestWindowLogCleansACleanRun(t *testing.T) {
 	}
 }
 
-// The first Fyne error raises one notification, not one per line.
-func TestFirstFyneErrorRaisesOneDialog(t *testing.T) {
+// A recoverable Fyne message stays in the log. A locale Fyne cannot round-trip
+// is the common one, and a modal box for it is a startup error the user has to
+// dismiss for nothing (#471).
+func TestRecoverableFyneErrorRaisesNoDialog(t *testing.T) {
 	var calls atomic.Int32
 
 	previous := notifyStartupError
@@ -66,20 +68,55 @@ func TestFirstFyneErrorRaisesOneDialog(t *testing.T) {
 
 	entry := startWindowLog(t.TempDir())
 
-	log.Printf("Fyne error: something recoverable")
-	log.Printf("Fyne error: another failure")
+	log.Printf("Fyne error:  Error parsing user locale pt-BR-Latn")
+
+	entry.keep()
+
+	time.Sleep(500 * time.Millisecond)
+
+	if got := calls.Load(); got != 0 {
+		t.Errorf("notifications = %d, want none for a recoverable message", got)
+	}
+}
+
+// A window Fyne cannot create raises one dialog and ends the process.
+func TestFatalWindowErrorRaisesOneDialogAndExits(t *testing.T) {
+	var (
+		calls  atomic.Int32
+		exited atomic.Int32
+	)
+
+	previousNotify := notifyStartupError
+	previousExit := exitWindow
+
+	notifyStartupError = func(string) { calls.Add(1) }
+	exitWindow = func(int) { exited.Add(1) }
+
+	t.Cleanup(func() {
+		notifyStartupError = previousNotify
+		exitWindow = previousExit
+		log.SetOutput(os.Stderr)
+	})
+
+	entry := startWindowLog(t.TempDir())
+
+	log.Printf("Fyne error:  window creation error")
+	log.Printf("  Cause: APIUnavailable: WGL: The driver does not appear to support OpenGL")
 
 	entry.keep()
 
 	if !waitFor(calls.Load, 1) {
-		t.Errorf("notifications = %d, want exactly one", calls.Load())
+		t.Fatalf("notifications = %d, want one", calls.Load())
 	}
 
-	// A second error must not raise a second dialog.
-	time.Sleep(400 * time.Millisecond)
+	if !waitFor(exited.Load, 1) {
+		t.Fatalf("exits = %d, want the windowless process to end", exited.Load())
+	}
+
+	time.Sleep(300 * time.Millisecond)
 
 	if got := calls.Load(); got != 1 {
-		t.Errorf("notifications = %d after a second error, want one", got)
+		t.Errorf("notifications = %d after a second line, want one", got)
 	}
 }
 

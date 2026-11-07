@@ -77,8 +77,11 @@ front of you, reinstall from the release archive: the release checks both.
 `crower-gui` is a graphical program: it has no console, so a start that fails
 inside Fyne used to look like a double-click that does nothing. It now writes
 what happened to `fyne.log` beside `crower.yaml`
-(`%USERPROFILE%\crower\fyne.log`), shows the reason in a dialog, and leaves the
-file behind. A run that opens normally removes it.
+(`%USERPROFILE%\crower\fyne.log`), and **a window Fyne cannot create** raises a
+dialog with the reason and leaves the file behind. Other Fyne messages — a locale
+it cannot round-trip, a clipboard it cannot reach — stay in the log: they are
+recoverable and do not deserve a modal box. A run that closes normally removes
+the file.
 
 The most common reason is that the display driver has no **OpenGL 2.1**. Windows
 reports this as `window creation error` / `WGL: The driver does not appear to
