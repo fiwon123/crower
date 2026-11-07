@@ -489,10 +489,17 @@ func (l *vStack) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
-// spacedActions puts a card's action buttons in one row with a visible gap,
-// wrapping when the card is too narrow.
+// actionGap is the space between two of a row's action buttons. Half the
+// theme's padding — the gap the About column already uses — is what makes a row
+// read as one group instead of buttons drifting apart (#503).
+func actionGap() float32 {
+	return theme.Padding() / 2
+}
+
+// spacedActions puts a card's action buttons in one row with that gap, wrapping
+// when the card is too narrow.
 func spacedActions(buttons ...fyne.CanvasObject) *fyne.Container {
-	return container.New(&rowFlow{gap: theme.Padding() * 2}, buttons...)
+	return container.New(&rowFlow{gap: actionGap()}, buttons...)
 }
 
 // indented gives a card body the left inset that separates it from the header

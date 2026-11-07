@@ -436,8 +436,8 @@ func TestCommandActionsRunFirstAndAreColoured(t *testing.T) {
 		t.Errorf("Run x = %.1f, Edit x = %.1f: Run is not first", card.run.Position().X, card.edit.Position().X)
 	}
 
-	if gap := card.edit.Position().X - (card.run.Position().X + card.run.Size().Width); gap < theme.Padding()*2 {
-		t.Errorf("gap between Run and Edit = %.1f, want at least %v", gap, theme.Padding()*2)
+	if gap := card.edit.Position().X - (card.run.Position().X + card.run.Size().Width); gap != actionGap() {
+		t.Errorf("gap between Run and Edit = %.1f, want %v", gap, actionGap())
 	}
 }
 

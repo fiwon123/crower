@@ -114,8 +114,8 @@ func TestFieldListAlignsLabelsAndKeepsTextSelectable(t *testing.T) {
 	}
 }
 
-// Spaced actions lay their buttons out in one row with a gap, and wrap instead
-// of running past the card.
+// Spaced actions lay their buttons out in one row with the shared small gap, and
+// wrap instead of running past the card.
 func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
 	app := test.NewApp()
 	t.Cleanup(app.Quit)
@@ -126,35 +126,36 @@ func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
 		widget.NewButton("Delete", nil),
 	}
 
-	flow := &rowFlow{gap: theme.Padding() * 2}
+	// The product's own row, so the test guards the gap it ships.
+	row := spacedActions(buttons...)
 
 	// Widths are measured, not assumed: a platform's font decides how wide a
 	// button is, and the wrap point has to be stated in those terms.
 	var wide float32
 	for _, button := range buttons {
-		wide += button.MinSize().Width + theme.Padding()*2
+		wide += button.MinSize().Width + actionGap()
 	}
 
-	flow.Layout(buttons, fyne.NewSize(wide, 40))
+	row.Resize(fyne.NewSize(wide, 40))
 
 	for index := 1; index < len(buttons); index++ {
 		previous := buttons[index-1]
 		current := buttons[index]
 		gap := current.Position().X - (previous.Position().X + previous.Size().Width)
 
-		if gap != theme.Padding()*2 {
-			t.Errorf("gap between buttons = %v, want %v", gap, theme.Padding()*2)
+		if gap != actionGap() {
+			t.Errorf("gap between buttons = %v, want %v", gap, actionGap())
 		}
 	}
 
-	narrow := buttons[0].MinSize().Width + theme.Padding()*2 + buttons[1].MinSize().Width - 1
-	flow.Layout(buttons, fyne.NewSize(narrow, 40))
+	narrow := buttons[0].MinSize().Width + actionGap() + buttons[1].MinSize().Width - 1
+	row.Resize(fyne.NewSize(narrow, 40))
 
 	if buttons[1].Position().Y <= buttons[0].Position().Y {
 		t.Error("a narrow row did not wrap its buttons")
 	}
 
-	if size := flow.MinSize(buttons); size.Height < buttons[0].Size().Height*2 {
+	if size := row.MinSize(); size.Height < buttons[0].Size().Height*2 {
 		t.Errorf("wrapped minimum height = %v, want room for two rows", size.Height)
 	}
 }

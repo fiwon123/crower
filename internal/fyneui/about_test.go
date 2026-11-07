@@ -317,7 +317,9 @@ func TestAboutActionsFitANarrowWindow(t *testing.T) {
 }
 
 // The update steps are one centred column with a gap tighter than the theme's
-// padding (#500).
+// padding (#500). The column must sit in the middle of the card, not merely
+// agree with itself: a stack that was never stretched keeps every button on a
+// common centre while hugging the card's left edge (#503).
 func TestAboutActionsAreCentredAndTight(t *testing.T) {
 	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
 	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
@@ -329,6 +331,11 @@ func TestAboutActionsAreCentredAndTight(t *testing.T) {
 	window.Resize(fyne.NewSize(960, 720))
 
 	driver := fyne.CurrentApp().Driver()
+
+	// The card insets its content symmetrically, so a centred column has the
+	// card's centre for its own.
+	cardPos := driver.AbsolutePositionForObject(front.aboutUpdates)
+	cardCentre := cardPos.X + front.aboutUpdates.Size().Width/2
 
 	var centre, lastBottom float32
 
@@ -344,6 +351,10 @@ func TestAboutActionsAreCentredAndTight(t *testing.T) {
 			centre = got
 		} else if diff := got - centre; diff < -0.5 || diff > 0.5 {
 			t.Errorf("%q centre = %.1f, want %.1f", button.Text, got, centre)
+		}
+
+		if diff := got - cardCentre; diff < -1 || diff > 1 {
+			t.Errorf("%q centre = %.1f, want the card's centre %.1f", button.Text, got, cardCentre)
 		}
 
 		if index > 0 {
