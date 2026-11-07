@@ -159,6 +159,131 @@ func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
 	}
 }
 
+// Every action button shares one height, whatever its icon or label, and an
+// icon-only button stays square.
+func TestNewButtonSharesOneSize(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	withIcon := newButton("Run", theme.MediaPlayIcon(), widget.SuccessImportance, nil)
+	textOnly := newButton("Cancel", nil, widget.LowImportance, nil)
+	iconOnly := newButton("", theme.DeleteIcon(), widget.DangerImportance, nil)
+
+	for name, button := range map[string]*appButton{
+		"with icon": withIcon,
+		"text only": textOnly,
+		"icon only": iconOnly,
+	} {
+		if got := button.MinSize().Height; got != buttonHeight {
+			t.Errorf("%s height = %.1f, want %.1f", name, got, buttonHeight)
+		}
+	}
+
+	for name, button := range map[string]*appButton{"with icon": withIcon, "text only": textOnly} {
+		if got := button.MinSize().Width; got < buttonMinWidth {
+			t.Errorf("%s width = %.1f, want at least %.1f", name, got, buttonMinWidth)
+		}
+	}
+
+	if got := iconOnly.MinSize().Width; got != buttonHeight {
+		t.Errorf("icon-only width = %.1f, want %.1f", got, buttonHeight)
+	}
+
+	if withIcon.Importance != widget.SuccessImportance {
+		t.Errorf("importance = %v, want success", withIcon.Importance)
+	}
+}
+
+// The embedded button is what the renderer paints, so a later SetText or
+// SetIcon repaints the button on screen rather than a second unseen copy.
+func TestAppButtonPaintsItsEmbeddedButton(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	button := newButton("Install", theme.DownloadIcon(), widget.HighImportance, nil)
+
+	renderer := button.CreateRenderer()
+	if len(renderer.Objects()) != 1 {
+		t.Fatalf("renderer has %d objects, want the embedded button", len(renderer.Objects()))
+	}
+
+	if renderer.Objects()[0] != fyne.CanvasObject(button.Button) {
+		t.Fatalf("renderer paints %T, want the embedded button", renderer.Objects()[0])
+	}
+
+	button.SetText("Install v1.1.0")
+
+	if button.Button.Text != "Install v1.1.0" {
+		t.Errorf("embedded text = %q, want the new label", button.Button.Text)
+	}
+}
+
+// buttonsIn collects every action button the canvas can reach, walking the tree
+// the way Fyne paints it.
+func buttonsIn(object fyne.CanvasObject) []*appButton {
+	switch typed := object.(type) {
+	case *appButton:
+		return []*appButton{typed}
+	case *fyne.Container:
+		found := make([]*appButton, 0, len(typed.Objects))
+
+		for _, child := range typed.Objects {
+			found = append(found, buttonsIn(child)...)
+		}
+
+		return found
+	case fyne.Widget:
+		renderer := test.WidgetRenderer(typed)
+		if renderer == nil {
+			return nil
+		}
+
+		found := make([]*appButton, 0, len(renderer.Objects()))
+
+		for _, child := range renderer.Objects() {
+			found = append(found, buttonsIn(child)...)
+		}
+
+		return found
+	}
+
+	return nil
+}
+
+// The built window really uses the one constructor everywhere: no button in any
+// tab is taller or shorter than another (#492).
+func TestEveryWindowButtonSharesOneHeight(t *testing.T) {
+	front, window := newTestUI(t, testModel(), stubEditor{}, stubReverter{})
+
+	window.SetContent(front.content())
+	window.Resize(fyne.NewSize(960, 640))
+
+	// AppTabs attaches only the selected tab, so walk each tab's content
+	// directly. A command card builds its actions on first open.
+	for _, card := range front.commandCards {
+		if card.key == "greet" {
+			front.toggleCommandCard(card)
+			break
+		}
+	}
+
+	buttons := make([]*appButton, 0, 32)
+
+	for _, item := range front.tabs.Items {
+		buttons = append(buttons, buttonsIn(item.Content)...)
+	}
+
+	if len(buttons) < 20 {
+		t.Fatalf("found %d buttons, want the tabs' actions", len(buttons))
+	}
+
+	for _, button := range buttons {
+		if got := button.MinSize().Height; got != buttonHeight {
+			t.Errorf("button %q height = %.1f, want %.1f", button.Text, got, buttonHeight)
+		}
+	}
+}
+
 // A result block colours its accent bar by the outcome.
 func TestBlockAccentFollowsTheOutcome(t *testing.T) {
 	app := test.NewApp()

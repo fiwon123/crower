@@ -312,6 +312,8 @@ func TestCommandsHaveALeftMargin(t *testing.T) {
 // hasButtonText reports whether a button with exactly this text is reachable.
 func hasButtonText(object fyne.CanvasObject, text string) bool {
 	switch typed := object.(type) {
+	case *appButton:
+		return typed.Text == text
 	case *widget.Button:
 		return typed.Text == text
 	case *fyne.Container:

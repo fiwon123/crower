@@ -107,7 +107,7 @@ func (u *ui) groupField(initial string) (*groupChoice, fyne.CanvasObject) {
 	})
 	choice.selectWidget.SetSelected(choice.groupLabel())
 
-	newGroup := widget.NewButton("New group", func() {
+	newGroup := newButton("New group", nil, widget.MediumImportance, func() {
 		u.promptNewGroup(func(name, icon string) {
 			if !u.createGroup(name, icon) {
 				return
@@ -413,7 +413,7 @@ func (u *ui) showOutput() {
 // showDismissible shows content in a non-modal pop-up: a click outside closes
 // it. Dialogs that need a decision use showConfirm instead, which stays modal.
 func showDismissible(title string, content fyne.CanvasObject, window fyne.Window, size fyne.Size) *widget.PopUp {
-	closeButton := widget.NewButton("Close", nil)
+	closeButton := newButton("Close", nil, widget.MediumImportance, nil)
 
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	body := container.NewBorder(
@@ -437,18 +437,16 @@ func showDismissible(title string, content fyne.CanvasObject, window fyne.Window
 func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window fyne.Window, onConfirm func(bool), size fyne.Size) *widget.PopUp {
 	var pop *widget.PopUp
 
-	confirmButton := widget.NewButton(confirm, func() {
+	confirmButton := newButton(confirm, nil, widget.HighImportance, func() {
 		pop.Hide()
 		onConfirm(true)
 	})
-	confirmButton.Importance = widget.HighImportance
 
-	dismissButton := widget.NewButton(dismiss, func() {
+	dismissButton := newButton(dismiss, nil, widget.LowImportance, func() {
 		if pop != nil {
 			pop.Hide()
 		}
 	})
-	dismissButton.Importance = widget.LowImportance
 
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	body := container.NewBorder(
@@ -501,19 +499,17 @@ func confirmNamed(title, message, expected, action string, importance widget.Imp
 
 	var pop *widget.PopUp
 
-	confirm := widget.NewButton(action, func() {
+	confirm := newButton(action, nil, importance, func() {
 		pop.Hide()
 		onConfirm(true)
 	})
-	confirm.Importance = importance
 	confirm.Disable()
 
-	dismiss := widget.NewButton("Cancel", func() {
+	dismiss := newButton("Cancel", nil, widget.LowImportance, func() {
 		if pop != nil {
 			pop.Hide()
 		}
 	})
-	dismiss.Importance = widget.LowImportance
 
 	entry.OnChanged = func(text string) {
 		if strings.TrimSpace(text) == expected {
