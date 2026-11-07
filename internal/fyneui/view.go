@@ -249,25 +249,28 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	})
 	u.setupSelect.SetSelected(u.setupLabel(u.activeSetup))
 
-	setupRow := container.NewHBox(selectableLabel("Setup"), u.setupSelect)
+	// One action column: the caption and selector take fixed cells sized to the
+	// wider of the two rows, so "New setup" and "Groups" start at the same x
+	// instead of following selectors of different widths (#495).
+	setupLabel := selectableLabel("Setup")
+	groupLabel := selectableLabel("Group")
+
+	labelWidth := max(setupLabel.MinSize().Width, groupLabel.MinSize().Width)
+	controlWidth := max(u.setupSelect.MinSize().Width, u.groupFilter.MinSize().Width)
+
+	setupRow := toolbarRow(labelWidth, controlWidth, setupLabel, u.setupSelect)
 
 	if u.setups != nil {
 		newSetup := newButton("New setup", theme.ContentAddIcon(), widget.HighImportance, u.showNewSetup)
 
 		removeSetup := newButton("Delete setup", theme.DeleteIcon(), widget.DangerImportance, u.showDeleteSetup)
 
-		// Beside the selector, not at the window's edge: a Button stretched to
-		// the row height is wrapped in Center, so it keeps the height of every
-		// other button (#483).
-		setupRow.Add(container.NewCenter(newSetup))
-		setupRow.Add(container.NewCenter(removeSetup))
+		setupRow.Add(newSetup)
+		setupRow.Add(removeSetup)
 	}
 
-	groupRow := container.NewHBox(
-		selectableLabel("Group"),
-		u.groupFilter,
-		container.NewCenter(groupsButton),
-	)
+	groupRow := toolbarRow(labelWidth, controlWidth, groupLabel, u.groupFilter)
+	groupRow.Add(groupsButton)
 
 	filterRow := container.NewBorder(nil, nil, selectableLabel("Filter"), nil, filter)
 
@@ -283,6 +286,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		widget.NewSeparator(),
 		gap(0, theme.Padding()/2),
 		filterRow,
+		gap(0, theme.Padding()),
 		createRow,
 		widget.NewSeparator(),
 	)
@@ -394,6 +398,16 @@ func selectableLabel(text string) *widget.Label {
 	label.Selectable = true
 
 	return label
+}
+
+// toolbarRow is one controls row: a caption and a selector in cells of fixed
+// width, so every row's actions begin in the same column no matter how wide its
+// selector is. The caller appends the action buttons after the returned cells.
+func toolbarRow(labelWidth, controlWidth float32, caption *widget.Label, control fyne.CanvasObject) *fyne.Container {
+	return container.NewHBox(
+		container.NewGridWrap(fyne.NewSize(labelWidth, caption.MinSize().Height), caption),
+		container.NewGridWrap(fyne.NewSize(controlWidth, control.MinSize().Height), control),
+	)
 }
 
 // allGroupsLabel is the group filter's "no filter" entry.
