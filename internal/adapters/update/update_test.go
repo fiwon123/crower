@@ -187,7 +187,7 @@ func TestBinaryFromArchive(t *testing.T) {
 			"crower":    binary,
 		})
 
-		got, err := binaryFromArchive("crower_v1_linux_amd64.tar.gz", body, "crower")
+		got, err := binaryFromArchive("crower_v1_linux_amd64.tar.gz", body)
 		if err != nil {
 			t.Fatalf("binaryFromArchive: %v", err)
 		}
@@ -203,7 +203,7 @@ func TestBinaryFromArchive(t *testing.T) {
 			"crower.exe": binary,
 		})
 
-		got, err := binaryFromArchive("crower_v1_windows_amd64.zip", body, "crower")
+		got, err := binaryFromArchive("crower_v1_windows_amd64.zip", body)
 		if err != nil {
 			t.Fatalf("binaryFromArchive: %v", err)
 		}
@@ -213,37 +213,10 @@ func TestBinaryFromArchive(t *testing.T) {
 		}
 	})
 
-	// The window updater takes its own member: installing the CLI's bytes over
-	// crower-gui.exe is what made Restart open a console program (#489).
-	t.Run("window member", func(t *testing.T) {
-		body := zipArchive(t, map[string]string{
-			"crower.exe":     "cli",
-			"crower-gui.exe": "window",
-		})
-
-		got, err := binaryFromArchive("crower_v1_windows_amd64.zip", body, "crower-gui")
-		if err != nil {
-			t.Fatalf("binaryFromArchive: %v", err)
-		}
-
-		if string(got) != "window" {
-			t.Errorf("binary = %q, want the window executable", got)
-		}
-
-		cli, err := binaryFromArchive("crower_v1_windows_amd64.zip", body, "crower")
-		if err != nil {
-			t.Fatalf("binaryFromArchive(cli): %v", err)
-		}
-
-		if string(cli) != "cli" {
-			t.Errorf("cli binary = %q, want the CLI executable", cli)
-		}
-	})
-
 	t.Run("empty binary", func(t *testing.T) {
 		body := tarGzArchive(t, map[string]string{"crower": ""})
 
-		if _, err := binaryFromArchive("crower_v1_linux_amd64.tar.gz", body, "crower"); err == nil {
+		if _, err := binaryFromArchive("crower_v1_linux_amd64.tar.gz", body); err == nil {
 			t.Fatal("an empty crower returned no error")
 		}
 	})
@@ -251,19 +224,19 @@ func TestBinaryFromArchive(t *testing.T) {
 	t.Run("missing binary", func(t *testing.T) {
 		body := tarGzArchive(t, map[string]string{"README.md": "docs"})
 
-		if _, err := binaryFromArchive("crower_v1_linux_amd64.tar.gz", body, "crower"); err == nil {
+		if _, err := binaryFromArchive("crower_v1_linux_amd64.tar.gz", body); err == nil {
 			t.Fatal("an archive without crower returned no error")
 		}
 	})
 
 	t.Run("corrupt archive", func(t *testing.T) {
-		if _, err := binaryFromArchive("crower_v1_linux_amd64.tar.gz", []byte("not a tarball"), "crower"); err == nil {
+		if _, err := binaryFromArchive("crower_v1_linux_amd64.tar.gz", []byte("not a tarball")); err == nil {
 			t.Fatal("a corrupt archive returned no error")
 		}
 	})
 
 	t.Run("unknown archive", func(t *testing.T) {
-		if _, err := binaryFromArchive("crower_v1_linux_amd64.rpm", nil, "crower"); err == nil {
+		if _, err := binaryFromArchive("crower_v1_linux_amd64.rpm", nil); err == nil {
 			t.Fatal("an unknown archive returned no error")
 		}
 	})

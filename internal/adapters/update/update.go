@@ -43,30 +43,12 @@ type Updater struct {
 	client  *http.Client
 	goos    string
 	goarch  string
-
-	// member is the executable the archive's bytes are taken from. The window
-	// binary must install itself, not the CLI beside it (#489).
-	member string
 }
 
-// New builds an Updater for the host's CLI binary.
+// New builds an Updater for the host.
 func New() *Updater {
-	return newUpdater("crower")
-}
-
-// NewWindow builds an Updater for the window binary.
-//
-// The archive carries crower, cr and crower-gui. Installing the CLI's bytes over
-// crower-gui.exe replaces the window with a console program, so the window asks
-// for its own member (#489).
-func NewWindow() *Updater {
-	return newUpdater("crower-gui")
-}
-
-func newUpdater(member string) *Updater {
 	return &Updater{
 		baseURL: defaultReleaseBase,
-		member:  member,
 		goos:    runtime.GOOS,
 		goarch:  runtime.GOARCH,
 		client: &http.Client{
@@ -153,7 +135,7 @@ func (h *Updater) fetchBinary(version string, asset string) ([]byte, error) {
 		return nil, fmt.Errorf("%w for %s", errors.ErrChecksumMismatch, asset)
 	}
 
-	return binaryFromArchive(asset, body, h.member)
+	return binaryFromArchive(asset, body)
 }
 
 // releaseURL builds a release download URL, refusing anything but HTTPS.
@@ -229,27 +211,27 @@ func parseChecksum(body []byte, asset string) ([]byte, error) {
 	return nil, fmt.Errorf("%w: checksums.txt has no entry for %s", errors.ErrChecksumUnavailable, asset)
 }
 
-// binaryFromArchive extracts the named executable from a release archive.
-func binaryFromArchive(asset string, body []byte, member string) ([]byte, error) {
+// binaryFromArchive extracts the crower executable from a release archive.
+func binaryFromArchive(asset string, body []byte) ([]byte, error) {
 	if strings.HasSuffix(asset, ".zip") {
-		return binaryFromZip(body, member+".exe")
+		return binaryFromZip(body)
 	}
 
 	if strings.HasSuffix(asset, ".tar.gz") {
-		return binaryFromTarGz(body, member)
+		return binaryFromTarGz(body)
 	}
 
 	return nil, fmt.Errorf("unsupported archive %q", asset)
 }
 
-func binaryFromZip(body []byte, name string) ([]byte, error) {
+func binaryFromZip(body []byte) ([]byte, error) {
 	reader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
 		return nil, fmt.Errorf("read zip: %w", err)
 	}
 
 	for _, file := range reader.File {
-		if filepath.Base(file.Name) != name {
+		if filepath.Base(file.Name) != "crower.exe" {
 			continue
 		}
 
@@ -259,13 +241,13 @@ func binaryFromZip(body []byte, name string) ([]byte, error) {
 		}
 		defer opened.Close()
 
-		return readBinary(opened, name)
+		return readBinary(opened, "crower.exe")
 	}
 
-	return nil, fmt.Errorf("zip carries no %s", name)
+	return nil, fmt.Errorf("zip carries no crower.exe")
 }
 
-func binaryFromTarGz(body []byte, name string) ([]byte, error) {
+func binaryFromTarGz(body []byte) ([]byte, error) {
 	gzipReader, err := gzip.NewReader(bytes.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("read gzip: %w", err)
@@ -284,14 +266,14 @@ func binaryFromTarGz(body []byte, name string) ([]byte, error) {
 			return nil, fmt.Errorf("read tar: %w", err)
 		}
 
-		if header.Typeflag != tar.TypeReg || filepath.Base(header.Name) != name {
+		if header.Typeflag != tar.TypeReg || filepath.Base(header.Name) != "crower" {
 			continue
 		}
 
-		return readBinary(archive, name)
+		return readBinary(archive, "crower")
 	}
 
-	return nil, fmt.Errorf("archive carries no %s", name)
+	return nil, fmt.Errorf("archive carries no crower")
 }
 
 // readBinary reads the executable and refuses an empty one: selfupdate would
