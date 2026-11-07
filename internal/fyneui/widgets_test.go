@@ -284,6 +284,69 @@ func TestEveryWindowButtonSharesOneHeight(t *testing.T) {
 	}
 }
 
+// A dialog footer keeps its buttons as one centred row: the native Fyne dialog
+// put them at the right edge, which is the inconsistency #500 removes.
+func TestDialogFooterCentersItsButtons(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	confirm := newButton("Yes", nil, widget.HighImportance, nil)
+	dismiss := newButton("No", nil, widget.LowImportance, nil)
+
+	window := test.NewWindow(dialogFooter(dismiss, confirm))
+	window.Resize(fyne.NewSize(600, 120))
+
+	buttons := buttonsIn(window.Canvas().Content())
+	if len(buttons) != 2 {
+		t.Fatalf("found %d buttons, want the footer's two", len(buttons))
+	}
+
+	driver := fyne.CurrentApp().Driver()
+
+	var left, right float32
+
+	for index, button := range buttons {
+		x := driver.AbsolutePositionForObject(button).X
+		if index == 0 || x < left {
+			left = x
+		}
+
+		if edge := x + button.Size().Width; index == 0 || edge > right {
+			right = edge
+		}
+	}
+
+	if center, want := left+(right-left)/2, float32(300); center != want {
+		t.Errorf("button row centre = %.1f, want %.1f (left %.1f, right %.1f)", center, want, left, right)
+	}
+}
+
+// The About action stack uses a gap tighter than the theme's padding.
+func TestVStackUsesTheTighterGap(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	first := newButton("One", nil, widget.MediumImportance, nil)
+	second := newButton("Two", nil, widget.MediumImportance, nil)
+
+	stack := &vStack{gap: theme.Padding() / 2, center: true}
+	objects := []fyne.CanvasObject{first, second}
+
+	if got, want := stack.MinSize(objects).Height, first.MinSize().Height*2+stack.gap; got != want {
+		t.Errorf("height = %.1f, want %.1f", got, want)
+	}
+
+	stack.Layout(objects, fyne.NewSize(400, stack.MinSize(objects).Height))
+
+	if got, want := second.Position().Y, first.MinSize().Height+stack.gap; got != want {
+		t.Errorf("second row y = %.1f, want %.1f", got, want)
+	}
+
+	if got, want := first.Position().X, (400-first.MinSize().Width)/2; got != want {
+		t.Errorf("first row x = %.1f, want %.1f", got, want)
+	}
+}
+
 // A result block colours its accent bar by the outcome.
 func TestBlockAccentFollowsTheOutcome(t *testing.T) {
 	app := test.NewApp()

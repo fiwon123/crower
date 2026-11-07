@@ -8,7 +8,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -376,7 +375,10 @@ func (u *ui) askParams(key string, command catalog.Command) {
 	input := newScrollFreeEntry()
 	input.SetPlaceHolder(paramsHint(command))
 
-	dialog.ShowCustomConfirm("Parameters", "Run", "Cancel", input, func(ok bool) {
+	// showForm, not Fyne's native dialog: the native one puts Run and Cancel at
+	// the right edge, so the prompt looked different from every other dialog
+	// (#500).
+	showForm("Parameters", "Run", "Cancel", container.NewVBox(input), u.window, func(ok bool) {
 		if !ok {
 			u.model.State = desktop.ViewList
 			return
@@ -385,7 +387,7 @@ func (u *ui) askParams(key string, command catalog.Command) {
 		u.model.ParamInput = input.Text
 		u.model.SubmitParams()
 		u.showOutput()
-	}, u.window)
+	}, dialogSizeFor(u.window, 420, 200, 620, 300))
 }
 
 func (u *ui) showOutput() {
@@ -446,6 +448,8 @@ func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window 
 		if pop != nil {
 			pop.Hide()
 		}
+
+		onConfirm(false)
 	})
 
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
@@ -538,10 +542,37 @@ func confirmNamed(title, message, expected, action string, importance widget.Imp
 
 // showConfirm asks a question. It stays modal so an outside click cannot answer
 // it, and its body is a selectable label so the message can be copied.
-func showConfirm(title, message string, window fyne.Window, onConfirm func(bool)) {
-	confirm := dialog.NewCustomConfirm(title, "Yes", "No", newSelectableText(message), onConfirm, window)
-	confirm.Resize(fyne.NewSize(560, 300))
-	confirm.Show()
+//
+// It is built here rather than with dialog.NewCustomConfirm because Fyne's
+// native dialog puts its buttons at the right edge; the rest of the window
+// centres them (#500).
+func showConfirm(title, message string, window fyne.Window, onConfirm func(bool)) *widget.PopUp {
+	var pop *widget.PopUp
+
+	confirm := newButton("Yes", nil, widget.HighImportance, func() {
+		pop.Hide()
+		onConfirm(true)
+	})
+
+	dismiss := newButton("No", nil, widget.LowImportance, func() {
+		pop.Hide()
+		onConfirm(false)
+	})
+
+	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	body := container.NewBorder(
+		container.NewVBox(head, widget.NewSeparator()),
+		dialogFooter(dismiss, confirm),
+		nil,
+		nil,
+		newSelectableText(message),
+	)
+
+	pop = widget.NewModalPopUp(container.NewPadded(body), window.Canvas())
+	pop.Resize(dialogSizeFor(window, 420, 220, 620, 380))
+	pop.Show()
+
+	return pop
 }
 
 func showText(title, text string, window fyne.Window) *widget.PopUp {
