@@ -14,7 +14,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -254,7 +253,7 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 
 	setupControls := container.NewHBox(selectableLabel("Setup"), u.setupSelect)
 
-	var setupActions fyne.CanvasObject
+	setupRow := container.NewVBox(setupControls)
 	if u.setups != nil {
 		newSetup := widget.NewButtonWithIcon("New setup", theme.ContentAddIcon(), u.showNewSetup)
 		newSetup.Importance = widget.HighImportance
@@ -262,30 +261,27 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 		removeSetup := widget.NewButtonWithIcon("Delete setup", theme.DeleteIcon(), u.showDeleteSetup)
 		removeSetup.Importance = widget.DangerImportance
 
-		setupActions = container.NewHBox(newSetup, removeSetup)
+		// The actions sit under their selector, on the same left edge as a
+		// card's Run/Edit/Delete: a Border stretched them to the selector's
+		// height, which is why they did not line up with anything (#480).
+		setupRow.Add(container.NewHBox(newSetup, removeSetup))
 	}
 
-	// Each control row keeps its label and selector on the left and its actions
-	// on the right, so the buttons share one edge down the panel: Delete setup,
-	// Groups and New command all line up.
-	setupRow := container.NewBorder(nil, nil, setupControls, setupActions)
-
-	groupRow := container.NewBorder(
-		nil,
-		nil,
+	groupRow := container.NewVBox(
 		container.NewHBox(selectableLabel("Group"), u.groupFilter),
 		groupsButton,
 	)
 
 	filterRow := container.NewBorder(nil, nil, selectableLabel("Filter"), nil, filter)
 
-	createRow := container.NewHBox(layout.NewSpacer(), newCommand)
+	createRow := container.NewHBox(newCommand)
 
 	controls := container.NewVBox(
 		gap(0, theme.Padding()),
 		setupRow,
 		gap(0, theme.Padding()/2),
 		groupRow,
+		gap(0, theme.Padding()/2),
 		filterRow,
 		createRow,
 		widget.NewSeparator(),

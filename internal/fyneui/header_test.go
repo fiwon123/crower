@@ -8,33 +8,29 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 )
 
-// The emoji and the summary are centred on the same line: an HBox alone left the
-// taller glyph's centre below the text's (#477).
-func TestHeaderCentersTheEmojiOnTheSummary(t *testing.T) {
+// The emoji and the summary are one text run: a dropdown aligns them that way,
+// and two objects of different sizes never share a baseline (#480).
+func TestHeaderDrawsOneLine(t *testing.T) {
 	app := test.NewApp()
 	t.Cleanup(app.Quit)
 
 	header := newCardHeader("🚀", "deploy")
 
-	window := test.NewWindow(container.NewVBox(header))
-	t.Cleanup(window.Close)
+	if header.text.Text != "🚀  deploy" {
+		t.Errorf("header line = %q, want the emoji and the summary together", header.text.Text)
+	}
 
-	window.Resize(fyne.NewSize(420, 120))
+	if header.text.TextSize < 18 {
+		t.Errorf("header text is %.1f pt, want it readable", header.text.TextSize)
+	}
 
-	driver := fyne.CurrentApp().Driver()
+	bare := newCardHeader("", "deploy")
 
-	emojiAt := driver.AbsolutePositionForObject(header.emoji)
-	titleAt := driver.AbsolutePositionForObject(header.title)
-
-	emojiCenter := emojiAt.Y + header.emoji.Size().Height/2
-	titleCenter := titleAt.Y + header.title.Size().Height/2
-
-	if difference := emojiCenter - titleCenter; difference > 1 || difference < -1 {
-		t.Errorf("emoji centre = %.1f, summary centre = %.1f, want them on one line", emojiCenter, titleCenter)
+	if bare.text.Text != "deploy" {
+		t.Errorf("header without an icon = %q, want the bare summary", bare.text.Text)
 	}
 }
 
