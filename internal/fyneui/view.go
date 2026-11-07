@@ -59,6 +59,7 @@ func Run(commands catalog.Catalog, history timeline.Log, deps Deps) {
 	model := desktop.NewModel(commands, history, deps.Exec)
 
 	a := app.New()
+	a.Settings().SetTheme(newAppTheme())
 	a.SetIcon(logoResource())
 
 	window := a.NewWindow("crower")
@@ -230,11 +231,13 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	}
 
 	newCommand := widget.NewButtonWithIcon("New command", theme.ContentAddIcon(), u.showCreate)
+	newCommand.Importance = widget.HighImportance
 
 	u.groupFilter = widget.NewSelect([]string{allGroupsLabel}, u.selectGroup)
 	u.refreshGroups()
 
 	groupsButton := widget.NewButtonWithIcon("Groups", theme.GridIcon(), u.showGroups)
+	groupsButton.Importance = widget.HighImportance
 
 	labels, choices := u.setupChoicesList()
 	u.setupChoices = choices
@@ -249,33 +252,42 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	})
 	u.setupSelect.SetSelected(u.setupLabel(u.activeSetup))
 
-	setupRow := container.NewHBox(widget.NewLabel("Setup"), u.setupSelect)
+	setupControls := container.NewHBox(selectableLabel("Setup"), u.setupSelect)
 
+	var setupActions fyne.CanvasObject
 	if u.setups != nil {
+		newSetup := widget.NewButtonWithIcon("New setup", theme.ContentAddIcon(), u.showNewSetup)
+		newSetup.Importance = widget.HighImportance
+
 		removeSetup := widget.NewButtonWithIcon("Delete setup", theme.DeleteIcon(), u.showDeleteSetup)
 		removeSetup.Importance = widget.DangerImportance
 
-		setupRow.Add(widget.NewButtonWithIcon("New setup", theme.ContentAddIcon(), u.showNewSetup))
-		setupRow.Add(removeSetup)
+		setupActions = container.NewHBox(newSetup, removeSetup)
 	}
 
-	groupRow := container.NewHBox(widget.NewLabel("Group"), u.groupFilter, groupsButton)
+	// Each control row keeps its label and selector on the left and its actions
+	// on the right, so the buttons share one edge down the panel: Delete setup,
+	// Groups and New command all line up.
+	setupRow := container.NewBorder(nil, nil, setupControls, setupActions)
 
-	filterRow := container.NewBorder(nil, nil, widget.NewLabel("Filter"), nil, filter)
+	groupRow := container.NewBorder(
+		nil,
+		nil,
+		container.NewHBox(selectableLabel("Group"), u.groupFilter),
+		groupsButton,
+	)
 
-	// Create sits at the top right, above the list it adds to; the filter reads
-	// under it with its own label, and a rule separates the controls from the
-	// cards so the two zones never look like one block.
+	filterRow := container.NewBorder(nil, nil, selectableLabel("Filter"), nil, filter)
+
 	createRow := container.NewHBox(layout.NewSpacer(), newCommand)
 
 	controls := container.NewVBox(
 		gap(0, theme.Padding()),
-		createRow,
-		filterRow,
-		widget.NewSeparator(),
 		setupRow,
 		gap(0, theme.Padding()/2),
 		groupRow,
+		filterRow,
+		createRow,
 		widget.NewSeparator(),
 	)
 
@@ -377,6 +389,15 @@ func (u *ui) selectCommand(key string) {
 
 		return
 	}
+}
+
+// selectableLabel is a control's caption: a reader copies a value from the
+// window often enough that every label is selectable.
+func selectableLabel(text string) *widget.Label {
+	label := widget.NewLabel(text)
+	label.Selectable = true
+
+	return label
 }
 
 // allGroupsLabel is the group filter's "no filter" entry.
@@ -581,15 +602,6 @@ func (u *ui) switchSetup(name string) bool {
 	u.window.SetTitle("crower — " + name)
 
 	return true
-}
-
-// commandLabel is what a card header shows: the icon when one is set, then the name.
-func commandLabel(command catalog.Command) string {
-	if command.Icon == "" {
-		return command.Name
-	}
-
-	return command.Icon + " " + command.Name
 }
 
 // paramsHint tells the user what the command's parameters mean without making

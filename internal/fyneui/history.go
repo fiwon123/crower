@@ -149,7 +149,7 @@ func (u *ui) updateHistoryLoad() {
 
 func (u *ui) newHistoryCard(summary desktop.HistorySummary) *historyCard {
 	card := &historyCard{version: summary.Version}
-	card.expandableCard = newExpandableCard(historySummaryTitle(summary), func() fyne.CanvasObject {
+	card.expandableCard = newExpandableCard(operationIcon(summary.Operation), historySummaryTitle(summary), func() fyne.CanvasObject {
 		return u.buildHistoryBody(card)
 	})
 	card.header.OnTapped = func() { u.toggleHistoryCard(card) }
@@ -157,17 +157,16 @@ func (u *ui) newHistoryCard(summary desktop.HistorySummary) *historyCard {
 	return card
 }
 
-// historySummaryTitle is the collapsed row: an operation icon, the command, the
-// time and the version. The full date and version are in the opened fields; a
-// long command is shortened so the header cannot widen the window.
+// historySummaryTitle is the collapsed row without its emoji: the operation, the
+// command, the time and the version. The full date and version are in the opened
+// fields; a long command is shortened so the header cannot widen the window.
 func historySummaryTitle(summary desktop.HistorySummary) string {
 	command := summary.Command
 	if command == "" {
 		command = "-"
 	}
 
-	return fmt.Sprintf("%s %s  ·  %s  ·  %s  ·  #%d",
-		operationIcon(summary.Operation),
+	return fmt.Sprintf("%s  ·  %s  ·  %s  ·  #%d",
 		summary.Operation,
 		shortLabel(command, 40),
 		shortTime(summary.When),

@@ -3,6 +3,7 @@
 package fyneui
 
 import (
+	"fmt"
 	"strings"
 
 	"fyne.io/fyne/v2"
@@ -62,14 +63,19 @@ func (u *ui) showGroups() {
 		var row fyne.CanvasObject
 
 		remove := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {
-			if !u.removeGroup(name) {
-				return
-			}
+			showConfirm("Delete group", fmt.Sprintf(
+				"Delete the group %q?\n\nA command that names it keeps the name until you change the command.",
+				name,
+			), u.window, func(confirmed bool) {
+				if !confirmed || !u.removeGroup(name) {
+					return
+				}
 
-			delete(entries, name)
-			list.Remove(row)
-			updateEmpty()
-			list.Refresh()
+				delete(entries, name)
+				list.Remove(row)
+				updateEmpty()
+				list.Refresh()
+			})
 		})
 		remove.Importance = widget.DangerImportance
 
@@ -96,6 +102,8 @@ func (u *ui) showGroups() {
 			list.Refresh()
 		})
 	})
+
+	newGroup.Importance = widget.HighImportance
 
 	content := container.NewBorder(
 		container.NewVBox(newGroup, widget.NewSeparator()),

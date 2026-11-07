@@ -224,6 +224,28 @@ func newFieldList(fields []detailField) *fyne.Container {
 	return container.New(layout.NewFormLayout(), objects...)
 }
 
+// formRow is one label and control in a dialog or a tool card.
+type formRow struct {
+	label   string
+	control fyne.CanvasObject
+}
+
+// newFormGrid lays a form out with the same left-aligned, selectable keys as a
+// card's field list. widget.Form draws its keys as trailing-aligned rich text a
+// user cannot select, which is the one thing every label in this window avoids.
+func newFormGrid(rows []formRow) *fyne.Container {
+	objects := make([]fyne.CanvasObject, 0, len(rows)*2)
+
+	for _, row := range rows {
+		label := widget.NewLabelWithStyle(row.label, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+		label.Selectable = true
+
+		objects = append(objects, label, row.control)
+	}
+
+	return container.New(layout.NewFormLayout(), objects...)
+}
+
 // block is a message in an inset panel: an optional accent bar on the left, the
 // text padded and selectable. The History raw note and a tool result both read
 // as a block instead of a line of text floating in the card.

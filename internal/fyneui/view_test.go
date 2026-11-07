@@ -875,13 +875,24 @@ func TestApplyRevertReportsAnError(t *testing.T) {
 	}
 }
 
-// A row shows the icon when one is set, and the bare name when it is not.
-func TestCommandLabelShowsTheIcon(t *testing.T) {
-	if got := commandLabel(catalog.Command{Name: "deploy", Icon: "🚀"}); got != "🚀 deploy" {
-		t.Errorf("commandLabel = %q, want the icon before the name", got)
+// A card header draws the icon large and the name beside it, and hides the
+// emoji when the command has none.
+func TestCommandHeaderShowsTheIconLarge(t *testing.T) {
+	header := newCardHeader("🚀", "deploy")
+
+	if header.Text != "deploy" {
+		t.Errorf("header text = %q, want the bare name", header.Text)
 	}
 
-	if got := commandLabel(catalog.Command{Name: "deploy"}); got != "deploy" {
-		t.Errorf("commandLabel = %q, want the bare name", got)
+	if header.emoji.Text != "🚀" {
+		t.Errorf("header emoji = %q, want the icon", header.emoji.Text)
+	}
+
+	if header.emoji.TextSize < 20 {
+		t.Errorf("emoji is %.1f pt, want it readable", header.emoji.TextSize)
+	}
+
+	if bare := newCardHeader("", "deploy"); bare.emoji.Visible() {
+		t.Error("a command without an icon shows an empty emoji")
 	}
 }
