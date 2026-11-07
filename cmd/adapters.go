@@ -148,19 +148,10 @@ func (s sessionPorts) Pending(steps int) (string, string, error) {
 	return output.HistoryLast(s.cfg.History, steps), output.HistoryFirst(s.cfg.History, stopIndex), nil
 }
 
-// RevertTo restores the command set steps entries back and reports the version
-// it landed on.
+// RevertTo restores the command set as it was steps operations ago and reports
+// the version it landed on.
 func (s sessionPorts) RevertTo(steps int) (int, error) {
-	entry, err := s.cfg.History.GetBeforeLast(steps)
-	if err != nil {
-		return 0, err
-	}
-
-	if err := s.cfg.RevertTo(entry); err != nil {
-		return 0, err
-	}
-
-	return entry.Version, nil
+	return s.cfg.RevertBack(steps)
 }
 
 // Revert is the history note for a revert.

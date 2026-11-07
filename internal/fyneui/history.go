@@ -437,18 +437,18 @@ func (u *ui) showRevert(card *historyCard) {
 	detail := card.detail
 	steps := u.revertSteps(card)
 
-	dropped := steps - 1
-
-	detailText := "No newer entries are dropped."
+	detailText := "This clears the whole history."
 	switch {
-	case dropped == 1:
-		detailText = "One newer entry is dropped."
-	case dropped > 1:
-		detailText = fmt.Sprintf("%d newer entries are dropped.", dropped)
+	case steps == 1:
+		detailText = "One history entry is dropped."
+	case steps < len(u.model.History.AllData):
+		detailText = fmt.Sprintf("%d history entries are dropped.", steps)
 	}
 
+	// The snapshot of an entry is the state after its operation, so undoing the
+	// entry means restoring the state before it (#483).
 	question := fmt.Sprintf(
-		"Restore the command set recorded at version %d (%s, %s)?\n\n%s",
+		"Restore the command set as it was before version %d (%s, %s)?\n\n%s",
 		detail.Version, detail.Operation, detail.Command, detailText,
 	)
 

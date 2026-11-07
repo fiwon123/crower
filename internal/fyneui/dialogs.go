@@ -9,7 +9,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
-	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
@@ -338,7 +337,7 @@ func (u *ui) showDeleteFor(key string) {
 
 	question := fmt.Sprintf("Delete %q?\n\nIts aliases go with it. You can restore it from the History tab.", key)
 
-	showConfirm("Delete command", question, u.window, func(ok bool) {
+	confirmNamed("Delete command", question, key, "Delete", u.window, func(ok bool) {
 		if !ok {
 			return
 		}
@@ -419,7 +418,7 @@ func showDismissible(title string, content fyne.CanvasObject, window fyne.Window
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	body := container.NewBorder(
 		container.NewVBox(head, widget.NewSeparator()),
-		container.NewHBox(layout.NewSpacer(), closeButton),
+		container.NewCenter(closeButton),
 		nil,
 		nil,
 		content,
@@ -454,7 +453,7 @@ func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window 
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	body := container.NewBorder(
 		container.NewVBox(head, widget.NewSeparator()),
-		container.NewHBox(layout.NewSpacer(), dismissButton, confirmButton),
+		container.NewCenter(container.NewHBox(dismissButton, confirmButton)),
 		nil,
 		nil,
 		content,
@@ -479,6 +478,57 @@ func dialogSizeFor(window fyne.Window, minWidth, minHeight, maxWidth, maxHeight 
 	height := max(minHeight, min(maxHeight, size.Height-pad))
 
 	return fyne.NewSize(width, height)
+}
+
+// confirmNamed asks for a destructive action to be confirmed by typing the
+// name. A click on a confirm button is one slip away; typing the name is not, so
+// the action stays disabled until the field matches exactly.
+func confirmNamed(title, message, name, action string, window fyne.Window, onConfirm func(bool)) *widget.PopUp {
+	entry := newScrollFreeEntry()
+	entry.SetPlaceHolder(name)
+
+	hint := newSelectableText(fmt.Sprintf("Type %s to %s.", name, action))
+	messageLabel := newSelectableText(message)
+
+	var pop *widget.PopUp
+
+	confirm := widget.NewButton(action, func() {
+		pop.Hide()
+		onConfirm(true)
+	})
+	confirm.Importance = widget.DangerImportance
+	confirm.Disable()
+
+	dismiss := widget.NewButton("Cancel", func() {
+		if pop != nil {
+			pop.Hide()
+		}
+	})
+	dismiss.Importance = widget.LowImportance
+
+	entry.OnChanged = func(text string) {
+		if strings.TrimSpace(text) == name {
+			confirm.Enable()
+			return
+		}
+
+		confirm.Disable()
+	}
+
+	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+	page := container.NewBorder(
+		container.NewVBox(head, widget.NewSeparator()),
+		container.NewCenter(container.NewHBox(dismiss, confirm)),
+		nil,
+		nil,
+		container.NewVBox(messageLabel, hint, entry),
+	)
+
+	pop = widget.NewPopUp(container.NewPadded(page), window.Canvas())
+	pop.Resize(dialogSizeFor(window, 420, 240, 620, 440))
+	pop.Show()
+
+	return pop
 }
 
 // showConfirm asks a question. It stays modal so an outside click cannot answer

@@ -61,7 +61,9 @@ func (u *ui) showDeleteSetup() {
 		return
 	}
 
-	name := u.setupSelect.Selected
+	// The selector's label carries the command count ("work (12)"); the setup
+	// is the name behind it.
+	name := u.setupName(u.setupSelect.Selected)
 	if name == "" {
 		return
 	}
@@ -71,7 +73,7 @@ func (u *ui) showDeleteSetup() {
 		name,
 	)
 
-	showConfirm("Delete setup", question, u.window, func(ok bool) {
+	confirmNamed("Delete setup", question, name, "Delete", u.window, func(ok bool) {
 		if !ok {
 			return
 		}

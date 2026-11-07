@@ -61,3 +61,55 @@ func TestRevertToReplacesTheInMemoryCatalog(t *testing.T) {
 		t.Error("the restored command is missing from the configuration file")
 	}
 }
+
+// RevertBack undoes the last operation: the delete's own snapshot still holds
+// the deletion, so the state before it is what comes back.
+func TestRevertBackUndoesOneOperation(t *testing.T) {
+	cfg := newTestConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
+
+	withCommand := catalog.New(nil, []catalog.Command{{Name: "a", Exec: "echo a"}})
+	if err := cfg.Commit(withCommand, operation.Create, "a", "note"); err != nil {
+		t.Fatalf("Commit create: %v", err)
+	}
+
+	if err := cfg.Commit(catalog.New(nil, nil), operation.Delete, "a", "note"); err != nil {
+		t.Fatalf("Commit delete: %v", err)
+	}
+
+	if _, err := cfg.RevertBack(1); err != nil {
+		t.Fatalf("RevertBack: %v", err)
+	}
+
+	if _, found := cfg.Catalog().Get("a"); !found {
+		t.Error("a did not come back from a revert")
+	}
+}
+
+// Undoing every operation restores an empty set and drops the whole log.
+func TestRevertBackUndoingEverythingLeavesAnEmptySet(t *testing.T) {
+	cfg := newTestConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
+
+	for _, name := range []string{"a", "b"} {
+		commands := catalog.New(nil, []catalog.Command{{Name: name, Exec: "echo " + name}})
+		if err := cfg.Commit(commands, operation.Create, name, "note"); err != nil {
+			t.Fatalf("Commit %s: %v", name, err)
+		}
+	}
+
+	version, err := cfg.RevertBack(2)
+	if err != nil {
+		t.Fatalf("RevertBack: %v", err)
+	}
+
+	if version != 0 {
+		t.Errorf("version = %d, want 0 for the empty set", version)
+	}
+
+	if names := cfg.Catalog().Names(); len(names) != 0 {
+		t.Errorf("catalog = %v, want empty", names)
+	}
+
+	if len(cfg.History.AllData) != 0 {
+		t.Errorf("history = %d entries, want none", len(cfg.History.AllData))
+	}
+}

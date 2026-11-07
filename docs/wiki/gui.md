@@ -49,7 +49,8 @@ into the labelled fields (name, exec, aliases, group, description, params, cwd,
 shell, timeout and numbered steps), a parameter entry, and **Run**, **Edit** and
 **Delete**. Opening one closes the previous card; a collapsed card carries no
 actions. **Run** passes the entry's text as parameters (an empty entry runs
-without any), **Edit** opens the command dialog and **Delete** asks first.
+without any), **Edit** opens the command dialog and **Delete** asks first, and the confirmation only enables once the command's name
+is typed.
 
 Each command and history entry is a card panel: the header is the summary and the
 opened body is indented from it, pairing each field label with its value in a
@@ -83,9 +84,11 @@ the commands, the history and the group icons without restarting, and saves the
 choice the way `crower setup use` does — so the next `crower` run opens the same
 setup.
 
-Delete and restore both ask first. Restoring puts the command set back to what a
-history entry recorded and drops the newer entries, through the same
-`Session.RevertTo` path `crower revert` uses.
+Delete and restore both ask first; deleting a command, a group or a setup needs
+the name typed before the button enables. **Restore this state** puts the command
+set back to how it was **before** the selected entry and drops it and the newer
+entries, through the same `Session.RevertBack` path `crower revert` uses — so
+restoring the entry of a deletion brings the command back.
 
 The History tab lists entries as cards, newest first. A card shows an operation
 icon, the command, the time and the version; it opens into the labelled fields
