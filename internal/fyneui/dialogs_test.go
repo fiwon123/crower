@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
 )
@@ -79,6 +80,58 @@ func TestNamedConfirmationNeedsTheExactName(t *testing.T) {
 
 	if !confirmed.Load() {
 		t.Error("the enabled action did not run")
+	}
+}
+
+// A dialog's button pair is centred in the body it sits in, not pushed towards
+// an edge. It lays out the scaffold and nesting showForm builds — the path that
+// a capture of dialogFooter on its own never covered (#503).
+func TestDialogPairIsCentredInTheBody(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	body := dialogScaffold(
+		"New command",
+		newSelectableText("A short body."),
+		dialogFooter(
+			newButton("Cancel", nil, widget.LowImportance, nil),
+			newButton("Create", nil, widget.HighImportance, nil),
+		),
+	)
+
+	window := test.NewWindow(container.NewPadded(body))
+	t.Cleanup(window.Close)
+	window.Resize(fyne.NewSize(760, 560))
+
+	content := window.Canvas().Content()
+
+	buttons := buttonsIn(content)
+	if len(buttons) != 2 {
+		t.Fatalf("found %d buttons, want the dialog's two", len(buttons))
+	}
+
+	driver := fyne.CurrentApp().Driver()
+
+	var left, right float32
+
+	for index, button := range buttons {
+		pos := driver.AbsolutePositionForObject(button)
+		if index == 0 || pos.X < left {
+			left = pos.X
+		}
+
+		if edge := pos.X + button.Size().Width; index == 0 || edge > right {
+			right = edge
+		}
+
+		if index > 0 && button.Position().Y != buttons[0].Position().Y {
+			t.Errorf("%q shares no row with the first button", button.Text)
+		}
+	}
+
+	bodyCentre := driver.AbsolutePositionForObject(content).X + content.Size().Width/2
+	if centre := left + (right-left)/2; centre != bodyCentre {
+		t.Errorf("button row centre = %.1f, want the body centre %.1f (left %.1f, right %.1f)", centre, bodyCentre, left, right)
 	}
 }
 
