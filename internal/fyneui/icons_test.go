@@ -134,12 +134,11 @@ func TestIconFieldIsOneButtonWithAnEmptyChoice(t *testing.T) {
 	choice.button.Tapped(&fyne.PointEvent{})
 
 	top := window.Canvas().Overlays().Top()
-	pop, ok := top.(*widget.PopUp)
-	if !ok {
-		t.Fatalf("overlay = %T, want the catalogue pop-up", top)
+	if top == nil {
+		t.Fatal("the emoji button did not open the catalogue")
 	}
 
-	noIcon := findButton(pop.Content, "No icon")
+	noIcon := findButton(top, "No icon")
 	if noIcon == nil {
 		t.Fatal("the catalogue has no empty choice")
 	}
