@@ -109,10 +109,10 @@ jobs:
           echo "previous_tag=$PREV" >> "$GITHUB_OUTPUT"
 
   gui:
-    # The Fyne GUI is a CGO build, so it cannot join a cross-compile matrix: it
-    # runs on the target OS runner and packages the cgo-free CLI pair and
-    # crower-gui into one archive. The two arm64 targets are handled by
-    # gui-cross below.
+    # The Fyne GUI is a CGO build, so it runs on the target OS runner and
+    # packages the cgo-free CLI pair and crower-gui into one archive. Windows
+    # amd64 is cross-linked by gui-windows below, and the two arm64 targets by
+    # gui-cross.
     name: Build GUI ${{ matrix.goos }}/${{ matrix.goarch }}
     needs: prepare
     runs-on: ${{ matrix.runner }}
@@ -123,9 +123,6 @@ jobs:
           - goos: linux
             goarch: amd64
             runner: ubuntu-latest
-          - goos: windows
-            goarch: amd64
-            runner: windows-latest
           - goos: darwin
             goarch: arm64
             runner: macos-latest
@@ -151,8 +148,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-dev xorg-dev libwayland-dev libxkbcommon-dev wayland-protocols
 
-      - name: Build the platform archive (Unix)
-        if: matrix.goos != 'windows'
+      - name: Build the platform archive
         env:
           VERSION: ${{ needs.prepare.outputs.tag }}
           GOOS: ${{ matrix.goos }}
@@ -160,65 +156,7 @@ jobs:
           CGO_ENABLED: '1'
         run: make release-gui-platform
 
-      - name: Build the platform archive (Windows)
-        if: matrix.goos == 'windows'
-        shell: pwsh
-        env:
-          VERSION: ${{ needs.prepare.outputs.tag }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $env:GOOS = 'windows'
-          $env:GOARCH = 'amd64'
-          New-Item -ItemType Directory -Force build/dist, build/gui-package | Out-Null
-
-          $env:CGO_ENABLED = '0'
-          go build -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION" -o build/crower.exe .
-          Copy-Item build/crower.exe build/cr.exe
-
-          # The window executable is a GUI program carrying the crower icon, a
-          # DPI-aware manifest and the version. Without -H windowsgui the loader
-          # gives it a console window, so double-clicking it opens a terminal
-          # instead of the window; without the .syso it has no icon at all.
-          go run ./internal/tools/winres -icon internal/fyneui/logo.png `
-            -out cmd/crowergui/rsrc_windows_amd64.syso -arch amd64 `
-            -name crower-gui -version $env:VERSION
-
-          $env:CGO_ENABLED = '1'
-          go build -tags fyne -ldflags "-X github.com/fiwon123/crower/cmd.Version=$env:VERSION -H windowsgui" -o build/crower-gui.exe ./cmd/crowergui
-
-          Remove-Item cmd/crowergui/rsrc_windows_amd64.syso
-
-          # The archive is only correct if the binaries are what their names
-          # promise: a GUI without a console, and two console programs.
-          go run ./internal/tools/winres -verify build/crower-gui.exe
-          go run ./internal/tools/winres -verify-console build/crower.exe
-          go run ./internal/tools/winres -verify-console build/cr.exe
-
-          # A file that parses is not a file Windows can start. Run what ships:
-          # the CLI reports its version and the window executable answers --help
-          # without opening a window, which proves the loader accepts all three.
-          $reported = (& build/crower.exe --version | Out-String).Trim()
-          if ($LASTEXITCODE -ne 0 -or $reported -ne $env:VERSION) {
-            throw "crower.exe --version printed '$reported' (exit $LASTEXITCODE)"
-          }
-          & build/cr.exe --version | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw "cr.exe --version failed (exit $LASTEXITCODE)" }
-
-          $gui = Start-Process build/crower-gui.exe -ArgumentList '--help' -PassThru
-          if (-not $gui.WaitForExit(60000)) {
-            $gui.Kill()
-            throw 'crower-gui.exe --help did not exit within 60 s'
-          }
-          if ($gui.ExitCode -ne 0) { throw "crower-gui.exe --help failed (exit $($gui.ExitCode))" }
-
-          Copy-Item build/crower.exe, build/cr.exe, build/crower-gui.exe, scripts/add_to_path.bat, scripts/WINDOWS.txt, README.md, LICENSE, LICENSE-APACHE, LICENSE-FYNE, NOTICE build/gui-package/
-          Push-Location build/gui-package
-          Compress-Archive -Path * -DestinationPath "../dist/crower_${env:VERSION}_windows_amd64.zip" -Force
-          Pop-Location
-          go run ./internal/tools/archiveverify -gui build/dist
-
-      - name: Verify build provenance (Unix)
-        if: matrix.goos != 'windows'
+      - name: Verify build provenance
         env:
           EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
         run: |
@@ -244,20 +182,6 @@ jobs:
           fi
 
           echo "provenance OK: built from $REVISION, unmodified"
-
-      - name: Verify build provenance (Windows)
-        if: matrix.goos == 'windows'
-        shell: pwsh
-        env:
-          EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
-        run: |
-          $ErrorActionPreference = 'Stop'
-          $info = go version -m build/crower-gui.exe
-          $rev = (($info | Select-String 'vcs.revision=').Line -split 'vcs.revision=')[1].Trim()
-          if ([string]::IsNullOrWhiteSpace($rev)) { throw 'GUI binary carries no vcs.revision' }
-          if ($rev -ne $env:EXPECTED_COMMIT) { throw "GUI binary was built from $rev, expected $env:EXPECTED_COMMIT" }
-          if (-not ($info -match 'vcs.modified=false')) { throw 'GUI binary reports a modified tree' }
-          Write-Host "provenance OK: built from $rev, unmodified"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -392,9 +316,117 @@ jobs:
           name: gui-cross-${{ matrix.goos }}-${{ matrix.goarch }}
           path: build/dist/*
 
+  gui-windows:
+    # The Windows window binary is cross-linked with mingw-w64 on Linux. It is
+    # the recipe the sibling project ships: the exe links the C runtime every
+    # Windows has (msvcrt) instead of the UCRT API sets a native windows-latest
+    # build pulls in, and the build stays beside the other cross targets (#465).
+    name: Build GUI windows/amd64 (mingw)
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Install the mingw-w64 cross compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcc-mingw-w64-x86-64 zip
+
+      - name: Build the platform archive
+        env:
+          VERSION: ${{ needs.prepare.outputs.tag }}
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: '1'
+          CC: x86_64-w64-mingw32-gcc
+        run: make release-gui-platform
+
+      - name: Verify build provenance
+        env:
+          EXPECTED_COMMIT: ${{ needs.prepare.outputs.commit }}
+        run: |
+          set -euo pipefail
+
+          INFO="$(go version -m build/crower-gui.exe)"
+          REVISION="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.revision=//p')"
+          MODIFIED="$(printf '%s\n' "$INFO" | sed -n 's/.*vcs\.modified=//p')"
+
+          if [ -z "$REVISION" ]; then
+            echo "::error::build/crower-gui.exe carries no vcs.revision" >&2
+            exit 1
+          fi
+
+          if [ "$REVISION" != "$EXPECTED_COMMIT" ]; then
+            echo "::error::GUI binary was built from $REVISION, expected $EXPECTED_COMMIT" >&2
+            exit 1
+          fi
+
+          if [ "$MODIFIED" != "false" ]; then
+            echo "::error::GUI binary reports vcs.modified=$MODIFIED" >&2
+            exit 1
+          fi
+
+          echo "provenance OK: built from $REVISION, unmodified"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: gui-windows-amd64
+          path: build/dist/*
+
+  windows-smoke:
+    # A cross-build cannot be started on the machine that produced it, so the
+    # three executables are run here, on Windows, before anything is published.
+    name: Start the Windows binaries
+    needs: [prepare, gui-windows]
+    runs-on: windows-latest
+    steps:
+      - name: Download the archive
+        uses: actions/download-artifact@v8
+        with:
+          name: gui-windows-amd64
+          path: dist
+
+      - name: Run each executable
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.prepare.outputs.tag }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force smoke | Out-Null
+          Expand-Archive -Path (Get-ChildItem dist/*.zip).FullName -DestinationPath smoke -Force
+
+          $reported = (& smoke/crower.exe --version | Out-String).Trim()
+          if ($LASTEXITCODE -ne 0 -or $reported -ne $env:VERSION) {
+            throw "crower.exe --version printed '$reported' (exit $LASTEXITCODE)"
+          }
+          & smoke/cr.exe --version | Out-Null
+          if ($LASTEXITCODE -ne 0) { throw "cr.exe --version failed (exit $LASTEXITCODE)" }
+
+          # --help exits before a window opens, so this proves the loader takes
+          # the GUI binary without needing a GPU on the runner.
+          $gui = Start-Process smoke/crower-gui.exe -ArgumentList '--help' -PassThru
+          if (-not $gui.WaitForExit(60000)) {
+            $gui.Kill()
+            throw 'crower-gui.exe --help did not exit within 60 s'
+          }
+          if ($gui.ExitCode -ne 0) { throw "crower-gui.exe --help failed (exit $($gui.ExitCode))" }
+
+          Write-Host 'all three Windows executables start'
+
   publish:
     name: Publish release
-    needs: [prepare, gui, gui-cross]
+    needs: [prepare, gui, gui-cross, gui-windows, windows-smoke]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout tag
