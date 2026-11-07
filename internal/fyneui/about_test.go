@@ -9,6 +9,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -270,9 +271,8 @@ func TestInstallNowReportsAFailure(t *testing.T) {
 	}
 }
 
-// A narrow window must wrap the update actions instead of pushing them past the
-// edge: the old single HBox overflowed as soon as Check, Install and Restore
-// were all visible.
+// A narrow window must keep every update action inside the width: the old
+// single HBox pushed the last one past the edge.
 func TestAboutActionsFitANarrowWindow(t *testing.T) {
 	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
 	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
@@ -313,6 +313,46 @@ func TestAboutActionsFitANarrowWindow(t *testing.T) {
 
 	if len(rows) < 2 {
 		t.Errorf("actions share one row (%v), want them to wrap at 360 px", rows)
+	}
+}
+
+// The update steps are one centred column with a gap tighter than the theme's
+// padding (#500).
+func TestAboutActionsAreCentredAndTight(t *testing.T) {
+	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
+	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
+
+	content := front.aboutTab()
+	front.applyLatest("v1.1.0", nil)
+
+	window.SetContent(content)
+	window.Resize(fyne.NewSize(960, 720))
+
+	driver := fyne.CurrentApp().Driver()
+
+	var centre, lastBottom float32
+
+	for index, button := range []*appButton{front.checkButton, front.installButton, front.restoreButton} {
+		if button == nil || !button.Visible() {
+			t.Fatalf("action %d is not visible", index)
+		}
+
+		pos := driver.AbsolutePositionForObject(button)
+
+		got := pos.X + button.Size().Width/2
+		if index == 0 {
+			centre = got
+		} else if diff := got - centre; diff < -0.5 || diff > 0.5 {
+			t.Errorf("%q centre = %.1f, want %.1f", button.Text, got, centre)
+		}
+
+		if index > 0 {
+			if gap := pos.Y - lastBottom; gap != theme.Padding()/2 {
+				t.Errorf("gap above %q = %.1f, want %.1f", button.Text, gap, theme.Padding()/2)
+			}
+		}
+
+		lastBottom = pos.Y + button.Size().Height
 	}
 }
 

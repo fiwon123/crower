@@ -437,6 +437,58 @@ func (l *rowFlow) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	l.rows = rows
 }
 
+// vStack lays objects out vertically with a gap tighter than the theme's
+// padding. The About actions use it so a short list of update steps reads as
+// one group instead of four unrelated rows (#500).
+type vStack struct {
+	gap    float32
+	center bool
+}
+
+func (l *vStack) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	var width, height float32
+
+	visible := 0
+
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+
+		natural := object.MinSize()
+		width = max(width, natural.Width)
+		height += natural.Height
+		visible++
+	}
+
+	if visible > 1 {
+		height += l.gap * float32(visible-1)
+	}
+
+	return fyne.NewSize(width, height)
+}
+
+func (l *vStack) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	var y float32
+
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+
+		natural := object.MinSize()
+
+		x := float32(0)
+		if l.center {
+			x = max(0, (size.Width-natural.Width)/2)
+		}
+
+		object.Move(fyne.NewPos(x, y))
+		object.Resize(natural)
+		y += natural.Height + l.gap
+	}
+}
+
 // spacedActions puts a card's action buttons in one row with a visible gap,
 // wrapping when the card is too narrow.
 func spacedActions(buttons ...fyne.CanvasObject) *fyne.Container {
