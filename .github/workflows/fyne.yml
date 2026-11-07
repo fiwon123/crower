@@ -1,11 +1,20 @@
 name: Fyne
 
 # The Fyne front end is a CGO build behind `-tags fyne`; the default `CI (Go)`
-# job stays cgo-free. This workflow proves the tagged binary builds on every
-# supported platform (#325, #333, #335).
+# job stays cgo-free. This workflow proves the tagged binary builds and its
+# headless tests pass on every supported platform (#325, #333, #335).
+#
+# Manual dispatch only. It used to run on every release pull request, but
+# `release.yml` rebuilds the same six archives from the same tag, so the release
+# path paid for the CGO compile twice. `release.yml` is the release gate; run
+# this one before merging when the change touches `internal/fyneui` or
+# `cmd/crowergui`:
+#
+#   gh workflow run fyne.yml --ref <branch>
+#
+# A cold run is ~5-7 minutes because the Go build cache is empty; a warm run is
+# ~1-3 minutes. The native Windows build is the slowest step when cold.
 on:
-  pull_request:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
