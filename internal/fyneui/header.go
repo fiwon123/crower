@@ -30,7 +30,7 @@ type cardHeader struct {
 	OnTapped func()
 
 	emoji   *canvas.Text
-	label   *widget.Label
+	title   *canvas.Text
 	chevron *widget.Icon
 	open    bool
 	box     *fyne.Container
@@ -46,7 +46,11 @@ func newCardHeader(emoji, title string) *cardHeader {
 		header.emoji.Hide()
 	}
 
-	header.label = widget.NewLabel(title)
+	// The title is canvas.Text, not a Label: a Label is a Tappable in the
+	// canvas, so it would swallow the click that opens the card.
+	header.title = canvas.NewText(title, theme.Color(theme.ColorNameForeground))
+	header.title.TextSize = theme.Size(theme.SizeNameText)
+
 	header.chevron = widget.NewIcon(theme.MenuDropDownIcon())
 
 	header.box = container.NewBorder(
@@ -54,7 +58,7 @@ func newCardHeader(emoji, title string) *cardHeader {
 		nil,
 		nil,
 		container.NewCenter(header.chevron),
-		container.NewHBox(header.emoji, header.label),
+		container.NewHBox(header.emoji, header.title),
 	)
 
 	header.ExtendBaseWidget(header)
@@ -90,5 +94,6 @@ func (h *cardHeader) setOpen(open bool) {
 // SetText replaces the summary, keeping the emoji.
 func (h *cardHeader) SetText(title string) {
 	h.Text = title
-	h.label.SetText(title)
+	h.title.Text = title
+	h.title.Refresh()
 }
