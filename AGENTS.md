@@ -370,7 +370,7 @@ instructions at all. If you add an agent, add its `.md` in the same commit.
 All workflow rules that agents must follow are documented in this file:
 
 - branch strategy and naming conventions;
-- CI strategy — `.github/workflows/ci.go.yml` runs on release pull requests (`dev` → `main`) and manual dispatch, not on feature-branch pull requests, which are gated by local `make check`;
+- CI strategy — `.github/workflows/ci.go.yml` runs on release pull requests (`dev` → `main`) and manual dispatch, not on feature-branch pull requests, which are gated by local `make check`; `.github/workflows/fyne.yml` is manual dispatch only, and is dispatched on a branch that changes the Fyne UI;
 - milestone and issue conventions;
 - development commands — `make check`, `make release`, `make clean`;
 - environment and secret-file rules;
@@ -396,6 +396,20 @@ package is not a pass for that package. `make check` prints those packages at
 the end of every run; a green run that names them is green for the packages that
 ran, not for those.
 
+**`fyne.yml` is manual dispatch only.** It used to run on every release pull
+request, but `release.yml` rebuilds the same six archives from the same tag, so
+the release path compiled the CGO tree twice. Dispatch it on the branch when a
+change touches `internal/fyneui` or `cmd/crowergui`:
+
+```bash
+gh workflow run fyne.yml --ref <branch>
+```
+
+A cold Fyne run is ~5-7 minutes because the Go build cache is empty; a warm run
+is ~1-3 minutes. The Windows jobs are the slowest when cold, and the Windows
+smoke test in `release.yml` takes seconds — the time is the CGO compile, not the
+operating system.
+
 ### Release workflow (read this before dispatching)
 
 `.github/workflows/release.yml` is manual-dispatch and `main`-only. It tags
@@ -403,6 +417,11 @@ ran, not for those.
 targets with `fyne-cross` — each containing `crower`, `cr` and `crower-gui`.
 It verifies each binary's embedded `vcs.revision`, writes `checksums.txt`, and
 creates a **draft** release — or publishes it when the `publish` input is set.
+
+Six archives is three OS families × two architectures, not six operating
+systems: `linux/{amd64,arm64}`, `windows/{amd64,arm64}` and
+`darwin/{amd64,arm64}`. They build in parallel, so the run's wall clock is the
+slowest target, not the number of targets.
 
 ```bash
 gh workflow run release.yml --ref main -f version=v0.6.0
