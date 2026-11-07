@@ -417,14 +417,7 @@ func (u *ui) showOutput() {
 func showDismissible(title string, content fyne.CanvasObject, window fyne.Window, size fyne.Size) *widget.PopUp {
 	closeButton := newButton("Close", nil, widget.MediumImportance, nil)
 
-	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	body := container.NewBorder(
-		container.NewVBox(head, widget.NewSeparator()),
-		dialogFooter(closeButton),
-		nil,
-		nil,
-		content,
-	)
+	body := dialogScaffold(title, content, dialogFooter(closeButton))
 
 	pop := widget.NewPopUp(container.NewPadded(body), window.Canvas())
 	closeButton.OnTapped = pop.Hide
@@ -452,14 +445,7 @@ func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window 
 		onConfirm(false)
 	})
 
-	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	body := container.NewBorder(
-		container.NewVBox(head, widget.NewSeparator()),
-		dialogFooter(dismissButton, confirmButton),
-		nil,
-		nil,
-		content,
-	)
+	body := dialogScaffold(title, content, dialogFooter(dismissButton, confirmButton))
 
 	pop = widget.NewPopUp(container.NewPadded(body), window.Canvas())
 	pop.Resize(size)
@@ -488,6 +474,22 @@ func dialogFooter(buttons ...fyne.CanvasObject) fyne.CanvasObject {
 	return container.NewVBox(
 		container.NewCenter(container.NewHBox(buttons...)),
 		gap(0, theme.Padding()*3),
+	)
+}
+
+// dialogScaffold is a dialog's body: a title over a separator, the content, and
+// the button row beneath it. Every dialog and the screenshot preview build it
+// with this function, so a capture cannot show a footer, or a button order, that
+// users never get (#503).
+func dialogScaffold(title string, content, footer fyne.CanvasObject) fyne.CanvasObject {
+	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
+
+	return container.NewBorder(
+		container.NewVBox(head, widget.NewSeparator()),
+		footer,
+		nil,
+		nil,
+		content,
 	)
 }
 
@@ -524,16 +526,9 @@ func confirmNamed(title, message, expected, action string, importance widget.Imp
 		confirm.Disable()
 	}
 
-	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	page := container.NewBorder(
-		container.NewVBox(head, widget.NewSeparator()),
-		dialogFooter(dismiss, confirm),
-		nil,
-		nil,
-		container.NewVBox(messageLabel, hint, entry),
-	)
+	body := dialogScaffold(title, container.NewVBox(messageLabel, hint, entry), dialogFooter(dismiss, confirm))
 
-	pop = widget.NewPopUp(container.NewPadded(page), window.Canvas())
+	pop = widget.NewPopUp(container.NewPadded(body), window.Canvas())
 	pop.Resize(dialogSizeFor(window, 420, 240, 620, 440))
 	pop.Show()
 
@@ -559,14 +554,7 @@ func showConfirm(title, message string, window fyne.Window, onConfirm func(bool)
 		onConfirm(false)
 	})
 
-	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-	body := container.NewBorder(
-		container.NewVBox(head, widget.NewSeparator()),
-		dialogFooter(dismiss, confirm),
-		nil,
-		nil,
-		newSelectableText(message),
-	)
+	body := dialogScaffold(title, newSelectableText(message), dialogFooter(dismiss, confirm))
 
 	pop = widget.NewModalPopUp(container.NewPadded(body), window.Canvas())
 	pop.Resize(dialogSizeFor(window, 420, 220, 620, 380))

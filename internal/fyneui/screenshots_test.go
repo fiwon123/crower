@@ -79,28 +79,24 @@ func captureShot(t *testing.T, content fyne.CanvasObject, name string, size fyne
 }
 
 // commandDialogPreview is the New command dialog's body without the pop-up, so
-// its footer button row can be inspected for spacing and centring.
+// its footer button row can be inspected for spacing and centring. It is built
+// with the same scaffold and button order as showForm, so a capture cannot drift
+// from the dialog users see (#503).
 func commandDialogPreview() fyne.CanvasObject {
-	head := widget.NewLabelWithStyle("New command", fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
-
 	form := newFormGrid([]formRow{
 		{"Name", newScrollFreeEntry()},
 		{"Aliases", newScrollFreeEntry()},
 		{"Exec", newExecEntry()},
 	})
 
-	body := container.NewBorder(
-		container.NewVBox(head, widget.NewSeparator()),
-		dialogFooter(
-			newButton("Create", nil, widget.HighImportance, nil),
-			newButton("Cancel", nil, widget.LowImportance, nil),
-		),
-		nil,
-		nil,
+	return container.NewPadded(dialogScaffold(
+		"New command",
 		container.NewVScroll(form),
-	)
-
-	return container.NewPadded(body)
+		dialogFooter(
+			newButton("Cancel", nil, widget.LowImportance, nil),
+			newButton("Create", nil, widget.HighImportance, nil),
+		),
+	))
 }
 
 func TestScreenshots(t *testing.T) {
