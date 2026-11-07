@@ -116,6 +116,19 @@ ifeq ($(GOOS),windows)
 	@$(HOST_GO) go run ./internal/tools/winres -verify $(BUILD_DIR)/$(GUI_NAME).exe
 	@$(HOST_GO) go run ./internal/tools/winres -verify-console $(BUILD_DIR)/$(APP_NAME).exe
 	@$(HOST_GO) go run ./internal/tools/winres -verify-console $(BUILD_DIR)/$(APP_NAME_SHORT).exe
+	@# The mingw cross-link uses msvcrt, the C runtime every Windows has; a
+	@# native build would import the UCRT API sets instead, which is the heap of
+	@# small DLLs a machine can be missing. Keep the exe on msvcrt (#468).
+	@if command -v x86_64-w64-mingw32-objdump >/dev/null 2>&1; then \
+		if x86_64-w64-mingw32-objdump -p $(BUILD_DIR)/$(GUI_NAME).exe | grep -q 'api-ms-win-crt'; then \
+			echo "ERROR: $(GUI_NAME).exe imports the UCRT API sets; the cross-link must stay on msvcrt (#468)" >&2; \
+			exit 1; \
+		fi; \
+		if ! x86_64-w64-mingw32-objdump -p $(BUILD_DIR)/$(GUI_NAME).exe | grep -q 'msvcrt.dll'; then \
+			echo "ERROR: $(GUI_NAME).exe does not import msvcrt.dll; the cross-link changed runtime (#468)" >&2; \
+			exit 1; \
+		fi; \
+	fi
 endif
 	@$(MAKE) package-gui GOOS=$(GOOS) GOARCH=$(GOARCH)
 	@$(MAKE) verify-release GUI=1
