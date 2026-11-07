@@ -43,8 +43,11 @@ func browseButton(pick func()) *widget.Button {
 }
 
 // fieldWithBrowse puts the button at the end of the path field.
+//
+// The cell is wider than the label: a Button's minimum width truncates "Browse…"
+// to an ellipsis, and the field has the room to spare (#486).
 func fieldWithBrowse(entry *widget.Entry, pick func()) fyne.CanvasObject {
-	return container.NewBorder(nil, nil, nil, browseButton(pick), entry)
+	return container.NewBorder(nil, nil, nil, container.NewGridWrap(fyne.NewSize(120, 38), browseButton(pick)), entry)
 }
 
 func (u *ui) transferCard() fyne.CanvasObject {

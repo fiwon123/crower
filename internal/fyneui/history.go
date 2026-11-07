@@ -35,6 +35,7 @@ type historyCard struct {
 
 	raw       *widget.Label
 	rawBlock  *block
+	rawPanel  *fyne.Container
 	rawToggle *widget.Button
 	rawShown  bool
 	run       *widget.Button
@@ -295,15 +296,12 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 	// clipboard without selecting it by hand.
 	card.rawBlock = newBlock(detail.Note)
 	card.raw = card.rawBlock.label
-	card.rawBlock.panel.Hide()
 
-	card.rawToggle = widget.NewButton("Raw note", func() {
+	// The raw note reads as a disclosure: a chevron that turns, like a card
+	// header, with its Copy beside the text once it is open (#486).
+	card.rawToggle = widget.NewButtonWithIcon("Raw note", theme.MenuDropDownIcon(), func() {
 		card.rawShown = !card.rawShown
-		if card.rawShown {
-			card.rawBlock.panel.Show()
-		} else {
-			card.rawBlock.panel.Hide()
-		}
+		card.setRawShown(card.rawShown)
 
 		u.historyPage.Refresh()
 
@@ -317,6 +315,12 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 		u.copyText(card.raw.Text)
 	})
 	rawCopy.Importance = widget.LowImportance
+
+	card.rawPanel = container.NewVBox(
+		card.rawBlock.panel,
+		container.NewHBox(container.NewCenter(rawCopy)),
+	)
+	card.rawPanel.Hide()
 
 	card.run = widget.NewButtonWithIcon("Run", theme.MediaPlayIcon(), func() {
 		u.runHistoryEntry(card)
@@ -340,11 +344,13 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 
 	return container.NewVBox(
 		form,
-		container.NewHBox(card.rawToggle, rawCopy),
-		card.rawBlock.panel,
+		card.rawToggle,
+		card.rawPanel,
 		widget.NewSeparator(),
+		gap(0, theme.Padding()/2),
 		spacedActions(card.run, card.edit, card.restore),
 		card.hint,
+		gap(0, theme.Padding()),
 	)
 }
 
@@ -452,7 +458,7 @@ func (u *ui) showRevert(card *historyCard) {
 		detail.Version, detail.Operation, detail.Command, detailText,
 	)
 
-	showConfirm("Restore command set", question, u.window, func(ok bool) {
+	confirmNamed("Restore command set", question, "yes", "Restore", widget.WarningImportance, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
@@ -471,6 +477,18 @@ func (u *ui) applyRevert(steps int) bool {
 
 	u.reload(commands, history)
 	return true
+}
+
+// setRawShown opens or closes the raw-note panel and points the chevron.
+func (card *historyCard) setRawShown(shown bool) {
+	if shown {
+		card.rawPanel.Show()
+		card.rawToggle.SetIcon(theme.MenuDropUpIcon())
+		return
+	}
+
+	card.rawPanel.Hide()
+	card.rawToggle.SetIcon(theme.MenuDropDownIcon())
 }
 
 // copyText puts text on the clipboard. The app owns the clipboard, so a window

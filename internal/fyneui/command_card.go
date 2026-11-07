@@ -64,7 +64,9 @@ func (u *ui) buildCommandBody(card *commandCard) fyne.CanvasObject {
 		form,
 		widget.NewSeparator(),
 		container.NewVBox(selectableLabel("Parameters"), card.params),
+		gap(0, theme.Padding()),
 		actions,
+		gap(0, theme.Padding()),
 	)
 }
 
