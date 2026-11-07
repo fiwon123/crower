@@ -224,6 +224,49 @@ func newFieldList(fields []detailField) *fyne.Container {
 	return container.New(layout.NewFormLayout(), objects...)
 }
 
+// vCenterLayout keeps an object at its natural size, left-aligned and centred
+// vertically in the space the row gives it.
+//
+// An HBox stretches every child to the row height, and a text object draws from
+// its own top edge. Two different line heights — a 22 pt emoji and a 16 pt
+// summary — then share a top edge and the emoji's centre lands lower, which
+// reads as "the emoji is dropped".
+type vCenterLayout struct{}
+
+func (vCenterLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	var size fyne.Size
+
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+
+		minimum := object.MinSize()
+		size.Width = max(size.Width, minimum.Width)
+		size.Height = max(size.Height, minimum.Height)
+	}
+
+	return size
+}
+
+func (vCenterLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+
+		minimum := object.MinSize()
+		object.Resize(minimum)
+		object.Move(fyne.NewPos(object.Position().X, (size.Height-minimum.Height)/2))
+	}
+}
+
+// centeredVertically keeps an object at its natural size in the middle of the
+// row it sits in.
+func centeredVertically(object fyne.CanvasObject) *fyne.Container {
+	return container.New(vCenterLayout{}, object)
+}
+
 // formRow is one label and control in a dialog or a tool card.
 type formRow struct {
 	label   string
