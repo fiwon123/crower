@@ -10,17 +10,18 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// cardEmojiSize is how large a command's or an operation's icon is drawn in a
-// card header. The button it replaced drew it at the body text size, where an
-// emoji is a smudge.
-const cardEmojiSize float32 = 22
+// cardTextSize is the size of the header line. Emoji and summary are one text
+// run at one size, so they share a baseline: two objects of different sizes
+// never line up, whatever their boxes say.
+const cardTextSize float32 = 18
 
-// cardHeader is an expandable card's title row: the emoji at a readable size,
-// the summary text, and the chevron.
+// cardHeader is an expandable card's title row: the emoji and the summary as one
+// line of text, and the chevron.
 //
-// It replaces the header button. A Button draws its whole label at one text
-// size, so growing the emoji would have grown the summary with it; here the two
-// have their own sizes.
+// Emoji and summary share a text run, which is what a dropdown does and why the
+// emoji reads correctly there. Drawing them as two objects of different sizes
+// leaves the emoji's baseline below the text's no matter how the boxes are
+// centred (#480).
 type cardHeader struct {
 	widget.BaseWidget
 
@@ -29,43 +30,44 @@ type cardHeader struct {
 
 	OnTapped func()
 
-	emoji   *canvas.Text
-	title   *canvas.Text
+	emoji   string
+	text    *canvas.Text
 	chevron *widget.Icon
 	open    bool
 	box     *fyne.Container
 }
 
 func newCardHeader(emoji, title string) *cardHeader {
-	header := &cardHeader{Text: title}
+	header := &cardHeader{Text: title, emoji: emoji}
 
-	header.emoji = canvas.NewText(emoji, theme.Color(theme.ColorNameForeground))
-	header.emoji.TextSize = cardEmojiSize
-
-	if emoji == "" {
-		header.emoji.Hide()
-	}
-
-	// The title is canvas.Text, not a Label: a Label is a Tappable in the
-	// canvas, so it would swallow the click that opens the card.
-	header.title = canvas.NewText(title, theme.Color(theme.ColorNameForeground))
-	header.title.TextSize = theme.Size(theme.SizeNameText)
+	// canvas.Text, not a Label: a Label is a Tappable in the canvas and would
+	// swallow the click that opens the card.
+	header.text = canvas.NewText(header.line(), theme.Color(theme.ColorNameForeground))
+	header.text.TextSize = cardTextSize
 
 	header.chevron = widget.NewIcon(theme.MenuDropDownIcon())
 
-	// Each part is centred on the row's middle line, so the emoji and the
-	// summary opt out of the HBox's top alignment.
 	header.box = container.NewBorder(
 		nil,
 		nil,
-		centeredVertically(header.emoji),
+		nil,
 		container.NewCenter(header.chevron),
-		container.NewHBox(centeredVertically(header.title)),
+		centeredVertically(header.text),
 	)
 
 	header.ExtendBaseWidget(header)
 
 	return header
+}
+
+// line is what the header draws: the emoji, a gap, and the summary. One string
+// means one baseline.
+func (h *cardHeader) line() string {
+	if h.emoji == "" {
+		return h.Text
+	}
+
+	return h.emoji + "  " + h.Text
 }
 
 // CreateRenderer hands the row to the canvas.
@@ -96,6 +98,6 @@ func (h *cardHeader) setOpen(open bool) {
 // SetText replaces the summary, keeping the emoji.
 func (h *cardHeader) SetText(title string) {
 	h.Text = title
-	h.title.Text = title
-	h.title.Refresh()
+	h.text.Text = h.line()
+	h.text.Refresh()
 }
