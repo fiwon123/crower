@@ -143,25 +143,26 @@ func (s *startupErrors) Write(data []byte) (int, error) {
 		return written, err
 	}
 
-	// Fyne writes a failed window start as "Fyne error: ...". A dialog for the
-	// first one is enough: a second would repeat the same story.
-	if !strings.Contains(line, "Fyne error") {
+	// Fyne writes a failed window start as "Fyne error: ...". Only that is
+	// worth a dialog: Fyne also logs recoverable messages — a locale it cannot
+	// round-trip, a clipboard it cannot reach — and a modal box on one of those
+	// turns a harmless warning into a startup error the user has to dismiss.
+	if !isFatalWindowError(line) || s.reported {
 		return written, err
 	}
 
 	s.reported = true
-	fatal := isFatalWindowError(line)
 
 	// Fyne writes its reason on the next line, so the dialog waits for it
 	// instead of reporting a sentence that ends at the colon.
-	go s.report(fatal)
+	go s.report()
 
 	return written, err
 }
 
 // report collects the lines Fyne just wrote, shows them, and ends a run whose
 // window cannot exist.
-func (s *startupErrors) report(fatal bool) {
+func (s *startupErrors) report() {
 	time.Sleep(250 * time.Millisecond)
 
 	details := s.details()
@@ -174,9 +175,7 @@ func (s *startupErrors) report(fatal bool) {
 		message += "\n\nLog: " + s.path
 	}
 
-	if fatal {
-		message += "\n\n" + openGLHint
-	}
+	message += "\n\n" + openGLHint
 
 	if s.notify != nil {
 		s.notify(message)
@@ -184,9 +183,7 @@ func (s *startupErrors) report(fatal bool) {
 
 	// Without a window the process would sit in the task manager doing
 	// nothing, which is what "nothing happens" looks like to the user.
-	if fatal {
-		os.Exit(1)
-	}
+	exitWindow(1)
 }
 
 // details is the log written so far, from the first Fyne error on.
@@ -216,3 +213,7 @@ func isFatalWindowError(line string) bool {
 // notifyStartupError is showFyneStartupError, and a variable so a test can see
 // that the first Fyne error raises exactly one notification.
 var notifyStartupError = showFyneStartupError
+
+// exitWindow is os.Exit, and a variable so the fatal path can be tested without
+// ending the test process.
+var exitWindow = os.Exit
