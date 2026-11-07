@@ -68,5 +68,6 @@ func TestScreenshots(t *testing.T) {
 	captureTab(t, history.window.Canvas().Content(), "history")
 
 	tools, _ := commandUI(t, stubExecutor{}, nil)
+	tools.tabs.SelectIndex(2)
 	captureTab(t, tools.window.Canvas().Content(), "tools")
 }
