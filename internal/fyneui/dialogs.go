@@ -337,7 +337,7 @@ func (u *ui) showDeleteFor(key string) {
 
 	question := fmt.Sprintf("Delete %q?\n\nIts aliases go with it. You can restore it from the History tab.", key)
 
-	confirmNamed("Delete command", question, key, "Delete", u.window, func(ok bool) {
+	confirmNamed("Delete command", question, key, "Delete", widget.DangerImportance, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
@@ -418,7 +418,7 @@ func showDismissible(title string, content fyne.CanvasObject, window fyne.Window
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	body := container.NewBorder(
 		container.NewVBox(head, widget.NewSeparator()),
-		container.NewCenter(closeButton),
+		dialogFooter(closeButton),
 		nil,
 		nil,
 		content,
@@ -453,7 +453,7 @@ func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window 
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	body := container.NewBorder(
 		container.NewVBox(head, widget.NewSeparator()),
-		container.NewCenter(container.NewHBox(dismissButton, confirmButton)),
+		dialogFooter(dismissButton, confirmButton),
 		nil,
 		nil,
 		content,
@@ -480,14 +480,23 @@ func dialogSizeFor(window fyne.Window, minWidth, minHeight, maxWidth, maxHeight 
 	return fyne.NewSize(width, height)
 }
 
+// dialogFooter is a dialog's button row: centred, with air under it so the
+// buttons are not glued to the window's lower edge.
+func dialogFooter(buttons ...fyne.CanvasObject) fyne.CanvasObject {
+	return container.NewVBox(
+		container.NewCenter(container.NewHBox(buttons...)),
+		gap(0, theme.Padding()*3),
+	)
+}
+
 // confirmNamed asks for a destructive action to be confirmed by typing the
 // name. A click on a confirm button is one slip away; typing the name is not, so
 // the action stays disabled until the field matches exactly.
-func confirmNamed(title, message, name, action string, window fyne.Window, onConfirm func(bool)) *widget.PopUp {
+func confirmNamed(title, message, expected, action string, importance widget.Importance, window fyne.Window, onConfirm func(bool)) *widget.PopUp {
 	entry := newScrollFreeEntry()
-	entry.SetPlaceHolder(name)
+	entry.SetPlaceHolder(expected)
 
-	hint := newSelectableText(fmt.Sprintf("Type %s to %s.", name, action))
+	hint := newSelectableText(fmt.Sprintf("Type %s to %s.", expected, strings.ToLower(action)))
 	messageLabel := newSelectableText(message)
 
 	var pop *widget.PopUp
@@ -496,7 +505,7 @@ func confirmNamed(title, message, name, action string, window fyne.Window, onCon
 		pop.Hide()
 		onConfirm(true)
 	})
-	confirm.Importance = widget.DangerImportance
+	confirm.Importance = importance
 	confirm.Disable()
 
 	dismiss := widget.NewButton("Cancel", func() {
@@ -507,7 +516,7 @@ func confirmNamed(title, message, name, action string, window fyne.Window, onCon
 	dismiss.Importance = widget.LowImportance
 
 	entry.OnChanged = func(text string) {
-		if strings.TrimSpace(text) == name {
+		if strings.TrimSpace(text) == expected {
 			confirm.Enable()
 			return
 		}
@@ -518,7 +527,7 @@ func confirmNamed(title, message, name, action string, window fyne.Window, onCon
 	head := widget.NewLabelWithStyle(title, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	page := container.NewBorder(
 		container.NewVBox(head, widget.NewSeparator()),
-		container.NewCenter(container.NewHBox(dismiss, confirm)),
+		dialogFooter(dismiss, confirm),
 		nil,
 		nil,
 		container.NewVBox(messageLabel, hint, entry),

@@ -47,13 +47,15 @@ func newCardHeader(emoji, title string) *cardHeader {
 
 	header.chevron = widget.NewIcon(theme.MenuDropDownIcon())
 
-	header.box = container.NewBorder(
+	// Inner padding, so the summary starts off the card's edge and off its top
+	// instead of touching both (#486).
+	header.box = container.NewPadded(container.NewBorder(
 		nil,
 		nil,
-		nil,
+		gap(theme.Padding(), 0),
 		container.NewCenter(header.chevron),
 		centeredVertically(header.text),
-	)
+	))
 
 	header.ExtendBaseWidget(header)
 

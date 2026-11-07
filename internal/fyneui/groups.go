@@ -66,7 +66,7 @@ func (u *ui) showGroups() {
 			confirmNamed("Delete group", fmt.Sprintf(
 				"Delete the group %q?\n\nA command that names it keeps the name until you change the command.",
 				name,
-			), name, "Delete", u.window, func(confirmed bool) {
+			), name, "Delete", widget.DangerImportance, u.window, func(confirmed bool) {
 				if !confirmed || !u.removeGroup(name) {
 					return
 				}
@@ -79,7 +79,7 @@ func (u *ui) showGroups() {
 		})
 		remove.Importance = widget.DangerImportance
 
-		row = container.NewHBox(field, nameLabel, layout.NewSpacer(), remove)
+		row = container.NewHBox(field, nameLabel, layout.NewSpacer(), remove, gap(theme.Padding()*2, 0))
 		list.Add(row)
 
 		updateEmpty()
@@ -106,7 +106,7 @@ func (u *ui) showGroups() {
 	newGroup.Importance = widget.HighImportance
 
 	content := container.NewBorder(
-		container.NewVBox(newGroup, widget.NewSeparator()),
+		container.NewVBox(newGroup, gap(0, theme.Padding()), widget.NewSeparator()),
 		nil,
 		nil,
 		nil,

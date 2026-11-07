@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
 )
 
 // showNewSetup asks for a name and creates an empty setup, the way
@@ -73,7 +74,7 @@ func (u *ui) showDeleteSetup() {
 		name,
 	)
 
-	confirmNamed("Delete setup", question, name, "Delete", u.window, func(ok bool) {
+	confirmNamed("Delete setup", question, name, "Delete", widget.DangerImportance, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
