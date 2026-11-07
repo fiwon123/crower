@@ -875,24 +875,24 @@ func TestApplyRevertReportsAnError(t *testing.T) {
 	}
 }
 
-// A card header draws the icon large and the name beside it, and hides the
-// emoji when the command has none.
-func TestCommandHeaderShowsTheIconLarge(t *testing.T) {
+// A card header draws the icon and the name in one readable line, and shows the
+// bare name when the command has no icon.
+func TestCommandHeaderShowsTheIconInLine(t *testing.T) {
 	header := newCardHeader("🚀", "deploy")
 
 	if header.Text != "deploy" {
 		t.Errorf("header text = %q, want the bare name", header.Text)
 	}
 
-	if header.emoji.Text != "🚀" {
-		t.Errorf("header emoji = %q, want the icon", header.emoji.Text)
+	if header.text.Text != "🚀  deploy" {
+		t.Errorf("header line = %q, want the icon before the name", header.text.Text)
 	}
 
-	if header.emoji.TextSize < 20 {
-		t.Errorf("emoji is %.1f pt, want it readable", header.emoji.TextSize)
+	if header.text.TextSize < 18 {
+		t.Errorf("header is %.1f pt, want it readable", header.text.TextSize)
 	}
 
-	if bare := newCardHeader("", "deploy"); bare.emoji.Visible() {
-		t.Error("a command without an icon shows an empty emoji")
+	if bare := newCardHeader("", "deploy"); bare.text.Text != "deploy" {
+		t.Errorf("a command without an icon draws %q, want the bare name", bare.text.Text)
 	}
 }
