@@ -38,6 +38,15 @@ jobs:
       - name: Test the Fyne view headlessly
         run: xvfb-run -a go test -tags fyne ./internal/fyneui
 
+      - name: Capture the tabs
+        run: go test -tags fyne ./internal/fyneui -run TestScreenshots -v
+
+      - name: Upload the captures
+        uses: actions/upload-artifact@v7
+        with:
+          name: shots
+          path: build/shots/*.png
+
       - name: Test the window startup log
         run: go test -tags fyne ./cmd -run 'TestWindowLog|TestFirstFyneError|TestOrdinaryLogLines'
 
