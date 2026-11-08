@@ -87,13 +87,13 @@ func (u *ui) aboutTab() fyne.CanvasObject {
 	u.restartButton = newButton("Restart now", theme.ViewRefreshIcon(), widget.SuccessImportance, u.restart)
 	u.restartButton.Hide()
 
-	// The update actions stay vertical — one centred step per row — but with a
-	// gap tighter than the theme's padding, so they read as one group instead of
-	// four unrelated rows. The buttons go in directly: a Centre wrapper stays
-	// visible when its button is hidden and leaves an empty row and its gap
-	// behind. It is kept on ui because hiding a button alone does not re-run this
-	// layout.
-	actions := container.New(&vStack{gap: theme.Padding() / 2, center: true},
+	// The update actions stay vertical — one centred step per row — with the same
+	// base-unit gap as any other pair of controls, so the column reads as one
+	// group instead of four unrelated rows. The buttons go in directly: a Centre
+	// wrapper stays visible when its button is hidden and leaves an empty row and
+	// its gap behind. It is kept on ui because hiding a button alone does not
+	// re-run this layout.
+	actions := container.New(&vStack{gap: actionGap(), center: true},
 		u.checkButton,
 		u.installButton,
 		u.restartButton,

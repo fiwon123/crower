@@ -277,16 +277,14 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	createRow := container.NewHBox(newCommand)
 
 	// Setup and group scope the whole tab; filter and New command act on the
-	// command list, so a rule separates the two groups.
+	// command list, so a rule separates the two groups. Every row takes the
+	// layout's own base-unit gap; a spacer child would add two more paddings and
+	// is what made one gap 6 px and the next 12 (#516).
 	controls := container.NewVBox(
-		gap(0, theme.Padding()),
 		setupRow,
-		gap(0, theme.Padding()/2),
 		groupRow,
 		widget.NewSeparator(),
-		gap(0, theme.Padding()/2),
 		filterRow,
-		gap(0, theme.Padding()),
 		createRow,
 		widget.NewSeparator(),
 	)
@@ -303,8 +301,8 @@ func (u *ui) commandsTab() fyne.CanvasObject {
 	u.rebuildCommands()
 
 	// The filter and setup rows sit outside the scroll, so they get the page's
-	// lateral margins: the same left inset and the same right gutter.
-	top := container.NewBorder(nil, nil, gap(theme.Padding()*2, 0), gap(scrollGutter(), 0), controls)
+	// lateral slots: the same left inset and the same scrollbar gutter.
+	top := container.NewBorder(nil, nil, slot(appSection, 0), slot(scrollGutter(), 0), controls)
 
 	return container.NewBorder(top, nil, nil, nil, u.commandScroll)
 }
@@ -401,12 +399,14 @@ func selectableLabel(text string) *widget.Label {
 }
 
 // toolbarRow is one controls row: a caption and a selector in cells of fixed
-// width, so every row's actions begin in the same column no matter how wide its
-// selector is. The caller appends the action buttons after the returned cells.
+// width and the window's button height, so every row's actions begin in the
+// same column no matter how wide its selector is, and a control shorter than a
+// button is centred on the row instead of sitting on its top edge (#495, #516).
+// The caller appends the action buttons after the returned cells.
 func toolbarRow(labelWidth, controlWidth float32, caption *widget.Label, control fyne.CanvasObject) *fyne.Container {
 	return container.NewHBox(
-		container.NewGridWrap(fyne.NewSize(labelWidth, caption.MinSize().Height), caption),
-		container.NewGridWrap(fyne.NewSize(controlWidth, control.MinSize().Height), control),
+		container.NewGridWrap(fyne.NewSize(labelWidth, buttonHeight), centeredVertically(caption)),
+		container.NewGridWrap(fyne.NewSize(controlWidth, buttonHeight), centeredVertically(control)),
 	)
 }
 
