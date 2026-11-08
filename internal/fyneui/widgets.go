@@ -340,12 +340,22 @@ func (b *block) object() fyne.CanvasObject {
 const buttonHeight float32 = 40
 
 // appButton is a widget.Button with the window's single button height. The
-// embedded button keeps its renderer and handlers; only the minimum size is
-// replaced, which is what the five previous layout rules disagreed about.
+// embedded button keeps its renderer and handlers; only the geometry belongs to
+// this wrapper.
+//
+// The wrapper owns its position and size deliberately. A container lays out the
+// object it was given, so Move and Resize arrive here; promoted to the embedded
+// button they would move the button that CreateRenderer paints, and the renderer
+// would then paint it at that offset a second time. The first child of a row sat
+// still at x=0 while every later one drifted right — the dialogs' second button,
+// the About column and every action row (#507).
 type appButton struct {
 	*widget.Button
 
 	iconOnly bool
+
+	pos  fyne.Position
+	size fyne.Size
 }
 
 // MinSize reports the canonical height and the width the embedded button asks
@@ -364,6 +374,28 @@ func (b *appButton) MinSize() fyne.Size {
 // embedded button would repaint only the copy nobody can see.
 func (b *appButton) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(b.Button)
+}
+
+// Move places the wrapper. The embedded button stays at the origin, so the
+// renderer paints it exactly once, at its container's position.
+func (b *appButton) Move(pos fyne.Position) {
+	b.pos = pos
+}
+
+// Position is where the container put this wrapper.
+func (b *appButton) Position() fyne.Position {
+	return b.pos
+}
+
+// Resize sizes the wrapper and the button it paints.
+func (b *appButton) Resize(size fyne.Size) {
+	b.size = size
+	b.Button.Resize(size)
+}
+
+// Size is the size the container gave this wrapper.
+func (b *appButton) Size() fyne.Size {
+	return b.size
 }
 
 // newButton builds every action button in the window: one height, one minimum
