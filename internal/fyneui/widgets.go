@@ -265,6 +265,47 @@ func centeredVertically(object fyne.CanvasObject) *fyne.Container {
 	return container.New(vCenterLayout{}, object)
 }
 
+// gutterLayout places one object after a left gutter and centres it vertically
+// in the row.
+//
+// A Border already pads its right slot by theme.Padding(), and a box layout pads
+// between its children, so either would add more than the gutter asked for; a
+// single-child box adds nothing. This layout states both the gap and the centring
+// exactly (#510).
+type gutterLayout struct {
+	left float32
+}
+
+func (l gutterLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	var size fyne.Size
+
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+
+		minimum := object.MinSize()
+		size.Width = max(size.Width, minimum.Width)
+		size.Height = max(size.Height, minimum.Height)
+	}
+
+	size.Width += l.left
+
+	return size
+}
+
+func (l gutterLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	for _, object := range objects {
+		if !object.Visible() {
+			continue
+		}
+
+		minimum := object.MinSize()
+		object.Resize(minimum)
+		object.Move(fyne.NewPos(l.left, (size.Height-minimum.Height)/2))
+	}
+}
+
 // formRow is one label and control in a dialog or a tool card.
 type formRow struct {
 	label   string

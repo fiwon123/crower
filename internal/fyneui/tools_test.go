@@ -9,12 +9,54 @@ import (
 	"strings"
 	"testing"
 
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/theme"
 
 	"github.com/fiwon123/crower/internal/desktop"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/timeline"
 )
+
+// The Browse button sits a gutter away from its field and is centred on the row,
+// instead of wherever the row's height happens to put it (#510).
+func TestBrowseButtonSitsBesideAndCentredOnItsField(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	entry := newScrollFreeEntry()
+	field := fieldWithBrowse(entry, func() {})
+
+	window := test.NewWindow(container.NewVBox(field))
+	t.Cleanup(window.Close)
+	window.Resize(fyne.NewSize(600, 120))
+
+	buttons := buttonsIn(field)
+	if len(buttons) != 1 {
+		t.Fatalf("found %d buttons, want the Browse control", len(buttons))
+	}
+
+	button := buttons[0]
+	driver := fyne.CurrentApp().Driver()
+
+	entryPos := driver.AbsolutePositionForObject(entry)
+	buttonPos := driver.AbsolutePositionForObject(button.Button)
+
+	// The Border pads its own right slot, so the visible gap is that padding plus
+	// the gutter the layout was given.
+	if gap, want := buttonPos.X-(entryPos.X+entry.Size().Width), theme.Padding()+actionGap(); gap != want {
+		t.Errorf("gutter = %.1f, want %v", gap, want)
+	}
+
+	entryCentre := entryPos.Y + entry.Size().Height/2
+	buttonCentre := buttonPos.Y + button.Button.Size().Height/2
+
+	if diff := buttonCentre - entryCentre; diff < -1 || diff > 1 {
+		t.Errorf("button centre = %.1f, want the field centre %.1f", buttonCentre, entryCentre)
+	}
+}
 
 // stubTools records what the tools tab asked for.
 type stubTools struct {
