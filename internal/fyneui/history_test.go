@@ -338,6 +338,37 @@ func TestHistoryRawNoteToggle(t *testing.T) {
 	}
 }
 
+// The raw note's Copy is an action like any other: it sits on the card's action
+// column instead of being the one centred button in the window (#516).
+func TestHistoryRawCopyAlignsWithTheActions(t *testing.T) {
+	note := notes.ExecuteCommandNote(catalog.Command{Name: "greet", Exec: "echo hi"}, nil)
+
+	front, _ := historyEntryUI(t, stubExecutor{}, nil, operation.Execute, "greet", note)
+	card := openHistoryCard(t, front, 0)
+
+	card.rawToggle.OnTapped()
+
+	positions := make(map[string]float32)
+
+	for _, button := range buttonsIn(card.body) {
+		positions[button.Text] = fyne.CurrentApp().Driver().AbsolutePositionForObject(button).X
+	}
+
+	copyX, ok := positions["Copy"]
+	if !ok {
+		t.Fatal("no Copy button beside the raw note")
+	}
+
+	runX, ok := positions["Run"]
+	if !ok {
+		t.Fatal("no Run button in the card actions")
+	}
+
+	if copyX != runX {
+		t.Errorf("Copy x = %.1f, want the action column x %.1f", copyX, runX)
+	}
+}
+
 // The page renders the newest hundred entries and loads the rest on request.
 func TestHistoryPagesOlderEntries(t *testing.T) {
 	var history timeline.Log

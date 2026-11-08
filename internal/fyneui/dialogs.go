@@ -8,7 +8,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 
 	"github.com/fiwon123/crower/internal/desktop"
@@ -460,7 +459,7 @@ func showForm(title, confirm, dismiss string, content fyne.CanvasObject, window 
 // screen with a single column of text in the middle.
 func dialogSizeFor(window fyne.Window, minWidth, minHeight, maxWidth, maxHeight float32) fyne.Size {
 	size := window.Canvas().Size()
-	pad := theme.Padding() * 6
+	pad := appSection * 2
 
 	width := max(minWidth, min(maxWidth, size.Width-pad))
 	height := max(minHeight, min(maxHeight, size.Height-pad))
@@ -468,13 +467,11 @@ func dialogSizeFor(window fyne.Window, minWidth, minHeight, maxWidth, maxHeight 
 	return fyne.NewSize(width, height)
 }
 
-// dialogFooter is a dialog's button row: centred, with air under it so the
-// buttons are not glued to the window's lower edge.
+// dialogFooter is a dialog's button row, centred. The scaffold's border padding
+// above it and the pop-up's own padding below it are the same base unit, so the
+// buttons sit symmetrically rather than with extra air underneath (#516).
 func dialogFooter(buttons ...fyne.CanvasObject) fyne.CanvasObject {
-	return container.NewVBox(
-		container.NewCenter(container.NewHBox(buttons...)),
-		gap(0, theme.Padding()*3),
-	)
+	return container.NewCenter(container.NewHBox(buttons...))
 }
 
 // dialogScaffold is a dialog's body: a title over a separator, the content, and

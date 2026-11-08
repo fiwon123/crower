@@ -6,13 +6,15 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
-// cardTextSize is the size of the header line. Emoji and summary are one text
-// run at one size, so they share a baseline: two objects of different sizes
-// never line up, whatever their boxes say.
+// cardTextSize is the size of a card's title line, shared by the expandable
+// cards and the simple ones. Emoji and summary are one text run at one size, so
+// they share a baseline: two objects of different sizes never line up, whatever
+// their boxes say.
 const cardTextSize float32 = 18
 
 // cardHeader is an expandable card's title row: the emoji and the summary as one
@@ -44,18 +46,24 @@ func newCardHeader(emoji, title string) *cardHeader {
 	// swallow the click that opens the card.
 	header.text = canvas.NewText(header.line(), theme.Color(theme.ColorNameForeground))
 	header.text.TextSize = cardTextSize
+	header.text.TextStyle = fyne.TextStyle{Bold: true}
 
 	header.chevron = widget.NewIcon(theme.MenuDropDownIcon())
 
-	// Inner padding, so the summary starts off the card's edge and off its top
-	// instead of touching both (#486).
-	header.box = container.NewPadded(container.NewBorder(
-		nil,
-		nil,
-		gap(theme.Padding(), 0),
-		container.NewCenter(header.chevron),
-		centeredVertically(header.text),
-	))
+	// Vertical air only, so the title clears the card's top and bottom and the
+	// tap target stays comfortable. No horizontal inset: the card's own padding
+	// puts the title off the edge, and the body is added at this same left edge
+	// so the two align (#516).
+	header.box = container.New(
+		layout.NewCustomPaddedLayout(appPadding, appPadding, 0, 0),
+		container.NewBorder(
+			nil,
+			nil,
+			nil,
+			container.NewCenter(header.chevron),
+			centeredVertically(header.text),
+		),
+	)
 
 	header.ExtendBaseWidget(header)
 

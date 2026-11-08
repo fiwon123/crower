@@ -314,9 +314,12 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 		u.copyText(card.raw.Text)
 	})
 
+	// Copy sits under the note it copies, on the same left edge as every other
+	// action in the card; centring it made it the one button in the window with
+	// no column of its own (#516).
 	card.rawPanel = container.NewVBox(
 		card.rawBlock.panel,
-		container.NewHBox(container.NewCenter(rawCopy)),
+		container.NewHBox(rawCopy),
 	)
 	card.rawPanel.Hide()
 
@@ -336,15 +339,16 @@ func (u *ui) buildHistoryBody(card *historyCard) fyne.CanvasObject {
 
 	u.updateHistoryActions(card, detail)
 
+	// One base-unit gap between each row: the separator and the action row are
+	// related parts of the same panel, so the layout's own padding is the space
+	// they get; a spacer here added two more paddings (#516).
 	return container.NewVBox(
 		form,
 		card.rawToggle,
 		card.rawPanel,
 		widget.NewSeparator(),
-		gap(0, theme.Padding()/2),
 		spacedActions(card.run, card.edit, card.restore),
 		card.hint,
-		gap(0, theme.Padding()),
 	)
 }
 

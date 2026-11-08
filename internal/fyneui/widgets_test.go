@@ -43,8 +43,7 @@ func TestGrowingRows(t *testing.T) {
 // Setting text on a growing field raises its minimum height, which is what the
 // dialog lays out; the cap keeps it from taking the window.
 func TestGrowingEntryGrowsWithItsText(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	entry := newGrowingEntry(4, 10)
 	entry.Resize(fyne.NewSize(600, 120))
@@ -75,8 +74,7 @@ func TestGrowingEntryGrowsWithItsText(t *testing.T) {
 // A detail list starts both columns at the left edge and keeps every label and
 // value selectable.
 func TestFieldListAlignsLabelsAndKeepsTextSelectable(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	list := newFieldList([]detailField{
 		{Label: "Exec", Value: "echo hi"},
@@ -117,8 +115,7 @@ func TestFieldListAlignsLabelsAndKeepsTextSelectable(t *testing.T) {
 // Spaced actions lay their buttons out in one row with the shared small gap, and
 // wrap instead of running past the card.
 func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	buttons := []fyne.CanvasObject{
 		widget.NewButton("Run", nil),
@@ -163,8 +160,7 @@ func TestSpacedActionsWrapAndKeepAGap(t *testing.T) {
 // Every action button shares one height, whatever its icon or label, and an
 // icon-only button stays square.
 func TestNewButtonSharesOneSize(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	withIcon := newButton("Run", theme.MediaPlayIcon(), widget.SuccessImportance, nil)
 	textOnly := newButton("Cancel", nil, widget.LowImportance, nil)
@@ -198,8 +194,7 @@ func TestNewButtonSharesOneSize(t *testing.T) {
 // The embedded button is what the renderer paints, so a later SetText or
 // SetIcon repaints the button on screen rather than a second unseen copy.
 func TestAppButtonPaintsItsEmbeddedButton(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	button := newButton("Install", theme.DownloadIcon(), widget.HighImportance, nil)
 
@@ -224,8 +219,7 @@ func TestAppButtonPaintsItsEmbeddedButton(t *testing.T) {
 // that offset a second time — so every button after the first drifted right
 // (#507).
 func TestAppButtonPaintsWhereTheContainerPutIt(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	first := newButton("Cancel", nil, widget.LowImportance, nil)
 	second := newButton("Create", nil, widget.HighImportance, nil)
@@ -323,8 +317,7 @@ func TestEveryWindowButtonSharesOneHeight(t *testing.T) {
 // A dialog footer keeps its buttons as one centred row: the native Fyne dialog
 // put them at the right edge, which is the inconsistency #500 removes.
 func TestDialogFooterCentersItsButtons(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	confirm := newButton("Yes", nil, widget.HighImportance, nil)
 	dismiss := newButton("No", nil, widget.LowImportance, nil)
@@ -357,15 +350,14 @@ func TestDialogFooterCentersItsButtons(t *testing.T) {
 	}
 }
 
-// The About action stack uses a gap tighter than the theme's padding.
-func TestVStackUsesTheTighterGap(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+// The About action stack uses the base-unit gap between its rows.
+func TestVStackUsesTheBaseGap(t *testing.T) {
+	useAppTheme(t)
 
 	first := newButton("One", nil, widget.MediumImportance, nil)
 	second := newButton("Two", nil, widget.MediumImportance, nil)
 
-	stack := &vStack{gap: theme.Padding() / 2, center: true}
+	stack := &vStack{gap: actionGap(), center: true}
 	objects := []fyne.CanvasObject{first, second}
 
 	if got, want := stack.MinSize(objects).Height, first.MinSize().Height*2+stack.gap; got != want {
@@ -385,8 +377,7 @@ func TestVStackUsesTheTighterGap(t *testing.T) {
 
 // A result block colours its accent bar by the outcome.
 func TestBlockAccentFollowsTheOutcome(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	result := newToolResult()
 	result.report("done")
@@ -417,8 +408,7 @@ func TestOutputTextIsSelectable(t *testing.T) {
 
 // A tool result's outcome can be selected and copied too.
 func TestToolResultIsSelectable(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	if result := newToolResult(); !result.label.Selectable {
 		t.Error("the tool result label is not selectable")
@@ -438,6 +428,8 @@ func TestCardDescriptionsAreSelectable(t *testing.T) {
 // Revealing a card scrolls the minimum: visible stays put, above and below move
 // just enough.
 func TestRevealOffset(t *testing.T) {
+	useAppTheme(t)
+
 	tests := []struct {
 		name    string
 		top     float32
@@ -447,8 +439,10 @@ func TestRevealOffset(t *testing.T) {
 		want    float32
 	}{
 		{"already visible", 100, 50, 400, 0, 0},
-		{"above the viewport", 10, 50, 400, 100, 6},
-		{"below the viewport", 500, 80, 400, 0, 184},
+		// The margin is the theme's own padding, so the expectation follows the
+		// spacing scale instead of encoding a toolkit default (#516).
+		{"above the viewport", 10, 50, 400, 100, 10 - appPadding},
+		{"below the viewport", 500, 80, 400, 0, 500 + 80 - 400 + appPadding},
 	}
 
 	for _, tt := range tests {

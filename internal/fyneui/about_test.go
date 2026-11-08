@@ -8,8 +8,9 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -65,9 +66,38 @@ func findLabel(object fyne.CanvasObject, want string) *widget.Label {
 		if typed.Content != nil {
 			return findLabel(typed.Content, want)
 		}
-	case *widget.Card:
+	}
+
+	return nil
+}
+
+// findText walks the widget tree for a canvas text with exactly this content.
+func findText(object fyne.CanvasObject, want string) *canvas.Text {
+	switch typed := object.(type) {
+	case *canvas.Text:
+		if typed.Text == want {
+			return typed
+		}
+	case *fyne.Container:
+		for _, child := range typed.Objects {
+			if found := findText(child, want); found != nil {
+				return found
+			}
+		}
+	case *container.Scroll:
 		if typed.Content != nil {
-			return findLabel(typed.Content, want)
+			return findText(typed.Content, want)
+		}
+	case fyne.Widget:
+		renderer := test.WidgetRenderer(typed)
+		if renderer == nil {
+			return nil
+		}
+
+		for _, child := range renderer.Objects() {
+			if found := findText(child, want); found != nil {
+				return found
+			}
 		}
 	}
 
@@ -86,10 +116,6 @@ func findLabelText(object fyne.CanvasObject, want string) bool {
 			}
 		}
 	case *container.Scroll:
-		if typed.Content != nil {
-			return findLabelText(typed.Content, want)
-		}
-	case *widget.Card:
 		if typed.Content != nil {
 			return findLabelText(typed.Content, want)
 		}
@@ -316,11 +342,11 @@ func TestAboutActionsFitANarrowWindow(t *testing.T) {
 	}
 }
 
-// The update steps are one centred column with a gap tighter than the theme's
-// padding (#500). The column must sit in the middle of the card, not merely
-// agree with itself: a stack that was never stretched keeps every button on a
-// common centre while hugging the card's left edge (#503).
-func TestAboutActionsAreCentredAndTight(t *testing.T) {
+// The update steps are one centred column with the base-unit gap (#500). The
+// column must sit in the middle of the card, not merely agree with itself: a
+// stack that was never stretched keeps every button on a common centre while
+// hugging the card's left edge (#503).
+func TestAboutActionsAreCentredAndSpaced(t *testing.T) {
 	updater := &stubUpdater{current: "v1.0.0", previous: "v0.9.0", hasPrevious: true}
 	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
 
@@ -360,8 +386,8 @@ func TestAboutActionsAreCentredAndTight(t *testing.T) {
 		}
 
 		if index > 0 {
-			if gap := pos.Y - lastBottom; gap != theme.Padding()/2 {
-				t.Errorf("gap above %q = %.1f, want %.1f", button.Text, gap, theme.Padding()/2)
+			if gap := pos.Y - lastBottom; gap != actionGap() {
+				t.Errorf("gap above %q = %.1f, want %.1f", button.Text, gap, actionGap())
 			}
 		}
 
@@ -396,18 +422,22 @@ func TestHidingAnAboutActionReclaimsItsRow(t *testing.T) {
 	}
 }
 
-// The About card's title is centred like the rest of the page. It used to be
-// widget.Card's left-aligned canvas.Text, which no tree walk could re-align.
+// The About card's title is centred like the rest of the page, and drawn with
+// the same one card-title treatment as every other card (#516).
 func TestAboutUpdateTitleIsCentred(t *testing.T) {
 	front, _ := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, &stubUpdater{current: "v0.0.0-test"})
 
-	label := findLabel(front.aboutTab(), "Updates")
-	if label == nil {
-		t.Fatal("the Updates title is not a label")
+	title := findText(front.aboutTab(), "Updates")
+	if title == nil {
+		t.Fatal("the Updates title is not a card title")
 	}
 
-	if label.Alignment != fyne.TextAlignCenter {
-		t.Errorf("title alignment = %v, want centre", label.Alignment)
+	if title.Alignment != fyne.TextAlignCenter {
+		t.Errorf("title alignment = %v, want centre", title.Alignment)
+	}
+
+	if title.TextSize != cardTextSize || !title.TextStyle.Bold {
+		t.Errorf("title is %.0fpt bold=%v, want the card title %.0fpt bold", title.TextSize, title.TextStyle.Bold, cardTextSize)
 	}
 }
 
