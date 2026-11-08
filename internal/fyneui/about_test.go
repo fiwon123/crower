@@ -344,7 +344,9 @@ func TestAboutActionsAreCentredAndTight(t *testing.T) {
 			t.Fatalf("action %d is not visible", index)
 		}
 
-		pos := driver.AbsolutePositionForObject(button)
+		// Measure the embedded button: it is what the canvas paints, so a
+		// wrapper placed correctly over a drifting button is still a failure.
+		pos := driver.AbsolutePositionForObject(button.Button)
 
 		got := pos.X + button.Size().Width/2
 		if index == 0 {

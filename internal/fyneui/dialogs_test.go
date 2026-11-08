@@ -112,19 +112,25 @@ func TestDialogPairIsCentredInTheBody(t *testing.T) {
 
 	driver := fyne.CurrentApp().Driver()
 
-	var left, right float32
+	var left, right, top float32
 
 	for index, button := range buttons {
-		pos := driver.AbsolutePositionForObject(button)
+		// The embedded button is what the canvas paints; the wrapper's position
+		// can be right while the painted button drifts (#507).
+		pos := driver.AbsolutePositionForObject(button.Button)
 		if index == 0 || pos.X < left {
 			left = pos.X
+		}
+
+		if index == 0 {
+			top = pos.Y
 		}
 
 		if edge := pos.X + button.Size().Width; index == 0 || edge > right {
 			right = edge
 		}
 
-		if index > 0 && button.Position().Y != buttons[0].Position().Y {
+		if pos.Y != top {
 			t.Errorf("%q shares no row with the first button", button.Text)
 		}
 	}

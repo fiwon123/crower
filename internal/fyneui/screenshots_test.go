@@ -30,7 +30,10 @@ func dumpButtons(t *testing.T, label string, object fyne.CanvasObject) {
 	walk = func(o fyne.CanvasObject) {
 		switch typed := o.(type) {
 		case *appButton:
-			pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(typed)
+			// The embedded button is what the canvas paints, so it is what a
+			// screenshot shows. Measuring the wrapper hid #507: it was placed
+			// correctly while the button it paints was offset again.
+			pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(typed.Button)
 			t.Logf("  btn  %-22q abs=(%.0f,%.0f) size=(%.0f,%.0f)", typed.Text, pos.X, pos.Y, typed.Size().Width, typed.Size().Height)
 		case *widget.Select:
 			pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(typed)
