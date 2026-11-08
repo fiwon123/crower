@@ -39,10 +39,13 @@ func browseButton(pick func()) *appButton {
 	return newButton("Browse…", theme.FolderOpenIcon(), widget.LowImportance, pick)
 }
 
-// fieldWithBrowse puts the button at the end of the path field. The button's
-// own minimum width keeps "Browse…" readable; the row height follows it.
+// fieldWithBrowse puts the button at the end of the path field: a small gutter
+// off the field, and centred on the row rather than wherever its height falls
+// (#510).
 func fieldWithBrowse(entry *widget.Entry, pick func()) fyne.CanvasObject {
-	return container.NewBorder(nil, nil, nil, browseButton(pick), entry)
+	button := container.New(gutterLayout{left: actionGap()}, browseButton(pick))
+
+	return container.NewBorder(nil, nil, nil, button, entry)
 }
 
 func (u *ui) transferCard() fyne.CanvasObject {
