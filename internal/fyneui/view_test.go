@@ -124,11 +124,21 @@ func testModel() *desktop.Model {
 	)
 }
 
-func testWindow(t *testing.T) fyne.Window {
+// useAppTheme starts a headless app under the window's production theme, so a
+// pixel assertion measures the spacing the product ships instead of the
+// toolkit's tighter default (#516).
+func useAppTheme(t *testing.T) {
 	t.Helper()
 
 	app := test.NewApp()
+	app.Settings().SetTheme(newAppTheme())
 	t.Cleanup(app.Quit)
+}
+
+func testWindow(t *testing.T) fyne.Window {
+	t.Helper()
+
+	useAppTheme(t)
 
 	return test.NewWindow(nil)
 }
@@ -297,6 +307,49 @@ func TestToolbarActionsShareOneColumn(t *testing.T) {
 	}
 }
 
+// The toolbar rows are related controls, so they are separated by the base
+// unit, and a selector is centred on its row rather than sitting on the top
+// edge beside a taller button (#516).
+func TestToolbarRowsUseTheBaseGap(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, nil)
+
+	buttons := buttonsIn(front.tabs.Items[0].Content)
+
+	position := func(text string) (fyne.Position, fyne.Size, bool) {
+		for _, button := range buttons {
+			if button.Text == text {
+				return fyne.CurrentApp().Driver().AbsolutePositionForObject(button), button.Size(), true
+			}
+		}
+
+		return fyne.Position{}, fyne.Size{}, false
+	}
+
+	newSetup, size, ok := position("New setup")
+	if !ok {
+		t.Fatal("New setup button not found")
+	}
+
+	groups, _, ok := position("Groups")
+	if !ok {
+		t.Fatal("Groups button not found")
+	}
+
+	if gap := groups.Y - (newSetup.Y + size.Height); gap != appPadding {
+		t.Errorf("gap between toolbar rows = %.1f, want the base unit %.1f", gap, appPadding)
+	}
+
+	driver := fyne.CurrentApp().Driver()
+	selectPos := driver.AbsolutePositionForObject(front.setupSelect)
+
+	rowCentre := newSetup.Y + size.Height/2
+	selectCentre := selectPos.Y + front.setupSelect.Size().Height/2
+
+	if diff := selectCentre - rowCentre; diff < -1 || diff > 1 {
+		t.Errorf("selector centre = %.1f, want the row centre %.1f", selectCentre, rowCentre)
+	}
+}
+
 // "New command" sits below the filter row instead of touching it (#495).
 func TestNewCommandClearsTheFilterRow(t *testing.T) {
 	front, _ := commandUI(t, stubExecutor{}, nil)
@@ -441,20 +494,36 @@ func TestCommandActionsRunFirstAndAreColoured(t *testing.T) {
 	}
 }
 
-// The expanded body is indented from the command header, so the fields read as
-// a panel under it rather than a continuation of the title.
-func TestCommandBodyIsIndented(t *testing.T) {
+// The expanded body starts on the card title's own left edge: the fields read
+// as a continuation of the heading rather than a nested panel, and the title,
+// the fields and the actions share one column (#516).
+func TestCommandBodyAlignsWithTheTitle(t *testing.T) {
 	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
 
 	card := openCommandCard(t, front, "greet")
 
-	pos, found := labelPosition(card.body, "Name")
+	body, found := labelPosition(card.body, "Name")
 	if !found {
 		t.Fatal("the Name label is not in the card body")
 	}
 
-	if pos.X < card.Position().X+theme.Padding()*3 {
-		t.Errorf("body x = %.1f, want it indented from the card edge %.1f", pos.X, card.Position().X)
+	driver := fyne.CurrentApp().Driver()
+
+	title := driver.AbsolutePositionForObject(card.header.text)
+	if body.X != title.X {
+		t.Errorf("body x = %.1f, want the card title's x %.1f", body.X, title.X)
+	}
+
+	cardEdge := driver.AbsolutePositionForObject(card.box).X
+	if body.X <= cardEdge {
+		t.Errorf("body x = %.1f, want it inside the card edge %.1f", body.X, cardEdge)
+	}
+
+	header := driver.AbsolutePositionForObject(card.header.box)
+	bodyTop := driver.AbsolutePositionForObject(card.body).Y
+
+	if gap := bodyTop - (header.Y + card.header.box.Size().Height); gap != appSection {
+		t.Errorf("gap between title and body = %.1f, want the section gap %.1f", gap, appSection)
 	}
 }
 

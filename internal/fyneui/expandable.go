@@ -6,6 +6,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -39,9 +40,17 @@ func newExpandableCard(emoji, title string, build func() fyne.CanvasObject) *exp
 	background.StrokeColor = theme.Color(theme.ColorNameSeparator)
 	background.StrokeWidth = theme.Size(theme.SizeNameSeparatorThickness)
 
+	// The title and the body are two groups inside one card, so they are
+	// separated by the section gap rather than the base unit. The body starts on
+	// the title's own left edge: its content is a continuation of the heading,
+	// not a nested panel (#516).
 	card.box = container.NewStack(
 		background,
-		container.NewPadded(container.NewVBox(card.header, card.body)),
+		container.NewPadded(container.New(
+			layout.NewCustomPaddedVBoxLayout(appSection),
+			card.header,
+			card.body,
+		)),
 	)
 	card.ExtendBaseWidget(card)
 
@@ -56,10 +65,9 @@ func (c *expandableCard) CreateRenderer() fyne.WidgetRenderer {
 // setOpen opens or closes the card, building the body on the first open.
 func (c *expandableCard) setOpen(open bool) {
 	if open && !c.built {
-		// The body is inset from the header text and separated from it by a
-		// little air, so an expanded card reads as a panel under its title
-		// rather than a continuation of it.
-		c.body.Add(container.NewVBox(gap(0, theme.Padding()), indented(c.build())))
+		// The body is a continuation of the title, so it is added at the same
+		// left edge. The section gap above it comes from the card's own layout.
+		c.body.Add(c.build())
 		c.built = true
 	}
 

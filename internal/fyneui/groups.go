@@ -79,8 +79,10 @@ func (u *ui) showGroups() {
 		})
 
 		// Centred, not stretched: an HBox grows a child to the row height and
-		// the emoji field beside it is taller than the button (#492).
-		row = container.NewHBox(field, nameLabel, layout.NewSpacer(), container.NewCenter(remove), gap(theme.Padding()*2, 0))
+		// the emoji field beside it is taller than the button (#492). The trailing
+		// slot clears the scrollbar the dialog overlays, by the same gutter the
+		// pages use (#516).
+		row = container.NewHBox(field, nameLabel, layout.NewSpacer(), container.NewCenter(remove), slot(scrollGutter(), 0))
 		list.Add(row)
 
 		updateEmpty()
@@ -105,7 +107,7 @@ func (u *ui) showGroups() {
 	})
 
 	content := container.NewBorder(
-		container.NewVBox(newGroup, gap(0, theme.Padding()), widget.NewSeparator()),
+		container.NewVBox(newGroup, widget.NewSeparator()),
 		nil,
 		nil,
 		nil,

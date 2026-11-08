@@ -562,31 +562,18 @@ func (l *vStack) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
-// actionGap is the space between two of a row's action buttons. Half the
-// theme's padding — the gap the About column already uses — is what makes a row
-// read as one group instead of buttons drifting apart (#503).
+// actionGap is the space between two of a row's action buttons: the base
+// spacing unit, the same gap the theme puts between any two related controls.
+// A rowFlow needs it as a number, and the Browse gutter uses it so a field and
+// its button are separated by exactly the same amount (#516).
 func actionGap() float32 {
-	return theme.Padding() / 2
+	return theme.Padding()
 }
 
 // spacedActions puts a card's action buttons in one row with that gap, wrapping
 // when the card is too narrow.
 func spacedActions(buttons ...fyne.CanvasObject) *fyne.Container {
 	return container.New(&rowFlow{gap: actionGap()}, buttons...)
-}
-
-// indented gives a card body the left inset that separates it from the header
-// text, and a small right margin for the scrollbar.
-func indented(content fyne.CanvasObject) fyne.CanvasObject {
-	pad := theme.Padding()
-
-	return container.NewBorder(
-		nil,
-		nil,
-		gap(pad*3, 0),
-		gap(pad, 0),
-		content,
-	)
 }
 
 // gap is an invisible spacer. An HBox's spacing is fixed, so a row that has to
@@ -605,16 +592,26 @@ func scrollGutter() float32 {
 	return theme.ScrollBarSize() + theme.Padding()
 }
 
-// page pads a scrolling tab: lateral margins, and a right inset wide enough for
-// the overlaid scrollbar.
-func page(content fyne.CanvasObject) fyne.CanvasObject {
+// slot is an invisible border slot that leaves exactly width and height of
+// clear space beside the content. A Border adds its own base-unit padding
+// around every slot, so the spacer carries the size minus that padding;
+// without the subtraction a page margin came out a base unit larger than the
+// value it was given (#516).
+func slot(width, height float32) fyne.CanvasObject {
 	pad := theme.Padding()
 
+	return gap(max(0, width-pad), max(0, height-pad))
+}
+
+// page pads a scrolling tab: a section gap from the window's edges and a right
+// inset wide enough for the overlaid scrollbar. The top toolbar uses the same
+// slots, so its controls line up with the cards below (#516).
+func page(content fyne.CanvasObject) fyne.CanvasObject {
 	return container.NewBorder(
-		gap(0, pad),
-		gap(0, pad),
-		gap(pad*2, 0),
-		gap(scrollGutter(), 0),
+		slot(0, appSection),
+		slot(0, appSection),
+		slot(appSection, 0),
+		slot(scrollGutter(), 0),
 		content,
 	)
 }
@@ -647,34 +644,53 @@ func revealOffset(cardTop, height, viewHeight, current float32) float32 {
 	return current
 }
 
-// newCard builds a card whose description wraps.
+// newCard builds one of the window's standard cards: a bold title, a wrapping
+// selectable description and the content, on the same inset panel the command
+// and history cards use.
 //
-// widget.NewCard paints its subtitle with a canvas.Text, which does not wrap, so
-// the subtitle's full width becomes the card's minimum and a long sentence makes
-// the page wider than a narrow window (#415). The description is a wrapping
-// label in the body instead.
+// widget.NewCard was replaced rather than wrapped: it indents its title further
+// than its content and draws the title with a left-aligned canvas text, so a
+// Tool card's text started on a different column from every other card in the
+// window (#415, #516).
 func newCard(title, description string, content fyne.CanvasObject) fyne.CanvasObject {
-	desc := widget.NewLabel(description)
-	desc.Wrapping = fyne.TextWrapWord
-	desc.Selectable = true
-
-	return widget.NewCard(title, "", container.NewVBox(desc, content))
+	return newAppCard(title, description, content, false)
 }
 
 // newCenteredCard is newCard with its title and description centred, for the
 // About page.
-//
-// The native card title is a left-aligned canvas.Text, so the centred card
-// carries its own title label and leaves the native one empty.
 func newCenteredCard(title, description string, content fyne.CanvasObject) fyne.CanvasObject {
-	head := widget.NewLabelWithStyle(title, fyne.TextAlignCenter, fyne.TextStyle{Bold: true})
+	return newAppCard(title, description, content, true)
+}
+
+// newAppCard is the one card treatment. The title is a canvas.Text so it can
+// share the size and weight of an expandable card's title; a widget.Label only
+// takes the body size. The description stays a label so it wraps and can be
+// selected.
+func newAppCard(title, description string, content fyne.CanvasObject, centered bool) fyne.CanvasObject {
+	head := canvas.NewText(title, theme.Color(theme.ColorNameForeground))
+	head.TextSize = cardTextSize
+	head.TextStyle = fyne.TextStyle{Bold: true}
 
 	desc := widget.NewLabel(description)
 	desc.Wrapping = fyne.TextWrapWord
-	desc.Alignment = fyne.TextAlignCenter
 	desc.Selectable = true
 
-	return widget.NewCard("", "", container.NewVBox(head, desc, content))
+	if centered {
+		head.Alignment = fyne.TextAlignCenter
+		desc.Alignment = fyne.TextAlignCenter
+	}
+
+	// Title and description are one heading block; the body is a section below
+	// it, the same split an expandable card makes between its header and body.
+	heading := container.New(layout.NewCustomPaddedVBoxLayout(appPadding), head, desc)
+	inner := container.New(layout.NewCustomPaddedVBoxLayout(appSection), heading, content)
+
+	background := canvas.NewRectangle(theme.Color(theme.ColorNameInputBackground))
+	background.CornerRadius = theme.Size(theme.SizeNameInputRadius)
+	background.StrokeColor = theme.Color(theme.ColorNameSeparator)
+	background.StrokeWidth = theme.Size(theme.SizeNameSeparatorThickness)
+
+	return container.NewStack(background, container.NewPadded(inner))
 }
 
 // appendPath adds a picked path to a comma-separated list, so repeated Browse

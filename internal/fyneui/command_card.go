@@ -55,13 +55,13 @@ func (u *ui) buildCommandBody(card *commandCard) fyne.CanvasObject {
 	// actions reads as one group, and the field gets the full card width.
 	actions := spacedActions(card.run, card.edit, card.remove)
 
+	// Every row here is a related control, so the layout's own base-unit gap is
+	// the space between them; a spacer on top would add two more paddings (#516).
 	return container.NewVBox(
 		form,
 		widget.NewSeparator(),
 		container.NewVBox(selectableLabel("Parameters"), card.params),
-		gap(0, theme.Padding()),
 		actions,
-		gap(0, theme.Padding()),
 	)
 }
 

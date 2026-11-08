@@ -16,6 +16,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 
 	"github.com/fiwon123/crower/internal/desktop"
+	"github.com/fiwon123/crower/internal/domain/catalog"
 	"github.com/fiwon123/crower/internal/domain/operation"
 	"github.com/fiwon123/crower/internal/domain/timeline"
 )
@@ -23,8 +24,7 @@ import (
 // The Browse button sits a gutter away from its field and is centred on the row,
 // instead of wherever the row's height happens to put it (#510).
 func TestBrowseButtonSitsBesideAndCentredOnItsField(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	entry := newScrollFreeEntry()
 	field := fieldWithBrowse(entry, func() {})
@@ -55,6 +55,60 @@ func TestBrowseButtonSitsBesideAndCentredOnItsField(t *testing.T) {
 
 	if diff := buttonCentre - entryCentre; diff < -1 || diff > 1 {
 		t.Errorf("button centre = %.1f, want the field centre %.1f", buttonCentre, entryCentre)
+	}
+}
+
+// A Tool card starts its title, its field labels and its actions on the same
+// column the command cards use in the other tab: one card inset for the whole
+// window, not one per tab (#516).
+func TestToolCardContentAlignsWithItsTitle(t *testing.T) {
+	front, _ := commandUI(t, stubExecutor{}, []catalog.Command{{Name: "greet", Exec: "echo hi"}})
+
+	card := openCommandCard(t, front, "greet")
+
+	body, found := labelPosition(card.body, "Name")
+	if !found {
+		t.Fatal("the Name label is not in the command card body")
+	}
+
+	front.tabs.SelectIndex(2)
+
+	content := front.tabs.Items[2].Content
+	driver := fyne.CurrentApp().Driver()
+
+	title := findText(content, "Copy or move")
+	if title == nil {
+		t.Fatal("the Copy or move card title is missing")
+	}
+
+	label := findLabel(content, "Sources")
+	if label == nil {
+		t.Fatal("the Sources field label is missing")
+	}
+
+	var copyButton *appButton
+
+	for _, button := range buttonsIn(content) {
+		if button.Text == "Copy" {
+			copyButton = button
+			break
+		}
+	}
+
+	if copyButton == nil {
+		t.Fatal("the Copy action is missing")
+	}
+
+	if got := driver.AbsolutePositionForObject(title).X; got != body.X {
+		t.Errorf("card title x = %.1f, want the command card's column %.1f", got, body.X)
+	}
+
+	if got := driver.AbsolutePositionForObject(label).X; got != body.X {
+		t.Errorf("field label x = %.1f, want the command card's column %.1f", got, body.X)
+	}
+
+	if got := driver.AbsolutePositionForObject(copyButton).X; got != body.X {
+		t.Errorf("action x = %.1f, want the command card's column %.1f", got, body.X)
 	}
 }
 

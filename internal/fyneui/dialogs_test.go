@@ -15,8 +15,7 @@ import (
 // Output and error dialogs are non-modal pop-ups: they can be dismissed, and a
 // click outside closes them.
 func TestOutputDialogIsDismissible(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	window := test.NewWindow(nil)
 	t.Cleanup(window.Close)
@@ -36,8 +35,7 @@ func TestOutputDialogIsDismissible(t *testing.T) {
 
 // A destructive action stays disabled until its name is typed exactly.
 func TestNamedConfirmationNeedsTheExactName(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	window := test.NewWindow(nil)
 	t.Cleanup(window.Close)
@@ -87,8 +85,7 @@ func TestNamedConfirmationNeedsTheExactName(t *testing.T) {
 // an edge. It lays out the scaffold and nesting showForm builds — the path that
 // a capture of dialogFooter on its own never covered (#503).
 func TestDialogPairIsCentredInTheBody(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	body := dialogScaffold(
 		"New command",
@@ -112,7 +109,7 @@ func TestDialogPairIsCentredInTheBody(t *testing.T) {
 
 	driver := fyne.CurrentApp().Driver()
 
-	var left, right, top float32
+	var left, right, top, rowWidth float32
 
 	for index, button := range buttons {
 		// The embedded button is what the canvas paints; the wrapper's position
@@ -126,6 +123,8 @@ func TestDialogPairIsCentredInTheBody(t *testing.T) {
 			top = pos.Y
 		}
 
+		rowWidth += button.Size().Width
+
 		if edge := pos.X + button.Size().Width; index == 0 || edge > right {
 			right = edge
 		}
@@ -133,6 +132,12 @@ func TestDialogPairIsCentredInTheBody(t *testing.T) {
 		if pos.Y != top {
 			t.Errorf("%q shares no row with the first button", button.Text)
 		}
+	}
+
+	// The pair is one group of related controls, separated by the base unit
+	// like every other action row (#516).
+	if gap := right - left - rowWidth; gap != actionGap() {
+		t.Errorf("gap between dialog buttons = %.1f, want %.1f", gap, actionGap())
 	}
 
 	bodyCentre := driver.AbsolutePositionForObject(content).X + content.Size().Width/2

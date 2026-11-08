@@ -8,14 +8,12 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/test"
 )
 
 // The emoji and the summary are one text run: a dropdown aligns them that way,
 // and two objects of different sizes never share a baseline (#480).
 func TestHeaderDrawsOneLine(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	header := newCardHeader("🚀", "deploy")
 
@@ -37,8 +35,7 @@ func TestHeaderDrawsOneLine(t *testing.T) {
 // The centring layout keeps an object at its natural size and moves it to the
 // middle of the row, leaving its horizontal position alone.
 func TestVCenterLayoutCentersVertically(t *testing.T) {
-	app := test.NewApp()
-	t.Cleanup(app.Quit)
+	useAppTheme(t)
 
 	object := canvas.NewText("x", color.White)
 
