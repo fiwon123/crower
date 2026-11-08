@@ -125,3 +125,20 @@ func TestFyneUpdaterLogsARestartFailure(t *testing.T) {
 		t.Errorf("log = %q, want the failure", data)
 	}
 }
+
+// The window installs the window member. update.New() extracts the CLI, and
+// selfupdate writes those bytes over crower-gui, so Restart launched the CLI —
+// which prints help and exits on Linux (#489, #513). #490 added NewWindow but
+// never wired it; this test is the guard that was missing.
+func TestFyneUpdaterInstallsTheWindowMember(t *testing.T) {
+	cfg := loadFyneConfigAt(t, filepath.Join(t.TempDir(), "crower.yaml"))
+
+	updater := newFyneUpdater(cfg, "v1.2.3")
+	if updater.installer == nil {
+		t.Fatal("the window updater has no installer")
+	}
+
+	if got := updater.installer.Member(); got != "crower-gui" {
+		t.Errorf("installer member = %q, want crower-gui", got)
+	}
+}

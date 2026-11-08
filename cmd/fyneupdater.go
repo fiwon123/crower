@@ -26,6 +26,12 @@ type fyneUpdater struct {
 	cfg     *session.Session
 	current string
 
+	// installer installs the window's own member. update.New() extracts the CLI,
+	// and selfupdate writes those bytes over crower-gui, so Restart launched a
+	// program that prints help and exits instead of opening the window (#489,
+	// #513).
+	installer *update.Updater
+
 	// executable and args are captured before any install: selfupdate moves the
 	// running binary aside, so os.Executable() after the update points at the old
 	// file (or a deleted one) instead of the new binary at the target path.
@@ -43,6 +49,7 @@ func newFyneUpdater(cfg *session.Session, current string) fyneUpdater {
 	return fyneUpdater{
 		cfg:        cfg,
 		current:    current,
+		installer:  update.NewWindow(),
 		executable: executable,
 		args:       os.Args[1:],
 		start:      startReplacement,
@@ -71,7 +78,12 @@ func (u fyneUpdater) Previous() (string, bool) {
 func (u fyneUpdater) Install(version string) error {
 	session := newUpdateSession(u.cfg)
 
-	return upgradeapp.New(session, quietOutput{}, latestTag{}, update.New(), session, session, session).Run(
+	installer := u.installer
+	if installer == nil {
+		installer = update.NewWindow()
+	}
+
+	return upgradeapp.New(session, quietOutput{}, latestTag{}, installer, session, session, session).Run(
 		upgradeapp.Request{Current: u.current, Version: version, AssumeYes: true},
 	)
 }
