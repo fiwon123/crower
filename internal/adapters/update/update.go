@@ -76,6 +76,16 @@ func newUpdater(member string) *Updater {
 	}
 }
 
+// Member is the executable this updater installs from the release archive:
+// crower for the CLI, crower-gui for the window.
+//
+// The window has to install its own member. Installing the CLI's bytes replaces
+// the window with a program that prints help and exits, so Restart never opens
+// the window again (#489, #513).
+func (h *Updater) Member() string {
+	return h.member
+}
+
 // WithRelease points the handler at another release base and HTTP client. A
 // test uses it with an httptest server; production keeps the default.
 func (h *Updater) WithRelease(base string, client *http.Client) *Updater {
