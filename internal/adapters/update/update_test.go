@@ -504,3 +504,16 @@ func TestFetchBinaryRequiresChecksums(t *testing.T) {
 		t.Error("the archive was downloaded before the checksum was known to exist")
 	}
 }
+
+// The two entry points install different members from the same archive: the
+// CLI takes crower, the window takes crower-gui. Installing the CLI's bytes is
+// what made Restart open a program that prints help and exits (#489, #513).
+func TestNewSelectsTheMember(t *testing.T) {
+	if got := New().Member(); got != "crower" {
+		t.Errorf("New() member = %q, want crower", got)
+	}
+
+	if got := NewWindow().Member(); got != "crower-gui" {
+		t.Errorf("NewWindow() member = %q, want crower-gui", got)
+	}
+}
