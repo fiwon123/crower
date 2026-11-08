@@ -219,6 +219,41 @@ func TestAppButtonPaintsItsEmbeddedButton(t *testing.T) {
 	}
 }
 
+// A container positions the wrapper, not the button inside it. The promoted
+// geometry used to move the embedded button, which the renderer then painted at
+// that offset a second time — so every button after the first drifted right
+// (#507).
+func TestAppButtonPaintsWhereTheContainerPutIt(t *testing.T) {
+	app := test.NewApp()
+	t.Cleanup(app.Quit)
+
+	first := newButton("Cancel", nil, widget.LowImportance, nil)
+	second := newButton("Create", nil, widget.HighImportance, nil)
+
+	window := test.NewWindow(spacedActions(first, second))
+	t.Cleanup(window.Close)
+	window.Resize(fyne.NewSize(400, buttonHeight))
+
+	driver := fyne.CurrentApp().Driver()
+
+	for _, button := range []*appButton{first, second} {
+		outer := driver.AbsolutePositionForObject(button)
+		inner := driver.AbsolutePositionForObject(button.Button)
+
+		if inner != outer {
+			t.Errorf("%q is painted at x=%.1f but positioned at x=%.1f: the wrapped button moved",
+				button.Text, inner.X, outer.X)
+		}
+	}
+
+	firstPos := driver.AbsolutePositionForObject(first.Button)
+	secondPos := driver.AbsolutePositionForObject(second.Button)
+
+	if gap := secondPos.X - (firstPos.X + first.Button.Size().Width); gap != actionGap() {
+		t.Errorf("painted gap = %.1f, want %v", gap, actionGap())
+	}
+}
+
 // buttonsIn collects every action button the canvas can reach, walking the tree
 // the way Fyne paints it.
 func buttonsIn(object fyne.CanvasObject) []*appButton {
