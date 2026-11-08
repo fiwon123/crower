@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strings"
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -16,15 +17,16 @@ import (
 
 // stubUpdater answers the About tab without touching GitHub.
 type stubUpdater struct {
-	current     string
-	latest      string
-	latestErr   error
-	previous    string
-	hasPrevious bool
-	installErr  error
-	installed   []string
-	restarts    int
-	restartErr  error
+	current        string
+	latest         string
+	latestErr      error
+	previous       string
+	hasPrevious    bool
+	installErr     error
+	installed      []string
+	installStarted chan string
+	restarts       int
+	restartErr     error
 }
 
 func (u *stubUpdater) Current() string { return u.current }
@@ -39,6 +41,10 @@ func (u *stubUpdater) Install(version string) error {
 	}
 
 	u.installed = append(u.installed, version)
+
+	if u.installStarted != nil {
+		u.installStarted <- version
+	}
 
 	return nil
 }
@@ -175,6 +181,96 @@ func TestAboutOffersRestoreOnlyWhenPreviousIsRecorded(t *testing.T) {
 
 	if front.restoreButton != nil {
 		t.Error("a fresh installation offered a restore button")
+	}
+}
+
+// Restoring a previous version is a deliberate action: Restore stays disabled
+// until exactly yes is typed, cancelling installs nothing, and confirming
+// installs the recorded previous version (#519).
+func TestRestorePreviousNeedsATypedYes(t *testing.T) {
+	updater := &stubUpdater{
+		current:        "v1.0.0",
+		previous:       "v0.9.0",
+		hasPrevious:    true,
+		installStarted: make(chan string, 1),
+	}
+	front, window := newTestUIWithUpdater(t, testModel(), stubEditor{}, stubReverter{}, updater)
+	front.aboutTab()
+
+	openRestore := func() fyne.CanvasObject {
+		t.Helper()
+
+		front.restorePrevious()
+
+		overlays := window.Canvas().Overlays().List()
+		if len(overlays) == 0 {
+			t.Fatal("restore did not ask for confirmation")
+		}
+
+		return overlays[len(overlays)-1]
+	}
+
+	pop := openRestore()
+
+	if text := strings.Join(labelsIn(pop), "\n"); !strings.Contains(text, "v0.9.0") {
+		t.Errorf("dialog text = %q, want the version it restores", text)
+	}
+
+	action := findButton(pop, "Restore")
+	if action == nil {
+		t.Fatal("the dialog has no Restore button")
+	}
+
+	if !action.Disabled() {
+		t.Error("Restore starts enabled")
+	}
+
+	entry := entryIn(pop)
+	if entry == nil {
+		t.Fatal("the dialog has no confirmation field")
+	}
+
+	for _, typed := range []string{"y", "YES", "yes please"} {
+		entry.SetText(typed)
+
+		if !action.Disabled() {
+			t.Errorf("%q enabled Restore", typed)
+		}
+	}
+
+	entry.SetText("yes")
+	if action.Disabled() {
+		t.Fatal("exactly yes did not enable Restore")
+	}
+
+	// Cancel is a no: it must not replace the binary.
+	cancel := findButton(pop, "Cancel")
+	if cancel == nil {
+		t.Fatal("the dialog has no Cancel button")
+	}
+
+	cancel.OnTapped()
+
+	if len(updater.installed) != 0 {
+		t.Fatalf("cancelling installed %v", updater.installed)
+	}
+
+	// Confirming installs the previous version, not the newest release.
+	pop = openRestore()
+
+	entry = entryIn(pop)
+	entry.SetText("yes")
+
+	action = findButton(pop, "Restore")
+	action.OnTapped()
+
+	select {
+	case got := <-updater.installStarted:
+		if got != "v0.9.0" {
+			t.Errorf("installed %q, want the previous version v0.9.0", got)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("confirming Restore never started the install")
 	}
 }
 

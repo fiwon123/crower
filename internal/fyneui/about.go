@@ -292,6 +292,10 @@ func (u *ui) confirmInstall(version string) {
 }
 
 // restorePrevious installs the version the installation ran before this one.
+//
+// It asks the user to type yes first: Restore sits beside Check for updates,
+// and a stray click must not replace the binary. The command set's restore in
+// the History tab asks the same way (#519).
 func (u *ui) restorePrevious() {
 	previous, found := u.updater.Previous()
 	if !found {
@@ -299,9 +303,9 @@ func (u *ui) restorePrevious() {
 		return
 	}
 
-	question := "Install crower " + previous + " again?\n\nIt replaces the binary on disk; a restart finishes the change."
+	question := "Restore crower " + previous + "?\n\nIt replaces the binary on disk; a restart finishes the change."
 
-	showConfirm("Restore "+previous, question, u.window, func(ok bool) {
+	confirmNamed("Restore "+previous, question, "yes", "Restore", widget.WarningImportance, u.window, func(ok bool) {
 		if !ok {
 			return
 		}
